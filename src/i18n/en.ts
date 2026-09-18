@@ -1,7 +1,7 @@
 /* Английские надписи страницы. Исходный язык: русский словарь (ru.ts) обязан повторить все ключи —
    иначе сборка не пройдёт. Тексты — те же, что стояли в разметке до v27. */
 const en = {
-  "doc.title": "Nikita Gorbachev, Product Designer",
+  "doc.title": "Gorbachev Nikita — Product Designer",
   "doc.desc": "Nikita Gorbachev, Senior/Lead Product Designer: complex products and AI-enabled services, from discovery to final UI, metrics and scale.",
   "doc.og": "Complex products and AI-enabled services, from discovery to final UI, metrics and scale.",
   "scene.alt": "A chair on a grassy hill at sunset",
