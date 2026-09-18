@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nikita Gorbachev, Product Designer</title>
+<meta name="description" content="Nikita Gorbachev, Senior/Lead Product Designer: complex products and AI-enabled services, from discovery to final UI, metrics and scale.">
+<meta name="theme-color" content="#e9d9b8">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Nikita Gorbachev, Product Designer">
+<meta property="og:description" content="Complex products and AI-enabled services, from discovery to final UI, metrics and scale.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://kloserock97-tech.github.io/the-quiet-hill/">
+<meta property="og:image" content="https://kloserock97-tech.github.io/the-quiet-hill/ui/hill-poster.webp">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://kloserock97-tech.github.io/the-quiet-hill/">
+<script>document.documentElement.className += " js";</script>
+<link rel="preload" href="/fonts/lexend-latin.woff2" as="font" type="font/woff2" crossorigin>
+<!-- шрифт экрана About портфолио на Tilda -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- не блокирует первый кадр: нужен только экрану About, бегущая строка перерисуется, когда шрифт приедет -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=Caveat:wght@600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=Caveat:wght@600&display=swap"></noscript>
+</head>
+<body>
+
+<!-- Первый экран: сцена холма и интерфейс поверх неё (стили — src/ui/hero/hero.css, поведение — src/ui/hero/heroUi.ts) -->
+<main class="hero" id="hero">
+  <canvas id="scene" data-i18n-label="scene.alt" aria-label="A chair on a grassy hill at sunset"></canvas>
+  <div class="scene-cover" aria-hidden="true"></div>
+  <!-- компьютер: подсказка у курсора и управление, пока камера у экрана -->
+  <span class="pc-tip" data-i18n="pc.tip" aria-hidden="true">Read the magazine</span>
+  <div class="pc-hud">
+    <button class="pc-back" type="button"><span aria-hidden="true">←</span> <span data-i18n="pc.back">Back to the hill</span></button>
+    <p class="pc-hint" data-i18n-html="pc.hint">Scroll to read · <kbd>Esc</kbd> to leave</p>
+  </div>
+
+  <div class="dock-wrap">
+    <nav class="dock" style="--pd:5" aria-label="Primary">
+      <a class="dock-item dock-mark" data-dock href="#" style="--d:120ms" data-i18n-label="nav.home" aria-label="Nikita Gorbachev: home">
+        <!-- метка: кресло -->
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6.2 3.5h9.6a1.6 1.6 0 0 1 1.6 1.8l-.9 7.2H5.5l-.9-7.2a1.6 1.6 0 0 1 1.6-1.8Z"/>
+          <path d="M3.2 11.4a1.3 1.3 0 0 1 2.1-.9l.8.7h11.8l.8-.7a1.3 1.3 0 0 1 2.1.9v3.1a1.6 1.6 0 0 1-1.6 1.6H4.8a1.6 1.6 0 0 1-1.6-1.6Z"/>
+          <path d="M5.3 16.8h2.1l-.9 4.2H5Zm11.3 0h2.1l.3 4.2h-1.5Z"/>
+        </svg>
+      </a>
+      <a class="dock-item is-active" data-dock href="#" style="--d:180ms">
+        <span class="glyph" aria-hidden="true">
+          <svg viewBox="0 0 16 16"><path d="M1.5 13.5c1.8-3.6 3.9-5.4 6.5-5.4s4.7 1.8 6.5 5.4"/><path d="M8 8.1V5.3"/><path d="M6.4 6.4h3.2"/></svg>
+        </span>
+        <span data-i18n="nav.hill">Hill</span>
+      </a>
+      <a class="dock-item" data-dock href="#work" style="--d:230ms">
+        <span class="glyph" aria-hidden="true">
+          <svg viewBox="0 0 16 16"><rect x="2.2" y="2.6" width="11.6" height="8.4" rx="1.4"/><path d="M5.6 13.6h4.8"/></svg>
+        </span>
+        <span data-i18n="nav.work">Work</span>
+      </a>
+      <a class="dock-item" data-dock href="#notes" style="--d:280ms">
+        <span class="glyph" aria-hidden="true">
+          <svg viewBox="0 0 16 16"><rect x="3" y="2.5" width="10" height="11" rx="1.6"/><path d="M5.8 6h4.4M5.8 8.6h4.4M5.8 11.2h2.6"/></svg>
+        </span>
+        <span data-i18n="nav.notes">Notes</span>
+      </a>
+      <a class="dock-item dock-item--enter" data-dock href="#contact" style="--d:330ms">
+        <span class="glyph" aria-hidden="true">
+          <svg viewBox="0 0 16 16"><path d="M2.4 4.2h11.2v7.6H2.4z"/><path d="m2.6 4.5 5.4 4.2 5.4-4.2"/></svg>
+        </span>
+        <span data-i18n="nav.hi">Say hi</span>
+      </a>
+      <!-- v27: язык страницы; подпись — язык, на который переключит (src/ui/langToggle.ts) -->
+      <button class="dock-item dock-lang" data-dock type="button" style="--d:355ms" data-i18n-label="nav.lang" aria-label="Читать по-русски">
+        <span class="glyph" aria-hidden="true">
+          <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M2.2 8h11.6"/><path d="M8 2.1c1.7 1.7 2.6 3.7 2.6 5.9S9.7 12.2 8 13.9C6.3 12.2 5.4 10.2 5.4 8s.9-4.2 2.6-5.9Z"/></svg>
+        </span>
+        <span class="dock-lang-l" data-i18n="nav.lang.short">RU</span>
+      </button>
+      <!-- звук: фон холма и тихие UI-сигналы (docs/prompts/sound.md), полоски пляшут, пока звук включён -->
+      <button class="dock-item dock-sound" data-dock type="button" style="--d:380ms" aria-pressed="false" data-i18n-label="nav.sound.off" aria-label="Sound off: turn on">
+        <span class="glyph sound-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      </button>
+    </nav>
+  </div>
+
+  <div class="stage" id="stage">
+
+    <div class="guides rise-fade" style="--d:900ms" aria-hidden="true">
+      <i style="left:calc(405 * var(--u))"></i>
+      <i style="left:calc(748 * var(--u))"></i>
+      <i style="left:calc(1091 * var(--u))"></i>
+    </div>
+
+
+
+    <h1 class="headline" style="--pd:18; --pr:1.2">
+      <span><i style="--d:260ms" data-i18n="hero.name">Nikita Gorbachev,</i></span>
+      <span><i style="--d:360ms" data-i18n="hero.role">product designer</i></span>
+    </h1>
+
+    <p class="lede rise" style="--d:480ms; --pd:14; --pr:1" data-i18n="hero.lede">I design complex products and AI-enabled services, from discovery to final UI, metrics and scale. Scroll down, the computer will explain.</p>
+
+    <!-- «Смотреть кейсы»: металлическая кнопка, блик идёт за курсором -->
+    <div class="cta-wrap rise" style="--d:600ms; --pd:15">
+      <button class="cta metal" type="button" data-action="explore">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 5.5h13"/><path d="M3.5 10h13"/><path d="M3.5 14.5h8"/></svg>
+        <span class="lbl" data-i18n="hero.explore">See the work</span>
+      </button>
+    </div>
+
+    <!-- «Позвать ветер»: круглая металлическая кнопка в тонком кольце -->
+    <span class="play-wrap rise-round" style="--d:900ms; --pd:20">
+      <button class="gust metal" type="button" data-i18n-label="hero.gust" aria-label="Call the wind" data-action="gust">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6.4 4.9c0-.9 1-1.4 1.7-.9l7.1 4.9c.6.4.6 1.4 0 1.9l-7.1 4.9c-.7.5-1.7 0-1.7-.9z"/></svg>
+      </button>
+      <span class="gust-ring" aria-hidden="true"></span>
+    </span>
+
+    <dl class="stat stat--a rise" style="--d:700ms; --pd:12">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 27q1-8 -3-15"/><path d="M13 27q-.5-11 4-19"/><path d="M19 27q.5-7 6-12"/><path d="M5 27h22"/>
+        </svg>
+      </span>
+      <div><dt data-i18n="stat.blades.label">Blades of grass</dt><dd data-stat="blades">520k, all real</dd></div>
+    </dl>
+
+    <dl class="stat stat--b rise" style="--d:770ms; --pd:13" role="button" tabindex="0" data-action="weather" data-i18n-label="stat.weather.aria" aria-label="Change the weather">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21a5 5 0 0 1 .6-10 7 7 0 0 1 13.2 1.6A4.2 4.2 0 0 1 22.5 21z"/><path d="M6 25.5h11"/><path d="M20 25.5h4"/>
+        </svg>
+      </span>
+      <div><dt><span data-i18n="stat.weather.label">Weather</span> <span class="stat-hint" data-i18n="stat.weather.hint" aria-hidden="true">· tap to change</span></dt><dd data-stat="wind">clear, gentle breeze</dd></div>
+    </dl>
+
+    <!-- v28: заметки — одна карточка, три страницы (холм, Driftfield, Nightsail); тексты и картинку
+         подставляет src/ui/fieldNote.ts, переключатель в правом верхнем углу -->
+    <article class="card card--stove rise" style="--d:880ms; --pd:22; --pr:2.4" data-note="hill" aria-roledescription="carousel">
+      <p class="label" data-note-label>Field note 01</p>
+      <div class="note-deck" role="group" aria-label="Notes">
+        <button class="note-deck__btn" type="button" data-step="-1" aria-label="Previous note">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg>
+        </button>
+        <span class="note-deck__count" aria-live="polite"><b>01</b>/03</span>
+        <button class="note-deck__btn" type="button" data-step="1" aria-label="Next note">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
+        </button>
+      </div>
+      <h2 data-note-title>How the hill was grown</h2>
+      <figure class="portal">
+        <span class="portal-media"><img src="/ui/card-grass.webp" data-note-img alt="Close-up of the grass bending in the wind" loading="eager" decoding="async"><video data-note-video muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"></video></span>
+      </figure>
+      <div class="card-note" id="field-note" aria-hidden="true">
+        <p class="label" data-note-label>Field note 01</p>
+        <h3 data-note-title>How the hill was grown</h3>
+        <ul data-note-points>
+          <li>Every blade is real geometry: hundreds of thousands of them in one instanced draw call, bent by wind in the vertex shader.</li>
+          <li>Two levels of detail, like Ghost of Tsushima: seven vertices up close, a single triangle far away.</li>
+          <li>Light from a baked HDRI: sun colour plus nine spherical-harmonics terms for the sky, god rays at quarter resolution.</li>
+          <li>Chair, computer and dog were assembled headless in Blender and squeezed with Draco.</li>
+          <li>On load the hill benchmarks your GPU and picks a quality tier. No grass was harmed.</li>
+        </ul>
+        <p class="note-links" data-note-links hidden></p>
+      </div>
+      <button class="knob knob--note" aria-label="Open note: How the hill was grown" aria-expanded="false" aria-controls="field-note">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5.5 14.5 14 6"/><path d="M7.5 5.5H14.5V12.5"/>
+        </svg>
+      </button>
+    </article>
+
+    <a class="scroll rise" style="--d:1040ms; --pd:9" href="#work"><span data-i18n="hero.scroll">Discover</span><span class="track"></span></a>
+
+  </div>
+</main>
+
+<!-- Скролл-история (docs/prompts/scroll.md): высота даёт место прокрутке, сцена стоит на месте -->
+<div class="story" aria-hidden="true"></div>
+
+<!-- Когда компьютер встал перед зрителем — раскладка экрана About портфолио на Tilda
+     (Main page/EN/Hero screen.en.html, .sf-about): слева «Hi there!» и абзац, в центре —
+     компьютер с фотографией, справа два абзаца и логотипы компаний -->
+<div class="story-progress" aria-hidden="true"></div>
+<div class="vf" aria-hidden="true">
+  <i class="vf-c vf-c--tl"></i><i class="vf-c vf-c--tr"></i><i class="vf-c vf-c--bl"></i><i class="vf-c vf-c--br"></i>
+  <i class="vf-t vf-t--t"></i><i class="vf-t vf-t--b"></i><i class="vf-t vf-t--l"></i><i class="vf-t vf-t--r"></i>
+  <i class="vf-ruler"></i>
+  <span class="vf-label vf-label--tl"><b class="vf-sq"></b><span data-i18n="vf.obj">OBJ_01 / CRT·2000</span></span>
+  <span class="vf-label vf-label--tr"><b class="vf-dot"></b><span data-vf-state>Tracking</span></span>
+  <span class="vf-label vf-label--bl" data-vf-size>000 × 000 px</span>
+  <span class="vf-label vf-label--br" data-vf-coords>X 0000  Y 0000</span>
+</div>
+<!-- v23: рукописная подпись над полароидом Келли на мониторе; положение пишет storyHero по проекции карточки -->
+<div class="kelly-note" aria-hidden="true">
+  <span class="kelly-text"><span data-i18n="kelly.note">and this is Kelly</span> <svg class="kelly-smile" viewBox="0 0 40 40"><circle cx="20" cy="20" r="16"/><path d="M13.5 16.5v.5M26.5 16.5v.5"/><path d="M12.5 23.5c4 6 11 6 15 0"/></svg></span>
+  <svg class="kelly-arrow" viewBox="0 0 120 110"><path class="kelly-arc" d="M12 10 C 52 2, 104 26, 88 82"/><path class="kelly-head" d="M74 70 L 88 84 L 100 66"/></svg>
+</div>
+<!-- v24: Келли спит клубочком на кресле в футере — «z z z» над головой; положение пишет storyHero по проекции -->
+<div class="kelly-zzz" aria-hidden="true"><i>z</i><i>z</i><i>z</i></div>
+<section class="story-hero" aria-hidden="true" aria-labelledby="story-hi">
+  <div class="story-col story-col--left">
+    <h2 class="story-hi" id="story-hi"><span data-i18n="about.hi">Hi there!</span><span class="story-base" aria-hidden="true"></span></h2>
+    <p class="story-intro" data-i18n="about.intro">I'm Nikita, a Senior/Lead Product Designer. I make complex services feel simple, both the ones millions of people use and the internal tools tens of thousands of employees open every morning. I also lead a team of designers.</p>
+  </div>
+  <div class="story-col story-col--right">
+    <p class="story-p story-reveal story-reveal--r" style="--i:1" data-i18n="about.p1">My work mixes product design, systems thinking and AI</p>
+    <p class="story-p story-reveal story-reveal--r" style="--i:2" data-i18n="about.p2">Research and product structure first, then launch, metrics and scaling what works.</p>
+    <!-- логотипы — разметка и SVG из блока About на Tilda, стили .sf-logos перенесены в hill-ui.css -->
+      <div class="sf-logos story-reveal story-reveal--r" style="--i:3" role="list" data-i18n-label="about.logos" aria-label="Companies I've worked for">
+        <div class="sf-logos__item" role="listitem" tabindex="0" data-i18n-label="about.logo.ozon" aria-label="Ozon, 2022">
+          <div class="sf-logos__disc">
+          <svg class="sf-logos__svg" viewBox="0 0 1001 1001" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Ozon">
+            <g clip-path="url(#clip0_80_625)">
+              <mask id="mask0_80_625" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="1001" height="1001">
+                <path d="M800.788 1000.28H200.816C90.3319 1000.28 0.801758 910.754 0.801758 800.34V200.369C0.801758 89.8846 90.3319 0.354492 200.816 0.354492H800.788C911.272 0.354492 1000.8 89.8846 1000.8 200.369V800.34C1000.73 910.754 911.201 1000.28 800.788 1000.28Z" fill="white"/>
+              </mask>
+              <g mask="url(#mask0_80_625)">
+                <path d="M0.801758 500.319C0.801758 776.442 224.644 1000.28 500.766 1000.28C776.889 1000.28 1000.73 776.442 1000.73 500.319C1000.73 224.196 776.889 0.354492 500.766 0.354492C224.644 0.354492 0.801758 224.196 0.801758 500.319Z" fill="#005BFF"/>
+              </g>
+              <mask id="mask1_80_625" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="1001" height="1001">
+                <path d="M800.788 0.354492H200.816C90.3318 0.354492 0.801758 89.8846 0.801758 200.369V800.34C0.801758 910.754 90.3318 1000.28 200.816 1000.28H800.788C911.201 1000.28 1000.73 910.754 1000.8 800.34V200.369C1000.8 89.8845 911.272 0.354492 800.788 0.354492Z" fill="white"/>
+              </mask>
+              <g mask="url(#mask1_80_625)">
+                <path d="M438.68 556.898L370.887 575.063L426.749 437.275C427.975 434.199 426.477 430.714 423.401 429.488C422.214 429.015 420.908 428.933 419.671 429.255L294.42 462.816C283.364 465.778 276.802 477.143 279.765 488.199C282.727 499.254 294.092 505.816 305.148 502.854L361.47 487.762L305.298 625.691C304.026 628.714 305.445 632.195 308.467 633.467C309.705 633.988 311.084 634.073 312.376 633.71L449.422 596.988C460.31 593.456 466.272 581.766 462.737 570.879C459.462 560.784 449.09 554.795 438.709 557.006L438.68 556.898ZM843.199 315.771C832.142 318.734 825.582 330.098 828.544 341.154L846.535 408.297L715.32 351.429C712.329 350.083 708.815 351.417 707.469 354.409C706.902 355.671 706.794 357.093 707.163 358.428L744.145 496.447C747.107 507.503 758.472 514.062 769.527 511.1C780.583 508.138 787.145 496.774 784.183 485.719L766.192 418.576L897.421 475.498C900.466 476.797 903.987 475.38 905.284 472.335C905.807 471.106 905.907 469.737 905.563 468.445L868.58 330.426C865.618 319.371 854.255 312.808 843.199 315.771ZM591.132 520.107C545.36 532.372 504.647 517.418 498.862 495.83C493.078 474.243 520.86 440.937 566.633 428.672C612.405 416.408 653.118 431.36 658.902 452.948C664.687 474.535 637.013 507.813 591.132 520.107ZM555.919 388.689C489.642 406.447 446.193 459.203 458.878 506.544C471.563 553.885 535.569 577.85 601.846 560.091C668.123 542.332 711.569 489.575 698.884 442.234C686.199 394.893 622.196 370.93 555.919 388.689ZM197.106 625.744C171.836 632.548 145.834 617.577 139.029 592.305C132.227 567.034 147.198 541.032 172.469 534.23C197.739 527.426 223.741 542.397 230.545 567.667L230.56 567.722C237.328 592.98 222.357 618.947 197.106 625.744ZM161.878 494.271C114.509 506.931 86.3715 555.596 99.033 602.964C111.693 650.335 160.357 678.471 207.726 665.811C255.095 653.15 283.233 604.487 270.571 557.117C270.561 557.081 270.551 557.044 270.542 557.008C257.86 509.678 209.21 481.589 161.878 494.271Z" fill="white"/>
+              </g>
+            </g>
+            <defs>
+              <clipPath id="clip0_80_625"><rect width="1000.98" height="1000.53" fill="white"/></clipPath>
+            </defs>
+          </svg>
+          </div>
+          <span class="sf-logos__tip" aria-hidden="true"><b>Ozon</b><i>2022</i></span>
+        </div>
+
+        <div class="sf-logos__item" role="listitem" tabindex="0" data-i18n-label="about.logo.mos" aria-label="Mos.ru, 2023 to 2025">
+          <div class="sf-logos__disc">
+          <svg class="sf-logos__svg" viewBox="0 0 989 989" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Mos.ru">
+            <rect width="989" height="989" rx="494.5" fill="url(#paint0_linear_80_470)"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M405 606.029H461V641.818C461.001 645.299 461.564 648.513 464.161 650.829C469.193 655.318 477.312 654.976 481.8 649.944C481.8 649.944 493.077 636.096 499.4 630.03C518.68 610.448 533.673 606.029 557 606.029H581C602.802 606.029 621 592.48 621 570.829V340.429C621 336.838 618.191 334.029 614.6 334.029H371.4C367.809 334.029 365 336.838 365 340.429V570.829C365 592.48 383.198 606.029 405 606.029ZM397 564.429V366.029H589V564.429C589 570.242 585.62 574.029 579.401 574.029H557C529.611 574.029 509.115 582.664 488.2 601.229V574.029H406.6C400.381 574.029 397 570.242 397 564.429Z" fill="#CC0029"/>
+            <defs>
+              <linearGradient id="paint0_linear_80_470" x1="358.086" y1="58.7337" x2="939.739" y2="945.423" gradientUnits="userSpaceOnUse">
+                <stop offset="0.264423" stop-color="#0B0F1A"/>
+                <stop offset="1" stop-color="#DD5461"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          </div>
+          <span class="sf-logos__tip" aria-hidden="true"><b>Mos.ru</b><i>2023–2025</i></span>
+        </div>
+
+        <div class="sf-logos__item" role="listitem" tabindex="0" data-i18n-label="about.logo.sber" aria-label="Sber, 2025 to 2026">
+          <div class="sf-logos__disc">
+          <svg class="sf-logos__svg" viewBox="0 0 989 989" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Sber">
+            <rect width="989" height="989" rx="494.5" fill="url(#paint0_linear_80_474)"/>
+            <path d="M644 494.12C644 485.001 643.231 475.993 641.583 467.094L609.064 491.044C609.064 492.033 609.064 493.131 609.064 494.12C609.064 558.28 557.098 610.355 492.828 610.355C428.558 610.355 376.703 558.39 376.703 494.12C376.703 429.96 428.668 377.885 492.938 377.885C516.339 377.885 539.191 384.916 558.527 398.1L587.86 376.457C522.931 324.162 427.899 334.379 375.495 399.198C323.09 464.018 333.307 559.159 398.236 611.454C463.165 663.859 558.197 653.641 610.492 588.822C632.135 562.016 644 528.617 644 494.12Z" fill="#21A038"/>
+            <path d="M612.469 401.726C619.61 410.954 625.763 421.061 630.597 431.718L493.048 533.122L435.59 497.087V453.801L493.048 489.836L612.469 401.726Z" fill="#21A038"/>
+            <defs>
+              <linearGradient id="paint0_linear_80_474" x1="358.086" y1="58.7337" x2="939.739" y2="945.423" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#0B0F1A"/>
+                <stop offset="1" stop-color="#74C167"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          </div>
+          <span class="sf-logos__tip" aria-hidden="true"><b>Sber</b><i>2025–2026</i></span>
+        </div>
+
+        <div class="sf-logos__item" role="listitem" tabindex="0" data-i18n-label="about.logo.grif" aria-label="Grif AI, 2026">
+          <div class="sf-logos__disc">
+          <svg class="sf-logos__svg" viewBox="0 0 989 989" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Grif AI">
+            <rect width="989" height="989" rx="494.5" fill="url(#paint0_linear_80_585)"/>
+            <path d="M542.322 497.372C540.496 507.6 551.068 514.588 560.362 509.213C561.889 508.333 562.638 506.234 564.578 506.614C594.28 519.928 623.926 535.39 645.604 559.981L630.41 550.725C621.173 545.872 611.628 541.744 601.806 538.165C599.438 537.299 591.677 535.601 590.507 534.721C589.751 534.15 589.202 530.431 587.226 528.649C584.465 526.155 580.385 525.605 576.933 527C574.643 527.923 573.73 530.452 572.596 530.515C542.893 524.894 512.363 523.513 482.225 526.268C476.925 514.363 462.552 515.412 459.499 528.148C398.638 538.067 313.461 530.515 285.142 467.124C308.29 477.817 333.591 483.706 358.964 486.728C385.656 489.912 412.505 489.842 439.376 489.63L440.81 490.328C442.871 496.717 451.788 498.57 456.474 493.857C460.269 490.039 455.996 488.44 465.056 488.905C476.84 489.511 488.895 490.567 500.636 491.751C514.567 493.16 528.491 495.308 542.322 497.379V497.372Z" fill="white"/>
+            <path d="M531.622 491.046C531.793 492.356 530.188 491.567 529.454 491.433C506.792 487.214 485.349 487.334 462.972 484.622C457.095 483.91 458.578 481.332 455.055 479.078C451.096 476.542 445.596 477.31 442.571 480.825C441.402 482.184 441.387 484.467 439.383 484.713C406.97 484.741 373.551 478.12 343.192 467.138C294.815 449.619 251.11 415.764 238.134 364.397C284.857 405.874 348.585 423.795 408.418 438.588C409.645 441.483 408.974 444.758 410.615 447.675C414.089 453.838 423.255 455.374 428.697 450.943C430.124 449.781 431.708 446.076 433.341 446.315L531.622 491.046Z" fill="white"/>
+            <path d="M571.497 534.679C571.525 545.64 585.349 549.077 589.736 538.842C610.993 545.428 632.279 554.241 649.505 568.442C662.523 579.17 673.387 598.26 679.928 613.68C681.319 616.956 682.889 620.457 683.359 624L664.499 600.071C628.983 562.13 579.515 551.747 529.168 563.518C527.064 563.243 526.18 559.799 523.576 558.432C518.747 555.903 512.427 556.889 509.16 561.355C507.883 563.095 507.177 567.005 506.528 567.554C505.729 568.223 491.84 571.591 489.472 572.161C441.53 583.714 380.185 586.834 345.703 545.548C352.451 545.527 359.249 545.773 366.032 545.872C375.905 546.013 385.884 546.034 395.921 545.196C417.548 543.378 438.741 538.067 459.941 533.883C464.67 545.217 480.948 543.702 482.574 531.22C512.27 527.656 542.044 530.734 571.504 534.672L571.497 534.679Z" fill="white"/>
+            <path d="M747.479 582.488C742.928 580.734 738.705 578.029 734.133 576.331C708.182 566.681 681.875 571.443 680.163 602.895C657.016 555.142 615.394 521.464 566.524 501.247C565.554 500.43 565.561 495.407 564.548 493.35C561.595 487.363 553.563 485.13 547.75 488.321C545.952 489.307 544.226 492.864 542.129 492.35L450.417 449.542C527.763 462.525 606.542 478.247 675.291 516.955C703.924 533.073 730.188 554.487 747.472 582.495L747.479 582.488Z" fill="white"/>
+            <path d="M670.534 614.856C651.031 597.766 622.534 586.03 596.106 587.425C592.746 587.601 584.878 589.757 582.574 589.531C580.72 589.348 579.215 586.354 577.481 585.403C570.177 581.381 563.079 587.249 561.802 594.526C520.958 611.925 465.048 628.106 424.26 602.366C423.554 601.922 422.991 602.436 423.34 600.788C452.23 596.315 478.965 584.206 505.821 573.499L507.983 573.478C511.043 580.029 520.544 581.247 525.573 576.168C527.442 574.274 528.59 569.174 529.974 568.554C580.655 555.754 628.783 566.919 663.779 605.705L670.526 614.863L670.534 614.856Z" fill="white"/>
+            <defs>
+              <linearGradient id="paint0_linear_80_585" x1="358.086" y1="58.7337" x2="939.739" y2="945.423" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#0B0F1A"/>
+                <stop offset="1" stop-color="#2563EB"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          </div>
+          <span class="sf-logos__tip" aria-hidden="true"><b>Grif AI</b><i>2026</i></span>
+        </div>
+      </div>
+  </div>
+</section>
+
+<!-- v23: футер — закатный холм со светлячками после кейсов; по мотивам футера Tilda (Main page/EN/Footer.en.html) -->
+<footer class="site-footer" id="contact" aria-hidden="true">
+  <div class="sf-top">
+    <p class="sf-kicker" data-i18n="footer.kicker">Open to new projects</p>
+    <h2 class="sf-title"><span data-i18n="footer.title1">Let's make something</span> <span data-i18n="footer.title2">complex feel simple.</span></h2>
+    <!-- v27: было три кнопки подряд, и «Copy» не говорила, что копирует. Теперь действие и адрес
+         разделены: пилюли — «написать» и Telegram, а сам адрес и есть кнопка копирования -->
+    <div class="sf-contacts">
+      <a class="sf-pill sf-pill--go" href="mailto:kloserock97@gmail.com" tabindex="-1">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 4.2h11.2v7.6H2.4z"/><path d="m2.6 4.5 5.4 4.2 5.4-4.2"/></svg>
+        <span data-i18n="footer.mail">Write an e-mail</span>
+      </a>
+      <a class="sf-pill" href="https://t.me/Gorbachev_Nikita_Designer" target="_blank" rel="noopener" tabindex="-1">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M14 2.6 1.9 7.3c-.6.2-.6 1 0 1.2l3 1 1.1 3.5c.2.5.8.6 1.1.2l1.7-1.8 3 2.2c.4.3 1 .1 1.1-.4L15 3.4c.1-.6-.5-1-1-.8Z"/><path d="m5 9.4 6.5-4.3"/></svg>
+        <span data-i18n="footer.tg">Telegram</span>
+      </a>
+      <a class="sf-pill" href="https://www.linkedin.com/in/nikita-gorbachev-productdesigner" target="_blank" rel="noopener" tabindex="-1">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.4" y="2.4" width="11.2" height="11.2" rx="2.2"/><path d="M5.4 6.05v.01" stroke-linecap="round"/><path d="M5.4 7.7v3.1"/><path d="M8.1 10.8V7.7"/><path d="M8.1 9c0-.9.6-1.4 1.35-1.4.85 0 1.35.6 1.35 1.5v1.7"/></svg>
+        <span>LinkedIn</span>
+      </a>
+      <button class="sf-copy" type="button" tabindex="-1" data-copy="kloserock97@gmail.com">
+        <svg class="sf-ic sf-ic--copy" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.6" y="5.6" width="8" height="8" rx="1.6"/><path d="M10.6 5.6V4a1.6 1.6 0 0 0-1.6-1.6H4A1.6 1.6 0 0 0 2.4 4v5a1.6 1.6 0 0 0 1.6 1.6h1.6"/></svg>
+        <svg class="sf-ic sf-ic--done" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 8.6 3.2 3.2L13 5"/></svg>
+        <span class="sf-copy-l">kloserock97@gmail.com</span>
+      </button>
+    </div>
+  </div>
+  <div class="sf-bar">
+    <p class="sf-copyright" data-i18n="footer.copyright">© Nikita Gorbachev 2026</p>
+    <nav class="sf-nav" aria-label="Footer">
+      <a href="#work" data-go="cases" tabindex="-1" data-i18n="footer.nav.work">Work</a>
+      <a href="#about" data-go="about" tabindex="-1" data-i18n="footer.nav.about">About</a>
+      <a href="#hero" data-go="top" tabindex="-1" data-i18n="footer.nav.top">Back to the hill ↑</a>
+      <!-- v24: страница без 3D — быстро пролистать или переслать рекрутеру -->
+      <a class="sf-lite" href="?lite=1" tabindex="-1" data-i18n="footer.nav.lite">Lite version</a>
+      <!-- v29: авторы моделей, шрифтов и кода (в том числе обязательная атрибуция CC BY для собаки) -->
+      <a href="./THIRD_PARTY_LICENSES.txt" target="_blank" rel="noopener" tabindex="-1" data-i18n="footer.nav.credits">Credits</a>
+    </nav>
+  </div>
+</footer>
+
+<!-- Глава «Кейсы» (docs/prompts/scroll.md, промпт 2): после About страница отрывается снизу, за ней —
+     размытое поле под другим ракурсом и лента кейсов по дуге; карточки собирает src/ui/cases.ts -->
+<section class="cases" id="work" aria-label="Selected work" aria-hidden="true">
+  <header class="cases-head">
+    <p class="cases-kicker" data-i18n="cases.kicker">Selected work</p>
+    <p class="cases-meta" data-i18n="cases.meta">06 case studies · 2024–2026</p>
+  </header>
+  <div class="cases-strip" role="list"></div>
+  <div class="cases-count" aria-hidden="true"><span class="cases-now">01</span><span class="cases-of" data-i18n="cases.of">/ 06</span></div>
+  <div class="cases-bar" aria-hidden="true"><i></i></div>
+</section>
+
+<!-- v32 (docs/prompts/v32.md): заставка над лугом перед лентой кейсов и заметки после неё.
+     Слова заголовка, карточки заметок и формат (?notes=stack|expand|strip) собирает src/ui/walkChapter.ts -->
+<section class="walk-intro" aria-hidden="true">
+  <p class="walk-kicker" data-i18n="walk.kicker">Case studies · 2024–2026</p>
+  <h2 class="walk-title" data-walk-title data-i18n="walk.title">Six products, from research to launch</h2>
+  <p class="walk-sub" data-i18n="walk.sub">Enterprise tools, public services and AI products. Each case covers the role, the context and the outcome.</p>
+</section>
+<section class="shelf" id="notes" aria-label="Side projects" aria-hidden="true">
+  <header class="shelf-head">
+    <p class="shelf-kicker" data-i18n="shelf.kicker">Side projects</p>
+    <h2 class="shelf-title" data-i18n="shelf.title">WebGL experiments</h2>
+    <p class="shelf-sub" data-i18n="shelf.sub">Real-time 3D: the hill scene of this site and three open-source demos with a live settings panel.</p>
+  </header>
+  <div class="shelf-stage" role="list"></div>
+  <div class="shelf-count" aria-hidden="true"><span class="shelf-now">01</span><span class="shelf-of"></span></div>
+</section>
+
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>

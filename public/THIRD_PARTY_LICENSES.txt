@@ -1,0 +1,67 @@
+The Quiet Hill — third-party credits and licenses
+==================================================
+
+Everything not listed here is the original work of Nikita Gorbachev.
+
+3D MODELS
+---------
+Dog "Kelly"
+  Based on "Low Poly Dog" by Jéssica Magno
+  https://sketchfab.com/3d-models/low-poly-dog-15d4cf0ad6bc418fa63872a9f5f37734
+  License: CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/
+  Changes: repainted to match a real dog, fluffy tail, new rig poses (sitting,
+  curled up asleep), umbrella hat added, re-exported with Draco compression.
+
+Armchair — "Modern Arm Chair 01" by Vibrant Nordic, Poly Haven
+  https://polyhaven.com/a/modern_arm_chair_01 — CC0 1.0
+  Changes: scaled, cushions recoloured, textures resized.
+
+Side table — "Side Table Tall 01" by James Ray Cock, Poly Haven
+  https://polyhaven.com/a/side_table_tall_01 — CC0 1.0
+  Changes: legs shortened, textures resized.
+
+Retro computer — "Old Computer 02", Freepoly.org, via BlenderKit — CC0 1.0
+
+Mug and saucer — made in code for this project (tools/blender-build-props.py).
+
+LIGHTING
+--------
+HDRI "Qwantani Sunset (Pure Sky)", Poly Haven — CC0 1.0
+  https://polyhaven.com/a/qwantani_sunset_puresky
+
+SOUND
+-----
+UI sound cues — uisfx (uisfx.com), "zen" set — sounds CC0 1.0, package MIT.
+Nature ambience — synthesised in code for this project.
+
+FONTS
+-----
+Lexend — Copyright 2018 The Lexend Project Authors — SIL Open Font License 1.1
+  (fonts/OFL.txt)
+Manrope, Caveat — Google Fonts — SIL Open Font License 1.1
+
+CODE
+----
+three.js — Copyright © 2010-2026 three.js authors — MIT License
+Draco decoder — Copyright Google LLC — Apache License 2.0
+"Hash without Sine" — Copyright (c) 2014 David Hoskins — MIT License
+Khronos PBR Neutral tone mapping — Khronos Group — Apache License 2.0
+
+The MIT License (three.js, Hash without Sine):
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+
+Apache License 2.0 (Draco, Khronos PBR Neutral): https://www.apache.org/licenses/LICENSE-2.0

@@ -1,0 +1,53 @@
+import { getLang } from '../i18n';
+import './caseScreenMotion.css';
+
+type Run = { stopped: boolean };
+type Scene = { file: string; ru: string; en: string; focus: string };
+const scenes: Record<string, Scene[]> = {
+  'grif-ai': [
+    { file: 'grif-context.png', ru: 'Ассистент изучает контекст', en: 'The assistant gathers context', focus: 'context' },
+    { file: 'grif-actions.png', ru: 'Ответ содержит карточки действий', en: 'The answer contains action cards', focus: 'actions' },
+    { file: 'grif-actions.png', ru: 'Важное действие требует подтверждения', en: 'Important actions need confirmation', focus: 'confirm' },
+  ],
+  'ai-agents': [
+    { file: 'agents-review.png', ru: 'Черновик рисков готов к проверке', en: 'Risk draft ready for review', focus: 'overview' },
+    { file: 'agents-review.png', ru: 'Риски и обоснования — в одном реестре', en: 'Risks and rationale in one registry', focus: 'risks' },
+    { file: 'agents-review.png', ru: 'Паспорт версии сохраняет контекст', en: 'The version passport retains context', focus: 'passport' },
+  ],
+};
+const label = (s: Scene) => getLang() === 'ru' ? s.ru : s.en;
+
+export function screenMarkup(id: string) {
+  const list = scenes[id];
+  return `<div class="dm sm sm--${id}" data-focus="${list[0].focus}">
+    <div class="sm-viewport"><div class="sm-camera">${[...new Set(list.map(s => s.file))].map((file, i) => `<img class="sm-screen${i === 0 ? ' is-current' : ''}" data-file="${file}" src="${import.meta.env.BASE_URL}cases/figma/${file}" alt="${id === 'grif-ai' ? 'GRIF — Chats' : 'Реестр рисков ИИ-агентов'}" decoding="async">`).join('')}</div></div>
+    <div class="sm-director"><p class="sm-caption">${label(list[0])}</p><div class="sm-controls" role="group" aria-label="${getLang() === 'ru' ? 'Состояния интерфейса' : 'Interface states'}">${list.map((s, i) => `<button type="button" data-shot="${i}" aria-label="${label(s)}" aria-pressed="${i === 0}"><span>0${i + 1}</span><i></i></button>`).join('')}</div></div>
+  </div>`;
+}
+
+export async function screenPlay(id: string, root: HTMLElement, run: Run) {
+  const list = scenes[id];
+  const select = (index: number) => {
+    const shot = list[index];
+    root.dataset.focus = shot.focus;
+    root.querySelectorAll<HTMLElement>('.sm-screen').forEach(img => img.classList.toggle('is-current', img.dataset.file === shot.file));
+    root.querySelector<HTMLElement>('.sm-caption')!.textContent = label(shot);
+    root.querySelectorAll<HTMLElement>('[data-shot]').forEach((button, i) => button.setAttribute('aria-pressed', String(i === index)));
+  };
+  root.querySelectorAll<HTMLButtonElement>('[data-shot]').forEach(button => {
+    button.onclick = () => { run.stopped = true; select(Number(button.dataset.shot)); };
+  });
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  if (reduced.matches) { select(1); return; }
+  select(0);
+  // Short cancellable beats: closing a case or scrolling away never advances its old scene.
+  for (let index = 1; index < list.length; index++) {
+    for (let tick = 0; tick < 32; tick++) {
+      await new Promise(resolve => window.setTimeout(resolve, 100));
+      if (run.stopped) return;
+      if (reduced.matches) { select(1); return; }
+      if (document.hidden) { tick--; continue; }
+    }
+    select(index);
+  }
+}

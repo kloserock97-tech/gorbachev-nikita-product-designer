@@ -1,0 +1,20 @@
+# dependencies and build output
+node_modules/
+dist/
+
+# local working files, kept out of the repository:
+# screenshots and measurement output, Blender sources (some assets are not redistributable),
+# reference video, the code graph
+shots/
+assets-src/
+reference/
+graphify-out/
+docs/prompts/
+docs/devlog.ru.md
+.env
+.env.*
+!.env.example
+
+*.log
+.DS_Store
+Thumbs.db

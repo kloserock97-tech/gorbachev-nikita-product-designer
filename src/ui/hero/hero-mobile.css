@@ -1,0 +1,124 @@
+/* v34: узкий экран без «ужатого артборда».
+   В hero.css телефон — тот же кадр шириной 760 единиц (--u = 100vw / 760): на 390px подпись выходила 9.7px,
+   «Дальше» — 5.6px, кнопки 28px. Здесь верхний блок идёт обычным потоком (сетка на .stage, абсолютные слои
+   её не замечают), у кеглей и кнопок нижний предел, карточка заметок раскладывается сверху вниз.
+   Подключается последним (main.ts), поэтому перекрывает hero.css и hill-ui.css. */
+@media (max-width: 900px) {
+  :root {
+    --m-pad: max(16px, calc(30 * var(--u)));
+    --m-row: max(40px, calc(46 * var(--u)));
+    --m-title: max(50px, calc(78 * var(--u)));
+    --m-fig: max(128px, calc(230 * var(--u)));
+    --m-card: calc(var(--m-pad) * 2 + var(--m-row) + var(--m-title) + 10px + var(--m-fig));
+    /* на сколько вытягивается открытая карточка: пять пунктов оборота крупным кеглем */
+    --m-open: max(300px, calc(470 * var(--u)));
+    /* полоса статистики под карточкой */
+    --m-stats: max(72px, calc(96 * var(--u)));
+  }
+
+  .stage {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-content: start;
+    column-gap: max(12px, calc(28 * var(--u)));
+    box-sizing: border-box;
+    /* док сверху: 30u отступа + 56px высоты — заголовок начинается ниже него */
+    padding: max(calc(128 * var(--u)), calc(30 * var(--u) + 74px)) calc(34 * var(--u)) 0;
+    height: calc(1357 * var(--u) + var(--m-card) + var(--m-stats));
+  }
+  .stage:has(.card--stove.is-open) { height: calc(1357 * var(--u) + var(--m-card) + var(--m-open) + var(--m-stats)); }
+  /* открытая карточка растёт вниз, статистика остаётся на месте */
+  .stage:has(.card--stove.is-open) .stat { top: calc(1324 * var(--u) + var(--m-card) + var(--m-open) + max(16px, calc(24 * var(--u)))); }
+
+  .headline, .lede, .cta-wrap { position: relative; left: auto; top: auto; }
+  .headline {
+    grid-column: 1 / -1; margin: 0;
+    font-size: max(30px, calc(62 * var(--u))); line-height: 1.06;
+  }
+  .lede {
+    grid-column: 1 / -1; width: auto; max-width: 34em; margin: max(12px, calc(22 * var(--u))) 0 0;
+    font-size: max(14px, calc(19 * var(--u))); line-height: 1.45;
+  }
+
+  .cta-wrap { grid-column: 1 / -1; justify-self: start; width: auto; height: auto; margin-top: max(18px, calc(30 * var(--u))); }
+  .cta {
+    position: relative; transform: none;
+    height: max(48px, calc(74 * var(--u))); font-size: max(15px, calc(20 * var(--u)));
+    padding: 0 max(22px, calc(34 * var(--u))) 0 max(16px, calc(24 * var(--u))); gap: max(10px, calc(14 * var(--u)));
+  }
+  .cta:active { transform: scale(0.96); }
+  .cta svg { width: max(18px, calc(22 * var(--u))); height: max(18px, calc(22 * var(--u))); }
+
+  /* статистика — под карточкой заметок, на траве. Кресло сцены держится около середины экрана:
+     наверху строка ложилась на него, над карточкой — тоже, стоило докрутить карточку до центра */
+  .stage .stat {
+    position: absolute; bottom: auto; top: calc(1324 * var(--u) + var(--m-card) + max(16px, calc(24 * var(--u))));
+    gap: max(8px, calc(11 * var(--u))); max-width: calc(50% - 40 * var(--u)); color: #f4f1ea;
+  }
+  .stage .stat--a { left: calc(34 * var(--u)); }
+  .stage .stat--b { left: 50%; }
+  .stat dt, .stat dd { color: #f4f1ea; text-shadow: 0 1px 12px rgba(10, 14, 8, 0.7); }
+  .stat dt { opacity: 0.8; }
+  .stage .stat .mark { color: #f4f1ea; }
+  .stat .mark { width: max(26px, calc(36 * var(--u))); height: max(26px, calc(36 * var(--u))); }
+  .stat dt { font-size: max(12px, calc(16 * var(--u))); line-height: 1.35; }
+  .stat dd { font-size: max(12.5px, calc(16.5 * var(--u))); line-height: 1.4; }
+  .stat--b { min-height: 44px; }
+
+  /* «Дальше» на телефоне лишнее: палец и так листает, а вертикальная подпись выходила 5px */
+  .scroll { display: none; }
+
+  /* ── карточка заметок: подпись и листалка строкой, заголовок, картинка во всю ширину ── */
+  .card--stove { height: var(--m-card); }
+  .card--stove.is-open { height: calc(var(--m-card) + var(--m-open)); }
+  .card--stove > .label {
+    left: var(--m-pad); top: var(--m-pad); margin: 0;
+    font-size: max(12.5px, calc(17 * var(--u))); line-height: var(--m-row);
+  }
+  .card--stove > h2 {
+    left: var(--m-pad); right: var(--m-pad); top: calc(var(--m-pad) + var(--m-row)); margin: 0;
+    font-size: max(21px, calc(34 * var(--u))); line-height: 1.12;
+  }
+  /* листалка — на картинке, внизу слева, стеклянной плашкой: в строке с подписью на русском не помещалась */
+  .note-deck {
+    top: auto; right: auto; left: calc(var(--m-pad) + max(8px, calc(12 * var(--u)))); bottom: calc(var(--m-pad) + max(8px, calc(12 * var(--u))));
+    height: auto; max-width: calc(100% - 2 * var(--m-pad) - max(64px, calc(82 * var(--u)))); padding: 3px; gap: 0; border-radius: 999px;
+    background: rgba(248, 248, 244, 0.86); box-shadow: 0 6px 18px rgba(20, 24, 16, 0.18);
+  }
+  .note-deck__btn { width: max(36px, calc(42 * var(--u))); height: max(36px, calc(42 * var(--u))); background: transparent; }
+  .note-deck__count { font-size: max(12px, calc(17 * var(--u))); min-width: 3em; }
+  .card figure {
+    left: var(--m-pad); right: var(--m-pad); bottom: var(--m-pad); top: auto;
+    width: auto; height: var(--m-fig); border-radius: max(18px, calc(30 * var(--u)));
+  }
+  .card .knob {
+    right: calc(var(--m-pad) + max(10px, calc(16 * var(--u)))); bottom: calc(var(--m-pad) + max(10px, calc(16 * var(--u))));
+    width: max(44px, calc(60 * var(--u))); height: max(44px, calc(60 * var(--u)));
+  }
+  .card .knob svg { width: max(17px, calc(22 * var(--u))); height: max(17px, calc(22 * var(--u))); }
+
+  /* оборот: крупный кегль, при нехватке места — прокрутка внутри */
+  .card-note {
+    padding: var(--m-pad) var(--m-pad) calc(var(--m-pad) + max(64px, calc(90 * var(--u))));
+    overflow-y: auto; overscroll-behavior: contain;
+  }
+  .card-note .label { font-size: max(12.5px, calc(17 * var(--u))); }
+  .card-note h3 { font-size: max(20px, calc(32 * var(--u))); }
+  .card-note ul { gap: max(8px, calc(12 * var(--u))); }
+  .card-note li { font-size: max(13.5px, calc(19 * var(--u))); padding-left: max(14px, calc(20 * var(--u))); }
+  .card-note li::before { width: max(5px, calc(7 * var(--u))); height: max(5px, calc(7 * var(--u))); }
+  .note-links { gap: 8px 14px; margin-top: max(14px, calc(20 * var(--u))); }
+  .note-links a { font-size: max(13px, calc(19 * var(--u))); }
+  .note-links a:first-child { padding: max(9px, calc(10 * var(--u))) max(16px, calc(18 * var(--u))); }
+}
+
+/* Кресло сцены стоит посередине высоты экрана. На низком широком экране (планшет лёжа, телефон боком)
+   «телефонная» единица от ширины раздувала заголовок до 70px, и подзаголовок ложился на кресло:
+   единица берётся и от высоты, текст уходит в левую колонку, карточка — на всю ширину. */
+@media (max-width: 900px) {
+  :root { --u: min(calc(100vw / 760), calc(100svh / 1100)); }
+  .card--stove { left: calc(34 * var(--u)); right: calc(34 * var(--u)); width: auto; }
+}
+@media (max-width: 900px) and (min-aspect-ratio: 1 / 1) {
+  .stage { grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr); }
+  .headline, .lede, .cta-wrap { grid-column: 1; }
+  .headline { font-size: clamp(26px, 4.6vw, 40px); }
+}
