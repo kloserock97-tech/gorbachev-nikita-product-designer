@@ -457,17 +457,24 @@ const details: CaseDetail[] = [
     "quote": "Quick verdicts in the registry save clicks, and a moderator's working day is mostly clicks.",
     "images": [
       {
-        "src": "cases/moderator-dashboard/01.webp",
-        "w": 1600,
-        "h": 1200,
-        "caption": "Comment registry sorted by status: Awaiting, Reviewed, Unwanted, Reported",
+        "src": "cases/figma/moderator-queue.png",
+        "w": 1440,
+        "h": 1156,
+        "caption": "User review queue with filters, assignees, statuses and complaints",
         "kind": "hero"
       },
       {
-        "src": "cases/moderator-dashboard/02.webp",
-        "w": 1600,
-        "h": 1200,
-        "caption": "Comment card: post context, author and karma, reply thread",
+        "src": "cases/figma/moderator-profile.png",
+        "w": 1440,
+        "h": 861,
+        "caption": "User profile with moderation context and related entities",
+        "kind": "screen"
+      },
+      {
+        "src": "cases/figma/moderator-confirm.png",
+        "w": 1440,
+        "h": 861,
+        "caption": "Confirmation before a moderator takes responsibility for the case",
         "kind": "screen"
       }
     ]
