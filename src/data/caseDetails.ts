@@ -550,11 +550,18 @@ const details: CaseDetail[] = [
     "quote": "I turned the most boring screen into a game of leveling up protection.",
     "images": [
       {
-        "src": "cases/stop-spam/01.webp",
-        "w": 1300,
-        "h": 2642,
-        "caption": "Anti-spam onboarding with a protection level meter",
+        "src": "cases/figma/spam-welcome.png",
+        "w": 402,
+        "h": 874,
+        "caption": "Welcome screen: the value proposition before any system permission",
         "kind": "hero"
+      },
+      {
+        "src": "cases/figma/spam-sms-setup.png",
+        "w": 402,
+        "h": 874,
+        "caption": "SMS filtering setup translated into five clear system steps",
+        "kind": "screen"
       }
     ]
   },

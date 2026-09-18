@@ -541,11 +541,18 @@ const details: CaseDetail[] = [
     "quote": "Превратил самый скучный экран в игровой прогресс защиты.",
     "images": [
       {
-        "src": "cases/stop-spam/01.webp",
-        "w": 1300,
-        "h": 2642,
-        "caption": "Онбординг антиспама со шкалой «уровня защиты»",
+        "src": "cases/figma/spam-welcome.png",
+        "w": 402,
+        "h": 874,
+        "caption": "Первый экран: ценность продукта до запроса системных разрешений",
         "kind": "hero"
+      },
+      {
+        "src": "cases/figma/spam-sms-setup.png",
+        "w": 402,
+        "h": 874,
+        "caption": "Настройка фильтра SMS, разложенная на пять понятных системных шагов",
+        "kind": "screen"
       }
     ]
   },
