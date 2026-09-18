@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kloserock97-tech.github.io/gorbachev-nikita-product-designer/sitemap.xml
