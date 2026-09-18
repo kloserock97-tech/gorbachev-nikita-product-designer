@@ -28,3 +28,6 @@
 .mh-paused *{animation-play-state:paused!important}.mh-still *{animation:none!important}.mh-still .mh-toggle{display:none}
 @media(max-width:640px){.mh{min-height:420px}.mh-orb{width:100px}.mh-orb b{font-size:52px}.mh-action{left:7%;right:7%;padding:20px}.mh-report{left:12%;padding:18px}.mh-report strong{font-size:22px}.mh-orbit{inset:8% 6% 40%}.mh-orbit span{padding:9px 11px;font-size:10px}.mh-story{padding:18px}.mh-story footer{left:18px;bottom:18px}.mh-verdict{right:7%;padding:20px 14px}.mh-shield{width:165px;height:200px}.mh-service{font-size:10px;padding:10px}.mh-windows{gap:12px 8px;padding:22px 12px}}
 @media(prefers-reduced-motion:reduce){.mh *{animation:none!important}.mh-toggle{display:none}}
+.mh-publication{position:absolute;left:50%;top:50%;width:min(70%,510px);height:auto;border-radius:12px;box-shadow:0 30px 70px #0005;transform:translate(-50%,-50%) rotate(2deg);animation:mh-publication 12s cubic-bezier(.45,0,.55,1) infinite}
+.mh-publication-back{position:absolute;left:50%;top:50%;width:min(70%,510px);aspect-ratio:612/492;border-radius:12px;background:#d8cdbb;transform:translate(-53%,-48%) rotate(-6deg);box-shadow:0 20px 50px #0003}
+@keyframes mh-publication{0%,100%{transform:translate(-50%,-48%) rotate(2deg)}45%,65%{transform:translate(-50%,-52%) rotate(-1deg)}}

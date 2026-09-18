@@ -5,7 +5,7 @@ const words = (ru: string, en: string) => getLang() === 'ru' ? ru : en;
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const lines = '<i></i><i></i><i></i>';
 
-/** Each composition tells a different product story. No screenshot or invented product metrics. */
+/** Product metaphors and exact Figma exports, with no invented product metrics. */
 export function heroAccent(id: string, label: string) {
   const scenes: Record<string, string> = {
     'grif-ai': `<div class="mh-orbit"><span>Calendar</span><span>Mail</span><span>Notes</span></div><div class="mh-orb"><b>g.</b></div><div class="mh-action"><small>${words('КОНТЕКСТ СОБРАН','CONTEXT CONNECTED')}</small><strong>${words('Следующий шаг готов.','Your next move. Ready.')}</strong><span>${words('Вы решаете — ассистент действует','You decide. Your assistant acts.')} <b>↗</b></span></div>`,
@@ -15,6 +15,7 @@ export function heroAccent(id: string, label: string) {
     'stop-spam': `<div class="mh-call mh-call--one">↙ ${words('Неизвестный номер','Unknown caller')}</div><div class="mh-call mh-call--two">↙ ${words('Нежелательный звонок','Unwanted call')}</div><img class="mh-shield mh-shield--asset" src="${import.meta.env.BASE_URL}cases/figma/spam-shield.png" width="400" height="400" alt=""><div class="mh-caption"><strong>${words('Ваше спокойствие.','Your peace of mind.')}</strong><span>${words('Защита начинается с первого шага','Protection starts with the first step')}</span></div>`,
     'electronic-house': `<div class="mh-building"><div class="mh-roof"></div><div class="mh-windows">${Array.from({length:12},(_,i)=>`<i style="--n:${i}"></i>`).join('')}</div></div><div class="mh-service mh-service--one">↗ ${words('Заявки','Requests')}</div><div class="mh-service mh-service--two">✓ ${words('Голосования','Voting')}</div><div class="mh-service mh-service--three">≋ ${words('Показания','Readings')}</div><div class="mh-caption"><strong>${words('Дом. Всё рядом.','Home. All connected.')}</strong></div>`,
   };
+  scenes.community = `<div class="mh-publication-back"></div><img class="mh-publication" src="${import.meta.env.BASE_URL}cases/figma/community-publication.png" width="612" height="492" alt="">`;
   const actual = id === 'grif-ai' || id === 'ai-agents';
   const base = import.meta.env.BASE_URL + 'cases/figma/';
   const frames = id === 'grif-ai'
