@@ -24,7 +24,7 @@ export function heroAccent(id: string, label: string) {
   const filmKicker = id === 'moderator-dashboard' ? words('ОЧЕРЕДЬ · КОНТЕКСТ · РЕШЕНИЕ', 'QUEUE · CONTEXT · DECISION') : words('ОТ КОНТЕКСТА К РЕШЕНИЮ', 'FROM CONTEXT TO DECISION');
   const filmTitle = id === 'moderator-dashboard' ? words('Проверка без потери контекста.', 'Review without losing context.') : words('Риски становятся понятными.', 'Make risks clear.');
   const film = '<div class="mh-film"><div class="mh-film-window">' + frames + '</div></div><div class="mh-film-title"><small>' + filmKicker + '</small><strong>' + filmTitle + '</strong></div>';
-  return `<figure class="mh mh--${id}${actual ? ' mh--film' : ''}" aria-label="${esc(label)}"><div class="mh-art" aria-hidden="true">${actual ? film : scenes[id] ?? ''}</div><figcaption>${esc(label)}<button type="button" class="mh-toggle" aria-pressed="false">${words('Пауза','Pause')}</button></figcaption></figure>`;
+  return `<figure class="mh mh--${id}${actual ? ' mh--film' : ''}" aria-label="${esc(label)}"><div class="mh-art" aria-hidden="true">${actual ? film : scenes[id] ?? ''}</div></figure>`;
 }
 
 export function mountHero(root: HTMLElement, scroller: HTMLElement) {
@@ -32,18 +32,10 @@ export function mountHero(root: HTMLElement, scroller: HTMLElement) {
   const media = matchMedia('(prefers-reduced-motion: reduce)');
   const sync = () => figures.forEach(el => {
     el.classList.toggle('mh-still', media.matches);
-    el.classList.toggle('mh-paused', document.hidden || el.dataset.visible !== 'true' || el.dataset.paused === 'true');
+    el.classList.toggle('mh-paused', document.hidden || el.dataset.visible !== 'true');
   });
   const io = new IntersectionObserver(entries => { entries.forEach(e => (e.target as HTMLElement).dataset.visible = String(e.isIntersecting)); sync(); }, {root: scroller});
-  figures.forEach(el => {
-    io.observe(el);
-    el.querySelector('button')?.addEventListener('click', e => {
-      const button = e.currentTarget as HTMLButtonElement;
-      const paused = el.dataset.paused !== 'true';
-      el.dataset.paused = String(paused); button.setAttribute('aria-pressed', String(paused));
-      button.textContent = paused ? words('Продолжить','Play') : words('Пауза','Pause'); sync();
-    });
-  });
+  figures.forEach(el => io.observe(el));
   document.addEventListener('visibilitychange', sync); media.addEventListener('change', sync); sync();
   return () => { io.disconnect(); document.removeEventListener('visibilitychange', sync); media.removeEventListener('change', sync); };
 }
