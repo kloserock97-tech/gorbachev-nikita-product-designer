@@ -728,8 +728,17 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.4s ease;
   background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 30%), rgba(214, 232, 170, 0.16), transparent 60%);
 }
-.case-cover { display: block; aspect-ratio: 16 / 9; border-radius: 20px; overflow: hidden; background: #1b2118; }
-.case-cover img { display: block; width: 100%; height: 100%; object-fit: cover; transition: scale 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.case-cover { position: relative; display: block; aspect-ratio: 16 / 9; border-radius: 20px; overflow: hidden; background: #e5e9e7; isolation: isolate; }
+.case-art { display: block; width: 100%; height: 100%; object-fit: cover; transition: scale 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.case-brand { position: absolute; top: 14px; left: 14px; display: grid; place-items: center; width: 64px; height: 44px; border-radius: 12px; background: rgba(255,255,255,.88); border: 1px solid rgba(255,255,255,.7); box-shadow: 0 3px 12px rgba(24,35,48,.06); pointer-events: none; }
+.case-brand img { display: block; width: 42px; height: 28px; object-fit: contain; }
+.case-brand--ai-agents { width: 112px; }
+.case-brand--ai-agents img { width: 88px; height: 24px; }
+.case-brand--stop-spam, .case-brand--electronic-house { width: 44px; }
+.case-brand--stop-spam img { width: 34px; height: 34px; }
+.case-brand--electronic-house { background: #222; border-color: rgba(255,255,255,.12); }
+.case-brand--electronic-house img { width: 36px; height: 36px; }
+@media (prefers-reduced-motion: reduce) { .case-art { transition: none; } }
 .case-body { display: flex; flex: 1; flex-direction: column; gap: 6px; padding: 0 12px; }
 .case-tag { font-size: 12.5px; font-weight: 300; color: rgba(244, 241, 234, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .case-title {
@@ -749,7 +758,8 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 .case-sub + .case-cta { margin-top: 10px; }
 .case:hover { box-shadow: inset 0 0 0 1px rgba(244, 241, 234, 0.2), 0 28px 56px rgba(0, 0, 0, 0.42); }
 .case:hover::after { opacity: 1; }
-.case:hover .case-cover img { scale: 1.05; }
+.case:hover .case-art { scale: 1.035; }
+@media (prefers-reduced-motion: reduce) { .case:hover .case-art { scale: 1; } }
 .case:hover .case-cta { background: #fff; }
 .case:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
 .cases-count {

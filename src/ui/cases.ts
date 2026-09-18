@@ -46,7 +46,10 @@ export function renderCases() {
   strip.innerHTML = getCases()
     .map(
       (c, i) => `<a class="case" role="listitem" href="#/work/${c.id}" tabindex="-1" style="--i:${i}">
-        <span class="case-cover"><img src="${BASE}${c.cover}" alt="" loading="lazy" decoding="async" width="560" height="350"></span>
+        <span class="case-cover">
+          <img class="case-art" src="${BASE}${c.cover}" alt="" loading="lazy" decoding="async" width="1120" height="630">
+          ${c.brand ? `<span class="case-brand case-brand--${c.id}" aria-hidden="true"><img src="${BASE}cases/brands/${c.brand}" alt="" loading="lazy" decoding="async" width="64" height="32"></span>` : ""}
+        </span>
         <span class="case-body">
           <span class="case-tag">${pad(i + 1)} · ${c.tag}</span>
           <span class="case-title">${c.title}</span>

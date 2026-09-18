@@ -1,12 +1,12 @@
 /* Кейсы для ленты в главе «Кейсы», меню Work и страницы на экране компьютера.
    Источник: порядок и ссылки — Main page/Cases.html (+ EN/Cases.en.html), подзаголовки — лиды
-   Main cases/*.html. Превью 560×350 лежат в public/cases (скриншоты из кейсов;
-   у «Электронного дома» скриншота продукта нет — пока плитка с логотипом).
+   Main cases/*.html. Предметные превью 1120×630 лежат в public/cases/covers,
+   оригинальные знаки — в public/cases/brands. Источники и промпты: docs/case-preview-art-direction.md.
    v27: у каждого кейса есть русский двойник — название, подзаголовок и метка берутся по текущему
    языку (getCases()). Порядок, id и обложки от языка не зависят. */
 import { getLang } from "../i18n";
 
-export type CaseItem = { id: string; title: string; subtitle: string; tag: string; cover: string };
+export type CaseItem = { id: string; title: string; subtitle: string; tag: string; cover: string; brand?: string };
 type Ru = { title: string; subtitle: string; tag: string };
 
 const cases: CaseItem[] = [
@@ -16,7 +16,18 @@ const cases: CaseItem[] = [
   { id: "moderator-dashboard", title: "Moderator Dashboard", subtitle: "A workspace of their own for moderators: −38% steps per task", tag: "B2B dashboard · Mos.ru · 2024", cover: "cases/moderator-dashboard.jpg" },
   { id: "stop-spam", title: "Stop Spam", subtitle: "Permission onboarding for an anti-spam app: +25% conversion", tag: "iOS · Android · 2026", cover: "cases/stop-spam.jpg" },
   { id: "electronic-house", title: "Electronic House", subtitle: "UX audit of a housing-services app with four main screens rebuilt", tag: "UX audit · Mobile app · 2024", cover: "cases/electronic-house.jpg" },
-];
+].map((item) => ({
+  ...item,
+  cover: `cases/covers/${item.id}.webp`,
+  brand: ({
+    "grif-ai": "grif.svg",
+    "ai-agents": "sber.svg",
+    community: "community.svg",
+    "moderator-dashboard": "community.svg",
+    "stop-spam": "stop-spam.png",
+    "electronic-house": "electronic-house.webp",
+  } as Record<string, string>)[item.id],
+}));
 
 const ru: Record<string, Ru> = {
   "grif-ai": { title: "GRIF AI", subtitle: "Проактивный ассистент с готовыми действиями: дизайн в одиночку", tag: "ИИ-ассистент · 2026" },
