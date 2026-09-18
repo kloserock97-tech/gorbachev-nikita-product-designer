@@ -10,6 +10,8 @@
 .sm[data-focus=settings]{--camera:translate(-10%,-20%) scale(1.2)}
 .sm[data-focus=engagement]{--camera:translate(-12%,-36%) scale(1.25)}
 .sm[data-focus=topics]{--camera:translate(-25%,-31%) scale(1.45)}
+.sm[data-focus=moderator-profile]{--camera:translate(-4%,-2%) scale(1.08)}
+.sm[data-focus=moderator-confirm]{--camera:translate(-18%,-7%) scale(1.45)}
 .sm-director{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:22px 26px;background:#101824;border-top:1px solid #ffffff15;color:#e5eaf2}
 .sm-caption{font:400 15px/1.5 Manrope,system-ui,sans-serif;margin:0;max-width:36em}
 .sm-controls{display:flex;gap:8px;flex-shrink:0}.sm-controls button{position:relative;display:flex;align-items:center;gap:8px;min-width:44px;min-height:44px;padding:10px;border-radius:12px;border:1px solid #ffffff20;color:#b3bed0;background:#ffffff06;cursor:pointer;font:400 12px/1 system-ui}
@@ -21,5 +23,6 @@
 .sm--stop-spam .sm-viewport{background:radial-gradient(circle at 50% 48%,#eef1ff 0,#f9f9fa 48%,#fff 76%)}
 .sm--community{max-width:760px;background:#f1eee4}
 .sm--community .sm-viewport{background:#e8e1d1}
+.sm--moderator-dashboard .sm-viewport{background:#f6f6f6}
 @media(max-width:640px){.sm-director{display:grid;padding:16px;gap:12px}.sm-caption{font-size:14px;min-height:42px}.sm-viewport{aspect-ratio:1.05}.sm-camera{height:auto;aspect-ratio:1.6;top:16%;bottom:auto}.sm--stop-spam .sm-camera{inset:0;height:100%;aspect-ratio:auto}.sm-controls{justify-content:center}.sm[data-focus=context]{--camera:translate(-18%,0) scale(1.3)}.sm[data-focus=overview]{--camera:translate(-4%,0) scale(1.1)}}
 @media(prefers-reduced-motion:reduce){.sm-camera,.sm-screen{transition:none}.sm-camera{will-change:auto}}

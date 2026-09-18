@@ -4,11 +4,6 @@ import './caseScreenMotion.css';
 type Run = { stopped: boolean };
 type Scene = { file: string; ru: string; en: string; focus: string };
 const scenes: Record<string, Scene[]> = {
-  'grif-ai': [
-    { file: 'grif-context.png', ru: 'Ассистент изучает контекст', en: 'The assistant gathers context', focus: 'context' },
-    { file: 'grif-actions.png', ru: 'Ответ содержит карточки действий', en: 'The answer contains action cards', focus: 'actions' },
-    { file: 'grif-actions.png', ru: 'Важное действие требует подтверждения', en: 'Important actions need confirmation', focus: 'confirm' },
-  ],
   'ai-agents': [
     { file: 'agents-review.png', ru: 'Черновик рисков готов к проверке', en: 'Risk draft ready for review', focus: 'overview' },
     { file: 'agents-review.png', ru: 'Риски и обоснования — в одном реестре', en: 'Risks and rationale in one registry', focus: 'risks' },
@@ -24,12 +19,17 @@ const scenes: Record<string, Scene[]> = {
     { file: 'community-publication.png', ru: 'Аудиоверсия и реакции — рядом с материалом', en: 'Audio and reactions stay close to the story', focus: 'engagement' },
     { file: 'community-publication.png', ru: 'Темы помогают продолжить исследование города', en: 'Topics invite further city exploration', focus: 'topics' },
   ],
+  'moderator-dashboard': [
+    { file: 'moderator-queue.png', ru: 'Очередь показывает статус каждой проверки', en: 'The queue exposes every review status', focus: 'moderator-queue' },
+    { file: 'moderator-profile.png', ru: 'Профиль собирает контекст пользователя', en: 'The profile gathers user context', focus: 'moderator-profile' },
+    { file: 'moderator-confirm.png', ru: 'Ответственное действие требует подтверждения', en: 'A consequential action requires confirmation', focus: 'moderator-confirm' },
+  ],
 };
 const label = (s: Scene) => getLang() === 'ru' ? s.ru : s.en;
 
 export function screenMarkup(id: string) {
   const list = scenes[id];
-  const alt = id === 'grif-ai' ? 'GRIF — Chats' : id === 'ai-agents' ? 'Реестр рисков ИИ-агентов' : id === 'community' ? 'Сообщество — карточка публикации' : 'Стоп Спам — настройка защиты';
+  const alt = id === 'ai-agents' ? 'Реестр рисков ИИ-агентов' : id === 'community' ? 'Сообщество — карточка публикации' : id === 'moderator-dashboard' ? 'Кабинет модератора' : 'Стоп Спам — настройка защиты';
   return `<div class="dm sm sm--${id}" data-focus="${list[0].focus}">
     <div class="sm-viewport"><div class="sm-camera">${[...new Set(list.map(s => s.file))].map((file, i) => `<img class="sm-screen${i === 0 ? ' is-current' : ''}" data-file="${file}" src="${import.meta.env.BASE_URL}cases/figma/${file}" alt="${alt}" decoding="async">`).join('')}</div></div>
     <div class="sm-director"><p class="sm-caption">${label(list[0])}</p><div class="sm-controls" role="group" aria-label="${getLang() === 'ru' ? 'Состояния интерфейса' : 'Interface states'}">${list.map((s, i) => `<button type="button" data-shot="${i}" aria-label="${label(s)}" aria-pressed="${i === 0}"><span>0${i + 1}</span><i></i></button>`).join('')}</div></div>

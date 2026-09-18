@@ -16,12 +16,14 @@ export function heroAccent(id: string, label: string) {
     'electronic-house': `<div class="mh-building"><div class="mh-roof"></div><div class="mh-windows">${Array.from({length:12},(_,i)=>`<i style="--n:${i}"></i>`).join('')}</div></div><div class="mh-service mh-service--one">↗ ${words('Заявки','Requests')}</div><div class="mh-service mh-service--two">✓ ${words('Голосования','Voting')}</div><div class="mh-service mh-service--three">≋ ${words('Показания','Readings')}</div><div class="mh-caption"><strong>${words('Дом. Всё рядом.','Home. All connected.')}</strong></div>`,
   };
   scenes.community = `<div class="mh-publication-back"></div><img class="mh-publication" src="${import.meta.env.BASE_URL}cases/figma/community-publication.png" width="612" height="492" alt="">`;
-  const actual = id === 'grif-ai' || id === 'ai-agents';
+  const actual = id === 'ai-agents' || id === 'moderator-dashboard';
   const base = import.meta.env.BASE_URL + 'cases/figma/';
-  const frames = id === 'grif-ai'
-    ? '<img src="' + base + 'grif-context.png" width="1440" height="900" alt=""><img class="mh-film-next" src="' + base + 'grif-actions.png" width="1440" height="900" alt="">'
+  const frames = id === 'moderator-dashboard'
+    ? '<img src="' + base + 'moderator-queue.png" width="1440" height="1156" alt=""><img class="mh-film-next" src="' + base + 'moderator-confirm.png" width="1440" height="861" alt="">'
     : '<img src="' + base + 'agents-review.png" width="760" height="475" alt="">';
-  const film = '<div class="mh-film"><div class="mh-film-window">' + frames + '</div></div><div class="mh-film-title"><small>' + words('ОТ КОНТЕКСТА К РЕШЕНИЮ', 'FROM CONTEXT TO DECISION') + '</small><strong>' + (id === 'grif-ai' ? words('Действие начинается с вас.', 'You decide the next move.') : words('Риски становятся понятными.', 'Make risks clear.')) + '</strong></div>';
+  const filmKicker = id === 'moderator-dashboard' ? words('ОЧЕРЕДЬ · КОНТЕКСТ · РЕШЕНИЕ', 'QUEUE · CONTEXT · DECISION') : words('ОТ КОНТЕКСТА К РЕШЕНИЮ', 'FROM CONTEXT TO DECISION');
+  const filmTitle = id === 'moderator-dashboard' ? words('Проверка без потери контекста.', 'Review without losing context.') : words('Риски становятся понятными.', 'Make risks clear.');
+  const film = '<div class="mh-film"><div class="mh-film-window">' + frames + '</div></div><div class="mh-film-title"><small>' + filmKicker + '</small><strong>' + filmTitle + '</strong></div>';
   return `<figure class="mh mh--${id}${actual ? ' mh--film' : ''}" aria-label="${esc(label)}"><div class="mh-art" aria-hidden="true">${actual ? film : scenes[id] ?? ''}</div><figcaption>${esc(label)}<button type="button" class="mh-toggle" aria-pressed="false">${words('Пауза','Pause')}</button></figcaption></figure>`;
 }
 

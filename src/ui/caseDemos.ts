@@ -21,8 +21,6 @@ const T = {
 const replayIcon = `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10a6 6 0 1 0 2-4.5"/><path d="M4 3.5V7h3.5"/></svg>`;
 
 /* ── GRIF: чат ──────────────────────────────────────────────────────────────── */
-function grifMarkup() { return screenMarkup("grif-ai"); }
-function grifPlay(root: HTMLElement, run: Run) { return screenPlay("grif-ai", root, run); }
 function agentsMarkup() { return screenMarkup("ai-agents"); }
 function agentsPlay(root: HTMLElement, run: Run) { return screenPlay("ai-agents", root, run); }
 
@@ -30,12 +28,14 @@ function spamMarkup() { return screenMarkup("stop-spam"); }
 function spamPlay(root: HTMLElement, run: Run) { return screenPlay("stop-spam", root, run); }
 function communityMarkup() { return screenMarkup("community"); }
 function communityPlay(root: HTMLElement, run: Run) { return screenPlay("community", root, run); }
+function moderatorMarkup() { return screenMarkup("moderator-dashboard"); }
+function moderatorPlay(root: HTMLElement, run: Run) { return screenPlay("moderator-dashboard", root, run); }
 
 const DEMOS: Record<string, { markup: () => string; play: (root: HTMLElement, run: Run) => Promise<void> }> = {
-  "grif-ai": { markup: grifMarkup, play: grifPlay },
   "ai-agents": { markup: agentsMarkup, play: agentsPlay },
   "stop-spam": { markup: spamMarkup, play: spamPlay },
   "community": { markup: communityMarkup, play: communityPlay },
+  "moderator-dashboard": { markup: moderatorMarkup, play: moderatorPlay },
 };
 
 export const hasDemo = (id: string) => id in DEMOS;
