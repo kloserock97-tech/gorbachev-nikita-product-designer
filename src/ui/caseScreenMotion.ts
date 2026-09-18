@@ -14,13 +14,24 @@ const scenes: Record<string, Scene[]> = {
     { file: 'agents-review.png', ru: 'Риски и обоснования — в одном реестре', en: 'Risks and rationale in one registry', focus: 'risks' },
     { file: 'agents-review.png', ru: 'Паспорт версии сохраняет контекст', en: 'The version passport retains context', focus: 'passport' },
   ],
+  'stop-spam': [
+    { file: 'spam-welcome.png', ru: 'Спокойное знакомство с продуктом', en: 'A calm product introduction', focus: 'welcome' },
+    { file: 'spam-sms-setup.png', ru: 'Настройка фильтра — по шагам', en: 'Filter setup, step by step', focus: 'setup' },
+    { file: 'spam-sms-setup.png', ru: 'Переход в настройки одним действием', en: 'Open Settings in one action', focus: 'settings' },
+  ],
+  'community': [
+    { file: 'community-publication.png', ru: 'Публикация собирает историю в одном кадре', en: 'A publication frames the whole story', focus: 'publication' },
+    { file: 'community-publication.png', ru: 'Аудиоверсия и реакции — рядом с материалом', en: 'Audio and reactions stay close to the story', focus: 'engagement' },
+    { file: 'community-publication.png', ru: 'Темы помогают продолжить исследование города', en: 'Topics invite further city exploration', focus: 'topics' },
+  ],
 };
 const label = (s: Scene) => getLang() === 'ru' ? s.ru : s.en;
 
 export function screenMarkup(id: string) {
   const list = scenes[id];
+  const alt = id === 'grif-ai' ? 'GRIF — Chats' : id === 'ai-agents' ? 'Реестр рисков ИИ-агентов' : id === 'community' ? 'Сообщество — карточка публикации' : 'Стоп Спам — настройка защиты';
   return `<div class="dm sm sm--${id}" data-focus="${list[0].focus}">
-    <div class="sm-viewport"><div class="sm-camera">${[...new Set(list.map(s => s.file))].map((file, i) => `<img class="sm-screen${i === 0 ? ' is-current' : ''}" data-file="${file}" src="${import.meta.env.BASE_URL}cases/figma/${file}" alt="${id === 'grif-ai' ? 'GRIF — Chats' : 'Реестр рисков ИИ-агентов'}" decoding="async">`).join('')}</div></div>
+    <div class="sm-viewport"><div class="sm-camera">${[...new Set(list.map(s => s.file))].map((file, i) => `<img class="sm-screen${i === 0 ? ' is-current' : ''}" data-file="${file}" src="${import.meta.env.BASE_URL}cases/figma/${file}" alt="${alt}" decoding="async">`).join('')}</div></div>
     <div class="sm-director"><p class="sm-caption">${label(list[0])}</p><div class="sm-controls" role="group" aria-label="${getLang() === 'ru' ? 'Состояния интерфейса' : 'Interface states'}">${list.map((s, i) => `<button type="button" data-shot="${i}" aria-label="${label(s)}" aria-pressed="${i === 0}"><span>0${i + 1}</span><i></i></button>`).join('')}</div></div>
   </div>`;
 }
