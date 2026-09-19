@@ -105,6 +105,7 @@ const ru: Record<keyof typeof en, string> = {
   "cases.kicker": "Избранные работы",
   "cases.meta": "06 кейсов · 2024–2026",
   "cases.of": "/ 06",
+  "cases.swipe": "Листайте вбок",
   "cases.cta": "Смотреть кейс",
 
   /* v32: заставка главы «Кейсы» над лугом и заметки после ленты */

@@ -18,6 +18,9 @@ import { liteReason, enterLite, rememberLite } from "./ui/lite";
 import { initLangToggle } from "./ui/langToggle";
 import { initI18n, onLang, t } from "./i18n";
 import { cue } from "./audio/bus";
+import { CASES, CHAPTER, CHAPTER2, TIMELINE } from "./scene/story";
+import { topFor } from "./ui/storyScroll";
+import { smoothWheel } from "./ui/smoothScroll";
 
 
 const params = new URLSearchParams(location.search);
@@ -55,6 +58,8 @@ function startLite(reason: string) {
     el.addEventListener("click", (e) => { e.preventDefault(); document.getElementById("work")?.scrollIntoView({ behavior: "smooth" }); }),
   );
   enterLite(reason);
+  /* v43: в лёгкой версии страница прокручивается сама — то же мягкое колесо, что на страницах кейсов */
+  smoothWheel(window, () => body.classList.contains("case-open"));
   initCaseView();
   initLangToggle();
   ui.ready();
@@ -157,6 +162,7 @@ function start3d() {
     renderCases();
     renderShelf();
     enterLite(why);
+    smoothWheel(window, () => body.classList.contains("case-open"));
     ui.ready();
   };
   scene.onDegrade = degrade;
@@ -277,7 +283,7 @@ function start3d() {
   window.addEventListener("pointercancel", () => (dragY = null));
   window.addEventListener("touchmove", (e) => { if (scene.computerFocused) e.preventDefault(); }, { passive: false });
   /* для CDP-замеров */
-  Object.assign(window, { __hill: scene });
+  Object.assign(window, { __hill: scene, __story: { TIMELINE, CASES, topFor, chapter: () => [CHAPTER, CHAPTER2] } });
 
   /* ?debug=1 — плашка качества: какую ступень выбрала калибровка на этом устройстве */
   if (params.get("debug") === "1") {

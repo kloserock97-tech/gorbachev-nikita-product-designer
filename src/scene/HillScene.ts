@@ -10,6 +10,7 @@ import { Dog } from "./dog";
 import { Weather, type WeatherKind } from "./weather";
 import { CASES, CHAPTER, FOOTER, MEADOW_OUT, STORY, STORY_FX, bell, casesCamera, chapters, flightPose, footerCamera, ramp, storyCamera, type Pose } from "./story";
 import { Meadow } from "./meadow/Meadow";
+import { SCROLL_LAMBDA } from "../scrollFeel";
 import { KINETIC_BASE, KINETIC_FONT, createKinetic, type Kinetic } from "./kinetic";
 import { Studio, projectBox, type HillLights } from "./studio";
 import { QualityGovernor } from "./quality";
@@ -1164,7 +1165,8 @@ export class HillScene {
   private updateStory(dt: number) {
     const introOn = this.opts.intro && !this.holoDetached;
     const target = introOn || this.focusOn ? 0 : this.storyTarget;
-    this.storyS += (target - this.storyS) * (1 - Math.exp(-dt * 5.5));
+    /* v43: та же постоянная, что у мягкого колеса на страницах кейсов (ui/smoothScroll.ts) */
+    this.storyS += (target - this.storyS) * (1 - Math.exp(-dt * SCROLL_LAMBDA));
     if (Math.abs(target - this.storyS) < 1e-5) this.storyS = target;
     /* главы: s — холм → About, c — «Кейсы» (story.ts, CHAPTER) */
     const { s, c, f } = chapters(this.storyS);
@@ -1307,10 +1309,29 @@ export class HillScene {
     /* точка финиша — перед камерой в конце отъезда, экран в центре кадра */
     storyCamera(1, rest, CAMERA_TARGET, this.storyEndCam, this.storyEndLook);
     const fwd = this.storyTmp2.subVectors(this.storyEndLook, this.storyEndCam).normalize();
-    const dist = this.camera.aspect < 1 ? 1.95 : 1.42;
+    let dist = this.camera.aspect < 1 ? 1.95 : 1.42;
     const e = this.storyEnd;
-    e.pos.copy(this.storyEndCam).addScaledVector(fwd, dist);
-    e.pos.y -= 0.26 * this.pc.scale.y / 0.8; // центр экрана выше основания компьютера
+    const slot = this.camera.aspect < 1 ? this.storySlot : null;
+    if (slot && slot.bottom - slot.top > 120) {
+      /* v43: на вертикальном экране компьютер вписывается в свободное место между текстами страницы About.
+         Расстояние — из габарита компьютера и высоты промежутка (и ширины окна), сдвиг по высоте — к центру
+         промежутка. Раньше стоял на фиксированных 1,95 м по центру кадра и на невысоких телефонах закрывал
+         нижний абзац. */
+      const c = this.canvasRect;
+      const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2);
+      const size = this.storyTmp3.copy(this.pcLocalBox.max).sub(this.pcLocalBox.min).multiply(this.pc.scale);
+      const fitH = (size.y * c.height) / (2 * tanH * (slot.bottom - slot.top));
+      const fitW = size.x / (2 * tanH * this.camera.aspect * 0.8);
+      /* ближняя грань ближе центра и выглядит крупнее — запас 12 % */
+      dist = Math.min(3.4, Math.max(1.5, Math.max(fitH, fitW) * 1.12));
+      e.pos.copy(this.storyEndCam).addScaledVector(fwd, dist);
+      const mid = (slot.top + slot.bottom) / 2 - c.top;
+      e.pos.y += (0.5 - mid / c.height) * 2 * dist * tanH;
+      e.pos.y -= ((this.pcLocalBox.min.y + this.pcLocalBox.max.y) / 2) * this.pc.scale.y;
+    } else {
+      e.pos.copy(this.storyEndCam).addScaledVector(fwd, dist);
+      e.pos.y -= 0.26 * this.pc.scale.y / 0.8; // центр экрана выше основания компьютера
+    }
     const toCam = this.storyTmp2.subVectors(this.storyEndCam, e.pos);
     e.yaw = Math.atan2(toCam.x, toCam.z);
     e.pitch = -Math.atan2(toCam.y, Math.hypot(toCam.x, toCam.z)) * 0.9;
@@ -1489,6 +1510,12 @@ export class HillScene {
   private pcOverlay = false;
   private storyCamPos = new THREE.Vector3();
   private storyCamLook = new THREE.Vector3().copy(CAMERA_TARGET);
+  private storyTmp3 = new THREE.Vector3();
+  /** свободное место под компьютер на странице About, px окна (пишет storyHero.ts; только вертикальный экран) */
+  private storySlot: { top: number; bottom: number } | null = null;
+  setStorySlot(slot: { top: number; bottom: number } | null) {
+    this.storySlot = slot;
+  }
   private storyEndCam = new THREE.Vector3();
   private storyEndLook = new THREE.Vector3();
   private storyTmp2 = new THREE.Vector3();  private storyTmp = new THREE.Vector3();

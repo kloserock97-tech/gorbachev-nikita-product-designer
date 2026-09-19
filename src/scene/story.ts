@@ -48,8 +48,13 @@ const flags = typeof location === "undefined" ? new URLSearchParams() : new URLS
    (v26 пробовали сетку кейсов на 300vh — вернули ленту и её длину) */
 /* v32: глава «Кейсы» выросла с ~450vh до ~870vh (луг, заставка, кейсы, заметки); .story 1330vh → 1750vh.
    Доли пересчитаны так, чтобы About и футер остались той же длины в прокрутке (529vh и 250vh). */
-export const CHAPTER = 0.3208;
-export const CHAPTER2 = 0.8485;
+/* v43: доли глав больше не константы, а результат расчёта. Длина каждой сцены задана в экранах (1 = 100vh),
+   а длина лент — от числа элементов: один кейс или одна заметка = один шаг прокрутки `step`. Шаг считает
+   cases.ts от настоящего расстояния между карточками, поэтому лента едет примерно с той же скоростью, что и
+   страница, на любом экране. layoutTimeline() пересчитывает доли; высоту .story ставит src/ui/storyScroll.ts. */
+type Span = readonly [number, number];
+export let CHAPTER = 0.3208;
+export let CHAPTER2 = 0.8485;
 export const FOOTER = {
   leave: [0.0, 0.14] as const, // лента кейсов уходит
   camera: [0.04, 0.5] as const, // камера возвращается к холму
@@ -57,14 +62,72 @@ export const FOOTER = {
   dusk: 0.08, // погода — закат, светлячки
   content: 0.52, // тексты и контакты футера
 };
-export const CASES = {
-  tear: [0.0, 0.083] as const, // страница About отрывается снизу и уходит вверх — под ней луг (v32)
-  intro: [0.06, 0.25] as const, // заставка «сейчас будут кейсы» поверх резкого луга
-  blur: [0.22, 0.28] as const, // луг уходит в размытие под ленту
-  cardsIn: [0.26, 0.343] as const, // лента кейсов поднимается
-  strip: [0.32, 0.71] as const, // лента едет: от первого кейса к последнему
-  stripOut: [0.71, 0.76] as const, // лента уходит
-  notes: [0.74, 1.0] as const, // заметки в новом формате
+export const CASES: Record<"tear" | "intro" | "blur" | "cardsIn" | "strip" | "stripOut" | "notes" | "notesIn" | "notesRun", Span> = {
+  tear: [0.0, 0.083], // страница About отрывается снизу и уходит вверх — под ней луг (v32)
+  intro: [0.06, 0.25], // заставка «сейчас будут кейсы» поверх резкого луга
+  blur: [0.22, 0.28], // луг уходит в размытие под ленту
+  cardsIn: [0.26, 0.343], // лента кейсов поднимается
+  strip: [0.32, 0.71], // лента едет: от первого кейса к последнему
+  stripOut: [0.71, 0.76], // лента уходит
+  notes: [0.74, 1.0], // заметки в новом формате
+  notesIn: [0.74, 0.777], // заметки входят
+  notesRun: [0.771, 0.984], // заметки листаются: от первой к последней
+};
+
+export type TimelineInput = {
+  /** узкий экран: сцены короче, как было в v32 (1454vh против 1750vh) */
+  narrow: boolean;
+  cases: number;
+  notes: number;
+  /** сколько экранов прокрутки приходится на один кейс или одну заметку */
+  step: number;
+};
+/** длины глав в экранах после последнего расчёта */
+export const TIMELINE = { about: 5.29, cases: 8.7, footer: 2.5, total: 16.5, step: 0.68 };
+
+/** Пересчитать доли глав. Возвращает функцию, которая переводит старый прогресс в новый (та же глава, та же доля). */
+export function layoutTimeline(input: TimelineInput) {
+  const old = { a: CHAPTER, b: CHAPTER2 };
+  const k = input.narrow ? 0.88 : 1;
+  const about = input.narrow ? 4.66 : 5.29;
+  const footer = input.narrow ? 2.2 : 2.5;
+  const step = Math.min(0.9, Math.max(0.4, input.step));
+  /* сцены главы «Кейсы» в экранах от её начала */
+  const tear: Span = [0, 0.72 * k];
+  const intro: Span = [0.52 * k, 2.17 * k];
+  const blur: Span = [1.91 * k, 2.43 * k];
+  const cardsIn: Span = [2.26 * k, 2.98 * k];
+  const stripStart = 2.88 * k; // первая карточка трогается, когда лента почти встала
+  const stripEnd = stripStart + Math.max(1, input.cases - 1) * step;
+  const stripOut: Span = [stripEnd, stripEnd + 0.43 * k];
+  const notesStart = stripEnd + 0.26 * k;
+  const notesIn: Span = [notesStart, notesStart + 0.32 * k];
+  const runStart = notesStart + 0.27 * k;
+  const runEnd = runStart + Math.max(1, input.notes - 1) * step;
+  const cases = runEnd + 0.14 * k;
+  const total = about + cases + footer;
+  const frac = (s: Span): Span => [s[0] / cases, s[1] / cases];
+  Object.assign(CASES, {
+    tear: frac(tear), intro: frac(intro), blur: frac(blur), cardsIn: frac(cardsIn),
+    strip: frac([stripStart, stripEnd]), stripOut: frac(stripOut),
+    notes: frac([notesStart, cases]), notesIn: frac(notesIn), notesRun: frac([runStart, runEnd]),
+  });
+  CHAPTER = about / total;
+  CHAPTER2 = (about + cases) / total;
+  Object.assign(TIMELINE, { about, cases, footer, total, step });
+  const now = { a: CHAPTER, b: CHAPTER2 };
+  return (p: number) =>
+    p <= old.a ? (p / old.a) * now.a
+    : p <= old.b ? now.a + ((p - old.a) / (old.b - old.a)) * (now.b - now.a)
+    : now.b + ((p - old.b) / (1 - old.b)) * (1 - now.b);
+}
+
+/** Шаги с мягкой остановкой: у каждого элемента лента притормаживает, между элементами едет быстрее.
+    Производная 1 − k·cos(2πf): при k = 0,5 скорость у карточки вдвое ниже средней, без остановок и рывков. */
+export const dwell = (x: number, k = 0.5) => {
+  const i = Math.floor(x);
+  const f = x - i;
+  return i + f - (k / (2 * Math.PI)) * Math.sin(2 * Math.PI * f);
 };
 /* v32: луг Meadow Walk — фон всей главы «Кейсы»; в футере под размытием смешивается обратно с холмом */
 export const MEADOW_OUT = [0.1, 0.26] as const;

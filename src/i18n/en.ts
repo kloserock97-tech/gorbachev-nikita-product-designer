@@ -103,6 +103,7 @@ const en = {
   "cases.meta": "06 case studies · 2024–2026",
   "cases.of": "/ 06",
   "cases.cta": "View case",
+  "cases.swipe": "Swipe sideways",
 
   /* v32: заставка главы «Кейсы» над лугом и заметки после ленты */
   "walk.kicker": "Case studies · 2024–2026",

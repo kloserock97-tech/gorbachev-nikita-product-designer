@@ -1,4 +1,5 @@
-import { CHAPTER, CHAPTER2, FOOTER, STORY, STORY_FX, chapters, ramp, trap } from "../scene/story";
+import { CASES, CHAPTER, CHAPTER2, FOOTER, STORY, STORY_FX, chapters, ramp, trap } from "../scene/story";
+import { onTimeline, storyBounds } from "./storyScroll";
 import { cue } from "../audio/bus";
 import { onLang, t as tr } from "../i18n";
 
@@ -24,6 +25,7 @@ type Scene = {
   onStoryFrame?: () => void;
   pcClientRect?(): Rect | null;
   setKineticTarget?(t: { left: number; baseline: number; font: number } | null): void;
+  setStorySlot?(slot: { top: number; bottom: number } | null): void;
   storyProgress: number;
   storyFlight: number;
   storyTear: number;
@@ -62,12 +64,7 @@ export function initStory(scene: Scene) {
   const fixed = Number(new URLSearchParams(location.search).get("story"));
   const hasFixed = new URLSearchParams(location.search).has("story") && Number.isFinite(fixed);
 
-  const bounds = () => {
-    const top = story.offsetTop;
-    const start = Math.max(0, top - innerHeight);
-    const end = top + story.offsetHeight - innerHeight;
-    return { start, end };
-  };
+  const bounds = storyBounds;
   let b = bounds();
   let raf = 0;
   const read = () => {
@@ -83,6 +80,14 @@ export function initStory(scene: Scene) {
     if (!head || !base || scene.storyTear > -0.5) return;
     const r = head.getBoundingClientRect();
     scene.setKineticTarget?.({ left: r.left, baseline: base.getBoundingClientRect().top, font: parseFloat(getComputedStyle(head).fontSize) });
+    /* v43: узкий экран — тексты стоят над компьютером и под ним; сцене нужен промежуток между ними.
+       offsetTop не зависит от translate, которым тексты въезжают. 64px сверху — под подпись «а это Келли» */
+    const left = hero.querySelector<HTMLElement>(".story-col--left");
+    const below = [...hero.children].filter((el): el is HTMLElement => el instanceof HTMLElement && el !== left && el.offsetHeight > 0 && getComputedStyle(el).position !== "absolute");
+    if (innerWidth <= 900 && left && below.length) {
+      const top = hero.getBoundingClientRect().top;
+      scene.setStorySlot?.({ top: top + left.offsetTop + left.offsetHeight + 64, bottom: top + Math.min(...below.map((el) => el.offsetTop)) - 8 });
+    } else scene.setStorySlot?.(null);
   };
   addEventListener("scroll", schedule, { passive: true });
   addEventListener("resize", () => { b = bounds(); schedule(); measure(); });
@@ -99,6 +104,13 @@ export function initStory(scene: Scene) {
   read();
   measure();
   if (hasFixed) scrollTo(0, b.start + (b.end - b.start) * fixed);
+  /* v43: длину истории считает cases.ts от числа кейсов и шага ленты — границы после этого другие */
+  onTimeline(() => {
+    b = bounds();
+    if (hasFixed) scrollTo(0, b.start + (b.end - b.start) * fixed);
+    schedule();
+    measure();
+  });
 
   const jumpTo = (p: number) => {
     b = bounds();
@@ -228,7 +240,7 @@ export function initStory(scene: Scene) {
 
   return {
     /** к главе «Кейсы»: лента уже поднялась */
-    toCases: () => scrollToProgress(CHAPTER + (CHAPTER2 - CHAPTER) * 0.26),
+    toCases: () => scrollToProgress(CHAPTER + (CHAPTER2 - CHAPTER) * CASES.strip[0]),
     toAbout: () => scrollToProgress(CHAPTER),
     /** к холму и к контактам: из середины истории плавная прокрутка тянулась бы секунды — прыжок ближе, остаток плавно */
     toTop: () => jumpTo(0),

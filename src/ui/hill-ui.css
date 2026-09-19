@@ -698,6 +698,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   visibility: hidden; opacity: 0; transition: opacity 0.4s ease, visibility 0s 0.4s;
   font-family: Lexend, Manrope, "Segoe UI", sans-serif; color: #fff;
   perspective: 1600px; perspective-origin: 50% 48%;
+  --w: clamp(260px, 27vw, 420px);
 }
 .cases.is-on { visibility: visible; opacity: calc(1 - var(--leave, 0)); translate: 0 calc(var(--leave, 0) * -8vh); transition: opacity 0.4s ease; }
 .cases-head {
@@ -714,7 +715,6 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
    подсветка под курсором (--mx/--my пишет cases.ts). Высота у всех одна: под название и подзаголовок
    зарезервировано по две строки, тексты подобраны на две строки, остаток выравнивает cases.ts */
 .case {
-  --w: clamp(260px, 27vw, 420px);
   position: absolute; left: calc(var(--w) / -2); top: 0; width: var(--w);
   translate: 0 -50%;
   display: flex; flex-direction: column; gap: 16px; padding: 12px 12px 22px;
@@ -774,10 +774,76 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   width: clamp(120px, 16vw, 240px); height: 2px; background: rgba(255, 255, 255, 0.3); overflow: hidden;
 }
 .cases-bar i { position: absolute; inset: 0; background: #fff; transform-origin: left; transform: scaleX(0); }
-@media (max-width: 900px) {
-  .case { --w: 76vw; }
-  .cases-head { top: 88px; }
-  .cases-strip { top: 54%; }
+/* ── v43: лента подстраивается под окно ─────────────────────────────────────
+   Дуга (мышь): ширина карточки — от ширины И высоты окна, чтобы карточка целиком помещалась между заголовком
+   и счётчиком на невысоком экране; шаг и зазоры считает cases.ts. */
+.cases[data-mode="arc"] { --w: clamp(230px, min(27vw, calc((100vh - 350px) * 0.92)), 420px); }
+@media (max-height: 700px) {
+  .cases[data-mode="arc"] .cases-head { top: 84px; }
+  .cases[data-mode="arc"] .cases-kicker { font-size: clamp(28px, 3.4vw, 48px); }
+  .cases[data-mode="arc"] .cases-meta { margin-top: 8px; font-size: 13px; }
+  .cases[data-mode="arc"] .cases-strip { top: 57%; }
+  .cases[data-mode="arc"] .cases-now { font-size: clamp(32px, 4vw, 56px); }
+}
+
+/* Под палец (телефон, планшет): обычная горизонтальная прокрутка с защёлкой. Секция — колонка: заголовок,
+   лента, счётчик; каждому своё место, ничего не накладывается при любой высоте окна. Один свайп — одна карточка,
+   соседняя выглядывает на 8–10 % ширины и подсказывает, что ленту можно тянуть (swipeStrip.ts). */
+.cases[data-mode="swipe"] {
+  --w: min(76vw, 400px); --gap: 14px; --e: 0;
+  perspective: none; display: flex; flex-direction: column; justify-content: center;
+  gap: clamp(14px, 2.6svh, 30px);
+  padding: calc(64px + env(safe-area-inset-top)) 0 max(26px, env(safe-area-inset-bottom));
+}
+.cases[data-mode="swipe"] .cases-head { position: static; padding: 0 20px; opacity: var(--e); translate: 0 calc((1 - var(--e)) * 24px); }
+.cases[data-mode="swipe"] .cases-kicker { font-size: clamp(32px, 8.6vw, 52px); }
+.cases[data-mode="swipe"] .cases-meta { margin-top: 8px; }
+.cases[data-mode="swipe"] .cases-strip {
+  position: relative; left: auto; top: auto; width: 100%; height: auto; flex: none;
+  display: flex; align-items: stretch; gap: var(--gap);
+  padding: 8px calc(50% - var(--w) / 2) 26px; margin-bottom: -18px; /* место под тень карточки */
+  overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y; transform-style: flat;
+  opacity: var(--e); translate: 0 calc((1 - var(--e)) * 40svh);
+}
+.cases[data-mode="swipe"] .cases-strip::-webkit-scrollbar { display: none; }
+.cases[data-mode="swipe"].is-on .cases-strip { pointer-events: auto; }
+.cases[data-mode="swipe"] .case {
+  position: relative; left: auto; top: auto; translate: none; flex: none; width: var(--w);
+  scroll-snap-align: center; scroll-snap-stop: always;
+  opacity: 0.7; scale: 0.94; will-change: auto;
+  transition: opacity 0.35s ease, scale 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s ease;
+  box-shadow: inset 0 0 0 1px rgba(244, 241, 234, 0.12), 0 14px 28px rgba(0, 0, 0, 0.3);
+}
+.cases[data-mode="swipe"] .case.is-active { opacity: 1; scale: 1; }
+.cases[data-mode="swipe"] .cases-foot { opacity: var(--e); }
+.cases-foot { display: contents; }
+.cases[data-mode="swipe"] .cases-foot { display: flex; align-items: center; gap: 16px; padding: 0 20px; }
+.cases[data-mode="swipe"] .cases-count { position: static; gap: 8px; }
+.cases[data-mode="swipe"] .cases-now { font-size: 34px; }
+.cases[data-mode="swipe"] .cases-of { font-size: 14px; }
+.cases[data-mode="swipe"] .cases-bar { position: relative; right: auto; bottom: auto; flex: 1; width: auto; }
+.cases-hint { display: none; }
+@media (pointer: coarse) {
+  .cases[data-mode="swipe"] .cases-hint {
+    display: block; margin: 0; font-size: 12.5px; font-weight: 300; letter-spacing: 0.02em; white-space: nowrap;
+    opacity: 0.75; transition: opacity 0.5s ease;
+  }
+  .cases[data-mode="swipe"].is-swiped .cases-hint { opacity: 0; }
+}
+/* невысокое окно (телефон боком): карточка ложится набок, заголовок уступает место */
+@media (max-height: 560px) {
+  .cases[data-mode="swipe"] { --w: min(76vw, 560px); padding-top: calc(16px + env(safe-area-inset-top)); gap: 10px; }
+  .cases[data-mode="swipe"] .cases-head { display: none; }
+  .cases[data-mode="swipe"] .case { flex-direction: row; align-items: center; gap: 14px; padding: 10px; }
+  .cases[data-mode="swipe"] .case-cover { flex: none; width: 46%; }
+  .cases[data-mode="swipe"] .case-body { padding: 0 6px 0 0; }
+  .cases[data-mode="swipe"] .cases-now { font-size: 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cases[data-mode="swipe"] .case { transition: none; scale: 1; }
+  .cases[data-mode="swipe"] .cases-strip { translate: none; }
 }
 
 

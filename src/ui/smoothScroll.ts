@@ -10,20 +10,28 @@
    не нами (клавиша, полоса, scrollTo), догонялка сразу подхватывает новое место.
    prefers-reduced-motion — сглаживания нет совсем. */
 
-const LAMBDA = 6.5; // 1/с: за ~0,45 с позиция проходит 95 % пути
+import { SCROLL_LAMBDA as LAMBDA } from "../scrollFeel";
+
 const LINE = 100 / 3; // пикселей в «строке» колеса (deltaMode = 1)
 
 export type Smoother = { to: (top: number) => void; stop: () => void };
 
-export function smoothWheel(scroller: HTMLElement): Smoother {
+/** scroller — блок с прокруткой или window (лёгкая версия главной); skip — когда колесо занято другим */
+export function smoothWheel(scroller: HTMLElement | Window, skip?: () => boolean): Smoother {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)");
-  let target = scroller.scrollTop;
+  const win = scroller === window;
+  const root = document.scrollingElement as HTMLElement;
+  const box = win ? root : (scroller as HTMLElement);
+  const getTop = () => (win ? scrollY : box.scrollTop);
+  const setTop = (v: number) => { if (win) scrollTo({ top: v, behavior: "instant" as ScrollBehavior }); else box.scrollTop = v; };
+  const view = () => (win ? innerHeight : box.clientHeight);
+  let target = getTop();
   let current = target;
   let expected = -1;
   let raf = 0;
   let last = 0;
 
-  const max = () => Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+  const max = () => Math.max(0, box.scrollHeight - view());
   const clamp = (v: number) => Math.min(max(), Math.max(0, v));
 
   const tick = (now: number) => {
@@ -33,7 +41,7 @@ export function smoothWheel(scroller: HTMLElement): Smoother {
     current += (target - current) * (1 - Math.exp(-dt * LAMBDA));
     if (Math.abs(target - current) < 0.4) current = target;
     expected = current;
-    scroller.scrollTop = current;
+    setTop(current);
     raf = current === target ? 0 : requestAnimationFrame(tick);
   };
   const start = () => {
@@ -44,13 +52,13 @@ export function smoothWheel(scroller: HTMLElement): Smoother {
   const halt = () => {
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
-    target = current = scroller.scrollTop;
+    target = current = getTop();
   };
 
   /* под курсором есть своя прокрутка, и ей ещё есть куда ехать — не мешаем */
   const nested = (from: EventTarget | null, dy: number) => {
-    for (let el = from as HTMLElement | null; el && el !== scroller; el = el.parentElement) {
-      if (el.scrollHeight <= el.clientHeight + 1) continue;
+    for (let el = from as HTMLElement | null; el && el !== box; el = el.parentElement) {
+      if (el === document.body || el.scrollHeight <= el.clientHeight + 1) continue;
       const oy = getComputedStyle(el).overflowY;
       if (oy !== "auto" && oy !== "scroll") continue;
       if (dy > 0 ? el.scrollTop + el.clientHeight < el.scrollHeight - 1 : el.scrollTop > 0) return true;
@@ -59,37 +67,37 @@ export function smoothWheel(scroller: HTMLElement): Smoother {
   };
 
   const onWheel = (e: WheelEvent) => {
-    if (reduce.matches || e.ctrlKey || e.metaKey || e.defaultPrevented) return;
+    if (reduce.matches || e.ctrlKey || e.metaKey || e.defaultPrevented || skip?.()) return;
     if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
     /* тачпад шлёт мелкие пиксельные дельты с собственной инерцией */
     if (e.deltaMode === 0 && Math.abs(e.deltaY) < 40) { if (raf) halt(); return; }
     if (nested(e.target, e.deltaY)) return;
-    const px = e.deltaMode === 1 ? e.deltaY * LINE : e.deltaMode === 2 ? e.deltaY * scroller.clientHeight * 0.9 : e.deltaY;
+    const px = e.deltaMode === 1 ? e.deltaY * LINE : e.deltaMode === 2 ? e.deltaY * view() * 0.9 : e.deltaY;
     e.preventDefault();
-    if (!raf) target = current = scroller.scrollTop;
+    if (!raf) target = current = getTop();
     target = clamp(target + px);
     start();
   };
 
   /* прокрутили не мы — клавиатура, полоса, чужой scrollTo: подхватываем место и не спорим */
   const onScroll = () => {
-    if (raf && Math.abs(scroller.scrollTop - expected) > 2) halt();
+    if (raf && Math.abs(getTop() - expected) > 2) halt();
   };
 
-  scroller.addEventListener("wheel", onWheel, { passive: false });
+  scroller.addEventListener("wheel", onWheel as EventListener, { passive: false });
   scroller.addEventListener("scroll", onScroll, { passive: true });
 
   return {
     /** доехать до места тем же движением, что и колесо; издалека — подлететь и мягко сесть */
     to(top: number) {
       const goal = clamp(top);
-      if (reduce.matches) { halt(); scroller.scrollTop = goal; return; }
-      if (!raf) target = current = scroller.scrollTop;
-      const reach = scroller.clientHeight * 1.2;
+      if (reduce.matches) { halt(); setTop(goal); return; }
+      if (!raf) target = current = getTop();
+      const reach = view() * 1.2;
       if (Math.abs(goal - current) > reach) {
         current = goal + (current > goal ? reach : -reach);
         expected = current;
-        scroller.scrollTop = current;
+        setTop(current);
       }
       target = goal;
       start();
@@ -97,7 +105,7 @@ export function smoothWheel(scroller: HTMLElement): Smoother {
     stop() {
       if (raf) cancelAnimationFrame(raf);
       raf = 0;
-      scroller.removeEventListener("wheel", onWheel);
+      scroller.removeEventListener("wheel", onWheel as EventListener);
       scroller.removeEventListener("scroll", onScroll);
     },
   };

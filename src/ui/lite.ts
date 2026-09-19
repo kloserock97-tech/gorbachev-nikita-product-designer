@@ -61,6 +61,7 @@ export function enterLite(reason: string) {
   }
   document.querySelector<HTMLElement>(".story-hi")?.style.removeProperty("opacity");
   document.querySelector<HTMLElement>(".story-intro")?.style.setProperty("--r", "1");
+  document.querySelector(".cases")?.removeAttribute("data-mode");
   document.querySelectorAll<HTMLElement>(".case").forEach((c) => { c.style.transform = ""; c.style.opacity = ""; });
   /* в DOM футер стоит раньше ленты (в 3D они наложены) — в обычной прокрутке кейсы идут перед контактами */
   const cases = document.querySelector(".cases"), footer = document.querySelector(".site-footer");
@@ -68,6 +69,7 @@ export function enterLite(reason: string) {
   /* v32: заметки — после кейсов, перед контактами; ролики в сетке не нужны — остаются постеры */
   const shelf = document.querySelector<HTMLElement>(".shelf");
   if (shelf && footer) footer.before(shelf);
+  shelf?.removeAttribute("data-format");
   shelf?.querySelectorAll("video").forEach((v) => v.remove());
   shelf?.querySelectorAll<HTMLElement>(".shelf-card").forEach((c) => { c.style.transform = ""; c.style.opacity = ""; });
   /* в лёгкой версии компьютера нет — лид обещает кейсы, а не рассказ компьютера */

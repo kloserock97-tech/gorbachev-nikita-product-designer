@@ -7,7 +7,9 @@
 import notes, { type Note } from "../data/notes";
 import { cue } from "../audio/bus";
 import { onLang, t, type Key } from "../i18n";
-import { CASES, FOOTER, chapters, ramp } from "../scene/story";
+import { CASES, CHAPTER, CHAPTER2, FOOTER, chapters, dwell, ramp } from "../scene/story";
+import { topFor } from "./storyScroll";
+import { swipeStrip, type SwipeStrip } from "./swipeStrip";
 
 type StoryScene = { onStory?: (p: number) => void };
 export type ShelfFormat = "stack" | "strip";
@@ -52,7 +54,8 @@ export function renderShelf() {
   const stage = root?.querySelector<HTMLElement>(".shelf-stage");
   if (!root || !stage) return;
   const format = shelfFormat();
-  root.dataset.format = format;
+  if (document.body.classList.contains("lite")) root.removeAttribute("data-format");
+  else root.dataset.format = format;
   stage.innerHTML = notes
     .map((n, i) => `<article class="shelf-card" role="listitem" data-i="${i}">${media(n)}<div class="shelf-body">${body(n)}</div></article>`)
     .join("") + (format === "stack" ? `<aside class="shelf-info" aria-live="polite"></aside>` : "");
@@ -86,10 +89,36 @@ export function initWalkChapter(scene: StoryScene) {
   let info: HTMLElement | null = null;
   const now = shelf.querySelector<HTMLElement>(".shelf-now");
 
+  /* v43: на телефоне заметки листаются пальцем, как лента кейсов (swipeStrip.ts) */
+  let swipe: SwipeStrip | null = null;
+  let held = -1;
+  let holdTimer = 0;
+  const topForNote = (i: number) => {
+    const c = CASES.notesRun[0] + (CASES.notesRun[1] - CASES.notesRun[0]) * (i / Math.max(1, cards.length - 1));
+    return topFor(CHAPTER + (CHAPTER2 - CHAPTER) * c);
+  };
+
   const rebuild = () => {
     renderShelf();
     cards = [...shelf.querySelectorAll<HTMLElement>(".shelf-card")];
     info = shelf.querySelector<HTMLElement>(".shelf-info");
+    swipe?.destroy();
+    swipe = null;
+    const stage = shelf.querySelector<HTMLElement>(".shelf-stage");
+    if (shelf.dataset.format === "strip" && stage) {
+      stage.scrollLeft = 0;
+      swipe = swipeStrip(stage, {
+        items: () => cards,
+        onMove: (idx) => setCurrent(idx),
+        onUserSettle: (i) => {
+          if (!shelfOn) return;
+          held = i;
+          clearTimeout(holdTimer);
+          holdTimer = window.setTimeout(() => (held = -1), 1600);
+          scrollTo({ top: topForNote(i), behavior: "instant" as ScrollBehavior });
+        },
+      });
+    }
     current = -1;
     last.length = 0;
     warmed = false;
@@ -104,7 +133,9 @@ export function initWalkChapter(scene: StoryScene) {
     rebuild();
   });
   addEventListener("resize", () => {
+    if (document.body.classList.contains("lite")) return;
     if (shelf.dataset.format !== shelfFormat()) rebuild();
+    else swipe?.refresh();
   });
 
   /* подсветка под курсором (лента на телефоне): координаты в CSS-переменных карточки */
@@ -151,6 +182,20 @@ export function initWalkChapter(scene: StoryScene) {
     step();
   };
 
+  function setCurrent(idx: number) {
+    if (idx === current) return;
+    if (current >= 0) cue("progress-step", 0.5);
+    current = idx;
+    if (now) now.textContent = pad(idx + 1);
+    if (info) {
+      info.classList.remove("is-in");
+      info.innerHTML = body(notes[idx]);
+      requestAnimationFrame(() => info?.classList.add("is-in"));
+      info.querySelectorAll<HTMLElement>("a").forEach((el) => (el.tabIndex = 0));
+    }
+    playOnly(idx);
+  }
+
   rebuild();
 
   const prev = scene.onStory;
@@ -176,7 +221,6 @@ export function initWalkChapter(scene: StoryScene) {
     }
 
     /* ── заметки ── */
-    const n = ramp(c, ...CASES.notes);
     const leave = ramp(f, ...FOOTER.leave);
     const sv = c > CASES.notes[0] && f < FOOTER.leave[1];
     if (sv !== shelfOn) {
@@ -187,12 +231,20 @@ export function initWalkChapter(scene: StoryScene) {
       if (!sv) playOnly(-1);
     }
     if (!sv) return;
-    const enter = ease(ramp(n, 0, 0.14));
+    const enter = ease(ramp(c, ...CASES.notesIn));
     shelf.style.setProperty("--enter", enter.toFixed(3));
     shelf.style.setProperty("--leave", leave.toFixed(3));
-    const a = ease(ramp(n, 0.12, 0.94)) * (cards.length - 1);
-    const idx = Math.round(a);
+    /* v43: тот же шаг на заметку, что и на кейс, с той же мягкой остановкой у каждой (story.ts: layoutTimeline, dwell).
+       Раньше вся лента шла по одной кривой: первая и последняя заметки листались медленно, средние быстро */
+    const run = ramp(c, ...CASES.notesRun) * (cards.length - 1);
+    const a = reduced ? run : dwell(run);
     const format = shelf.dataset.format as ShelfFormat;
+    if (swipe) {
+      const i = Math.round(run);
+      if (held >= 0) { if (i === held) held = -1; } else swipe.follow(i);
+      return;
+    }
+    const idx = Math.round(a);
 
     cards.forEach((card, i) => {
       const d = i - a;
@@ -223,18 +275,7 @@ export function initWalkChapter(scene: StoryScene) {
       }
     });
 
-    if (idx !== current) {
-      if (current >= 0) cue("progress-step", 0.5);
-      current = idx;
-      if (now) now.textContent = pad(idx + 1);
-      if (info) {
-        info.classList.remove("is-in");
-        info.innerHTML = body(notes[idx]);
-        requestAnimationFrame(() => info?.classList.add("is-in"));
-        info.querySelectorAll<HTMLElement>("a").forEach((el) => (el.tabIndex = 0));
-      }
-      playOnly(idx);
-    }
+    setCurrent(idx);
   };
 
   document.addEventListener("visibilitychange", () => playOnly(document.hidden ? -1 : current));

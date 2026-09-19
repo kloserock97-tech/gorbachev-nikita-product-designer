@@ -1,5 +1,8 @@
 import { getCases } from "../data/cases";
-import { CASES, CHAPTER, chapters, ramp } from "../scene/story";
+import notes from "../data/notes";
+import { CASES, CHAPTER, CHAPTER2, chapters, dwell, ramp } from "../scene/story";
+import { applyTimeline, topFor } from "./storyScroll";
+import { swipeStrip, type SwipeStrip } from "./swipeStrip";
 import { cue } from "../audio/bus";
 import { onLang, t } from "../i18n";
 
@@ -63,6 +66,9 @@ export function renderCases() {
   return strip;
 }
 
+/** лента под палец: узкий экран или устройство без мыши (планшет в альбомной ориентации тоже) */
+export const swipeMode = () => matchMedia("(max-width: 900px), (pointer: coarse)").matches;
+
 export function initCases(scene: Scene) {
   const root = document.querySelector<HTMLElement>(".cases");
   const strip = renderCases();
@@ -80,20 +86,78 @@ export function initCases(scene: Scene) {
   let shown = false;
   let current = -1;
   let spacing = 0;
+  let lastP = 0;
+
+  /* ── лента под палец (v43) ── */
+  let swipe: SwipeStrip | null = null;
+  let held = -1; // карточка, на которую человек перелистнул сам: история догоняет, ленту не трогаем
+  let holdTimer = 0;
+  const showIndex = (idx: number, fraction: number) => {
+    if (idx !== current && now) {
+      if (current >= 0) cue("progress-step", 0.5); // лента перелистнула кейс
+      current = idx;
+      now.textContent = pad(idx + 1);
+    }
+    if (bar) bar.style.transform = `scaleX(${fraction.toFixed(4)})`;
+  };
+  /** прокрутка страницы, при которой история стоит на карточке i */
+  const topForCard = (i: number) => {
+    const c = CASES.strip[0] + (CASES.strip[1] - CASES.strip[0]) * (i / Math.max(1, cards.length - 1));
+    return topFor(CHAPTER + (CHAPTER2 - CHAPTER) * c);
+  };
+  const setMode = () => {
+    if (document.body.classList.contains("lite")) return;
+    const mode = swipeMode() ? "swipe" : "arc";
+    if (root.dataset.mode === mode) return;
+    root.dataset.mode = mode;
+    swipe?.destroy();
+    swipe = null;
+    current = -1;
+    cards.forEach((c) => { c.style.transform = ""; c.style.opacity = ""; c.classList.remove("is-active"); });
+    last.fill("");
+    if (mode !== "swipe") return;
+    swipe = swipeStrip(strip, {
+      items: () => cards,
+      onMove: showIndex,
+      onUserSettle: (i) => {
+        root.classList.add("is-swiped");
+        if (!shown) return;
+        /* человек перелистнул сам — переставляем прокрутку страницы на ту же карточку, иначе следующий
+           вертикальный скролл вернул бы ленту назад */
+        held = i;
+        clearTimeout(holdTimer);
+        holdTimer = window.setTimeout(() => (held = -1), 1600);
+        scrollTo({ top: topForCard(i), behavior: "instant" as ScrollBehavior });
+      },
+    });
+  };
+
   const layout = () => {
+    setMode();
     /* v33: все карточки одной высоты. Тексты подобраны на две строки подзаголовка, CSS держит место под две строки
        названия и подзаголовка; остаток (узкий экран, длинное русское название) выравниваем по самой высокой */
     cards.forEach((c) => c.style.removeProperty("min-height"));
     const tallest = Math.max(0, ...cards.map((c) => c.offsetHeight));
     if (tallest > 0) cards.forEach((c) => (c.style.minHeight = `${tallest}px`));
-    /* шаг ленты — от ширины карточки: на телефоне соседние выглядывают с краёв */
     const w = cards[0]?.offsetWidth ?? 360;
-    spacing = innerWidth < 900 ? w * 0.92 : w * 1.02;
+    /* v43: шаг дуги считается от зазора, а не от доли ширины. Соседняя карточка повёрнута на 24°, уменьшена до 0,92
+       и отодвинута на 150px при перспективе 1600px: её ближний край виден на (spacing − 0,42w)·0,954 от центра.
+       Отсюда spacing для зазора gap: (w/2 + gap) / 0,954 + 0,42w. Раньше шаг был 1,02w (и 0,92w на узком
+       экране) — зазор получался 7 % ширины, а на планшете карточки наезжали друг на друга. */
+    const gap = Math.min(44, Math.max(22, innerWidth * 0.024));
+    spacing = reduced ? w + gap : (w / 2 + gap) / 0.954 + 0.42 * w;
     last.fill("");
+    /* дистанция прокрутки на один кейс: лента едет чуть медленнее страницы (1 : 1,3), чтобы карточку успевали
+       прочитать; под палец — полэкрана на карточку. Тот же шаг получают заметки (story.ts, layoutTimeline) */
+    const step = swipe ? 0.5 : (spacing * 1.3) / Math.max(1, innerHeight);
+    applyTimeline({ narrow: innerWidth <= 900, cases: cards.length, notes: notes.length, step });
+    swipe?.refresh();
+    scene.onStory?.(lastP);
   };
   addEventListener("resize", layout);
   /* подсветка под курсором, как у карточек заметок */
   root.addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "mouse") return;
     const card = (e.target as HTMLElement).closest<HTMLElement>(".case");
     if (!card) return;
     const r = card.getBoundingClientRect();
@@ -104,7 +168,6 @@ export function initCases(scene: Scene) {
   cards.forEach((c) => c.querySelector("img")?.addEventListener("load", () => requestAnimationFrame(layout), { once: true }));
   /* русские подписи длиннее английских — после смены языка карточки мерим заново */
   onLang(() => requestAnimationFrame(layout));
-  layout();
 
   /* обложки декодируем заранее, пока читают About: иначе первый показ ленты декодирует шесть картинок разом.
      По одной, с паузой — requestIdleCallback гоняет цепочку в одно окно простоя */
@@ -124,6 +187,7 @@ export function initCases(scene: Scene) {
   const prev = scene.onStory;
   scene.onStory = (p) => {
     prev?.(p);
+    lastP = p;
     if (!warmed && p > CHAPTER - 0.07) warm();
     const { c, f } = chapters(p);
     const inK = ramp(c, ...CASES.cardsIn);
@@ -138,8 +202,19 @@ export function initCases(scene: Scene) {
     }
     if (!vis) return;
     const e = 1 - (1 - inK) ** 3;
-    /* активный кейс — дробный: лента едет плавно, без щелчков */
-    const active = ramp(c, ...CASES.strip) * (cards.length - 1);
+    const run = ramp(c, ...CASES.strip) * (cards.length - 1);
+
+    if (swipe) {
+      /* лента под палец: вся лента поднимается разом, карточки листает сам браузер */
+      const key = e.toFixed(3);
+      if (last[0] !== key) { last[0] = key; root.style.setProperty("--e", key); }
+      const idx = Math.round(run);
+      if (held >= 0) { if (idx === held) held = -1; } else swipe.follow(idx);
+      return;
+    }
+
+    /* активный кейс — дробный: лента едет плавно, у каждой карточки притормаживает (story.ts, dwell) */
+    const active = reduced ? run : dwell(run);
     cards.forEach((el, i) => {
       const d = i - active;
       const ad = Math.abs(d);
@@ -159,12 +234,7 @@ export function initCases(scene: Scene) {
         el.classList.toggle("is-active", ad < 0.5);
       }
     });
-    const idx = Math.round(active);
-    if (idx !== current && now) {
-      if (current >= 0) cue("progress-step", 0.5); // лента перелистнула кейс
-      current = idx;
-      now.textContent = pad(idx + 1);
-    }
-    if (bar) bar.style.transform = `scaleX(${(active / (cards.length - 1)).toFixed(4)})`;
+    showIndex(Math.round(active), active / (cards.length - 1));
   };
+  layout();
 }
