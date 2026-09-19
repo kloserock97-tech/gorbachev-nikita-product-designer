@@ -79,6 +79,11 @@ function paint() {
   meta("description", "name", t("doc.desc"));
   meta("og:title", "property", t("doc.title"));
   meta("og:description", "property", t("doc.og"));
+  /* превью ссылки собирают краулеры по исходному HTML, но пусть в живой странице подписи не расходятся */
+  meta("og:locale", "property", lang === "ru" ? "ru_RU" : "en_US");
+  meta("og:locale:alternate", "property", lang === "ru" ? "en_US" : "ru_RU");
+  meta("twitter:title", "name", t("doc.title"));
+  meta("twitter:description", "name", t("doc.og"));
   applyStatic();
 }
 
