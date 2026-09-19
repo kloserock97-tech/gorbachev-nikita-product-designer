@@ -132,9 +132,6 @@ body.lang-ru .cs-lead { font-weight: 400; letter-spacing: -0.024em; }
 .cs-refusals li { position: relative; padding: 18px 20px 18px 50px; border-radius: 20px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); font-size: 14.5px; font-weight: 300; line-height: 1.55; }
 .cs-refusals li::before { content: ""; position: absolute; left: 20px; top: 22px; width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px #b0543a; background: linear-gradient(45deg, transparent 45%, #b0543a 45% 55%, transparent 55%); }
 
-.cs-wide { border-radius: 24px; overflow: hidden; background: var(--card); box-shadow: inset 0 0 0 1px var(--line), 0 24px 50px rgba(40, 30, 12, 0.1); }
-.cs-wide img { display: block; width: 100%; height: auto; }
-.cs-wide figcaption, .cs-gal figcaption, .cs-decision-img figcaption, .cs-method-img figcaption { padding: 12px 18px 14px; font-size: 13px; font-weight: 300; line-height: 1.45; color: var(--soft); }
 
 /* ── исследование ─────────────────────────────────────────────────────────── */
 .cs-methods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
@@ -148,8 +145,6 @@ body.lang-ru .cs-lead { font-weight: 400; letter-spacing: -0.024em; }
 .cs-method dt { color: #7c8177; font-weight: 300; }
 .cs-method-finding { font-size: 15px; font-weight: 300; line-height: 1.6; color: #3a3f35; }
 .cs-method-finding b, .cs-why b, .cs-measured b { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 400; letter-spacing: 0.06em; text-transform: uppercase; color: #7c8177; }
-.cs-method-img { border-radius: 16px; overflow: hidden; background: #e6e6e0; }
-.cs-method-img img { display: block; width: 100%; height: auto; }
 
 .cs-hyp { display: grid; border-top: 1px solid var(--line); }
 .cs-hyp li { display: grid; grid-template-columns: 44px 1fr auto; gap: 8px 18px; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--line); }
@@ -243,12 +238,6 @@ body.lang-ru .cs-decision h3, body.lang-ru .cs-mistake h3 { font-weight: 400; }
 .cs-divelink span { color: var(--green); transition: translate 0.3s var(--ease); }
 .cs-divelink:hover { background: #d9d8d0; }
 .cs-divelink:hover span { translate: 3px 0; }
-.cs-decision-img { border-radius: 22px; overflow: hidden; background: var(--card); box-shadow: inset 0 0 0 1px var(--line), 0 24px 50px rgba(40, 30, 12, 0.1); }
-.cs-decision-img img { display: block; width: 100%; height: auto; }
-.cs-decision-img.is-tall { background: radial-gradient(90% 90% at 50% 10%, #38452f, #1d241a 70%); box-shadow: inset 0 1px rgba(255, 255, 255, 0.12), 0 24px 50px rgba(40, 30, 12, 0.14); padding-top: 28px; }
-.cs-decision-img.is-tall img { width: auto; max-width: 70%; max-height: 520px; margin: 0 auto; border-radius: 18px; }
-.cs-decision-img.is-tall.is-device img { border-radius: 0; }
-.cs-decision-img.is-tall figcaption { color: #c9cfbe; }
 
 /* разборы в глубину */
 .cs-deeps { display: grid; gap: 10px; margin-top: clamp(28px, 4vh, 48px) !important; }
@@ -285,8 +274,6 @@ body.lang-ru .cs-decision h3, body.lang-ru .cs-mistake h3 { font-weight: 400; }
 .cs-option header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .cs-option b { font-size: 17px; font-weight: 400; }
 .cs-option p { font-size: 14.5px; font-weight: 300; line-height: 1.55; color: #3a3f35; }
-.cs-option-img { max-height: 460px; overflow: hidden; border-radius: 14px; background: #e6e6e0; }
-.cs-option-img img { display: block; width: 100%; height: auto; }
 .cs-badge { padding: 4px 10px; border-radius: 999px; background: var(--glass); color: #9fe38b; font-size: 12px; white-space: nowrap; }
 .cs-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 12px; }
 .cs-steps li { display: grid; align-content: start; gap: 8px; padding: 20px 22px; border-radius: 20px; background: #f2f2ee; box-shadow: inset 0 0 0 1px var(--line); }
@@ -317,17 +304,44 @@ body.lang-ru .cs-decision h3, body.lang-ru .cs-mistake h3 { font-weight: 400; }
 .cs-points li::before { content: "↗"; position: absolute; left: 0; top: 16px; color: var(--green); }
 .cs-honesty { padding: 22px 26px; border-radius: 22px; border: 1px dashed rgba(30, 34, 25, 0.28); font-size: 14.5px; font-weight: 300; line-height: 1.6; color: #3a3f35; max-width: 60em; }
 
-/* ── галереи ─────────────────────────────────────────────────────────────── */
-.cs-gallery { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: clamp(16px, 2vw, 28px); align-items: start; }
-.cs-gal { grid-column: 1 / -1; min-width: 0; }
-.cs-gal-title { margin-bottom: 14px !important; font-size: clamp(18px, 1.5vw, 23px); font-weight: 400; line-height: 1.2; letter-spacing: -0.012em; max-width: 30em; }
-.cs-film { grid-column: span 5; }
-.cs-compare { grid-column: span 7; }
+/* ── сцена: один способ показывать экран ─────────────────────────────────────
+   Экран любого вида стоит на одной тёмной сцене. Сцена всегда помещается в окно: высота не больше --stage-h
+   (окно минус панель, заголовок и подпись), ширина — по колонке, пропорции — из --ar. Поэтому экран виден
+   целиком без прокрутки туда-сюда, а подпись остаётся в кадре. Клик открывает экран во весь размер. */
+.cs { --stage-h: clamp(340px, calc(100svh - 230px), 780px); --stage-pad: clamp(14px, 2.2vw, 36px); }
+.cs-fig { container-type: inline-size; min-width: 0; }
+.cs-fig--inline { --stage-h: clamp(240px, 56svh, 520px); --stage-pad: clamp(12px, 1.6vw, 22px); }
+.cs-stage {
+  position: relative; display: grid; place-items: center; width: 100%; overflow: hidden; border-radius: 30px;
+  height: min(var(--stage-h), calc((100cqw - 2 * var(--stage-pad)) / var(--ar, 1.6) + 2 * var(--stage-pad)));
+  background: radial-gradient(90% 90% at 50% 12%, #38452f, #1d241a 70%);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.12), 0 30px 70px rgba(30, 26, 12, 0.18);
+}
+.cs-fig--inline .cs-stage { border-radius: 22px; box-shadow: inset 0 1px rgba(255, 255, 255, 0.12), 0 20px 44px rgba(30, 26, 12, 0.14); }
+.cs-stage-media {
+  position: relative; display: block; padding: 0; border: 0; background: none;
+  border-radius: 12px; overflow: hidden; cursor: zoom-in; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.36);
+  transition: scale 0.6s var(--ease);
+}
+/* размер экрана считается явно, а не процентами: процент от сцены ломается, когда картинка догружается
+   и тянет блок своим настоящим размером. --iar — пропорции конкретной картинки, если они отличаются от сцены */
+.cs-stage-media, .cs-spot-img, .cs-compare-box img {
+  width: auto; min-width: 0; aspect-ratio: var(--iar, var(--ar, 1.6));
+  height: min(calc(var(--stage-h) - 2 * var(--stage-pad)), calc((100cqw - 2 * var(--stage-pad)) / var(--iar, var(--ar, 1.6))));
+}
+.cs-stage-media img, .cs-spot-img img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.cs-stage-media:hover { scale: 1.012; }
+.cs-stage-media.is-device { border-radius: 0; overflow: visible; box-shadow: none; filter: drop-shadow(0 26px 36px rgba(0, 0, 0, 0.42)); }
+.cs-fig figcaption { padding: 12px 4px 0; font-size: 13px; font-weight: 300; line-height: 1.45; color: var(--soft); }
 
-/* spot: экран на тёмной сцене с мягким свечением, точки пульсируют */
-.cs-spot-box { position: relative; padding: clamp(14px, 2.4vw, 40px); border-radius: 30px; background: radial-gradient(90% 90% at 50% 20%, #38452f, #1d241a 70%); box-shadow: inset 0 1px rgba(255, 255, 255, 0.12), 0 30px 70px rgba(30, 26, 12, 0.2); }
+/* ── галереи ─────────────────────────────────────────────────────────────── */
+.cs-gallery { display: grid; gap: clamp(56px, 9vh, 104px); }
+.cs-gal { min-width: 0; }
+.cs-gal-title { margin-bottom: 14px !important; font-size: clamp(18px, 1.5vw, 23px); font-weight: 400; line-height: 1.2; letter-spacing: -0.012em; max-width: 30em; }
+
+/* spot: точки стоят на самом экране, поэтому обёртка повторяет его размер */
 .cs-spot-img { position: relative; }
-.cs-spot-box img { display: block; width: 100%; height: auto; border-radius: 14px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35); }
+.cs-spot-img img { border-radius: 12px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.36); }
 .cs-spot-dot {
   position: absolute; left: calc(var(--x) * 1%); top: calc(var(--y) * 1%);
   translate: -50% -50%; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%;
@@ -349,21 +363,25 @@ body.lang-ru .cs-decision h3, body.lang-ru .cs-mistake h3 { font-weight: 400; }
 .cs-spot-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 8px 24px; margin-top: 16px !important; counter-reset: sp; }
 .cs-spot-list li { counter-increment: sp; display: grid; grid-template-columns: 26px 1fr; gap: 10px; font-size: 13.5px; font-weight: 300; line-height: 1.45; color: #3a3f35; }
 .cs-spot-list li::before { content: counter(sp); display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--glass); color: #9fe38b; font-size: 11.5px; }
-.cs-spot figcaption { padding-left: 0; }
 
-/* film: высокий экран едет внутри рамки */
-.cs-film-frame { position: relative; height: clamp(420px, 62vh, 640px); overflow: hidden; border-radius: 28px; background: radial-gradient(100% 80% at 50% 0%, #38452f, #1d241a 72%); box-shadow: inset 0 1px rgba(255, 255, 255, 0.12), 0 30px 70px rgba(30, 26, 12, 0.2); }
-.cs-film-frame::after { content: ""; position: absolute; inset: auto 0 0; height: 22%; background: linear-gradient(transparent, rgba(20, 25, 16, 0.55)); pointer-events: none; }
-.cs-film-track { position: absolute; left: 8%; right: 8%; top: 7%; transform: translateY(calc(var(--p, 0) * -1 * (100% - clamp(420px, 62vh, 640px) * 0.86))); transition: transform 0.12s linear; will-change: transform; }
-.cs-film-track img { display: block; width: 100%; height: auto; border-radius: 14px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4); }
+/* film: высокий экран. Сцена закрепляется под панелью, экран внутри едет на столько же пикселей, на сколько
+   прокрутили страницу: скорость прокрутки не меняется, экран успевают рассмотреть целиком. */
+/* липкий блок держится только внутри содержимого родителя, поэтому запас хода — отдельный пустой блок, а не padding */
+.cs-film-run { height: var(--over, 0px); }
+.cs-film-sticky { position: sticky; top: 92px; }
+.cs-film-stage { height: min(var(--stage-h), var(--film-h, 9999px)); place-items: start center; }
+.cs-film-stage::after { content: ""; position: absolute; inset: auto 0 0; height: 18%; background: linear-gradient(transparent, rgba(20, 25, 16, 0.6)); pointer-events: none; transition: opacity 0.4s var(--ease); }
+.cs-film-pin.is-end .cs-film-stage::after { opacity: 0; }
+.cs-film-track { position: absolute; top: var(--stage-pad); left: 50%; width: min(calc(100% - 2 * var(--stage-pad)), 760px); translate: -50% calc(var(--shift, 0px) * -1); will-change: translate; }
+.cs-film-track img { display: block; width: 100%; height: auto; border-radius: 12px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4); }
 
-/* compare: два варианта под одним ползунком */
-.cs-compare-box { position: relative; height: clamp(420px, 62vh, 640px); overflow: hidden; border-radius: 28px; background: #1d241a; box-shadow: inset 0 1px rgba(255, 255, 255, 0.12), 0 30px 70px rgba(30, 26, 12, 0.2); touch-action: pan-y; cursor: ew-resize; user-select: none; }
-.cs-compare-after, .cs-compare-before { position: absolute; inset: 0; display: grid; justify-items: center; padding: 6% 0 0; }
-.cs-compare-after { background: radial-gradient(100% 80% at 50% 0%, #2f3a42, #161c20 72%); }
-.cs-compare-before { background: radial-gradient(100% 80% at 50% 0%, #38452f, #1d241a 72%); clip-path: inset(0 calc(100% - var(--pos)) 0 0); }
-.cs-compare-box img { display: block; width: min(62%, 380px); height: auto; border-radius: 14px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4); pointer-events: none; }
-.cs-compare-label { position: absolute; top: 16px; padding: 7px 13px; border-radius: 999px; background: rgba(15, 19, 13, 0.62); color: #f2f3ef; font-size: 12px; backdrop-filter: blur(10px); pointer-events: none; }
+/* compare: два варианта под одним ползунком, оба экрана видны целиком */
+.cs-compare-box { touch-action: pan-y; cursor: ew-resize; user-select: none; }
+.cs-compare-after, .cs-compare-before { position: absolute; inset: 0; display: grid; place-items: center; }
+.cs-compare-after { background: radial-gradient(90% 90% at 50% 12%, #2f3a42, #161c20 72%); }
+.cs-compare-before { background: radial-gradient(90% 90% at 50% 12%, #38452f, #1d241a 70%); clip-path: inset(0 calc(100% - var(--pos)) 0 0); }
+.cs-compare-box img { display: block; border-radius: 12px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4); pointer-events: none; }
+.cs-compare-label { position: absolute; top: 16px; padding: 7px 13px; border-radius: 999px; background: rgba(15, 19, 13, 0.62); color: #f2f3ef; font-size: 12px; backdrop-filter: blur(10px); pointer-events: none; z-index: 1; }
 .cs-compare-label--a { left: 16px; } .cs-compare-label--b { right: 16px; }
 .cs-compare-handle { position: absolute; top: 0; bottom: 0; left: var(--pos); width: 2px; translate: -1px 0; background: #9fe38b; pointer-events: none; }
 .cs-compare-handle i { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: 44px; height: 44px; border-radius: 50%; background: #9fe38b; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); }
@@ -371,31 +389,27 @@ body.lang-ru .cs-decision h3, body.lang-ru .cs-mistake h3 { font-weight: 400; }
 .cs-compare-handle i::before { left: 11px; translate: 0 -50%; rotate: -45deg; }
 .cs-compare-handle i::after { right: 11px; translate: 0 -50%; rotate: 135deg; }
 .cs-compare-range { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; }
-.cs-compare-range:focus-visible + * { outline: none; }
 .cs-compare-box:has(.cs-compare-range:focus-visible) { outline: 2px solid var(--ink); outline-offset: 3px; }
 
-.cs-compare.is-wide { grid-column: 1 / -1; }
-.cs-compare.is-wide .cs-compare-box { height: auto; aspect-ratio: 16 / 10.5; }
-.cs-compare.is-wide .cs-compare-after, .cs-compare.is-wide .cs-compare-before { padding: 5% 0 0; }
-.cs-compare.is-wide .cs-compare-box img { width: 86%; }
+/* stack: веер телефонов на той же сцене */
+.cs-stack-fan { --ar: 1.9; display: flex; justify-content: center; align-items: flex-end; padding-top: var(--stage-pad); }
+.cs-stack-fan .cs-stack-phone { --mid: calc((var(--n) - 1) / 2); --o: calc(var(--i) - var(--mid)); flex: none; height: 92%; aspect-ratio: 402 / 874; width: auto; margin: 0 clamp(-36px, -2.4cqw, -12px); padding: 0; border: 6px solid #12170f; border-radius: 30px; overflow: hidden; background: #12170f; cursor: zoom-in; rotate: calc(var(--o) * 7deg); translate: 0 calc(var(--o) * var(--o) * 4% + 9%); box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45); transition: translate 0.5s var(--ease), rotate 0.5s var(--ease), scale 0.5s var(--ease); }
+.cs-stack-fan .cs-stack-phone:hover, .cs-stack-fan .cs-stack-phone:focus-visible { rotate: 0deg; translate: 0 4%; scale: 1.03; z-index: 2; }
+.cs-stack-fan .cs-stack-phone { position: relative; min-width: 0; }
+.cs-stack-phone img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.cs-stack-fan .cs-stack-phone.is-device { border: 0; border-radius: 0; background: none; overflow: visible; box-shadow: none; aspect-ratio: 1300 / 2642; filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.45)); }
 
-/* stack: веер телефонов */
-.cs-stack-fan { position: relative; display: flex; justify-content: center; align-items: flex-end; min-height: clamp(380px, 56vh, 560px); padding: clamp(28px, 4vw, 56px) 0 0; border-radius: 30px; overflow: hidden; background: radial-gradient(90% 90% at 50% 10%, #38452f, #1d241a 70%); box-shadow: inset 0 1px rgba(255, 255, 255, 0.12), 0 30px 70px rgba(30, 26, 12, 0.2); }
-.cs-stack-fan .cs-stack-phone { --mid: calc((var(--n) - 1) / 2); --o: calc(var(--i) - var(--mid)); flex: none; width: clamp(150px, 19vw, 250px); margin: 0 clamp(-36px, -2.4vw, -16px); padding: 0; border: 6px solid #12170f; border-radius: 30px; overflow: hidden; background: #12170f; cursor: zoom-in; rotate: calc(var(--o) * 7deg); translate: 0 calc(var(--o) * var(--o) * 18px + 24px); box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45); transition: translate 0.5s var(--ease), rotate 0.5s var(--ease), scale 0.5s var(--ease); }
-.cs-stack-phone:hover, .cs-stack-phone:focus-visible { rotate: 0deg; translate: 0 0; scale: 1.04; z-index: 2; }
-.cs-stack-phone img { display: block; width: 100%; height: auto; }
-.cs-stack-fan .cs-stack-phone.is-device { border: 0; border-radius: 0; background: none; overflow: visible; box-shadow: none; filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.45)); width: clamp(164px, 20.6vw, 272px); }
+/* у экранов с точками и у закреплённого экрана картинку открывает кнопка в углу сцены */
+.cs-stage-zoom { position: absolute; right: 14px; bottom: 14px; z-index: 3; display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: rgba(15, 19, 13, 0.62); color: #f2f3ef; cursor: zoom-in; backdrop-filter: blur(10px); transition: background 0.25s var(--ease), scale 0.25s var(--ease); }
+.cs-stage-zoom:hover { background: rgba(15, 19, 13, 0.85); scale: 1.06; }
+.cs-stage-zoom svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+/* в узкой колонке веер телефонов получает сцену повыше, иначе телефоны выходят с ноготь */
+@container (max-width: 640px) { .cs-stack-fan { --ar: 0.95; } }
 
-/* bento */
-.cs-bento { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px; align-items: start; }
-.cs-bento--inline { grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
-.cs-bento-item { border-radius: 22px; overflow: hidden; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
-.cs-bento-item.is-wide { grid-column: 1 / -1; }
-.cs-zoom { display: block; width: 100%; padding: 10px 10px 0; border: 0; background: none; cursor: zoom-in; }
-.cs-bento-item .cs-zoom img { display: block; width: 100%; height: auto; max-height: 420px; object-fit: cover; object-position: top; border-radius: 14px; background: #e6e6e0; transition: scale 0.7s var(--ease); }
-.cs-bento-item.is-tall .cs-zoom img { max-height: 520px; }
-.cs-bento-item:hover .cs-zoom img { scale: 1.02; }
-.cs-bento-item figcaption { padding: 12px 18px 16px; font-size: 13px; font-weight: 300; line-height: 1.45; color: var(--soft); }
+/* сетка остальных экранов: те же сцены, только меньше */
+.cs-bento { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: clamp(16px, 2vw, 28px); align-items: start; }
+.cs-bento--inline { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+.cs-bento .cs-fig--inline { --stage-h: clamp(220px, 44svh, 400px); }
 
 .cs-lightbox { width: min(1400px, 94vw); max-height: 92vh; padding: 0; border: 0; border-radius: 22px; background: #12170f; color: #e9ece2; overflow: auto; }
 .cs-lightbox::backdrop { background: rgba(12, 16, 10, 0.78); backdrop-filter: blur(6px); }
@@ -457,7 +471,6 @@ body.case-open .lite-bar { opacity: 0; pointer-events: none; }
   .cs-mistake-grid > div:nth-child(n + 3) { border-top: 1px solid var(--line); }
   .cs-outcomes li { grid-template-columns: 56px 1fr; }
   .cs-outcomes li > div { grid-column: 2; }
-  .cs-film, .cs-compare { grid-column: 1 / -1; }
   .cs-persona-card { grid-template-columns: auto 1fr; }
   .cs-persona-card > div:nth-child(n + 3) { grid-column: 1 / -1; }
 }
@@ -490,17 +503,15 @@ body.case-open .lite-bar { opacity: 0; pointer-events: none; }
   .cs-next { grid-template-columns: 1fr auto; padding: 22px; }
   .cs-next-img { display: none; }
   .cs-next .cs-go { margin-right: 0; }
-  .cs-spot-dot { width: 26px; height: 26px; font-size: 12px; }
+  .cs-spot-dot { width: 24px; height: 24px; font-size: 11.5px; }
   .cs-spot-dot em { display: none; }
-  .cs-stack-phone { width: clamp(120px, 34vw, 170px); border-width: 4px; border-radius: 22px; }
+  .cs-stage { border-radius: 22px; }
+  .cs-stack-fan .cs-stack-phone { border-width: 4px; border-radius: 20px; }
   .cs-funnel li { width: 100%; }
   .cs-quote { padding: 22px 22px 22px 52px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .cs-spot-dot { animation: none; }
-  .cs-film-track { transform: none; transition: none; }
-  .cs-film-frame { height: auto; max-height: 640px; overflow-y: auto; }
-  .cs-film-track { position: static; margin: 7% 8%; }
   .cs-deep-body, .cs-sheet, .cs-sheet-panel { animation: none; }
-  .cs-stack-phone, .cs-method, .cs-top-title { transition: none; }
+  .cs-stack-fan .cs-stack-phone, .cs-stage-media, .cs-method, .cs-top-title { transition: none; }
 }

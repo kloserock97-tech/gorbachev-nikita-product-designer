@@ -11,6 +11,7 @@ import { getCases } from "../data/cases";
 import { t } from "../i18n";
 import { heroAccent, mountHero } from "./caseHero";
 import { demoBlock, mountDemos } from "./caseDemos";
+import { smoothWheel } from "./smoothScroll";
 import "./case-v41.css";
 
 const BASE = import.meta.env.BASE_URL;
@@ -23,6 +24,19 @@ type Section = { id: string; label: string; children?: { id: string; label: stri
 
 const pic = (g: CaseImage, extra = "") =>
   `<img src="${BASE}${g.src}" alt="${esc(g.caption)}" width="${g.w}" height="${g.h}" loading="lazy" decoding="async"${extra}>`;
+
+/* ── сцена: один способ показывать экран ─────────────────────────────────────
+   Любой экран стоит на одной и той же тёмной сцене, и сцена всегда помещается в окно: высота ограничена
+   --stage-h, ширина — колонкой, пропорции берутся из --ar (case-v41.css). Клик открывает экран целиком.
+   Высокий экран (film) закрепляется и проезжает внутри сцены с той же скоростью, с какой крутят страницу. */
+const ar = (g: CaseImage) => (g.w / g.h).toFixed(4);
+
+const stage = (g: CaseImage) =>
+  `<div class="cs-stage" style="--ar:${ar(g)}"><button type="button" class="cs-stage-media${g.kind === "device" ? " is-device" : ""}" data-zoom aria-label="${t("cs.open")}: ${esc(g.caption)}">${pic(g)}</button></div>`;
+
+/** экран внутри текста: решение, метод, подход, вариант */
+const fig = (g: CaseImage, cls = "") =>
+  `<figure class="cs-fig cs-fig--inline ${cls}">${stage(g)}<figcaption>${esc(g.caption)}</figcaption></figure>`;
 
 /* ── куски ─────────────────────────────────────────────────────────────────── */
 const head = (n: number, id: string, label: string, lead?: string) => `
@@ -45,7 +59,7 @@ const methodCard = (m: Method, k: number) => `
       ${m.sample ? `<div><dt>${t("cs.sample")}</dt><dd>${esc(m.sample)}</dd></div>` : ""}
     </dl>
     <p class="cs-method-finding"><b>${t("cs.finding")}</b>${esc(m.finding)}</p>
-    ${m.image ? `<figure class="cs-method-img">${pic(m.image)}<figcaption>${esc(m.image.caption)}</figcaption></figure>` : ""}
+    ${m.image ? fig(m.image) : ""}
   </article>`;
 
 const decision = (d: Decision, k: number, dives: CaseTrack[]) => {
@@ -66,7 +80,7 @@ const decision = (d: Decision, k: number, dives: CaseTrack[]) => {
         ${dive ? `<a class="cs-divelink" href="#/work/__ID__/${dive.id}" data-dive="${dive.id}">${t("cs.deep")}: ${esc(dive.chip)} <span aria-hidden="true">→</span></a>` : ""}
       </p>
     </div>
-    ${d.image ? `<figure class="cs-decision-img${d.image.h > d.image.w * 1.2 ? " is-tall" : ""}${d.image.kind === "device" ? " is-device" : ""}">${pic(d.image)}<figcaption>${esc(d.image.caption)}</figcaption></figure>` : ""}
+    ${d.image ? fig(d.image, "cs-decision-img") : ""}
   </article>`;
 };
 
@@ -85,7 +99,7 @@ const part = (p: TrackPart, k: number) => {
     blocks.push(`<div class="cs-options">${p.options.map((o) => `<article class="cs-option${o.chosen ? " is-chosen" : ""}">
       <header><b>${esc(o.name)}</b>${o.chosen ? `<span class="cs-badge">${t("cs.chosen")}</span>` : ""}</header>
       <p>${esc(o.text)}</p>
-      ${o.image ? `<div class="cs-option-img">${pic(o.image)}</div>` : ""}
+      ${o.image ? fig(o.image) : ""}
     </article>`).join("")}</div>`);
   }
   if (p.steps?.length) blocks.push(`<ol class="cs-steps">${p.steps.map((s, j) => `<li><span>${pad(j + 1)}</span><b>${esc(s.title)}</b><p>${esc(s.text)}</p></li>`).join("")}</ol>`);
@@ -96,7 +110,7 @@ const part = (p: TrackPart, k: number) => {
     </div>`);
   }
   if (p.lesson) blocks.push(`<div class="cs-lesson"><p class="cs-mini">${t("cv.lesson")}</p><b>${esc(p.lesson.title)}</b><p>${esc(p.lesson.text)}</p></div>`);
-  if (p.images?.length) blocks.push(`<div class="cs-bento cs-bento--inline">${p.images.map((g) => `<figure class="cs-bento-item${g.h > g.w ? " is-tall" : ""}"><button type="button" class="cs-zoom" aria-label="${t("cs.open")}">${pic(g)}</button><figcaption>${esc(g.caption)}</figcaption></figure>`).join("")}</div>`);
+  if (p.images?.length) blocks.push(`<div class="cs-bento cs-bento--inline">${p.images.map((g) => fig(g, "cs-bento-item")).join("")}</div>`);
   return `<section class="cs-part"><p class="cs-mini">${pad(k + 1)} · ${esc(p.label)}</p><h4>${esc(p.title)}</h4>${blocks.join("")}</section>`;
 };
 
@@ -119,19 +133,20 @@ const deepDive = (tr: CaseTrack, k: number) => `
     </div>
   </details>`;
 
-/* ── галереи ─────────────────────────────────────────────────────────────── */
 const gallery = (g: Gallery, k: number) => {
   const title = g.title ? `<h3 class="cs-gal-title">${esc(g.title)}</h3>` : "";
   switch (g.kind) {
     case "film":
-      return `<figure class="cs-gal cs-film" data-reveal style="--rd:${k % 3}">${title}
-        <div class="cs-film-frame"><div class="cs-film-track">${pic(g.image, ' draggable="false"')}</div></div>
-        <figcaption>${esc(g.image.caption)}</figcaption></figure>`;
+      return `<figure class="cs-gal cs-fig cs-film" data-reveal style="--rd:${k % 3}">${title}
+        <div class="cs-film-pin"><div class="cs-film-sticky">
+          <div class="cs-stage cs-film-stage"><div class="cs-film-track">${pic(g.image, ' draggable="false"')}</div><button type="button" class="cs-stage-zoom" data-zoom aria-label="${t("cs.open")}"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 3H3v5M12 3h5v5M8 17H3v-5M12 17h5v-5"/></svg></button></div>
+          <figcaption>${esc(g.image.caption)}</figcaption>
+        </div><div class="cs-film-run" aria-hidden="true"></div></div></figure>`;
     case "compare":
-      return `<figure class="cs-gal cs-compare${g.before.w > g.before.h ? " is-wide" : ""}" data-reveal style="--rd:${k % 3}">${title}
-        <div class="cs-compare-box" style="--pos:50%">
-          <div class="cs-compare-after">${pic(g.after, ' draggable="false"')}</div>
-          <div class="cs-compare-before">${pic(g.before, ' draggable="false"')}</div>
+      return `<figure class="cs-gal cs-fig cs-compare" data-reveal style="--rd:${k % 3}">${title}
+        <div class="cs-stage cs-compare-box" style="--ar:${Math.min(g.before.w / g.before.h, g.after.w / g.after.h).toFixed(4)};--pos:50%">
+          <div class="cs-compare-after">${pic(g.after, ` draggable="false" style="--iar:${ar(g.after)}"`)}</div>
+          <div class="cs-compare-before">${pic(g.before, ` draggable="false" style="--iar:${ar(g.before)}"`)}</div>
           <span class="cs-compare-label cs-compare-label--a">${esc(g.labels[0])}</span>
           <span class="cs-compare-label cs-compare-label--b">${esc(g.labels[1])}</span>
           <div class="cs-compare-handle" aria-hidden="true"><i></i></div>
@@ -139,19 +154,19 @@ const gallery = (g: Gallery, k: number) => {
         </div>
         <figcaption>${esc(g.before.caption)} · ${esc(g.after.caption)}</figcaption></figure>`;
     case "spot":
-      return `<figure class="cs-gal cs-spot" data-reveal style="--rd:${k % 3}">${title}
-        <div class="cs-spot-box"><div class="cs-spot-img">${pic(g.image)}
+      return `<figure class="cs-gal cs-fig cs-spot" data-reveal style="--rd:${k % 3}">${title}
+        <div class="cs-stage" style="--ar:${ar(g.image)}"><div class="cs-spot-img">${pic(g.image)}
           ${g.spots.map((s, j) => `<button type="button" class="cs-spot-dot${s.x > 66 ? " is-right" : s.x < 34 ? " is-left" : ""}" style="--x:${s.x};--y:${s.y}" data-decision="${s.decision ?? ""}" aria-label="${t("cs.spot")} ${j + 1}: ${esc(s.text)}"><span>${j + 1}</span><em>${esc(s.text)}</em></button>`).join("")}
-        </div></div>
+        </div><button type="button" class="cs-stage-zoom" data-zoom aria-label="${t("cs.open")}"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 3H3v5M12 3h5v5M8 17H3v-5M12 17h5v-5"/></svg></button></div>
         <ol class="cs-spot-list">${g.spots.map((s) => `<li><span>${esc(s.text)}</span></li>`).join("")}</ol>
         <figcaption>${esc(g.image.caption)}</figcaption></figure>`;
     case "stack":
-      return `<figure class="cs-gal cs-stack" data-reveal style="--rd:${k % 3}">${title}
-        <div class="cs-stack-fan" style="--n:${g.images.length}">${g.images.map((im, j) => `<button type="button" class="cs-stack-phone cs-zoom${im.kind === "device" ? " is-device" : ""}" style="--i:${j}" aria-label="${t("cs.open")}: ${esc(im.caption)}">${pic(im)}</button>`).join("")}</div>
+      return `<figure class="cs-gal cs-fig cs-stack" data-reveal style="--rd:${k % 3}">${title}
+        <div class="cs-stage cs-stack-fan" style="--n:${g.images.length}">${g.images.map((im, j) => `<button type="button" class="cs-stack-phone${im.kind === "device" ? " is-device" : ""}" data-zoom style="--i:${j}" aria-label="${t("cs.open")}: ${esc(im.caption)}">${pic(im)}</button>`).join("")}</div>
         <figcaption>${g.images.map((im) => esc(im.caption)).join(" · ")}</figcaption></figure>`;
     case "bento":
       return `<div class="cs-gal" data-reveal style="--rd:${k % 3}">${title}
-        <div class="cs-bento">${g.images.map((im) => `<figure class="cs-bento-item${im.h > im.w ? " is-tall" : im.w / im.h > 2 ? " is-wide" : ""}"><button type="button" class="cs-zoom" aria-label="${t("cs.open")}">${pic(im)}</button><figcaption>${esc(im.caption)}</figcaption></figure>`).join("")}</div></div>`;
+        <div class="cs-bento">${g.images.map((im) => fig(im, "cs-bento-item")).join("")}</div></div>`;
   }
 };
 
@@ -240,7 +255,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           ${ap.levels?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.levels"))}<ol class="cs-levels">${ap.levels.map((x, k) => `<li style="--k:${k}"><span>${pad(k + 1)}</span><b>${esc(x.title)}</b><p>${esc(x.text)}</p></li>`).join("")}</ol></div>` : ""}
           ${ap.rules?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.rules"))}<dl class="cs-rules">${ap.rules.map((x) => `<div><dt>${esc(x.trait)}</dt><dd>${esc(x.rule)}</dd></div>`).join("")}</dl></div>` : ""}
           ${ap.refusals?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.refusals"))}<ul class="cs-refusals">${ap.refusals.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
-          ${ap.image ? `<figure class="cs-wide" data-reveal>${pic(ap.image)}<figcaption>${esc(ap.image.caption)}</figcaption></figure>` : ""}
+          ${ap.image ? `<div data-reveal>${fig(ap.image, "cs-fig--wide")}</div>` : ""}
         </section>` : ""}
 
         <section class="cs-sec">
@@ -366,11 +381,11 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
   root.querySelector(".cs-back")!.addEventListener("click", opts.onClose);
 
   /* прокрутка к разделу: по оглавлению и по ссылкам «Разбор» */
+  /* колесо и переходы по оглавлению едут одним и тем же мягким движением (smoothScroll.ts) */
+  const smoother = smoothWheel(scroller);
+  stops.push(() => smoother.stop());
   const scrollTo = (target: HTMLElement) => {
-    const top = target.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 84;
-    /* далёкий прыжок — сразу: плавно ехать через десять экранов долго и укачивает */
-    const far = Math.abs(top - scroller.scrollTop) > scroller.clientHeight * 2.5;
-    scroller.scrollTo({ top, behavior: reduced() || far ? "auto" : "smooth" });
+    smoother.to(target.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 84);
   };
   const openDive = (diveId: string, jump = true) => {
     const d = root.querySelector<HTMLDetailsElement>(`#cs-dd-${CSS.escape(diveId)}`);
@@ -421,7 +436,8 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
   const progress = root.querySelector<HTMLElement>(".cs-progress")!;
   const top = root.querySelector<HTMLElement>(".cs-top")!;
   const hero = root.querySelector<HTMLElement>(".cs-hero")!;
-  const films = [...root.querySelectorAll<HTMLElement>(".cs-film")];
+  const films = [...root.querySelectorAll<HTMLElement>(".cs-film-pin")].map((pin) => ({ pin, over: 0 }));
+  const stageTop = 92;
   let raf = 0;
   const onScroll = () => {
     if (raf) return;
@@ -431,18 +447,30 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
       progress.style.setProperty("--p", String(max > 0 ? scroller.scrollTop / max : 0));
       top.classList.toggle("is-past", scroller.scrollTop > hero.offsetTop + hero.offsetHeight - 120);
       markSection();
-      /* film: картинка едет внутри рамки, пока рамка проходит через экран */
-      if (!reduced()) {
-        const vh = scroller.clientHeight;
-        for (const f of films) {
-          const frame = f.querySelector<HTMLElement>(".cs-film-frame")!;
-          const r = frame.getBoundingClientRect();
-          const p = Math.min(1, Math.max(0, (vh - r.top) / (vh + r.height)));
-          frame.style.setProperty("--p", String(p));
-        }
+      /* film: сцена закреплена под панелью, экран внутри проезжает ровно на столько, на сколько прокрутили страницу */
+      const edge = scroller.getBoundingClientRect().top + stageTop;
+      for (const f of films) {
+        const shift = Math.min(f.over, Math.max(0, edge - f.pin.getBoundingClientRect().top));
+        f.pin.style.setProperty("--shift", `${shift}px`);
+        f.pin.classList.toggle("is-end", f.over === 0 || shift >= f.over - 1);
       }
     });
   };
+  /* сколько экрана не помещается в сцену — на столько же удлиняется закреплённый участок */
+  const measureFilms = () => {
+    for (const f of films) {
+      const stageEl = f.pin.querySelector<HTMLElement>(".cs-film-stage")!;
+      const track = f.pin.querySelector<HTMLElement>(".cs-film-track")!;
+      const padY = parseFloat(getComputedStyle(stageEl).getPropertyValue("--stage-pad")) || 24;
+      f.pin.style.setProperty("--film-h", `${Math.ceil(track.offsetHeight + padY * 2)}px`);
+      f.over = Math.max(0, Math.round(track.offsetHeight + padY * 2 - stageEl.clientHeight));
+      f.pin.style.setProperty("--over", `${f.over}px`);
+    }
+    onScroll();
+  };
+  const ro = new ResizeObserver(measureFilms);
+  films.forEach((f) => { ro.observe(f.pin.querySelector(".cs-film-track")!); ro.observe(f.pin.querySelector(".cs-film-stage")!); });
+  stops.push(() => ro.disconnect());
   scroller.addEventListener("scroll", onScroll, { passive: true });
   stops.push(() => scroller.removeEventListener("scroll", onScroll));
   onScroll();
@@ -475,8 +503,8 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
   const box = root.querySelector<HTMLDialogElement>(".cs-lightbox")!;
   const boxImg = box.querySelector("img")!;
   const boxCap = box.querySelector("p")!;
-  root.querySelectorAll<HTMLButtonElement>(".cs-zoom").forEach((b) => b.addEventListener("click", () => {
-    const im = b.querySelector("img")!;
+  root.querySelectorAll<HTMLButtonElement>("[data-zoom]").forEach((b) => b.addEventListener("click", () => {
+    const im = b.querySelector("img") ?? b.closest(".cs-stage")!.querySelector("img")!;
     boxImg.src = im.src; boxImg.alt = im.alt; boxCap.textContent = im.alt;
     box.showModal();
   }));
