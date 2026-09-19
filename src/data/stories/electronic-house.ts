@@ -170,7 +170,7 @@ export const en: CaseStory = {
     team: [
       { who: "Research team", how: "Brought the data on the negativity: ratings and user complaints. The audit started from real feedback, not my guesses." },
       { who: "Product team", how: "Together we decided which findings were critical for the product and what was realistic for the next iterations." },
-      { who: "Feasibility", how: "I kept the recommendations within the existing app: targeted fixes that can actually ship instead of \"rewrite everything from scratch\"." },
+      { who: "Feasibility", how: "I kept the recommendations within the existing app: targeted fixes that can ship. Nobody was going to rewrite everything from scratch." },
     ],
     myRole: "An audit against usability heuristics, a problem map by screen, prioritised findings and a redesign of the four most painful screens. The rest went into recommendations.",
   },

@@ -141,7 +141,7 @@ const gallery = (g: Gallery, k: number) => {
     case "spot":
       return `<figure class="cs-gal cs-spot" data-reveal style="--rd:${k % 3}">${title}
         <div class="cs-spot-box"><div class="cs-spot-img">${pic(g.image)}
-          ${g.spots.map((s, j) => `<button type="button" class="cs-spot-dot" style="--x:${s.x};--y:${s.y}" data-decision="${s.decision ?? ""}" aria-label="${t("cs.spot")} ${j + 1}: ${esc(s.text)}"><span>${j + 1}</span><em>${esc(s.text)}</em></button>`).join("")}
+          ${g.spots.map((s, j) => `<button type="button" class="cs-spot-dot${s.x > 66 ? " is-right" : s.x < 34 ? " is-left" : ""}" style="--x:${s.x};--y:${s.y}" data-decision="${s.decision ?? ""}" aria-label="${t("cs.spot")} ${j + 1}: ${esc(s.text)}"><span>${j + 1}</span><em>${esc(s.text)}</em></button>`).join("")}
         </div></div>
         <ol class="cs-spot-list">${g.spots.map((s) => `<li><span>${esc(s.text)}</span></li>`).join("")}</ol>
         <figcaption>${esc(g.image.caption)}</figcaption></figure>`;

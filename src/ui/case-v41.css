@@ -56,7 +56,7 @@ body.lang-ru .cs { font-weight: 350; }
 .cs-toc a.is-on { color: var(--ink); border-left-color: var(--ink); }
 .cs-toc a.is-on span { color: var(--green); }
 .cs-toc ol { display: grid; gap: 0; padding: 2px 0 6px 26px; }
-.cs-toc ol a { padding: 5px 10px 5px 14px; font-size: 12.5px; border-left: 0; }
+.cs-toc ol a { padding: 7px 10px 7px 14px; font-size: 12.5px; border-left: 0; }
 .cs-toc ol a::before { content: ""; position: absolute; left: 0; top: 50%; width: 7px; height: 1px; background: currentColor; opacity: 0.5; }
 .cs-toc ol a.is-on { color: var(--green); }
 
@@ -74,8 +74,8 @@ body.lang-ru .cs-hero h1 { font-weight: 400; letter-spacing: -0.028em; }
 .cs-hero-art { min-width: 0; }
 
 /* цифры под шапкой */
-.cs-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-top: clamp(36px, 6vh, 72px); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.cs-kpi { display: grid; align-content: start; gap: 10px; padding: 24px 22px 26px 0; }
+.cs-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); margin-top: clamp(36px, 6vh, 72px); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.cs-kpi { display: grid; align-content: start; gap: 10px; min-width: 0; padding: 24px 22px 26px 0; }
 .cs-kpi + .cs-kpi { padding-left: 22px; border-left: 1px solid var(--line); }
 .cs-kpi b { font-size: clamp(34px, 3.3vw, 56px); font-weight: 300; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 .cs-kpi span { max-width: 22em; font-size: 13.5px; font-weight: 300; line-height: 1.45; color: var(--soft); }
@@ -104,7 +104,7 @@ body.lang-ru .cs-lead { font-weight: 400; letter-spacing: -0.024em; }
 .cs-card > * + * { margin-top: 10px; }
 
 /* участники и команда */
-.cs-roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.cs-roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
 .cs-roles li { display: grid; gap: 6px; align-content: start; padding: 20px 22px; border-radius: 22px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
 .cs-roles b { font-size: 16px; font-weight: 400; letter-spacing: -0.01em; }
 .cs-roles span { font-size: 14px; font-weight: 300; line-height: 1.5; color: var(--soft); }
@@ -128,7 +128,7 @@ body.lang-ru .cs-lead { font-weight: 400; letter-spacing: -0.024em; }
 .cs-rules div { display: grid; grid-template-columns: minmax(150px, 0.3fr) 1fr; gap: 8px 24px; padding: 16px 0; border-bottom: 1px solid var(--line); }
 .cs-rules dt { font-size: 17px; font-weight: 400; letter-spacing: -0.01em; }
 .cs-rules dd { font-size: 15px; font-weight: 300; line-height: 1.55; color: #3a3f35; }
-.cs-refusals { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.cs-refusals { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; }
 .cs-refusals li { position: relative; padding: 18px 20px 18px 50px; border-radius: 20px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); font-size: 14.5px; font-weight: 300; line-height: 1.55; }
 .cs-refusals li::before { content: ""; position: absolute; left: 20px; top: 22px; width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px #b0543a; background: linear-gradient(45deg, transparent 45%, #b0543a 45% 55%, transparent 55%); }
 
@@ -229,7 +229,7 @@ html[lang="en"] .cs-hyp q { quotes: "\201C" "\201D"; }
 .cs-decision.is-flash { background: rgba(159, 227, 139, 0.16); box-shadow: 0 0 0 16px rgba(159, 227, 139, 0.16); border-radius: 8px; }
 .cs-decision h3, .cs-mistake h3 { margin-top: 12px; max-width: 20em; font-size: clamp(24px, 2.2vw, 36px); font-weight: 300; line-height: 1.1; letter-spacing: -0.022em; }
 body.lang-ru .cs-decision h3, body.lang-ru .cs-mistake h3 { font-weight: 400; }
-.cs-fdw { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px 28px; margin-top: 22px; }
+.cs-fdw { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 18px 28px; margin-top: 22px; }
 .cs-fdw--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 0; }
 .cs-fdw p:not(.cs-mini) { margin-top: 8px; font-size: 15px; font-weight: 300; line-height: 1.6; color: #3a3f35; }
 .cs-why { margin-top: 22px !important; padding: 18px 22px; border-radius: 20px; background: var(--glass); color: #eef0e9; font-size: 15px; font-weight: 300; line-height: 1.6; max-width: 56em; }
@@ -279,7 +279,7 @@ body.lang-ru .cs-decision h3, body.lang-ru .cs-mistake h3 { font-weight: 400; }
 .cs-checks { display: grid; gap: 10px; margin-top: 12px; }
 .cs-checks li { position: relative; padding-left: 28px; font-size: 14.5px; font-weight: 300; line-height: 1.55; }
 .cs-checks li::before { content: ""; position: absolute; left: 0; top: 3px; width: 17px; height: 17px; border-radius: 50%; background: #1b2216 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='m5 9.2 2.6 2.6L13 6.4' fill='none' stroke='%239fe38b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 17px no-repeat; }
-.cs-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; align-items: start; }
+.cs-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; align-items: start; }
 .cs-option { display: grid; gap: 10px; padding: 20px; border-radius: 22px; background: #f2f2ee; box-shadow: inset 0 0 0 1px var(--line); }
 .cs-option.is-chosen { box-shadow: inset 0 0 0 2px var(--green); }
 .cs-option header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -288,11 +288,11 @@ body.lang-ru .cs-decision h3, body.lang-ru .cs-mistake h3 { font-weight: 400; }
 .cs-option-img { max-height: 460px; overflow: hidden; border-radius: 14px; background: #e6e6e0; }
 .cs-option-img img { display: block; width: 100%; height: auto; }
 .cs-badge { padding: 4px 10px; border-radius: 999px; background: var(--glass); color: #9fe38b; font-size: 12px; white-space: nowrap; }
-.cs-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.cs-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 12px; }
 .cs-steps li { display: grid; align-content: start; gap: 8px; padding: 20px 22px; border-radius: 20px; background: #f2f2ee; box-shadow: inset 0 0 0 1px var(--line); }
 .cs-steps b { font-size: 16.5px; font-weight: 400; line-height: 1.3; }
 .cs-steps p { font-size: 14px; font-weight: 300; line-height: 1.55; color: var(--soft); }
-.cs-pair, .cs-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.cs-pair, .cs-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px; }
 .cs-lesson { position: relative; padding: 22px 24px; border-radius: 20px; box-shadow: inset 0 0 0 1px var(--line); border-left: 3px solid var(--green); }
 .cs-lesson b { display: block; margin-top: 8px; font-size: 17px; font-weight: 400; }
 .cs-lesson p:last-child { margin-top: 6px; font-size: 15px; font-weight: 300; line-height: 1.55; color: #3a3f35; }
@@ -341,8 +341,12 @@ body.lang-ru .cs-decision h3, body.lang-ru .cs-mistake h3 { font-weight: 400; }
   opacity: 0; pointer-events: none; transition: opacity 0.25s var(--ease), translate 0.3s var(--ease);
 }
 .cs-spot-dot:hover em, .cs-spot-dot:focus-visible em { opacity: 1; translate: -50% 0; }
+/* у края экрана подсказка выравнивается по точке, а не по центру — иначе вылезает за страницу */
+.cs-spot-dot.is-right em { left: auto; right: -6px; translate: 0 6px; }
+.cs-spot-dot.is-left em { left: -6px; translate: 0 6px; }
+.cs-spot-dot.is-right:hover em, .cs-spot-dot.is-right:focus-visible em, .cs-spot-dot.is-left:hover em, .cs-spot-dot.is-left:focus-visible em { translate: 0 0; }
 @keyframes cs-ping { 0% { box-shadow: 0 0 0 0 rgba(159, 227, 139, 0.55), 0 6px 18px rgba(0, 0, 0, 0.35); } 70%, 100% { box-shadow: 0 0 0 16px rgba(159, 227, 139, 0), 0 6px 18px rgba(0, 0, 0, 0.35); } }
-.cs-spot-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 24px; margin-top: 16px !important; counter-reset: sp; }
+.cs-spot-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 8px 24px; margin-top: 16px !important; counter-reset: sp; }
 .cs-spot-list li { counter-increment: sp; display: grid; grid-template-columns: 26px 1fr; gap: 10px; font-size: 13.5px; font-weight: 300; line-height: 1.45; color: #3a3f35; }
 .cs-spot-list li::before { content: counter(sp); display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--glass); color: #9fe38b; font-size: 11.5px; }
 .cs-spot figcaption { padding-left: 0; }
@@ -383,8 +387,8 @@ body.lang-ru .cs-decision h3, body.lang-ru .cs-mistake h3 { font-weight: 400; }
 .cs-stack-fan .cs-stack-phone.is-device { border: 0; border-radius: 0; background: none; overflow: visible; box-shadow: none; filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.45)); width: clamp(164px, 20.6vw, 272px); }
 
 /* bento */
-.cs-bento { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; align-items: start; }
-.cs-bento--inline { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.cs-bento { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 14px; align-items: start; }
+.cs-bento--inline { grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
 .cs-bento-item { border-radius: 22px; overflow: hidden; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
 .cs-bento-item.is-wide { grid-column: 1 / -1; }
 .cs-zoom { display: block; width: 100%; padding: 10px 10px 0; border: 0; background: none; cursor: zoom-in; }
@@ -400,13 +404,13 @@ body.lang-ru .cs-decision h3, body.lang-ru .cs-mistake h3 { font-weight: 400; }
 .cs-lightbox-close, .cs-sheet-close { position: sticky; top: 12px; float: right; margin: 12px 12px -52px 0; width: 40px; height: 40px; border: 0; border-radius: 50%; background: rgba(242, 243, 239, 0.92); color: #17200f; font-size: 22px; line-height: 1; cursor: pointer; z-index: 2; }
 
 /* ── развитие, выводы, цитата, следующий кейс ───────────────────────────── */
-.cs-roadmap { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.cs-roadmap { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; }
 .cs-roadmap article { display: grid; align-content: start; gap: 10px; padding: 24px; border-radius: 24px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
 .cs-roadmap b { font-size: clamp(19px, 1.5vw, 23px); font-weight: 400; line-height: 1.2; letter-spacing: -0.012em; }
 .cs-roadmap p:not(.cs-mini) { font-size: 14.5px; font-weight: 300; line-height: 1.58; color: #3a3f35; }
 .cs-roadmap .cs-mini { color: var(--green); }
 .cs-takeaway { max-width: 26em; font-size: clamp(24px, 2.3vw, 38px); font-weight: 300; line-height: 1.26; letter-spacing: -0.018em; }
-.cs-learn { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.cs-learn { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
 .cs-learn li { padding: 22px 24px; border-radius: 22px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); font-size: 15.5px; font-weight: 300; line-height: 1.58; }
 .cs-quote { position: relative; padding: 26px 28px 26px 62px; border-radius: 24px; background: var(--glass); color: #f2f3ef; font-size: clamp(17px, 1.4vw, 22px); font-weight: 300; line-height: 1.45; max-width: 46em; }
 .cs-quote::before { content: "“"; position: absolute; left: 22px; top: 10px; font-size: 56px; line-height: 1; color: #9fe38b; }
@@ -477,6 +481,8 @@ body.case-open .lite-bar { opacity: 0; pointer-events: none; }
   .cs-mistake-grid > div, .cs-mistake-grid > div + div { padding: 16px 0 4px; border-left: 0; }
   .cs-mistake-grid > div + div { border-top: 1px solid var(--line); }
   .cs-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* «2 платформы» и «169,4 тыс.» должны помещаться в половину экрана целиком, без переноса посреди слова */
+  .cs-kpi b { font-size: clamp(21px, 6.1vw, 40px); overflow-wrap: break-word; }
   .cs-kpi:nth-child(odd) { padding-left: 0; border-left: 0; }
   .cs-kpi:nth-child(n + 3) { border-top: 1px solid var(--line); }
   .cs-deep summary { grid-template-columns: 1fr auto; padding: 18px; }
