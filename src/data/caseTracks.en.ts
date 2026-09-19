@@ -80,7 +80,7 @@ const tracks: TrackSet = {
             did:
               "While the system parses the uploaded archive, the screen shows progress and skeletons of the risks to come. The empty state before upload isn't silent either: \"you don't have any assessments yet\" plus a hint on what to do next.",
             effect:
-              "People start not with a blank field but with a draft to check and fix. Editing is always faster than writing.",
+              "People start from a draft they check and fix. Editing is always faster than writing.",
             why:
               "Nielsen's first heuristic, visibility of system status, backed by response-time thresholds: up to 0.1 s feels instant, up to 1 s keeps the train of thought, past 10 s attention wanders. Parsing an archive takes well over ten seconds, so without an indicator the screen reads as broken. Skeletons also hint at the shape of the result.",
             images: [
@@ -114,7 +114,7 @@ const tracks: TrackSet = {
         chip: "Sorting & summary",
         kicker: "Subtask · AI agent risks",
         title: "The registry answers \"what do I grab first\" before anyone counts rows",
-        tagline: "A summary and four sort options instead of a recount by eye and a dozen columns.",
+        tagline: "A summary and four sort options replaced counting rows by eye and a dozen sortable columns.",
         parts: [
           {
             id: "summary",
@@ -234,7 +234,7 @@ const tracks: TrackSet = {
               },
               {
                 title: "Design debt",
-                text: "Tracked and prioritised, so quality improves systematically instead of chaos piling up.",
+                text: "Tracked and prioritised, so quality improves step by step and small flaws stop piling up.",
               },
               {
                 title: "Design system",
@@ -411,7 +411,7 @@ const tracks: TrackSet = {
               },
               {
                 title: "The rare track",
-                text: "Investors worked through real tasks in the finished part of the product. The outcome decided not \"is it usable\" but \"do we keep going\".",
+                text: "Investors worked through real tasks in the finished part of the product. The question on the table was \"do we keep going\". Usability was only part of the answer.",
               },
             ],
             effect:
