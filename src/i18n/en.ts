@@ -64,7 +64,7 @@ const en = {
   "notes.drift.title": "Driftfield",
   "notes.drift.alt": "A cloud of white particles torn into shreds by a flow field",
   "notes.drift.p1": "A cloud of 80,000 points traced along the streamlines of a curl-noise field, recomputed from scratch on the GPU every frame.",
-  "notes.drift.p2": "Nothing is simulated, so time can be frozen and rewound and the shape never falls apart.",
+  "notes.drift.p2": "Nothing is simulated, so you can freeze time or rewind it and the shape holds.",
   "notes.drift.p3": "A thin-lens depth of field with a real f-stop, and every parameter on a live panel.",
 
   "notes.sail.label": "Side project 03",
@@ -72,13 +72,13 @@ const en = {
   "notes.sail.alt": "A giant marble head surfacing from a night sea under a column of light",
   "notes.sail.p1": "A giant marble head under a column of light. The tide drowns it and gives it back.",
   "notes.sail.p2": "The stone reads the same wave sum the sea draws, so the waterline is exact: foam at the surface, and wet dark marble that dries slowly after the water leaves.",
-  "notes.sail.p3": "WebGPU and TSL. Every value sits on a panel, tide and flare included, and fits into a link.",
+  "notes.sail.p3": "Built on WebGPU and TSL. Every value sits on a panel, tide and flare included, and the setup fits into a link.",
 
   "notes.meadow.label": "Side project 04",
   "notes.meadow.title": "Meadow Walk",
   "notes.meadow.alt": "Dark hills covered in dense grass under a low sun",
   "notes.meadow.p1": "An endless flight over a windy meadow: half a million blades of grass placed and bent by wind on the GPU.",
-  "notes.meadow.p2": "The cursor sends soft waves through the field; pebbles and dust ride the crest and settle back.",
+  "notes.meadow.p2": "The cursor sends soft waves through the field. Pebbles and dust ride the crest and settle back.",
   "notes.meadow.p3": "One heightmap per frame feeds terrain, grass and shadows, and every number is on a live panel.",
 
   /* рамка видоискателя, пока компьютер летит */
@@ -111,7 +111,7 @@ const en = {
   "walk.sub": "Enterprise tools, public services and AI products. Each case covers the role, the context and the outcome.",
   "shelf.kicker": "Side projects",
   "shelf.title": "WebGL experiments",
-  "shelf.sub": "Real-time 3D: four open-source demos with a live settings panel. The grass of the first one grows on the hill of this site.",
+  "shelf.sub": "Real-time 3D: four demos with the code on GitHub and a live settings panel. The grass of the first one grows on the hill of this site.",
   "shelf.of": "of",
 
   /* меню Work в доке */
