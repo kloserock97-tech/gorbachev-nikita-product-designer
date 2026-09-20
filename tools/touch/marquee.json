@@ -1,0 +1,13 @@
+[
+  { "eval": "window.scrollTo(0, __story.topFor(0.14))" }, { "wait": 3500 },
+  { "eval": "window.scrollTo(0, __story.topFor(0.2))" }, { "wait": 5000 },
+  { "shot": "run" },
+  { "eval": "window.scrollTo(0, __story.topFor(0.27))" }, { "wait": 5000 },
+  { "shot": "settle" },
+  { "eval": "window.scrollTo(0, __story.topFor(0.285))" }, { "wait": 5000 },
+  { "shot": "swap" },
+  { "eval": "document.querySelector('[data-lang-toggle], .dock-lang, [data-nav=\"lang\"], .lang-toggle')?.click()" }, { "wait": 1500 },
+  { "eval": "window.scrollTo(0, __story.topFor(0.2))" }, { "wait": 5000 },
+  { "probe": "document.documentElement.lang + ' ' + new URL(location.href).searchParams.get('lang')", "as": "lang after toggle" },
+  { "shot": "toggled-run" }
+]

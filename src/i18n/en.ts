@@ -89,6 +89,7 @@ const en = {
 
   /* экран About */
   "about.hi": "Hi there!",
+  "about.marquee": "I’m Nikita, a Senior/Lead Product Designer",
   "about.intro": "I'm Nikita, a Senior/Lead Product Designer. I make complex services feel simple, both the ones millions of people use and the internal tools tens of thousands of employees open every morning. I also lead a team of designers.",
   "about.p1": "My work mixes product design, systems thinking and AI",
   "about.p2": "Research and product structure come first. Then launch, numbers and growing what works.",
