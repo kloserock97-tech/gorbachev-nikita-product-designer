@@ -52,7 +52,14 @@ const SHADOW_DIR = new THREE.Vector3(0.25, 1.0, -0.55).normalize();
 
 /* v10: камера на 1.8 м дальше (было z 10.8) — ближняя трава мельче и спокойнее */
 const CAMERA_BASE = new THREE.Vector3(0, 1.92, 12.6);
-const CAMERA_TARGET = new THREE.Vector3(0, 2.62, 0);
+/* v47: первый экран снят тем же кадром, что и футер. Раньше так стояла только камера футера (покой + сдвиг
+   FOOT_OFF в story.ts): чуть дальше и ниже, взгляд выше — гребень холма на ~62 % высоты кадра, над ним небо под
+   заголовок, кресло не спорит с кнопкой. Никите эта композиция нравится больше, поэтому теперь это и есть поза покоя,
+   а футер просто возвращается в неё. CAMERA_PIVOT — прежняя точка взгляда: от неё по-прежнему считается отъезд
+   камеры на вертикальном экране (camDistance), чтобы телефон получил ровно тот же кадр, что был в футере. */
+const CAMERA_PIVOT = new THREE.Vector3(0, 2.62, 0);
+const CAMERA_REST_OFF = new THREE.Vector3(0.6, -0.34, 1.6);
+const CAMERA_TARGET = new THREE.Vector3(0.2, 3.57, 0);
 const SHADOW_LAYER = 3;
 /* слой компьютера в скролл-истории: рисуется отдельным проходом поверх заливки */
 const PC_LAYER = 5;
@@ -409,7 +416,7 @@ export class HillScene {
   private restPos = new THREE.Vector3();
   /* без выделения памяти: вызывается каждый кадр; кому нужна копия — клонирует */
   private cameraRest() {
-    return this.restPos.lerpVectors(CAMERA_TARGET, CAMERA_BASE, this.camDistance);
+    return this.restPos.lerpVectors(CAMERA_PIVOT, CAMERA_BASE, this.camDistance).add(CAMERA_REST_OFF);
   }
 
   /* Всё посаженное (трава, цветы, пампасы, колоски) — одной группой: посадка зависит от позы

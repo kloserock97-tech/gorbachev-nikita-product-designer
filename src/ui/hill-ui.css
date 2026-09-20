@@ -83,12 +83,14 @@ body {
      статистикой травы и погоды внизу — она про ту же траву */
   .cta-wrap { left: calc(700 * var(--u)); top: calc(322 * var(--u)); }
   /* кнопка ветра меньше и в ряду со статистикой травы и погоды — она про ту же траву */
-  .play-wrap { left: calc(470 * var(--u)); top: calc(664 * var(--u)); width: calc(106 * var(--u)); height: calc(106 * var(--u)); }
+  /* v47: кадр первого экрана стал как в футере — гребень ниже, у левого края трава начинается на ~40u ниже.
+     Статистика и кнопка ветра опущены на столько же, чтобы светлые подписи стояли на траве, а не на кромке неба */
+  .play-wrap { left: calc(470 * var(--u)); top: calc(704 * var(--u)); width: calc(106 * var(--u)); height: calc(106 * var(--u)); }
   .gust { width: calc(56 * var(--u)); height: calc(56 * var(--u)); margin: calc(-28 * var(--u)) 0 0 calc(-28 * var(--u)); }
   .gust svg { width: calc(19 * var(--u)); height: calc(19 * var(--u)); margin-left: calc(3 * var(--u)); }
 
-  .stat--a { left: calc(64 * var(--u)); top: calc(730 * var(--u)); }
-  .stat--b { left: calc(300 * var(--u)); top: calc(730 * var(--u)); }
+  .stat--a { left: calc(64 * var(--u)); top: calc(770 * var(--u)); }
+  .stat--b { left: calc(300 * var(--u)); top: calc(770 * var(--u)); }
 
   /* v19: одна карточка справа — «How the hill was grown»; «Who sits here?» ушла в скролл-историю */
   .card--stove { left: calc(1213 * var(--u)); top: calc(300 * var(--u)); }

@@ -140,8 +140,10 @@ export const chapters = (p: number) => ({
 
 /* футер: камера от последнего кадра кейсов плавно возвращается к холму — чуть дальше и ниже,
    чем на первом экране, чтобы над гребнем было закатное небо под тексты */
-const FOOT_OFF = new THREE.Vector3(0.6, -0.34, 1.6);
-const FOOT_LOOK = new THREE.Vector3(0.2, 0.95, 0);
+/* v47: этот кадр стал позой покоя самого холма (HillScene: CAMERA_REST_OFF, CAMERA_TARGET) — футер возвращается
+   ровно в неё, без собственного сдвига */
+const FOOT_OFF = new THREE.Vector3(0, 0, 0);
+const FOOT_LOOK = new THREE.Vector3(0, 0, 0);
 const tmpF = new THREE.Vector3();
 const tmpL = new THREE.Vector3();
 export function footerCamera(f: number, rest: THREE.Vector3, restLook: THREE.Vector3, pos: THREE.Vector3, look: THREE.Vector3) {

@@ -30,7 +30,7 @@ const me = {
 
   now: [
     "I design products, often AI ones, and think in systems. I cover the whole cycle: research, product structure, launch, metrics and scaling.",
-    "Last role: Head of Product Design at Grif AI. I joined as the first designer and built the design function from scratch. I've just moved to the Netherlands and I'm open to product design roles in the EU or remote.",
+    "Last role: Head of Product Design at Grif AI. I joined as the first designer and built the design function from scratch. I'm open to product design roles and ready to relocate or work remotely.",
   ],
 
 
