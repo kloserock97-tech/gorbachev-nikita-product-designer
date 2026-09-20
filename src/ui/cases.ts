@@ -1,6 +1,6 @@
 import { getCases } from "../data/cases";
 import notes from "../data/notes";
-import { CASES, CHAPTER, CHAPTER2, chapters, dwell, ramp } from "../scene/story";
+import { CASES, CHAPTER, CHAPTER2, chapters, dwell, ramp, stickyIndex } from "../scene/story";
 import { applyTimeline, topFor } from "./storyScroll";
 import { swipeStrip, type SwipeStrip } from "./swipeStrip";
 import { cue } from "../audio/bus";
@@ -90,6 +90,7 @@ export function initCases(scene: Scene) {
 
   /* ── лента под палец (v43) ── */
   let swipe: SwipeStrip | null = null;
+  let followed = -1; // карточка, на которой лента стоит по вертикальной истории (с гистерезисом, story.ts)
   let held = -1; // карточка, на которую человек перелистнул сам: история догоняет, ленту не трогаем
   let holdTimer = 0;
   const showIndex = (idx: number, fraction: number) => {
@@ -126,7 +127,7 @@ export function initCases(scene: Scene) {
            вертикальный скролл вернул бы ленту назад */
         held = i;
         clearTimeout(holdTimer);
-        holdTimer = window.setTimeout(() => (held = -1), 1600);
+        holdTimer = window.setTimeout(() => (held = -1), 2500);
         scrollTo({ top: topForCard(i), behavior: "instant" as ScrollBehavior });
       },
     });
@@ -149,7 +150,10 @@ export function initCases(scene: Scene) {
     last.fill("");
     /* дистанция прокрутки на один кейс: лента едет чуть медленнее страницы (1 : 1,3), чтобы карточку успевали
        прочитать; под палец — полэкрана на карточку. Тот же шаг получают заметки (story.ts, layoutTimeline) */
-    const step = swipe ? 0.5 : (spacing * 1.3) / Math.max(1, innerHeight);
+    /* v48: под палец — 0,85 экрана на карточку (было 0,5). Замер жестами (tools/cdp-touch.mjs): бросок пальцем на
+       500 px увозит страницу на ~1,2 экрана — при 0,5 он пролистывал две-три карточки и выносил из раздела, а
+       250 px медленного скролла уже меняли карточку. Теперь один бросок — одна карточка, как в лентах историй */
+    const step = swipe ? 0.85 : (spacing * 1.3) / Math.max(1, innerHeight);
     applyTimeline({ narrow: innerWidth <= 900, cases: cards.length, notes: notes.length, step });
     swipe?.refresh();
     scene.onStory?.(lastP);
@@ -208,8 +212,9 @@ export function initCases(scene: Scene) {
       /* лента под палец: вся лента поднимается разом, карточки листает сам браузер */
       const key = e.toFixed(3);
       if (last[0] !== key) { last[0] = key; root.style.setProperty("--e", key); }
-      const idx = Math.round(run);
-      if (held >= 0) { if (idx === held) held = -1; } else swipe.follow(idx);
+      if (held >= 0) { followed = held; if (Math.abs(run - held) < 0.05) held = -1; return; }
+      followed = stickyIndex(run, followed);
+      swipe.follow(followed);
       return;
     }
 

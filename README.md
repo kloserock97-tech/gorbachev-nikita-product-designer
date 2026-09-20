@@ -100,6 +100,7 @@ The `tools/` scripts drive a headless Chrome over the DevTools protocol:
 - `cdp-profile.mjs` records a CPU profile of a page or of a moment in the story.
 - `cdp-eval.mjs`, `cdp-shot.mjs` and `cdp-frames.mjs` evaluate code, take screenshots and capture frame sequences.
 - `pre-shader-stalls.js` with `cdp-eval.mjs --pre tools/pre-shader-stalls.js --fresh` lists shader programs that block the main thread on a cold cache. `cdp-profile.mjs --lines <function>` splits a function's self time by source line.
+- `cdp-touch.mjs` emulates a phone with a real finger in Chrome and runs gesture scripts from `tools/touch/*.json` (swipe, fling, screenshot, probe).
 - `crop.ps1` crops and enlarges a screenshot region without smoothing, to inspect single pixels.
 - `?tier=0..8` forces a quality tier and `?edgeaa=0|1` toggles edge anti-aliasing of the final pass.
 

@@ -1,0 +1,7 @@
+[
+  { "probe": "scrollY", "as": "y0" },
+  { "swipe": [200, 500, 0, -300], "speed": 800, "fling": false },
+  { "wait": 1500 },
+  { "probe": "scrollY", "as": "after vertical swipe on the hero" },
+  { "probe": "JSON.stringify({touch: 'ontouchstart' in window, coarse: matchMedia('(pointer: coarse)').matches, w: innerWidth})", "as": "env" }
+]

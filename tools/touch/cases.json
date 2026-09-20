@@ -1,0 +1,18 @@
+[
+  { "eval": "(() => { const s = window.__story; const [a, b] = s.chapter(); scrollTo(0, s.topFor(a + (b - a) * s.CASES.strip[0])); })()" },
+  { "wait": 4000 },
+  { "probe": "JSON.stringify({now: document.querySelector('.cases-now').textContent, on: document.querySelector('.cases').classList.contains('is-on'), total: window.__story.TIMELINE.total})", "as": "start" },
+  { "swipe": [200, 500, 0, -250], "speed": 600, "fling": false },
+  { "wait": 2200 },
+  { "probe": "document.querySelector('.cases-now').textContent", "as": "after slow vertical 250" },
+  { "swipe": [200, 500, 0, -450], "speed": 3000 },
+  { "wait": 3000 },
+  { "probe": "document.querySelector('.cases-now').textContent", "as": "after one vertical flick" },
+  { "swipe": [320, 450, -240, 0], "speed": 900 },
+  { "wait": 2200 },
+  { "probe": "document.querySelector('.cases-now').textContent", "as": "after swipe left" },
+  { "swipe": [200, 500, 0, -200], "speed": 600, "fling": false },
+  { "wait": 2200 },
+  { "probe": "document.querySelector('.cases-now').textContent", "as": "after slow vertical 200 (must stay)" },
+  { "shot": "cases" }
+]

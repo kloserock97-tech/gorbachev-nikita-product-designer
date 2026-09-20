@@ -1,0 +1,20 @@
+[
+  { "probe": "JSON.stringify({storyTop: document.querySelector('.story').offsetTop, H: innerHeight, card: (()=>{const r=document.querySelector('.card--stove').getBoundingClientRect();return [Math.round(r.top+scrollY), Math.round(r.bottom+scrollY)]})()})", "as": "geometry" },
+  { "swipe": [200, 600, 0, -330], "speed": 700, "fling": false },
+  { "wait": 1500 },
+  { "probe": "(() => { const r = document.querySelector('.card--stove').getBoundingClientRect(); return JSON.stringify({y: Math.round(scrollY), cardTop: Math.round(r.top), cardBottom: Math.round(r.bottom), storyActive: document.body.classList.contains('story-active'), so: getComputedStyle(document.querySelector('.stage')).getPropertyValue('--so')}); })()", "as": "after scrolling 330: card fully on screen?" },
+  { "shot": "card-closed" },
+  { "swipe": [300, 440, -200, 6], "speed": 900 },
+  { "wait": 1500 },
+  { "probe": "JSON.stringify({count: document.querySelector('.note-deck__count').textContent, label: document.querySelector('.card--stove > .label').textContent})", "as": "after swipe left on the picture" },
+  { "swipe": [120, 440, 200, -4], "speed": 900 },
+  { "wait": 1500 },
+  { "probe": "document.querySelector('.note-deck__count').textContent", "as": "after swipe right" },
+  { "eval": "document.querySelector('.knob--note').click()" },
+  { "wait": 1600 },
+  { "shot": "card-open" },
+  { "probe": "(() => { const n = document.querySelector('.card-note'); const c = document.querySelector('.card--stove'); const cr = c.getBoundingClientRect(); return JSON.stringify({open: c.classList.contains('is-open'), cardTop: Math.round(cr.top), cardBottom: Math.round(cr.bottom), textFits: n.scrollHeight <= n.clientHeight + 1, storyActive: document.body.classList.contains('story-active')}); })()", "as": "open card" },
+  { "swipe": [200, 420, 0, -200], "speed": 700, "fling": false },
+  { "wait": 1200 },
+  { "probe": "JSON.stringify({y: Math.round(scrollY), storyActive: document.body.classList.contains('story-active')})", "as": "page scrolls from the open card" }
+]

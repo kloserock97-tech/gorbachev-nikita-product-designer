@@ -7,12 +7,20 @@ import { TIMELINE, layoutTimeline, type TimelineInput } from "../scene/story";
 
 const story = () => document.querySelector<HTMLElement>(".story");
 
+/* Сколько экрана над историей уже должно быть занято ею, когда она стартует. Широкий экран: первый экран закреплён,
+   история начинается с нуля. Узкий (v48): первый экран прокручивается, и карточка заметок стоит в самом его низу.
+   Раньше история стартовала, как только низ первого экрана показался в окне: карточка была целиком видна ~200 px
+   прокрутки, потом интерфейс гас и переставал отвечать на палец — заметки на телефоне было не полистать.
+   Теперь история ждёт, пока низ первого экрана поднимется до 40 % высоты окна: карточка успевает доехать до
+   середины экрана, её можно раскрыть и пролистать. */
+const leadPx = (top: number) => Math.min(top, innerHeight * (innerWidth <= 900 ? 0.4 : 1));
+
 /** где в прокрутке страницы история начинается и заканчивается */
 export function storyBounds() {
   const el = story();
   if (!el) return { start: 0, end: 1 };
   const top = el.offsetTop;
-  return { start: Math.max(0, top - innerHeight), end: top + el.offsetHeight - innerHeight };
+  return { start: Math.max(0, top - leadPx(top)), end: top + el.offsetHeight - innerHeight };
 }
 export function topFor(p: number) {
   const b = storyBounds();
@@ -35,7 +43,7 @@ export function applyTimeline(input: TimelineInput) {
   if (!el) return;
   /* на телефоне окно меняет высоту, когда прячется адресная строка: пересчёт по каждому такому событию сбивал бы
      инерцию пальца, поэтому ключ — только то, от чего зависят доли */
-  const lead = Math.min(el.offsetTop, innerHeight) / Math.max(1, innerHeight);
+  const lead = leadPx(el.offsetTop) / Math.max(1, innerHeight);
   const key = `${input.narrow}|${input.cases}|${input.notes}|${input.step.toFixed(2)}|${lead.toFixed(2)}`;
   if (key === lastKey) return;
   lastKey = key;

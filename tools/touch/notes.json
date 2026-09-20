@@ -1,0 +1,17 @@
+[
+  { "eval": "(() => { const s = window.__story; const [a, b] = s.chapter(); scrollTo(0, s.topFor(a + (b - a) * s.CASES.notesRun[0])); })()" },
+  { "wait": 4000 },
+  { "shot": "notes-1" },
+  { "probe": "JSON.stringify({now: document.querySelector('.shelf-now').textContent, left: Math.round(document.querySelector('.shelf-stage').scrollLeft), y: Math.round(scrollY), on: document.querySelector('.shelf').classList.contains('is-on')})", "as": "start" },
+  { "swipe": [320, 450, -240, 0], "speed": 900 },
+  { "wait": 2000 },
+  { "probe": "JSON.stringify({now: document.querySelector('.shelf-now').textContent, left: Math.round(document.querySelector('.shelf-stage').scrollLeft), y: Math.round(scrollY)})", "as": "after swipe left" },
+  { "shot": "notes-2" },
+  { "swipe": [200, 500, 0, -250], "speed": 600, "fling": false },
+  { "wait": 2500 },
+  { "probe": "JSON.stringify({now: document.querySelector('.shelf-now').textContent, left: Math.round(document.querySelector('.shelf-stage').scrollLeft), y: Math.round(scrollY)})", "as": "after slow vertical 250 on the card" },
+  { "swipe": [200, 500, 0, -500], "speed": 3000 },
+  { "wait": 3000 },
+  { "probe": "JSON.stringify({now: document.querySelector('.shelf-now').textContent, left: Math.round(document.querySelector('.shelf-stage').scrollLeft), y: Math.round(scrollY), on: document.querySelector('.shelf').classList.contains('is-on')})", "as": "after vertical flick 500" },
+  { "shot": "notes-3" }
+]

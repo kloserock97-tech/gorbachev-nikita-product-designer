@@ -7,7 +7,7 @@
 import notes, { type Note } from "../data/notes";
 import { cue } from "../audio/bus";
 import { onLang, t, type Key } from "../i18n";
-import { CASES, CHAPTER, CHAPTER2, FOOTER, chapters, dwell, ramp } from "../scene/story";
+import { CASES, CHAPTER, CHAPTER2, FOOTER, chapters, dwell, ramp, stickyIndex } from "../scene/story";
 import { topFor } from "./storyScroll";
 import { swipeStrip, type SwipeStrip } from "./swipeStrip";
 
@@ -91,6 +91,7 @@ export function initWalkChapter(scene: StoryScene) {
 
   /* v43: на телефоне заметки листаются пальцем, как лента кейсов (swipeStrip.ts) */
   let swipe: SwipeStrip | null = null;
+  let followed = -1;
   let held = -1;
   let holdTimer = 0;
   const topForNote = (i: number) => {
@@ -104,6 +105,7 @@ export function initWalkChapter(scene: StoryScene) {
     info = shelf.querySelector<HTMLElement>(".shelf-info");
     swipe?.destroy();
     swipe = null;
+    followed = -1;
     const stage = shelf.querySelector<HTMLElement>(".shelf-stage");
     if (shelf.dataset.format === "strip" && stage) {
       stage.scrollLeft = 0;
@@ -114,7 +116,7 @@ export function initWalkChapter(scene: StoryScene) {
           if (!shelfOn) return;
           held = i;
           clearTimeout(holdTimer);
-          holdTimer = window.setTimeout(() => (held = -1), 1600);
+          holdTimer = window.setTimeout(() => (held = -1), 2500);
           scrollTo({ top: topForNote(i), behavior: "instant" as ScrollBehavior });
         },
       });
@@ -240,8 +242,9 @@ export function initWalkChapter(scene: StoryScene) {
     const a = reduced ? run : dwell(run);
     const format = shelf.dataset.format as ShelfFormat;
     if (swipe) {
-      const i = Math.round(run);
-      if (held >= 0) { if (i === held) held = -1; } else swipe.follow(i);
+      if (held >= 0) { followed = held; if (Math.abs(run - held) < 0.05) held = -1; return; }
+      followed = stickyIndex(run, followed);
+      swipe.follow(followed);
       return;
     }
     const idx = Math.round(a);

@@ -41,6 +41,7 @@ export function initFieldNote() {
 
   let index = 0;
   let swapTimer = 0;
+  let fitOpenRef: () => void = () => {};
   let inView = true;
   const isOpen = () => card.classList.contains("is-open");
 
@@ -54,6 +55,7 @@ export function initFieldNote() {
   };
 
   const set = (open: boolean) => {
+    if (open && !isOpen()) fitOpenRef();
     if (open !== isOpen()) cue(open ? "expand" : "collapse");
     card.classList.toggle("is-open", open);
     knob.setAttribute("aria-expanded", String(open));
@@ -166,19 +168,50 @@ export function initFieldNote() {
     if (e.key === "ArrowLeft") { e.preventDefault(); go(-1); }
   });
 
-  /* свайп пальцем по карточке; вертикальное движение оставляем прокрутке страницы */
-  let startX = 0, startY = 0, tracking = false;
+  /* Свайп пальцем по карточке (v48). У карточки touch-action: pan-y — вертикаль остаётся прокрутке страницы,
+     горизонталь приходит сюда. Раньше браузер забирал жест себе (pointercancel), и свайп срабатывал через раз.
+     Лицевая сторона едет за пальцем (--drag): видно, что карточка листается, ещё до того как палец отпущен. */
+  let startX = 0, startY = 0, tracking = false, dragging = false;
+  const drop = () => {
+    tracking = dragging = false;
+    card.classList.remove("is-dragging");
+    card.style.removeProperty("--drag");
+  };
   card.addEventListener("pointerdown", (e) => {
-    if (e.pointerType === "mouse" || (e.target as Element).closest("a, button")) return;
+    if (e.pointerType === "mouse" || isOpen() || (e.target as Element).closest("a, button")) return;
     tracking = true; startX = e.clientX; startY = e.clientY;
+  });
+  card.addEventListener("pointermove", (e) => {
+    if (!tracking) return;
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    if (!dragging) {
+      if (Math.abs(dx) < 10 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+      dragging = true;
+      card.classList.add("is-dragging");
+    }
+    /* за пальцем, но с сопротивлением: карточка не уезжает, а намекает направление */
+    card.style.setProperty("--drag", (Math.sign(dx) * Math.min(56, Math.abs(dx) * 0.45)).toFixed(1));
   });
   card.addEventListener("pointerup", (e) => {
     if (!tracking) return;
-    tracking = false;
     const dx = e.clientX - startX, dy = e.clientY - startY;
-    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.4) go(dx < 0 ? 1 : -1);
+    drop();
+    if (Math.abs(dx) > 44 && Math.abs(dx) > Math.abs(dy) * 1.4) go(dx < 0 ? 1 : -1);
   });
-  card.addEventListener("pointercancel", () => (tracking = false));
+  card.addEventListener("pointercancel", drop);
+
+  /* Оборот на телефоне раскрывается на всю высоту своего текста (v48). Раньше высота была фиксированной, а лишнее
+     прокручивалось внутри карточки с overscroll-behavior: contain — палец застревал в карточке, страница не ехала.
+     Вложенная прокрутка на телефоне — известная ловушка; карточка просто растёт, страница прокручивается как обычно. */
+  const narrow = matchMedia("(max-width: 900px)");
+  let closedH = 0;
+  const fitOpen = () => {
+    const root = document.documentElement;
+    if (!narrow.matches) { root.style.removeProperty("--m-open"); return; }
+    /* высота закрытой карточки меряется, только пока она закрыта и не едет; высота текста — всегда */
+    if (!isOpen()) closedH = card.offsetHeight;
+    if (closedH) root.style.setProperty("--m-open", `${Math.max(0, Math.ceil(note.scrollHeight - closedH))}px`);
+  };
 
   addEventListener("keydown", (e) => { if (e.key === "Escape") set(false); });
   addEventListener("click", (e) => { if (!card.contains(e.target as Node)) set(false); });
@@ -188,6 +221,8 @@ export function initFieldNote() {
   let scrollRaf = 0;
   addEventListener("scroll", () => { if (!scrollRaf) scrollRaf = requestAnimationFrame(() => { scrollRaf = 0; syncVideo(); }); }, { passive: true });
 
+  fitOpenRef = fitOpen;
+  addEventListener("resize", () => { if (!isOpen()) fitOpen(); });
   onLang(paint);
   paint();
 }

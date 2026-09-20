@@ -90,6 +90,13 @@ export function initStory(scene: Scene) {
     } else scene.setStorySlot?.(null);
   };
   addEventListener("scroll", schedule, { passive: true });
+  /* v48: на телефоне первый экран меняет высоту, когда раскрывается карточка заметок, — история сдвигается вместе с ним */
+  const heroBox = document.querySelector<HTMLElement>(".hero");
+  if (heroBox && "ResizeObserver" in window) {
+    const ro = new ResizeObserver(() => { b = bounds(); schedule(); });
+    ro.observe(heroBox);
+    if (stage) ro.observe(stage);
+  }
   addEventListener("resize", () => { b = bounds(); schedule(); measure(); });
   document.fonts?.ready.then(measure);
   /* стиль Manrope грузится асинхронно — перемерить, когда шрифт реально подгрузился */
