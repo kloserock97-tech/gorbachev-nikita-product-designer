@@ -1,0 +1,3 @@
+[
+  { "probe": "JSON.stringify({loader: !!document.querySelector('.nature-loader'), render: !!document.querySelector('.nature-loader__stage.has-render'), growth: document.querySelector('.nature-loader')?.dataset.growth, t: Math.round(performance.now())})", "as": "state" }
+]

@@ -2,13 +2,14 @@ import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { FullScreenQuad } from "three/examples/jsm/postprocessing/Pass.js";
-import { TILE, COVER, FRONT, rand, delayAt, seedDelay, GARDEN_DELAY_GLSL, topSurface, rimSurface, baseAt, mossHeight, mossField, mossKnob, iceAt, fbm } from "./gardenSurface";
+import { TILE, FRONT, DRAPE, rand, seedDelay, meltDelay, GARDEN_DELAY_GLSL, topSurface, rimSurface, anchorAt, mossAt, mossFast, iceAt, fbm, type Anchor } from "./gardenSurface";
 
 const smooth = (a: number, b: number, x: number) => THREE.MathUtils.smoothstep(x, a, b);
 
-/** v59. A thick slab of frosted glass seen in three-quarter view. It starts cold: a sheet of ice in one corner and
-    frost around it. As the portfolio loads the ice melts back and leaves droplets, and from the warm corner moss
-    grows in cushions, then thin blades, then flowers that stand taller than the edge. Part of the glass stays bare.
+/** A thick slab of frosted glass seen in three-quarter view. It starts cold: ice along one edge, frost and leaf shadows
+    on bare glass. As the portfolio loads the ice melts and leaves condensation, and from the warm corner moss takes the
+    slab: cushions, a short pile, then flowers that stand taller than the edge.
+    v60: at 100 % the whole solid is overgrown, walls included; the look of the reference is the middle of the run.
     No network assets: this scene must be cheaper to load than the scene it introduces. */
 export class NatureScene {
   get isReady() { return this.ready; }
@@ -24,16 +25,25 @@ export class NatureScene {
   private clock = { value: 0 };
   private flowers: { group: THREE.Group; petals: THREE.Mesh[]; delay: number; seed: number }[] = [];
   private drops!: THREE.InstancedMesh;
-  private dropSeeds: { p: THREE.Vector3; size: number; at: number; flat: number }[] = [];
+  private dropSeeds: { p: THREE.Vector3; size: number; at: number; until: number; flat: number }[] = [];
   private dummy = new THREE.Object3D();
   private key: THREE.DirectionalLight;
   private ready = false;
   private disposed = false;
   private lastShadow = -1;
   private small: boolean;
+  private pointer = new THREE.Vector2();
+  private tilt = new THREE.Vector2();
+  private lastTime = 0;
+  /** plants the next portion of the pile within a time budget; returns true when all of it stands */
+  private plantMore: ((budgetMs: number) => boolean) | null = null;
+  /** how long each part of the start-up took, ms: the loader must stay cheaper than what it introduces */
+  readonly timings: Record<string, number> = {};
 
   constructor(canvas: HTMLCanvasElement, private reduced: boolean) {
     this.small = matchMedia("(max-width: 700px)").matches;
+    let mark = performance.now();
+    const lap = (name: string) => { const now = performance.now(); this.timings[name] = Math.round(now - mark); mark = now; };
     this.renderer = new THREE.WebGLRenderer({ canvas, alpha: true, premultipliedAlpha: true, antialias: false, powerPreference: "low-power" });
     /* The canvas is transparent: the page background shows around the slab, and the floor is only a shadow catcher.
        A rendered backdrop never matched the CSS one exactly and showed as a pale disc. */
@@ -46,17 +56,19 @@ export class NatureScene {
     this.renderer.toneMappingExposure = 1.0;
     /* Glass and ice are read through what they reflect. A tiny procedural room, prefiltered once, gives them
        soft boxes to mirror; nothing is downloaded. */
+    lap("renderer");
     const pmrem = new THREE.PMREMGenerator(this.renderer);
     const room = new RoomEnvironment();
     this.env = pmrem.fromScene(room, .05);
     this.scene.environment = this.env.texture;
     this.scene.environmentIntensity = .42;
     room.dispose(); pmrem.dispose();
+    lap("env");
     /* Three-quarter view from the front left with a long lens: the left and the near wall show the thickness,
        the top stays almost square, and tall flowers rise past the far edge instead of reading as dots from above. */
-    const azimuth = THREE.MathUtils.degToRad(23), elevation = THREE.MathUtils.degToRad(49), distance = 12.4;
+    const azimuth = THREE.MathUtils.degToRad(23), elevation = THREE.MathUtils.degToRad(49), distance = this.small ? 14.4 : 12.9;
     this.camera.position.set(-Math.sin(azimuth) * Math.cos(elevation) * distance, Math.sin(elevation) * distance, Math.cos(azimuth) * Math.cos(elevation) * distance);
-    this.camera.lookAt(.05, -.1, .1);
+    this.camera.lookAt(.05, -.06, .1);
     this.world.rotation.y = -.17;
     this.scene.add(this.world);
     this.scene.add(new THREE.HemisphereLight("#f3f7ee", "#5c6349", .42));
@@ -71,12 +83,13 @@ export class NatureScene {
     this.scene.add(this.key);
     const fill = new THREE.DirectionalLight("#d6e4ff", .7);
     fill.position.set(3, 2, 4); this.scene.add(fill);
-    this.buildTile();
-    this.buildIce();
-    this.buildMoss();
-    this.buildGrass();
-    this.buildFlowers();
-    this.buildDrops();
+    lap("lights");
+    this.buildTile(); lap("tile");
+    this.buildIce(); lap("ice");
+    this.buildMoss(); lap("moss");
+    this.buildGrass(); lap("grass");
+    this.buildFlowers(); lap("flowers");
+    this.buildDrops(); lap("drops");
     this.rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, format: THREE.RGBAFormat, samples: this.small ? 2 : 4 });
     this.post = new THREE.ShaderMaterial({
       uniforms: { tScene: { value: this.rt.texture }, uPixel: { value: new THREE.Vector2() } },
@@ -113,7 +126,11 @@ export class NatureScene {
       if (!this.disposed) this.ready = true;
     }).catch(() => { if (!this.disposed) this.ready = true; });
     this.renderer.setRenderTarget(null);
+    lap("compile");
   }
+
+  /** cursor position in the loader, −1…1 on both axes; the slab leans a little towards it */
+  setPointer(x: number, y: number) { this.pointer.set(THREE.MathUtils.clamp(x, -1, 1), THREE.MathUtils.clamp(y, -1, 1)); }
 
   private buildTile() {
     const floorMat = new THREE.ShadowMaterial({ color: "#2f3427", opacity: .2 });
@@ -151,11 +168,10 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
         #include <color_fragment>
         float x=vTile.x,z=vTile.z;
         float delay=${GARDEN_DELAY_GLSL};
-        // Moss stains the glass only where it will grow; the rest of the slab stays bare.
-        float cover=1.-smoothstep(${(COVER - .03).toFixed(3)},${(COVER + .05).toFixed(3)},delay);
-        float arrive=min(1.,delay/${COVER.toFixed(3)})*${FRONT.toFixed(3)};
-        // only the top face: on the wall the stain read as green stripes
-        float moss=smoothstep(arrive,arrive+.16,uGarden)*cover*smoothstep(.45,.9,abs(normalize(vTileN).y));
+        float arrive=delay/.70*${FRONT.toFixed(3)};
+        // where the moss already stands: frost and the glow of the glass give way there
+        float moss=smoothstep(arrive,arrive+.16,uGarden);
+        float top=smoothstep(.5,.95,abs(normalize(vTileN).y));
         // Cloudy density inside the glass.
         float cloud=.5+.5*sin(x*2.1+sin(z*2.9)*1.3)*cos(z*1.7-x*.9);
         diffuseColor.rgb*=mix(.93,1.03,cloud);
@@ -164,16 +180,28 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
         diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.50,.64,.69),wallTint*.78);
         // A cool breath across the top towards the cold corner.
         diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.74,.86,.90),(1.-wallTint)*.34*smoothstep(1.4,-1.8,x+z));
-        // Frost around the ice, fading as the corner warms up.
-        float frost=(1.-smoothstep(1.1,3.1,length(vec2(x+1.5,(z+1.6)*.85))))*(1.-moss)*(1.-uGarden*.4);
+        // Frost along the ice, fading as the slab warms up.
+        float frost=(1.-smoothstep(.9,2.6,length(vec2((x+1.7)*1.25,(z+1.2)*.6))))*(1.-moss)*(1.-uGarden*.55);
         float crystal=.5+.5*sin(x*47.+sin(z*35.))*cos(z*53.);
         diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.60,.77,.83)*(1.+crystal*.2),frost*.62);
         // Matting: tiny crystals scattered over the top, denser inside the frost.
         float speck=fract(sin(dot(floor(vTile.xz*70.),vec2(12.9898,78.233)))*43758.5453);
-        diffuseColor.rgb*=1.-step(.62,speck)*(.03+frost*.07)*smoothstep(.6,.95,abs(normalize(vTileN).y));
-        // No green stain under the moss: the cushions do not fill the covered area, and a stain showed past them.
-        float canopy=sin(x*2.7+sin(z*1.6)+uGardenTime*.05)*cos(z*3.2-x*.7);
-        diffuseColor.rgb*=1.-smoothstep(.1,.8,canopy)*.2;
+        diffuseColor.rgb*=1.-step(.62,speck)*(.03+frost*.07)*top;
+        // Foliage somewhere above, out of frame: soft leaf shadows lie across the bare glass and sway a little.
+        float shade=0.;
+        for(int i=0;i<9;i++){
+          float fi=float(i);
+          float sway=sin(uGardenTime*.45+fi*1.7)*.035;
+          // two loose branches crossing the slab from the far side
+          vec2 c=vec2(-.95+fi*.27+sin(fi*2.3)*.22, -.75+fi*.17+cos(fi*1.9)*.38)+vec2(sway,sway*.6);
+          float a=.9+sin(fi*3.1)*.9+sway*2.;
+          vec2 p=vec2(x,z)-c; p=vec2(cos(a)*p.x+sin(a)*p.y,-sin(a)*p.x+cos(a)*p.y);
+          p/=vec2(.46+.12*sin(fi*5.),.17+.04*cos(fi*4.));
+          // a leaf: an ellipse pinched towards both tips
+          float d=length(vec2(p.x,p.y*(1.+.9*abs(p.x))));
+          shade=max(shade,(1.-smoothstep(.45,1.15,d))*(.7+.3*sin(fi*7.)));
+        }
+        diffuseColor.rgb*=1.-shade*.26*top;
       `);
       /* cast glass is never optically flat: a slow wave in the normal makes the reflections of the room wander */
       shader.fragmentShader = shader.fragmentShader.replace("#include <normal_fragment_maps>", `
@@ -197,11 +225,12 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
     this.world.add(tile);
   }
 
-  /** A sheet that lies on the slab and drapes over its edge. Every vertex knows its hidden rest point just under
-      the surface and the growth value at which it moves: moss rises from rest, ice sinks back into it. */
+  /** A sheet that lies on the slab and wraps down its walls. Every vertex stands on its anchor (a point of the solid
+      and the normal there) at the height of the layer, knows the hidden rest point just under the surface and the
+      growth value at which it moves: moss rises from rest, ice sinks back into it. */
   private buildSheet(opts: {
     x0: number; x1: number; z0: number; z1: number; res: number; mode: "grow" | "melt";
-    sample: (x: number, z: number) => { h: number; delay: number; shade: number };
+    sample: (x: number, z: number, anchor: Anchor) => { h: number; delay: number; shade: number };
     material: THREE.Material; tint: (shade: number, out: THREE.Color) => void;
   }) {
     const { x0, x1, z0, z1, res } = opts, n = res + 1;
@@ -210,12 +239,13 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
     const color = new THREE.Color();
     for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
       const k = j * n + i, x = x0 + (x1 - x0) * i / res, z = z0 + (z1 - z0) * j / res;
-      const s = opts.sample(x, z), base = baseAt(x, z);
-      rest.set(base.rest, k * 3);
-      /* a vertex just outside the layer sits a little under the glass, on the continuation of the slope:
-         the visible edge is then cut by the glass itself, smoothly */
-      position.set([base.rest[0], (s.h > 0 ? base.y : base.rest[1] + .008) + s.h, base.rest[2]], k * 3);
-      if (s.h > 0) { position.set([x, base.y + s.h, z], k * 3); alive[k] = 1; }
+      const anchor = anchorAt(x, z), s = opts.sample(x, z, anchor), [px, py, pz] = anchor.p, [nx, ny, nz] = anchor.n;
+      /* a vertex just outside the layer sits a little under the surface, on the continuation of the slope:
+         the visible edge is then cut by the glass itself, smoothly, and not along the cells of the grid */
+      const h = Math.max(-.05, s.h);
+      position.set([px + nx * h, py + ny * h, pz + nz * h], k * 3);
+      rest.set([px - nx * .012, py - ny * .012, pz - nz * .012], k * 3);
+      if (s.h > 0) alive[k] = 1;
       delay[k] = s.delay;
       opts.tint(s.shade, color); colors.set([color.r, color.g, color.b], k * 3);
     }
@@ -231,7 +261,7 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     geometry.setIndex(index);
     geometry.computeVertexNormals();
-    const amount = opts.mode === "grow" ? "smoothstep(aDelay+.05,aDelay+.30,uGarden)" : "1.-smoothstep(aDelay,aDelay+.30,uGarden)";
+    const amount = opts.mode === "grow" ? "smoothstep(aDelay+.07,aDelay+.34,uGarden)" : "1.-smoothstep(aDelay,aDelay+.30,uGarden)";
     const inject = (shader: THREE.WebGLProgramParametersWithUniforms) => {
       shader.uniforms.uGarden = this.growth;
       shader.vertexShader = "uniform float uGarden; attribute vec3 aRest; attribute float aDelay;\n" + shader.vertexShader;
@@ -253,27 +283,37 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
       flatShading: true, vertexColors: true, emissive: "#8fc6d6", emissiveIntensity: .13, envMapIntensity: 1.5,
     });
     this.buildSheet({
-      x0: -TILE.width / 2 - .1, x1: -TILE.width / 2 + 1.85, z0: -TILE.depth / 2 - .1, z1: -TILE.depth / 2 + 2.3,
-      res: this.small ? 44 : 60, mode: "melt", material,
-      /* thin edges melt first; the core of the corner (t below about .45) outlives the whole load */
-      sample: (x, z) => { const ice = iceAt(x, z); return { h: ice.h, delay: .06 + Math.max(0, 1 - ice.t) * 1.7, shade: ice.h }; },
-      tint: (shade, out) => out.setRGB(.60 + shade * 2.0, .80 + shade * 1.0, .92 + shade * .4),
+      x0: -TILE.width / 2 - DRAPE, x1: -TILE.width / 2 + 1.85, z0: -TILE.depth / 2 - DRAPE, z1: -TILE.depth / 2 + 3.05,
+      res: this.small ? 60 : 88, mode: "melt", material,
+      /* thin edges melt first, the core of the corner last; the ice hangs over the edge and part of the way down the
+         wall, thinner the lower it gets */
+      sample: (_x, _z, anchor) => {
+        const ice = iceAt(anchor.bx, anchor.bz), hang = 1 - smooth(.35, .8, Math.min(1, anchor.wall));
+        return { h: ice.h > 0 ? ice.h * hang - (1 - hang) * .05 : ice.h, delay: meltDelay(ice.t) - Math.min(1, anchor.wall) * .05, shade: ice.h };
+      },
+      /* deep blue where the sheet is thin and you look into it, white crust on the ridges */
+      tint: (shade, out) => out.setRGB(.50 + shade * 2.1, .74 + shade * 1.1, .90 + shade * .45),
     });
   }
 
   private buildMoss() {
     const material = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 1, vertexColors: true, envMapIntensity: .25 });
     this.buildSheet({
-      x0: -TILE.width / 2 - .25, x1: TILE.width / 2 + .25, z0: -TILE.depth / 2 - .25, z1: TILE.depth / 2 + .25,
-      res: this.small ? 64 : 88, mode: "grow", material,
-      sample: (x, z) => ({ h: mossField(x, z), delay: seedDelay(x, z), shade: mossHeight(x, z) + fbm(x * 6, z * 6) * .08 }),
+      x0: -TILE.width / 2 - DRAPE - .1, x1: TILE.width / 2 + DRAPE + .1, z0: -TILE.depth / 2 - DRAPE - .1, z1: TILE.depth / 2 + DRAPE + .1,
+      res: this.small ? 76 : 106, mode: "grow", material,
+      /* the front runs over the top first and then creeps down each wall */
+      sample: (x, z, anchor) => {
+        const h = mossAt(x, z, anchor);
+        return { h, delay: seedDelay(anchor.bx, anchor.bz) + Math.min(1, anchor.wall) * .07, shade: Math.max(0, h) + fbm(x * 6, z * 6) * .08 };
+      },
       /* dark in the creases between cushions, greener on their crowns */
       tint: (shade, out) => out.setRGB(.014 + shade * .07, .030 + shade * .14, .006 + shade * .02),
     });
   }
 
   private buildGrass() {
-    const geo = new THREE.PlaneGeometry(1, 1, 1, 4);
+    /* a short pile: three rows of vertices are enough, and that pays for covering the whole solid */
+    const geo = new THREE.PlaneGeometry(1, 1, 1, 2);
     geo.translate(0, .5, 0);
     const positions = geo.attributes.position;
     for (let i = 0; i < positions.count; i++) {
@@ -282,7 +322,7 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
       positions.setZ(i, y * y * .42);
     }
     geo.computeVertexNormals();
-    const topCount = this.small ? 18000 : 30000, rimCount = this.small ? 900 : 1700;
+    const topCount = this.small ? 30000 : 56000, rimCount = this.small ? 9000 : 18000;
     const count = topCount + rimCount;
     const seeds = new Float32Array(count * 2), lifts = new Float32Array(count * 3);
     const mat = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: .9, side: THREE.DoubleSide, envMapIntensity: .3 });
@@ -300,7 +340,7 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
       `);
       shader.vertexShader = shader.vertexShader.replace("#include <begin_vertex>", `
         #include <begin_vertex>
-        float grow=smoothstep(aGarden.x,aGarden.x+.17,uGarden);
+        float grow=smoothstep(aGarden.x,aGarden.x+.13,uGarden);
         float tip=position.y*position.y;
         transformed.y*=grow;
         transformed.x*=max(.01,grow);
@@ -311,7 +351,7 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
       /* a blade stands on a cushion that is itself still rising: ride it up from the rest point */
       shader.vertexShader = shader.vertexShader.replace("#include <project_vertex>", `
         vec4 mvPosition=instanceMatrix*vec4(transformed,1.);
-        mvPosition.xyz+=aLift*(1.-smoothstep(aGarden.x+.05,aGarden.x+.30,uGarden));
+        mvPosition.xyz+=aLift*(1.-smoothstep(aGarden.x+.07,aGarden.x+.34,uGarden));
         mvPosition=modelViewMatrix*mvPosition;
         gl_Position=projectionMatrix*mvPosition;
       `);
@@ -323,47 +363,67 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
     grass.frustumCulled = false;
     const dummy = new THREE.Object3D(), color = new THREE.Color();
     const normal = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), spin = new THREE.Quaternion();
-    const e = .02;
-    for (let i = 0, n = 0; i < count && n < count * 40; n++) {
+    geo.setAttribute("aGarden", new THREE.InstancedBufferAttribute(seeds, 2));
+    geo.setAttribute("aLift", new THREE.InstancedBufferAttribute(lifts, 3));
+    /* Planting 74 000 blades is about a microsecond each whatever you do, 80 ms in one go. The slab starts bare, so
+       only the first portion is planted now; render() plants the rest a few milliseconds a frame, and each portion
+       is uploaded as a range, not as the whole buffer again. */
+    let i = 0, n = 0;
+    const plant = (budgetMs: number) => {
+      const started = performance.now(), from = i;
+      for (; i < count && n < count * 6; n++) {
+      if (i > from && (i & 511) === 0 && performance.now() - started > budgetMs) break;
       const rim = i >= topCount;
-      let x: number, y: number, z: number, lift = 0;
+      let x: number, y: number, z: number, delay: number, knob = .5;
       if (rim) {
-        const s = rimSurface(rand(n * 7 + 1), rand(n * 7 + 2) * .3);
-        /* only where a cushion really reaches the rim */
-        if (delayAt(s.x, s.z) > COVER - .03 || mossHeight(s.x * .9, s.z * .9) < .03) continue;
-        x = s.x; y = s.y; z = s.z;
-        normal.set(s.nx, Math.max(.3, s.ny + .5), s.nz).normalize();
+        /* the walls: from the upper shoulder to the lower lip, standing out of the carpet that covers them */
+        const s = rimSurface(rand(n * 7 + 1), rand(n * 7 + 2) * .92);
+        /* a cheap random here: fractal noise for every wall blade cost 25 ms at start-up */
+        const thick = .05 + rand(n * 7 + 11) * .03;
+        x = s.x + s.nx * thick; y = s.y + s.ny * thick; z = s.z + s.nz * thick;
+        lifts.set([-s.nx * (thick + .012), -s.ny * (thick + .012), -s.nz * (thick + .012)], i * 3);
+        /* wall shoots curl outward and up, rather than sticking out like a comb */
+        normal.set(s.nx, Math.max(.25, s.ny + .45), s.nz).normalize();
+        delay = seedDelay(s.x, s.z) + .05 + Math.max(0, -s.y) * .2;
+        knob = .25 + rand(n * 7 + 10) * .7;
       } else {
-        x = (rand(n * 7 + 1) - .5) * (TILE.width + .4); z = (rand(n * 7 + 2) - .5) * (TILE.depth + .4);
-        const h = mossHeight(x, z), inside = topSurface(x, z);
-        /* only on the cushions: a fringe of single blades on bare glass read as stubble */
-        if (h < .006) continue;
-        const base = baseAt(x, z);
-        y = base.y + h; lift = base.rest[1] - y;
-        lifts.set([base.rest[0] - x, lift, base.rest[2] - z], i * 3);
-        const hx = mossHeight(x + e, z) - mossHeight(x - e, z), hz = mossHeight(x, z + e) - mossHeight(x, z - e);
-        normal.set(-hx / (2 * e) + (inside?.nx ?? 0), 1, -hz / (2 * e) + (inside?.nz ?? 0)).normalize();
+        x = (rand(n * 7 + 1) - .5) * TILE.width; z = (rand(n * 7 + 2) - .5) * TILE.depth;
+        const surface = topSurface(x, z);
+        if (!surface) continue;
+        /* height, slope and knob come from a table built once: see mossFast */
+        const moss = mossFast(x, z), h = moss.h, px = x, pz = z;
+        const nx = surface.nx, ny = surface.ny, nz = surface.nz;
+        x = px + nx * h; y = surface.y + ny * h; z = pz + nz * h;
+        lifts.set([-nx * (h + .012), -ny * (h + .012), -nz * (h + .012)], i * 3);
+        normal.set(-moss.hx + nx, ny, -moss.hz + nz).normalize();
+        delay = seedDelay(px, pz);
+        knob = moss.knob;
       }
-      const r = rand(n * 7 + 3), tuft = rand(n * 7 + 9) > .975, knob = rim ? .5 : mossKnob(x, z);
+      const r = rand(n * 7 + 3), tuft = rand(n * 7 + 9) > .978;
       /* short velvet almost everywhere, with a few longer bright blades standing out of it */
-      const height = tuft ? .08 + r * .1 : rim ? .03 + r * .04 : .016 + r * r * .034;
+      const height = tuft ? .08 + r * .1 : rim ? .035 + r * .055 : .018 + r * r * .036;
       dummy.position.set(x + normal.x * .002, y + normal.y * .002, z + normal.z * .002);
       dummy.quaternion.setFromUnitVectors(up, normal);
       spin.setFromAxisAngle(up, rand(n * 7 + 4) * Math.PI * 2); dummy.quaternion.multiply(spin);
-      dummy.scale.set(.008 + rand(n * 7 + 5) * .011, height, height);
+      dummy.scale.set(.009 + rand(n * 7 + 5) * .012, height, height);
       dummy.updateMatrix(); grass.setMatrixAt(i, dummy.matrix);
       /* dark in the creases, fresh on the crowns of the knobs */
-      color.setHSL(.225 + rand(n * 7 + 6) * .05 - knob * .03 - (tuft ? .03 : 0), .5 + knob * .22, (tuft ? .16 : .035 + knob * .115) + r * .05);
+      color.setHSL(.225 + rand(n * 7 + 6) * .05 - knob * .03 - (tuft ? .03 : 0), .5 + knob * .22, (tuft ? .16 : .032 + knob * .125) + r * .05);
       grass.setColorAt(i, color);
-      seeds[i * 2] = seedDelay(x, z) + rand(n + 19) * .04 + (rim ? .02 : 0);
+      seeds[i * 2] = delay + rand(n + 19) * .025;
       seeds[i * 2 + 1] = rand(n + 70);
       i++;
+      }
       grass.count = i;
-    }
-    geo.setAttribute("aGarden", new THREE.InstancedBufferAttribute(seeds, 2));
-    geo.setAttribute("aLift", new THREE.InstancedBufferAttribute(lifts, 3));
-    grass.instanceMatrix.needsUpdate = true;
-    if (grass.instanceColor) grass.instanceColor.needsUpdate = true;
+      const added = i - from;
+      for (const attribute of [grass.instanceMatrix, grass.instanceColor, geo.getAttribute("aGarden"), geo.getAttribute("aLift")] as (THREE.BufferAttribute | null)[]) {
+        if (!attribute || !added) continue;
+        attribute.addUpdateRange(from * attribute.itemSize, added * attribute.itemSize);
+        attribute.needsUpdate = true;
+      }
+      return i >= count || n >= count * 6;
+    };
+    if (!plant(10)) this.plantMore = plant;
     this.world.add(grass);
   }
 
@@ -379,59 +439,71 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
 
   private buildFlowers() {
     const petalGeo = this.petalGeometry();
-    const ivory = new THREE.MeshStandardMaterial({ color: "#fff4d8", roughness: .67, side: THREE.DoubleSide, envMapIntensity: .4 });
-    const orange = new THREE.MeshStandardMaterial({ color: "#ef7a1f", roughness: .58, side: THREE.DoubleSide, envMapIntensity: .4 });
-    const stemMat = new THREE.MeshStandardMaterial({ color: "#426b27", roughness: .9, envMapIntensity: .3 });
+    const petalMat = (hex: string) => new THREE.MeshStandardMaterial({ color: hex, roughness: .6, side: THREE.DoubleSide, envMapIntensity: .4 });
+    const ivory = petalMat("#fff4d8");
+    /* a ranunculus deepens towards its heart: pale outer petals, red-orange inside */
+    const orange = [petalMat("#f6a03c"), petalMat("#ee7a22"), petalMat("#dc5518"), petalMat("#c9440f")];
+    const stemMat = new THREE.MeshStandardMaterial({ color: "#35581f", roughness: .9, envMapIntensity: .3 });
     const coreMat = new THREE.MeshStandardMaterial({ color: "#d6a52c", roughness: .94, envMapIntensity: .3 });
+    const budMat = new THREE.MeshStandardMaterial({ color: "#e0641c", roughness: .7, envMapIntensity: .3 });
     const coreGeo = new THREE.SphereGeometry(.043, 12, 8);
     const leafGeo = new THREE.SphereGeometry(1, 8, 6);
-    /* three tall orange flowers stand at the far right edge and rise past it; small daisies dot the moss */
+    /* orange flowers and a bud stand at the warm edge and lean out past it, as in the reference; daisies dot the moss */
     const spots: { x: number; z: number; accent: number }[] = [
-      { x: 1.30, z: -.12, accent: 0 }, { x: 1.40, z: .38, accent: 1 }, { x: 1.20, z: .86, accent: 2 },
+      { x: 1.34, z: -.18, accent: 0 }, { x: 1.43, z: .30, accent: 1 }, { x: 1.26, z: .78, accent: 2 }, { x: 1.40, z: .02, accent: 3 },
     ];
-    for (let n = 0; spots.length < 15 && n < 600; n++) {
-      const x = (rand(n * 9 + 211) - .5) * 2.7, z = (rand(n * 9 + 212) - .5) * 2.9;
-      if (delayAt(x, z) > COVER - .06 || mossHeight(x, z) < .02) continue;
-      if (spots.some(s => Math.hypot(s.x - x, s.z - z) < .24)) continue;
+    for (let n = 0; spots.length < 20 && n < 1500; n++) {
+      const x = (rand(n * 9 + 211) - .5) * 2.75, z = (rand(n * 9 + 212) - .5) * 2.95;
+      /* daisies grow in loose drifts, not as an even polka dot */
+      if (fbm(x * 1.3 + 20, z * 1.3 + 4) < .52 || spots.some(s => Math.hypot(s.x - x, s.z - z) < .2)) continue;
       spots.push({ x, z, accent: -1 });
     }
     spots.forEach(({ x, z, accent: slot }, i) => {
-      const accent = slot >= 0;
-      const height = accent ? [.66, .84, .52][slot] : .13 + rand(i + 80) * .15;
-      const group = new THREE.Group(); group.position.set(x, baseAt(x, z).y + mossHeight(x, z) * .8, z);
-      const bend = accent ? .10 + slot * .05 : (rand(i + 31) - .5) * .14;
-      const path = new THREE.QuadraticBezierCurve3(new THREE.Vector3(), new THREE.Vector3(-bend, height * .55, .015), new THREE.Vector3(bend, height, 0));
-      const stem = new THREE.Mesh(new THREE.TubeGeometry(path, 9, accent ? .012 : .006, 5, false), stemMat);
+      const accent = slot >= 0, bud = slot === 3;
+      const height = accent ? [.62, .80, .50, .46][slot] : .11 + rand(i + 80) * .13;
+      const anchor = anchorAt(x, z), h = mossAt(x, z, anchor) * .8;
+      const group = new THREE.Group(); group.position.set(anchor.p[0] + anchor.n[0] * h, anchor.p[1] + anchor.n[1] * h, anchor.p[2] + anchor.n[2] * h);
+      /* accents lean outwards over the edge */
+      const bend = accent ? .16 + slot * .04 : (rand(i + 31) - .5) * .12;
+      const path = new THREE.QuadraticBezierCurve3(new THREE.Vector3(), new THREE.Vector3(-bend * .4, height * .6, .015), new THREE.Vector3(bend, height, 0));
+      const stem = new THREE.Mesh(new THREE.TubeGeometry(path, 9, accent ? .009 : .005, 5, false), stemMat);
       stem.castShadow = true; group.add(stem);
       for (let j = 0; j < 2; j++) {
         const leaf = new THREE.Mesh(leafGeo, stemMat);
-        leaf.position.set(j ? -.025 : .03, height * (.3 + j * .2), 0);
-        leaf.scale.set(accent ? .085 : .05, .009, accent ? .03 : .02); leaf.rotation.z = j ? -.6 : .6;
+        leaf.position.set(j ? -.02 : .035, height * (.3 + j * .2), 0);
+        leaf.scale.set(accent ? .075 : .045, .008, accent ? .026 : .018); leaf.rotation.z = j ? -.6 : .6;
         leaf.castShadow = true; group.add(leaf);
       }
       const head = new THREE.Group(); head.position.set(bend, height, 0);
       /* heads tip towards the camera a little, so the corolla reads in three-quarter view */
       head.rotation.set(accent ? .55 : .3, i * 1.17, accent ? -.35 : -.17); group.add(head);
-      const core = new THREE.Mesh(coreGeo, coreMat); core.scale.y = .55; core.castShadow = true; head.add(core);
       const petals: THREE.Mesh[] = [];
-      const layers = accent ? 3 : 1, amount = accent ? 9 : 10;
-      for (let layer = 0; layer < layers; layer++) for (let j = 0; j < amount; j++) {
-        const pivot = new THREE.Group(); pivot.rotation.y = j / amount * Math.PI * 2 + layer * .35;
-        head.add(pivot);
-        const petal = new THREE.Mesh(petalGeo, accent ? orange : ivory);
-        petal.scale.setScalar(accent ? 1.12 - layer * .24 : .29 + rand(i + 1) * .14);
-        petal.position.y = layer * .012; petal.castShadow = petal.receiveShadow = true;
-        petal.userData.open = accent ? [.05, -.38, -.78][layer] : .1;
-        pivot.add(petal); petals.push(petal);
+      if (bud) {
+        const closed = new THREE.Mesh(coreGeo, budMat); closed.scale.set(.9, 1.5, .9); closed.position.y = .03; closed.castShadow = true; head.add(closed);
+        const calyx = new THREE.Mesh(coreGeo, stemMat); calyx.scale.set(.75, .6, .75); calyx.castShadow = true; head.add(calyx);
+      } else {
+        const core = new THREE.Mesh(coreGeo, coreMat); core.scale.set(accent ? .7 : 1, .55, accent ? .7 : 1); core.castShadow = true; head.add(core);
+        const layers = accent ? 4 : 1, amount = accent ? 8 : 10;
+        for (let layer = 0; layer < layers; layer++) for (let j = 0; j < amount; j++) {
+          const pivot = new THREE.Group(); pivot.rotation.y = j / amount * Math.PI * 2 + layer * .42;
+          head.add(pivot);
+          const petal = new THREE.Mesh(petalGeo, accent ? orange[layer] : ivory);
+          petal.scale.setScalar(accent ? .82 - layer * .16 : .27 + rand(i + 1) * .12);
+          petal.position.y = layer * .01; petal.castShadow = petal.receiveShadow = true;
+          /* inner rings stay cupped: that is what makes a ranunculus and not a daisy */
+          petal.userData.open = accent ? [.02, -.34, -.66, -.95][layer] : .1;
+          pivot.add(petal); petals.push(petal);
+        }
       }
       this.flowers.push({ group, petals, delay: seedDelay(x, z) + .1, seed: i });
       this.world.add(group);
     });
   }
 
-  /** Meltwater on the bare glass, thickest along the retreating edge of the ice, plus a little dew on the moss. */
+  /** Condensation on the bare glass, thickest along the retreating ice; it goes when the moss arrives.
+      A little dew stays on the moss itself. */
   private buildDrops() {
-    const total = this.small ? 110 : 190;
+    const glass = this.small ? 260 : 480, dew = this.small ? 40 : 80, total = glass + dew;
     /* A drop on white glass is a lens: clear in the middle, a dark rim where it bends the view, one hard highlight.
        Faked with view-dependent alpha and colour; real transmission would render the whole scene a second time. */
     const water = new THREE.MeshPhysicalMaterial({ color: "#ffffff", metalness: 0, roughness: .02, clearcoat: 1, clearcoatRoughness: .02, ior: 1.33,
@@ -440,25 +512,30 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
       shader.fragmentShader = shader.fragmentShader.replace("#include <color_fragment>", `
         #include <color_fragment>
         float rim=pow(1.-clamp(dot(normalize(vNormal),normalize(vViewPosition)),0.,1.),1.6);
-        diffuseColor.rgb=mix(vec3(.90,.95,.96),vec3(.22,.32,.36),rim);
-        diffuseColor.a=mix(.20,.92,rim);
+        diffuseColor.rgb=mix(vec3(.88,.94,.95),vec3(.16,.25,.29),rim);
+        diffuseColor.a=mix(.24,.95,rim);
       `);
     };
-    this.drops = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 16, 12), water, total);
+    this.drops = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 12, 8), water, total);
     this.drops.frustumCulled = false; this.drops.castShadow = true;
-    for (let n = 0; this.dropSeeds.length < total && n < total * 60; n++) {
+    for (let n = 0; this.dropSeeds.length < glass && n < glass * 40; n++) {
       const x = (rand(n * 3 + 711) - .5) * TILE.width, z = (rand(n * 3 + 712) - .5) * TILE.depth;
       const surface = topSurface(x, z); if (!surface || surface.ny < .8) continue;
-      const moss = mossHeight(x, z), ice = iceAt(x, z), d = delayAt(x, z);
-      const onMoss = moss > .03;
-      if (onMoss ? rand(n + 5) > .1 : d < COVER + .02) continue;
-      /* the core of the ice never melts: no drops under it; most drops sit in the band the ice gives up */
-      if (ice.t < .5) continue;
-      if (!onMoss && ice.t > 1.25 && rand(n + 9) > .38) continue;
+      const ice = iceAt(x, z), arrive = seedDelay(x, z);
+      /* most drops sit in the band the ice gives up; far from it the glass is only lightly fogged */
+      if (ice.t > 1.35 && rand(n + 9) > .4) continue;
+      /* under the ice a drop is born when the ice above it goes, elsewhere soon after the start */
+      const at = ice.t < 1 ? meltDelay(ice.t) + .16 : .04 + rand(n + 4) * .22;
+      if (arrive < at + .1) continue;
       const big = rand(n + 13);
-      const size = onMoss ? .008 + big * .01 : .013 + big * big * big * .06;
-      const at = onMoss ? seedDelay(x, z) + .2 : THREE.MathUtils.clamp(.06 + Math.max(0, 1 - ice.t) * 1.7 + .1, .1, .7) * (ice.t < 1 ? 1 : .6 + rand(n + 4) * .5);
-      this.dropSeeds.push({ p: new THREE.Vector3(x, surface.y + (onMoss ? moss + .045 : 0), z), size, at, flat: onMoss ? .8 : .42 });
+      /* condensation: a haze of tiny beads and a few fat drops that have run together */
+      this.dropSeeds.push({ p: new THREE.Vector3(x, surface.y, z), size: .009 + Math.pow(big, 5) * .075, at, until: arrive, flat: .42 });
+    }
+    for (let n = 0; this.dropSeeds.length < total && n < dew * 40; n++) {
+      const x = (rand(n * 3 + 1711) - .5) * TILE.width, z = (rand(n * 3 + 1712) - .5) * TILE.depth;
+      const surface = topSurface(x, z); if (!surface || surface.ny < .8) continue;
+      const h = mossAt(x, z);
+      this.dropSeeds.push({ p: new THREE.Vector3(x, surface.y + h + .03, z), size: .008 + rand(n + 13) * .011, at: seedDelay(x, z) + .28, until: 9, flat: .8 });
     }
     this.drops.count = this.dropSeeds.length;
     this.world.add(this.drops);
@@ -475,9 +552,18 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
 
   render(progress: number, time: number) {
     if (!this.ready || this.disposed) return;
+    if (this.plantMore?.(6)) this.plantMore = null;
     this.growth.value = progress;
     this.clock.value = this.reduced ? 0 : time;
-    // The slab stays composed; only living elements move.
+    /* The slab hovers, so it may breathe: a slow float, and a lean towards the cursor. Both are tiny, the composition
+       holds. With reduced motion it stays still. */
+    if (!this.reduced) {
+      const dt = Math.min(.05, Math.max(0, time - this.lastTime)); this.lastTime = time;
+      this.tilt.lerp(this.pointer, 1 - Math.exp(-dt * 3.2));
+      this.world.position.y = Math.sin(time * .9) * .022;
+      this.world.rotation.x = Math.sin(time * .7 + 1.3) * .008 + this.tilt.y * .05;
+      this.world.rotation.z = Math.cos(time * .6) * .008 - this.tilt.x * .05;
+    }
     for (const flower of this.flowers) {
       const stem = smooth(flower.delay, flower.delay + .14, progress);
       const bloom = smooth(flower.delay + .09, flower.delay + .26, progress);
@@ -487,7 +573,7 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
     }
     const dummy = this.dummy;
     this.dropSeeds.forEach((drop, i) => {
-      const g = smooth(drop.at, drop.at + .2, progress);
+      const g = smooth(drop.at, drop.at + .2, progress) * (1 - smooth(drop.until - .03, drop.until + .05, progress));
       dummy.position.copy(drop.p);
       dummy.scale.setScalar(Math.max(.00001, drop.size * g));
       dummy.scale.y *= drop.flat; dummy.updateMatrix(); this.drops.setMatrixAt(i, dummy.matrix);

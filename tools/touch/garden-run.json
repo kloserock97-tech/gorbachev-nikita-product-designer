@@ -1,0 +1,5 @@
+[
+  { "probe": "!!document.querySelector('.nature-loader')", "as": "loader shown" },
+  { "wait": 9000 },
+  { "probe": "JSON.stringify({loaderGone: !document.querySelector('.nature-loader'), ready: document.body.classList.contains('is-ready'), lite: document.body.classList.contains('lite'), loading: document.body.classList.contains('garden-loading')})", "as": "after run" }
+]

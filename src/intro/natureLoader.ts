@@ -46,7 +46,8 @@ export function createNatureLoader(onDone: () => void, onLite: () => void): Natu
   let ready = false, skipped = false, leaving = false, disposed = false, raf = 0, exitTimer = 0;
   let statusIndex = -1, completedAt = -1, renderedGrowth = -1;
   const resize = () => { const { width, height } = stage.getBoundingClientRect(); view?.resize(width, height); };
-  try { view = new NatureScene(canvas, reduced); resize(); }
+  const buildStart = performance.now();
+  try { view = new NatureScene(canvas, reduced); resize(); root.dataset.buildMs = (performance.now() - buildStart).toFixed(0); root.dataset.build = JSON.stringify(view.timings); }
   catch (error) { console.warn("Garden renderer unavailable; using static loader", error); }
   const observer = new ResizeObserver(resize); observer.observe(stage);
   canvas.addEventListener("webglcontextlost", () => {
@@ -76,6 +77,11 @@ export function createNatureLoader(onDone: () => void, onLite: () => void): Natu
   };
   button.addEventListener("click", skip);
   fallback.addEventListener("click", () => { dispose(); onLite(); });
+  /* the slab leans a little towards the cursor; a finger on a phone does not steer it */
+  root.addEventListener("pointermove", e => {
+    if (e.pointerType !== "mouse" || reduced) return;
+    view?.setPointer(e.clientX / innerWidth * 2 - 1, e.clientY / innerHeight * 2 - 1);
+  });
   root.addEventListener("pointerdown", e => e.stopPropagation());
   root.addEventListener("click", e => e.stopPropagation());
   root.addEventListener("keydown", e => {
@@ -104,7 +110,7 @@ export function createNatureLoader(onDone: () => void, onLite: () => void): Natu
       if (view?.isReady) { stage.classList.add("has-render"); renderedGrowth = growth; }
       lastDraw = now;
     }
-    // 100 means both a ready portfolio AND a rendered, fully grown scene (ice melted back, moss and flowers up).
+    // 100 means both a ready portfolio AND a rendered, fully overgrown solid: no ice, no bare glass, walls included.
     const complete = ready && growth === 1 && (!view || renderedGrowth === 1);
     const progress = complete ? 1 : Math.min(.99, growth, target);
     root.style.setProperty("--garden-progress", String(progress));
@@ -115,7 +121,7 @@ export function createNatureLoader(onDone: () => void, onLite: () => void): Natu
       statusIndex = index;
       label.textContent = (ru ? ["Подготавливаю свет и материалы", "Собираю пространство", "Последние детали", "Можно исследовать"] : ["Preparing light and materials", "Building the scene", "Finishing touches", "Ready to explore"])[index];
     }
-    // Let the finished slab read before the dissolve begins.
+    // Let the completed edge-to-edge garden read before the dissolve begins.
     if (complete && (reduced || skipped || elapsed - completedAt >= .32)) finish();
   };
   raf = requestAnimationFrame(frame);
