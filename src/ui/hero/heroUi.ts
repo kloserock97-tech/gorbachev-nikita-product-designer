@@ -39,6 +39,15 @@ export function initHeroUi(hooks: Hooks = {}) {
   document.documentElement.addEventListener("pointerleave", () => { pointer.seen = false; pointer.nx = pointer.ny = 0; });
 
   /* ── док: близость курсора к каждому пункту ─────────────────────────────── */
+  /* v44: прямоугольники дока меряются, когда он изменился (ResizeObserver, resize), а не каждый кадр:
+     getBoundingClientRect сразу после записи стилей — принудительный пересчёт раскладки на каждом кадре */
+  let dockBox: DOMRect | null = null;
+  let centers: number[] = [];
+  let dockDirty = true;
+  if (dock && "ResizeObserver" in window) new ResizeObserver(() => (dockDirty = true)).observe(dock);
+  addEventListener("resize", () => (dockDirty = true));
+  /* на узком экране hero прокручивается вместе с доком; на широком она закреплена и скролл дока не двигает */
+  addEventListener("scroll", () => { if (innerWidth <= 900) dockDirty = true; }, { passive: true });
   const dockTargets = () => {
     const out = items.map(() => 0);
     if (keyboardFocus >= 0) {
@@ -46,13 +55,17 @@ export function initHeroUi(hooks: Hooks = {}) {
       return { out, glintTarget: 0.6 };
     }
     if (!dock || !pointer.seen || !FINE.matches || REDUCED) return { out, glintTarget: 0 };
-    const box = dock.getBoundingClientRect();
+    if (dockDirty || !dockBox) {
+      dockDirty = false;
+      dockBox = dock.getBoundingClientRect();
+      centers = items.map((el) => { const r = el.getBoundingClientRect(); return r.left + r.width / 2; });
+    }
+    const box = dockBox;
     const reachX = box.height * 2.6;
     const inBand = pointer.y > box.top - box.height && pointer.y < box.bottom + box.height * 2.2 && pointer.x > box.left - reachX && pointer.x < box.right + reachX;
     if (!inBand) return { out, glintTarget: 0 };
-    items.forEach((el, i) => {
-      const r = el.getBoundingClientRect();
-      const d = Math.abs(pointer.x - (r.left + r.width / 2)) / reachX;
+    items.forEach((_, i) => {
+      const d = Math.abs(pointer.x - centers[i]) / reachX;
       const t = Math.max(0, 1 - d);
       out[i] = t * t * (3 - 2 * t);
     });

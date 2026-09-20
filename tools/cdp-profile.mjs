@@ -46,4 +46,13 @@ const show = (m, title) => { console.log(`\n${title}`); [...m].sort((a, b) => b[
 console.log(`всего сэмплировано ${total.toFixed(0)} мс`);
 show(agg, "SELF");
 show(incl, "INCLUSIVE");
+/* --lines имя — по каким строкам функции разложилось её собственное время (positionTicks) */
+const LINES = arg("lines", "");
+if (LINES) {
+  const ticks = new Map();
+  for (const n of p.nodes) if (n.callFrame.functionName === LINES) for (const t of n.positionTicks ?? []) ticks.set(t.line, (ticks.get(t.line) ?? 0) + t.ticks);
+  console.log(`
+СТРОКИ ${LINES} (тики по ${(total / p.samples.length).toFixed(2)} мс)`);
+  [...ticks].sort((a, b) => b[1] - a[1]).slice(0, 14).forEach(([l, t]) => console.log(`${String(t).padStart(7)}  строка ${l}`));
+}
 ws.close(); chrome.kill(); process.exit(0);

@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
+import { sharedPmrem } from "./hdri";
 
 /* Студийный свет для компьютера на светлой странице (v17, по мотивам oryzo.ai; вынесено из
    HillScene в v21). Закатный свет делал корпус оливково-тёмным на белом фоне. Лампы студии живут
@@ -34,16 +35,38 @@ export class Studio {
 
   /** v24: окружение студии собирается не в конструкторе (0,47 с главного потока на загрузке),
       а при прогреве истории — после HDRI, программы PMREM к этому времени уже скомпилированы */
+  private preparing = false;
+  /** v44: тот же генератор PMREM, что у HDRI (его программы уже собраны), а материалы комнаты и фоновый куб
+      генератора собираются параллельно в драйвере до рендера. Раньше этот вызов посреди чтения первого экрана
+      останавливал главный поток на 0,3 с (на слабом процессоре — больше секунды): новый генератор заново
+      собирал GGX-свёртку и размытие, комната — три своих материала, всё синхронно */
   prepare(renderer: THREE.WebGLRenderer) {
-    if (this.env) return;
-    try {
-      const pmrem = new THREE.PMREMGenerator(renderer);
-      const room = new RoomEnvironment();
-      this.env = pmrem.fromScene(room, 0.04, 0.1, 100, { size: 64 }).texture;
+    if (this.env || this.preparing) return;
+    this.preparing = true;
+    const { pmrem, ready } = sharedPmrem(renderer);
+    const room = new RoomEnvironment();
+    const build = () => {
+      try {
+        this.env = pmrem.fromScene(room, 0.04, 0.1, 100, { size: 64 }).texture;
+      } catch (e) {
+        console.warn("студийное окружение не собралось", e);
+      }
       room.dispose();
-      pmrem.dispose();
-    } catch (e) {
-      console.warn("студийное окружение не собралось", e);
+    };
+    try {
+      /* фоновый куб генератор создаёт сам при первом fromScene — создаём такой же заранее, чтобы собрать его программу */
+      const p = pmrem as unknown as { _backgroundBox: THREE.Mesh | null };
+      p._backgroundBox ??= new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({ name: "PMREM.Background", side: THREE.BackSide, depthWrite: false, depthTest: false }));
+      const rt = new THREE.WebGLRenderTarget(8, 8, { type: THREE.HalfFloatType, colorSpace: THREE.LinearSRGBColorSpace });
+      const cam = new THREE.PerspectiveCamera(90, 1, 0.1, 100);
+      const prev = renderer.getRenderTarget();
+      renderer.setRenderTarget(rt);
+      const jobs = [renderer.compileAsync(room, cam), renderer.compileAsync(p._backgroundBox, cam)];
+      renderer.setRenderTarget(prev);
+      const wait = new Promise<void>((r) => setTimeout(r, 4000));
+      void Promise.race([Promise.all([...jobs, ready]), wait]).catch(() => {}).then(() => { rt.dispose(); build(); });
+    } catch {
+      build();
     }
   }
 

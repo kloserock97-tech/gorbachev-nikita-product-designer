@@ -460,7 +460,8 @@ export class HillScene {
       guard++;
       let x = X0 + (X1 - X0) * rng();
       let z = Z0 + (Z1 - Z0) * rng();
-      const d0 = Math.hypot(x - cam.x, heightAt(x, z) - cam.y, z - cam.z);
+      const h0 = heightAt(x, z);
+      const d0 = Math.hypot(x - cam.x, h0 - cam.y, z - cam.z);
       if (d0 < (this.opts.fixedCamera ? 0.05 : 1.2)) continue;
       /* Плотность ∝ ~1/d²: так на экран приходится примерно одинаково травинок
          на пиксель по всей глубине. Раньше до 8.5 м плотность на метр была
@@ -468,10 +469,15 @@ export class HillScene {
          экранную площадь, чем даль — отсюда просветы дёрна внизу. */
       const density = Math.min(1, Math.pow(5.2 / d0, 1.8));
       /* прогалины — только лёгкие разрежения, без проплешин до земли */
+      /* v44: посадка — 0,5 с главного потока на загрузке. Случайное число берём до шума прогалин: bare ≤ 1, поэтому
+         при r > density кандидат отброшен при любом шуме, и три октавы fbm для него не считаем (дальние кандидаты
+         отсеиваются почти все). Высота для проверки видимости — уже посчитанная. Порядок rng() и результат те же. */
+      const r = rng();
+      if (r > density) continue;
       const patch = fbm(x * 0.55 + 7.3, z * 0.55 - 2.1, 3);
       const bare = 0.72 + 0.28 * smooth(0.28, 0.52, patch);
-      if (rng() > density * bare) continue;
-      if (!visible(x, heightAt(x, z), z, 0.2)) continue;
+      if (r > density * bare) continue;
+      if (!visible(x, h0, z, 0.2)) continue;
 
       /* Кочки по Вороному (GoT): травинка знает свою ячейку, подтягивается
          к её центру и клонится к нему; рост и тон — общие на ячейку.
@@ -1637,32 +1643,56 @@ export class HillScene {
     cam.updateMatrixWorld();
     cam.layers.set(SHADOW_LAYER);
 
-    const prevTarget = this.renderer.getRenderTarget();
-    const bg = this.scene.background;
-    this.scene.background = null;
-    this.renderer.setRenderTarget(rt);
-    this.renderer.setClearColor(0x000000, 0);
-    this.renderer.clear();
     /* v24: нужна только глубина — один простой материал вместо PBR-материалов реквизита
        (иначе рендер без ламп синхронно собирал для кресла второй комплект программ) */
-    const over = this.scene.overrideMaterial;
-    this.scene.overrideMaterial = new THREE.MeshBasicMaterial({ colorWrite: false });
-    this.renderer.render(this.scene, cam);
-    this.scene.overrideMaterial.dispose();
-    this.scene.overrideMaterial = over;
-    this.renderer.setRenderTarget(prevTarget);
-    this.scene.background = bg;
+    const depthOnly = new THREE.MeshBasicMaterial({ colorWrite: false });
+    const bake = () => {
+      if (this.disposed) return;
+      const prevTarget = this.renderer.getRenderTarget();
+      const bg = this.scene.background;
+      this.scene.background = null;
+      this.renderer.setRenderTarget(rt);
+      this.renderer.setClearColor(0x000000, 0);
+      this.renderer.clear();
+      const over = this.scene.overrideMaterial;
+      this.scene.overrideMaterial = depthOnly;
+      this.renderer.render(this.scene, cam);
+      this.scene.overrideMaterial = over;
+      this.renderer.setRenderTarget(prevTarget);
+      this.scene.background = bg;
+      depthOnly.dispose();
 
-    this.uniforms.uShadowMap.value = rt.depthTexture;
-    this.uniforms.uShadowMatrix.value.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
-    this.uniforms.uShadowTexel.value = 1 / size;
-    this.uniforms.uShadowOn.value = 1;
+      this.uniforms.uShadowMap.value = rt.depthTexture;
+      this.uniforms.uShadowMatrix.value.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
+      this.uniforms.uShadowTexel.value = 1 / size;
+      this.uniforms.uShadowOn.value = 1;
+    };
+    /* v44: программа этого материала собиралась синхронно прямо в рендере тени — 0,33 с главного потока на
+       холодном кэше. Теперь сначала параллельная сборка (те же геометрии, та же цель, тот же туман сцены),
+       запекание — когда программа готова; тень появляется на долю секунды позже, холст в это время ещё скрыт */
+    const twins = new THREE.Group();
+    props.updateWorldMatrix(true, true);
+    props.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (!m.isMesh || !m.layers.isEnabled(SHADOW_LAYER)) return;
+      const twin = new THREE.Mesh(m.geometry, depthOnly);
+      twin.layers.set(SHADOW_LAYER);
+      twin.frustumCulled = false;
+      twins.add(twin);
+    });
+    const prev = this.renderer.getRenderTarget();
+    this.renderer.setRenderTarget(rt);
+    const compiled = this.renderer.compileAsync(twins, cam, this.scene);
+    this.renderer.setRenderTarget(prev);
+    void Promise.race([compiled, new Promise((r) => setTimeout(r, 3000))]).catch(() => {}).then(bake);
   }
 
   /* ------------------------------------------------------------------ */
 
   private onPointer = (e: PointerEvent) => {
-    const r = this.canvas.getBoundingClientRect();
+    /* v44: канвас закреплён в окне — его прямоугольник меняется только на resize (readCanvasRect);
+       getBoundingClientRect на каждое движение мыши тоже форсировал раскладку */
+    const r = this.canvasRect;
     this.ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     /* параллакс — от окна, а не от канваса: на телефоне канвас выше экрана */
     this.pointer.set((e.clientX / window.innerWidth) * 2 - 1, -((e.clientY / window.innerHeight) * 2 - 1));
@@ -1882,7 +1912,10 @@ export class HillScene {
       this.updateComputer(dt, rest);
     }
 
-    this.uniforms.uPixelWorld.value = (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2)) / Math.max(1, (this.canvas.clientHeight || window.innerHeight) * this.dpr);
+    /* v44: высота канваса — из замера в resize, а не canvas.clientHeight. Чтение clientHeight каждый кадр после
+       записи стилей интерфейса заставляло браузер синхронно пересчитывать раскладку всей страницы: по профилю
+       22 % времени главного потока на быстром процессоре, на слабом — почти весь бюджет кадра */
+    this.uniforms.uPixelWorld.value = (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2)) / Math.max(1, (this.canvasRect.height || window.innerHeight) * this.dpr);
     /* студийный свет и прямоугольник компьютера — по камере этого кадра, иначе фон и рамка отстают на кадр */
     if (this.storyS > 0 && !(this.opts.intro && !this.holoDetached)) {
       this.syncOverlayCam();
@@ -1974,12 +2007,19 @@ export class HillScene {
     const ext = gl.getExtension("WEBGL_debug_renderer_info");
     const gpu = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : "gpu";
     /* v3 — версия рендер-пайплайна: при его изменении старые ступени недействительны */
-    return `hill-tier:v13:${gpu}:${screen.width}x${screen.height}@${window.devicePixelRatio}:${this.bladeTotal}`;
+    return `hill-tier:v14:${gpu}:${screen.width}x${screen.height}@${window.devicePixelRatio}:${this.bladeTotal}`;
   }
 
   private static readonly TIER_TTL = 14 * 24 * 3600 * 1000;
   private restoreTier() {
     if (this.tierLocked) return; // ?dpr= — ручной режим для замеров
+    /* v44: ?tier=0…8 — поставить ступень руками (посмотреть, что видит слабый компьютер); регулятор выключен */
+    const forcedTier = new URLSearchParams(location.search).get("tier");
+    if (forcedTier !== null && Number.isInteger(+forcedTier) && +forcedTier >= 0 && +forcedTier < HillScene.LADDER.length) {
+      this.setTier(+forcedTier, "param");
+      this.lockTier(false);
+      return;
+    }
     if (/[?&]recalibrate=1/.test(location.search)) return;
     try {
       /* ступень хранится со временем замера: одна неудачная калибровка (занятая видеокарта,
@@ -2126,7 +2166,7 @@ export class HillScene {
   private governor: QualityGovernor | null = null;
   private lockTier(save: boolean) {
     this.tierLocked = true;
-    const manual = this.opts.fixedCamera || Number(new URLSearchParams(location.search).get("dpr")) > 0 || /[?&]governor=0/.test(location.search);
+    const manual = this.opts.fixedCamera || Number(new URLSearchParams(location.search).get("dpr")) > 0 || /[?&](governor=0|tier=d)/.test(location.search);
     if (!manual && !this.governor) this.governor = new QualityGovernor(this.renderer.getContext() as WebGL2RenderingContext, HillScene.LADDER);
     if (save) try { localStorage.setItem(this.tierKey(), JSON.stringify({ tier: this.tier, at: Date.now() })); } catch { /* ничего */ }
     this.resolveCalibrated();

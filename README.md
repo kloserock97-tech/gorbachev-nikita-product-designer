@@ -99,6 +99,9 @@ The `tools/` scripts drive a headless Chrome over the DevTools protocol:
 - `load-test.mjs` runs nine device profiles (fast desktop, laptop with a slow CPU, software rendering, good and budget phones, reduced motion, no WebGL, lost context, rotation) and records load time, per-chapter frame intervals, long tasks and layout shifts. Results for the current version are in [docs/load-test-report.md](docs/load-test-report.md) (in Russian).
 - `cdp-profile.mjs` records a CPU profile of a page or of a moment in the story.
 - `cdp-eval.mjs`, `cdp-shot.mjs` and `cdp-frames.mjs` evaluate code, take screenshots and capture frame sequences.
+- `pre-shader-stalls.js` with `cdp-eval.mjs --pre tools/pre-shader-stalls.js --fresh` lists shader programs that block the main thread on a cold cache. `cdp-profile.mjs --lines <function>` splits a function's self time by source line.
+- `crop.ps1` crops and enlarges a screenshot region without smoothing, to inspect single pixels.
+- `?tier=0..8` forces a quality tier and `?edgeaa=0|1` toggles edge anti-aliasing of the final pass.
 
 The scripts look for Chrome at the default Windows path. Set `CHROME=/path/to/chrome` on other systems.
 

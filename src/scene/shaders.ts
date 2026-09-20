@@ -799,6 +799,7 @@ uniform float uGrain;
 uniform float uExposure;
 uniform vec2 uTexel;       /* размер текселя буфера сцены */
 uniform float uSharp;      /* 0 — без резкости, 1 — максимум CAS */
+uniform float uEdgeAA;     /* v44: сглаживание краёв в этом проходе — для ступеней без MSAA (0 — выкл., 1 — полное) */
 uniform int uTone;
 uniform float uVibrance;   /* насыщенность, бережная к уже насыщенным цветам */
 uniform float uContrast;   /* контраст в лог-пространстве вокруг 0.18 */
@@ -891,6 +892,30 @@ float vnoise(vec2 p){
   return mix(mix(hash21(i), hash21(i + vec2(1.0, 0.0)), u.x), mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), u.x), u.y);
 }
 
+/* v44: сглаживание краёв после рендера — для ступеней качества без MSAA (слабые видеокарты). Без него на экране
+   с DPR 1 травинка шириной в пиксель рисуется лесенкой и мерцает на ветру («трава пиксельная»).
+   Идея FXAA: по четырём диагональным выборкам находим направление края по яркости и усредняем вдоль него.
+   Яркость берём через корень — буфер линейный HDR, а край нужно искать так, как его видит глаз.
+   Стоит 8 выборок на пиксель только на контрастных краях; MSAA 2× на Intel Arc стоит 6 мс, этот проход — меньше 1. */
+float edgeLuma(vec3 c){ return sqrt(dot(min(c, vec3(1.0)), LUMA)); }
+vec3 edgeAA(vec2 uv, vec3 m){
+  vec3 nw = textureLod(tScene, uv + vec2(-0.5, -0.5) * uTexel, 0.0).rgb;
+  vec3 ne = textureLod(tScene, uv + vec2(0.5, -0.5) * uTexel, 0.0).rgb;
+  vec3 sw = textureLod(tScene, uv + vec2(-0.5, 0.5) * uTexel, 0.0).rgb;
+  vec3 se = textureLod(tScene, uv + vec2(0.5, 0.5) * uTexel, 0.0).rgb;
+  float lM = edgeLuma(m), lNW = edgeLuma(nw), lNE = edgeLuma(ne), lSW = edgeLuma(sw), lSE = edgeLuma(se);
+  float lMin = min(lM, min(min(lNW, lNE), min(lSW, lSE)));
+  float lMax = max(lM, max(max(lNW, lNE), max(lSW, lSE)));
+  if (lMax - lMin < max(0.03, lMax * 0.1)) return m;
+  vec2 dir = vec2((lSW + lSE) - (lNW + lNE), (lNW + lSW) - (lNE + lSE));
+  float damp = max((lNW + lNE + lSW + lSE) * 0.03, 0.008);
+  dir = clamp(dir / (min(abs(dir.x), abs(dir.y)) + damp), vec2(-6.0), vec2(6.0)) * uTexel;
+  vec3 near = 0.5 * (textureLod(tScene, uv - dir * 0.1667, 0.0).rgb + textureLod(tScene, uv + dir * 0.1667, 0.0).rgb);
+  vec3 far = 0.5 * near + 0.25 * (textureLod(tScene, uv - dir * 0.5, 0.0).rgb + textureLod(tScene, uv + dir * 0.5, 0.0).rgb);
+  float lF = edgeLuma(far);
+  return mix(m, (lF < lMin || lF > lMax) ? near : far, uEdgeAA);
+}
+
 /* HDR → экран: контраст в лог-пространстве, тонмаппинг, vibrance, sRGB. Общий для сцены
    и для отдельного прохода компьютера, чтобы на стыке слоёв цвет не прыгал */
 vec3 grade(vec3 hdr){
@@ -927,6 +952,7 @@ void main(){
     e.r = texture2D(tScene, uv + vec2(split, 0.0)).r;
     e.b = texture2D(tScene, uv - vec2(split, 0.0)).b;
   }
+  if (uEdgeAA > 0.001 && split <= 0.0) e = edgeAA(uv, e);
   if (uSharp > 0.001) {
     vec3 b = texture2D(tScene, uv - vec2(0.0, uTexel.y)).rgb;
     vec3 h = texture2D(tScene, uv + vec2(0.0, uTexel.y)).rgb;

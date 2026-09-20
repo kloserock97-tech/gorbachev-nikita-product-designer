@@ -69,6 +69,7 @@ export function createPostFx(
   const bgBlurRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
   const shadowRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
   let sharp = 0;
+  const edgeAA = new URLSearchParams(location.search).has("edgeaa") ? Number(new URLSearchParams(location.search).get("edgeaa")) : null;
   const small = { type: THREE.HalfFloatType, depthBuffer: false };
   const maskRT = new THREE.WebGLRenderTarget(1, 1, small);
   const blurA = new THREE.WebGLRenderTarget(1, 1, small);
@@ -154,6 +155,7 @@ export function createPostFx(
       uExposure: { value: params.exposure },
       uTexel: { value: new THREE.Vector2(1, 1) },
       uSharp: { value: 0 },
+      uEdgeAA: { value: 0 },
       uTone: { value: toneMode },
       uVibrance: { value: params.vibrance },
       uContrast: { value: params.contrast },
@@ -277,6 +279,9 @@ export function createPostFx(
       final.uniforms.uAlt.value = altMix ? params.alt : 0;
       /* резкость CAS считает соседей полноразмерным текселем — на половинном буфере она ни к чему */
       final.uniforms.uSharp.value = low || altFull ? 0 : sharp;
+      /* v44: без MSAA края сглаживает финальный проход целиком, с MSAA 2× — наполовину (две ступени покрытия
+         всё ещё дают лесенку на DPR 1); с MSAA 4× не нужен. Размытому заднику он тоже не нужен. ?edgeaa=0|1 — для сравнения */
+      final.uniforms.uEdgeAA.value = low || altFull ? 0 : edgeAA ?? (sceneRT.samples === 0 ? 1 : sceneRT.samples <= 2 ? 0.5 : 0);
       if (params.overlay) {
         const mask = camera.layers.mask;
         const alpha = renderer.getClearAlpha();
@@ -341,6 +346,10 @@ export function createPostFx(
       /* ключ программы зависит от цели: промежуточные проходы — в half-float буфер, финал — на экран */
       const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
       const geo = new THREE.PlaneGeometry(2, 2);
+      /* v44: у настоящего полноэкранного прохода (FullScreenQuad) нормалей нет. С нормалями three добавляет
+         #define HAS_NORMAL — ключ программы другой, и все проходы собирались дважды: заранее (впустую) и синхронно
+         на первом кадре (финальный шейдер — 0,18 с главного потока на холодном кэше) */
+      geo.deleteAttribute("normal");
       const scene = (mats: THREE.Material[]) => {
         const s = new THREE.Scene();
         for (const m of mats) { const mesh = new THREE.Mesh(geo, m); mesh.frustumCulled = false; s.add(mesh); }

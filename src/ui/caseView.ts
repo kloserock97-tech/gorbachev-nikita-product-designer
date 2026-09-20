@@ -1,8 +1,22 @@
 import { getCases } from "../data/cases";
-import { getStory } from "../data/caseStory";
 import { cue } from "../audio/bus";
 import { onLang, t } from "../i18n";
-import { renderStory, mountStory } from "./caseStoryView";
+
+/* v44: тексты шести кейсов на двух языках, разметка и стили страницы кейса — отдельный файл сборки.
+   Раньше всё это (около 430 КБ исходников) разбиралось вместе со сценой до первого кадра холма, хотя нужно
+   только тому, кто открыл кейс. Файл подгружается в простое после старта, по наведению на карточку кейса
+   и сразу, если сайт открыли прямой ссылкой на кейс. Маршруты и история остаются здесь и работают синхронно. */
+type Kit = {
+  getStory: typeof import("../data/caseStory").getStory;
+  renderStory: typeof import("./caseStoryView").renderStory;
+  mountStory: typeof import("./caseStoryView").mountStory;
+};
+let kit: Kit | null = null;
+let kitLoading: Promise<Kit> | null = null;
+export const loadCaseKit = () =>
+  (kitLoading ??= Promise.all([import("../data/caseStory"), import("./caseStoryView")]).then(
+    ([d, v]) => (kit = { getStory: d.getStory, renderStory: v.renderStory, mountStory: v.mountStory }),
+  ));
 
 /* Страница кейса внутри сайта (v26). Открывается поверх сцены по адресу #/work/<id>: карточка в главе
    «Кейсы», меню Work в доке, прямая ссылка. Закрывается кнопкой «Все кейсы», Esc и «назад» в браузере.
@@ -37,7 +51,7 @@ export function initCaseView(opts: Opts = {}) {
 
   let current: Route | null = null;
   let lastFocus: HTMLElement | null = null;
-  let storyApi: ReturnType<typeof mountStory> | null = null;
+  let storyApi: ReturnType<Kit["mountStory"]> | null = null;
 
   const href = (id: string, track?: string | null) => `#/work/${id}${track ? `/${track}` : ""}`;
 
@@ -71,17 +85,17 @@ export function initCaseView(opts: Opts = {}) {
     storyApi?.stop();
     storyApi = null;
     if (r.missing) { renderMissing(r.missing); return; }
-    const story = getStory(r.id)!;
+    const story = kit!.getStory(r.id)!;
     const k = order.indexOf(r.id);
     const n = order.length;
-    root.innerHTML = `<div class="cv-scroll cv-scroll--story">${renderStory(story, k, n, order[(k + 1) % n], order[(k - 1 + n) % n])}</div>`;
+    root.innerHTML = `<div class="cv-scroll cv-scroll--story">${kit!.renderStory(story, k, n, order[(k + 1) % n], order[(k - 1 + n) % n])}</div>`;
     const scroller = root.querySelector<HTMLElement>(".cv-scroll")!;
     scroller.scrollTop = 0;
-    storyApi = mountStory(root, scroller, { onClose: () => close(), track: r.track, go });
+    storyApi = kit!.mountStory(root, scroller, { onClose: () => close(), track: r.track, go });
   };
 
   const open = (r: Route) => {
-    if (!r.missing && !getStory(r.id)) return;
+    if (!r.missing && !kit!.getStory(r.id)) return;
     const was = current;
     /* тот же кейс: страница на месте, меняется только раскрытый разбор */
     if (was && storyApi && !r.missing && was.id === r.id) { current = r; storyApi.setTrack(r.track); return; }
@@ -132,13 +146,19 @@ export function initCaseView(opts: Opts = {}) {
   const parse = (): Route | null => {
     const m = location.hash.match(/^#\/work\/([\w-]+)(?:\/([\w-]+))?/);
     if (!m) return null;
-    const story = getStory(m[1]);
+    const story = kit!.getStory(m[1]);
     if (!story) return { id: "", track: null, missing: m[1] };
     const track = m[2] && story.deepDives.some((x) => x.id === m[2]) ? m[2] : null;
     return { id: m[1], track };
   };
 
   const route = () => {
+    /* адрес кейса, а данные ещё не приехали — дождаться и разобрать адрес заново */
+    if (!kit) {
+      if (location.hash.startsWith("#/work/")) void loadCaseKit().then(route, () => {});
+      else if (current) hide();
+      return;
+    }
     const r = parse();
     if (closing) {
       closing = false;
@@ -173,6 +193,12 @@ export function initCaseView(opts: Opts = {}) {
     if (location.hash === to) return;
     go(to);
   });
+  /* заранее: в простое после старта и когда курсор или палец дошёл до ссылки на кейс */
+  const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1));
+  window.setTimeout(() => idle(() => void loadCaseKit().catch(() => {}), { timeout: 4000 }), 5000);
+  const warm = (e: Event) => { if ((e.target as Element).closest?.("a[href^='#/work/']")) void loadCaseKit().catch(() => {}); };
+  document.addEventListener("pointerover", warm, { passive: true });
+  document.addEventListener("touchstart", warm, { passive: true });
   addEventListener("hashchange", route);
   addEventListener("popstate", route);
   addEventListener("keydown", (e) => {
