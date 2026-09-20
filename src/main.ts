@@ -21,6 +21,7 @@ import { cue } from "./audio/bus";
 import { CASES, CHAPTER, CHAPTER2, TIMELINE, chapters } from "./scene/story";
 import { topFor } from "./ui/storyScroll";
 import { smoothWheel } from "./ui/smoothScroll";
+import { createNatureLoader } from "./intro/natureLoader";
 
 
 const params = new URLSearchParams(location.search);
@@ -77,17 +78,24 @@ function start3d() {
   if (cam?.length === 6 && cam.every(Number.isFinite)) opts.fixedCamera = cam as HillSceneOptions["fixedCamera"];
   if (params.get("ui") === "0") body.classList.add("no-ui");
 
-  /* Интро (docs/prompts/intro.md): SYS_CAM → глитч → прогрузка локации с волной → вход UI.
+  /* Живой сад (docs/nature-loader.md): процедурная сцена растёт во время загрузки.
      Один раз за сессию; ?intro=1 — всегда, ?intro=0 — никогда, ?ui=0 — тоже без интро.
      Решается до создания сцены: без интро реквизит не получает срез голограммы. */
   const introParam = params.get("intro");
   let seen = false;
   try { seen = sessionStorage.getItem("hill-intro") === "1"; } catch { /* приватный режим */ }
-  const withIntro = introParam === "1" || (introParam !== "0" && !seen && params.get("ui") !== "0" && !opts.fixedCamera);
-  opts.intro = withIntro;
+  const withIntro = !location.hash.startsWith("#/work/") && (introParam === "1" || (introParam !== "0" && !seen && params.get("ui") !== "0" && !opts.fixedCamera));
+  opts.intro = false; // Garden replaces the old holographic material cuts.
+  const garden = withIntro ? createNatureLoader(() => {
+    try { sessionStorage.setItem("hill-intro", "1"); } catch { /* private mode */ }
+    scene.paused = body.classList.contains("case-open");
+    ui.ready();
+  }, () => degrade("stall")) : null;
 
   const canvas = document.getElementById("scene") as HTMLCanvasElement;
-  const scene = new HillScene(canvas, opts);
+  let scene: HillScene;
+  try { scene = new HillScene(canvas, opts); }
+  catch (error) { garden?.dispose(); throw error; }
 
   /* Погода: клик по «Weather» в углу перебирает ясно → облака → дождь → сумерки */
   const weatherLabel = (k: typeof scene.weatherKind) => t(`weather.${k}` as "weather.clear");
@@ -136,23 +144,23 @@ function start3d() {
   /* Порядок показа: сцена сразу в финальной позе (без отъезда камеры) — как только
      откалибровалось качество, канвас мягко проявляется целиком; через мгновение за
      ним входят надписи, док и карточки. Пока канвас скрыт, замер не мешает CSS. */
-  /* код интро грузится отдельным чанком и только тогда, когда интро будет играть */
-  const introReady = withIntro ? import("./intro/intro").then((m) => m.createIntro(scene, () => ui.ready())) : Promise.resolve(null);
+  // Real readiness milestones drive the loader; no simulated download percentage.
+  const gardenPoll = garden ? window.setInterval(() => garden.progress(scene.loadingProgress), 160) : 0;
 
   let started = false;
   const start = () => {
     if (started || body.classList.contains("lite")) return;
     started = true;
     body.classList.add("scene-ready");
-    introReady.then((intro) => {
-      if (intro) {
-        try { sessionStorage.setItem("hill-intro", "1"); } catch { /* ничего */ }
-        /* ждём кресло (у него каркас голограммы), но не дольше 1,5 с */
-        Promise.race([scene.propsReady, new Promise((r) => setTimeout(r, 1500))]).then(() => intro.play());
-      } else {
-        setTimeout(() => ui.ready(), 280);
-      }
-    }).catch(() => setTimeout(() => ui.ready(), 280));
+    clearInterval(gardenPoll);
+    if (garden) {
+      scene.presentationReady.then(() => {
+        if (body.classList.contains("lite")) return;
+        // The prepared hill is completely occluded. Keep its last frame until reveal.
+        scene.paused = true;
+        garden.ready();
+      });
+    } else setTimeout(() => ui.ready(), 280);
   };
   scene.calibrated.then(start);
   setTimeout(() => { if (!started) scene.provisionalTier(); start(); }, 6000);
@@ -163,6 +171,8 @@ function start3d() {
   const degrade = (why: "slow" | "context" | "stall") => {
     if (body.classList.contains("lite")) return;
     if (why !== "context") rememberLite();
+    clearInterval(gardenPoll);
+    garden?.dispose();
     closePc();
     scene.dispose();
     renderCases();

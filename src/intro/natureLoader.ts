@@ -1,0 +1,128 @@
+import { getLang } from "../i18n";
+import { NatureScene } from "./NatureScene";
+import "./natureLoader.css";
+
+export type NatureLoader = { progress: (value: number) => void; ready: () => void; dispose: () => void };
+
+/** The garden grows while the real scene prepares, not as a second intro after loading. */
+export function createNatureLoader(onDone: () => void, onLite: () => void): NatureLoader {
+  const ru = getLang() === "ru";
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const query = new URLSearchParams(location.search);
+  const frozenValue = query.has("garden") ? Number(query.get("garden")) : NaN;
+  const frozen = Number.isFinite(frozenValue) ? Math.min(1, Math.max(0, frozenValue)) : null;
+  const root = document.createElement("section");
+  root.className = "nature-loader";
+  root.setAttribute("role", "dialog");
+  root.setAttribute("aria-modal", "true");
+  root.setAttribute("aria-labelledby", "garden-title");
+  root.innerHTML = `
+    <header class="nature-loader__top">
+      <div class="nature-loader__identity"><b>NIKITA GORBACHEV</b><span>PRODUCT DESIGNER</span></div>
+      <span class="nature-loader__edition">${ru ? "ЦИФРОВАЯ ПРИРОДА" : "DIGITAL NATURE"} · 01</span>
+    </header>
+    <div class="nature-loader__stage" aria-hidden="true"><canvas></canvas></div>
+    <div class="nature-loader__bottom">
+      <h1 class="nature-loader__title" id="garden-title">${ru ? "Всё начинается с малого." : "Every idea starts small."}</h1>
+      <div class="nature-loader__line"><span class="nature-loader__status" role="status" aria-live="polite"></span><span aria-hidden="true">01 — 03</span></div>
+      <div class="nature-loader__track" role="progressbar" aria-label="${ru ? "Подготовка портфолио" : "Preparing portfolio"}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
+      <button class="nature-loader__skip" type="button">${ru ? "Пропустить анимацию" : "Skip animation"}</button>
+      <button class="nature-loader__fallback" type="button">${ru ? "Открыть лёгкую версию" : "Open lightweight version"}</button>
+    </div>`;
+  document.body.appendChild(root);
+  document.body.classList.add("garden-loading");
+  const previousFocus = document.activeElement as HTMLElement | null;
+  const inert = [...document.body.children].filter((e): e is HTMLElement => e instanceof HTMLElement && e !== root && !["SCRIPT", "STYLE", "LINK"].includes(e.tagName)).map(e => ({ e, was: e.inert }));
+  inert.forEach(({ e }) => { e.inert = true; });
+  const button = root.querySelector<HTMLButtonElement>(".nature-loader__skip")!;
+  const fallback = root.querySelector<HTMLButtonElement>(".nature-loader__fallback")!;
+  const label = root.querySelector<HTMLElement>(".nature-loader__status")!;
+  const track = root.querySelector<HTMLElement>(".nature-loader__track")!;
+  const stage = root.querySelector<HTMLElement>(".nature-loader__stage")!;
+  const canvas = root.querySelector("canvas")!;
+  button.focus({ preventScroll: true });
+  let view: NatureScene | null = null;
+  let target = .04, growth = 0, elapsed = 0, last = performance.now(), lastDraw = 0;
+  let ready = false, skipped = false, leaving = false, disposed = false, raf = 0, exitTimer = 0;
+  let statusIndex = -1;
+  const resize = () => { const { width, height } = stage.getBoundingClientRect(); view?.resize(width, height); };
+  try { view = new NatureScene(canvas, reduced); resize(); }
+  catch (error) { console.warn("Garden renderer unavailable; using static loader", error); }
+  const observer = new ResizeObserver(resize); observer.observe(stage);
+  canvas.addEventListener("webglcontextlost", () => {
+    if (disposed) return;
+    view?.dispose(); view = null; stage.classList.remove("has-render");
+  });
+  const slowTimer = window.setTimeout(() => root.classList.add("is-slow"), 10000);
+  const dispose = () => {
+    if (disposed) return; disposed = true;
+    cancelAnimationFrame(raf); clearTimeout(slowTimer); clearTimeout(exitTimer); observer.disconnect();
+    view?.dispose(); view = null;
+    inert.forEach(({ e, was }) => { e.inert = was; });
+    root.remove(); document.body.classList.remove("garden-loading");
+    if (previousFocus?.isConnected && previousFocus !== document.body) previousFocus.focus({ preventScroll: true });
+  };
+  const finish = () => {
+    if (leaving || disposed || frozen !== null) return;
+    leaving = true; root.classList.add("is-leaving");
+    // Reveal the underlying scene while opacity fades. No extra fixed-duration intro.
+    onDone();
+    exitTimer = window.setTimeout(dispose, reduced ? 0 : 680);
+  };
+  const skip = () => {
+    if (skipped) return;
+    skipped = true; button.setAttribute("aria-disabled", "true");
+    button.textContent = ru ? "Открываю портфолио…" : "Opening portfolio…";
+    if (ready) finish();
+  };
+  button.addEventListener("click", skip);
+  fallback.addEventListener("click", () => { dispose(); onLite(); });
+  root.addEventListener("pointerdown", e => e.stopPropagation());
+  root.addEventListener("click", e => e.stopPropagation());
+  root.addEventListener("keydown", e => {
+    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); skip(); }
+    if (e.key === "Tab") {
+      const buttons = [button, ...(root.classList.contains("is-slow") ? [fallback] : [])].filter(b => !b.disabled);
+      if (!buttons.length) { e.preventDefault(); return; }
+      const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+      e.preventDefault(); buttons[(index + (e.shiftKey ? -1 : 1) + buttons.length) % buttons.length].focus();
+    }
+  });
+  const frame = (now: number) => {
+    if (disposed) return;
+    raf = requestAnimationFrame(frame);
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (document.hidden) return;
+    elapsed += dt;
+    // Loading phases gate growth; elapsed time is only choreography, never a fake byte count.
+    const desired = frozen ?? (reduced || skipped ? .99 : Math.min(target * .94 + .04, elapsed / 4.6));
+    growth += (desired - growth) * (1 - Math.exp(-dt * 4.5));
+    if (frozen !== null) growth = frozen;
+    root.dataset.growth = growth.toFixed(3);
+    if (now - lastDraw >= (reduced ? 220 : 1000 / 60)) {
+      view?.render(reduced ? .97 : growth, elapsed);
+      if (view?.isReady) stage.classList.add("has-render");
+      lastDraw = now;
+    }
+    const index = ready ? 3 : target < .36 ? 0 : target < .72 ? 1 : 2;
+    if (index !== statusIndex) {
+      statusIndex = index;
+      label.textContent = (ru ? ["Подготавливаю свет и материалы", "Собираю пространство", "Последние детали", "Можно исследовать"] : ["Preparing light and materials", "Building the scene", "Finishing touches", "Ready to explore"])[index];
+    }
+    if (ready && (reduced || skipped || (elapsed > 4.8 && growth > .96))) finish();
+  };
+  raf = requestAnimationFrame(frame);
+  return {
+    progress(value) {
+      target = Math.max(target, Math.min(.94, value));
+      root.style.setProperty("--garden-progress", String(target));
+      track.setAttribute("aria-valuenow", String(Math.round(target * 100)));
+    },
+    ready() {
+      if (disposed) return;
+      ready = true; target = 1;
+      root.style.setProperty("--garden-progress", "1"); track.setAttribute("aria-valuenow", "100");
+    },
+    dispose,
+  };
+}

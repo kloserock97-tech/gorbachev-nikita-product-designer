@@ -281,6 +281,12 @@ export class HillScene {
     return this.bladeTotal;
   }
 
+  /** Readiness of setup phases, not transferred byte percentage. */
+  get loadingProgress() {
+    return .08 + Math.min(this.assetsReady, 2) * .21 + (this.shadersReady ? .22 : 0)
+      + (this.pendingCompile === 0 ? .08 : 0) + (this.tierLocked ? .14 : 0);
+  }
+
   /* ---------------------------- интро --------------------------------- */
 
   private hologram!: Hologram;
@@ -1725,6 +1731,9 @@ export class HillScene {
   /** v24: сцена не справляется — main.ts переводит страницу в лёгкую версию без 3D */
   onDegrade?: (why: "slow" | "context") => void;
   renderedFrames = 0;
+  private resolvePresentation!: () => void;
+  /** A frame with the critical assets and compiled materials has actually been drawn. */
+  readonly presentationReady = new Promise<void>(resolve => { this.resolvePresentation = resolve; });
   private onContextLost = (e: Event) => {
     e.preventDefault();
     cancelAnimationFrame(this.raf);
@@ -1943,6 +1952,7 @@ export class HillScene {
     gov?.begin();
     this.fx.render();
     this.renderedFrames++;
+    if (this.assetsReady >= 2) this.resolvePresentation();
     gov?.end();
     if (gov && !gov.asleep) {
       const idle = this.storyS === 0 && this.focus === 0 && !(this.opts.intro && !this.holoDetached) && !document.hidden;
