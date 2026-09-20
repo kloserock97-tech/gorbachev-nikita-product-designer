@@ -13,7 +13,8 @@ const notes: Note[] = [
     image: "ui/card-windcrest.webp",
     video: { webm: "ui/card-windcrest.webm", mp4: "ui/card-windcrest.mp4" },
     points: 3,
-    links: { demo: "https://kloserock97-tech.github.io/windcrest/", repo: "https://github.com/kloserock97-tech/windcrest" },
+    /* v54: на карточке трава в пресете moonlit, и демо по ссылке открывается в нём же (настройки Windcrest живут в hash) */
+    links: { demo: "https://kloserock97-tech.github.io/windcrest/#wi=0.8&se=5.5&sa=170&sc=b9ceff&sp=0.55&sk=34466b&bo=10160f&am=1.15&bl=1.6&fg=1a2436&ze=070c18&hz=0.9&ex=1.6", repo: "https://github.com/kloserock97-tech/windcrest" },
   },
   {
     id: "drift",
