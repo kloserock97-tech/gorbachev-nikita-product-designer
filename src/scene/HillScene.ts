@@ -281,12 +281,6 @@ export class HillScene {
     return this.bladeTotal;
   }
 
-  /** Readiness of setup phases, not transferred byte percentage. */
-  get loadingProgress() {
-    return .08 + Math.min(this.assetsReady, 2) * .21 + (this.shadersReady ? .22 : 0)
-      + (this.pendingCompile === 0 ? .08 : 0) + (this.tierLocked ? .14 : 0);
-  }
-
   /* ---------------------------- интро --------------------------------- */
 
   private hologram!: Hologram;
