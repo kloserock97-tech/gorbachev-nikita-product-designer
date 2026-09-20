@@ -66,56 +66,6 @@
   /* «Дальше» на телефоне лишнее: палец и так листает, а вертикальная подпись выходила 5px */
   .scroll { display: none; }
 
-  /* ── карточка заметок: подпись и листалка строкой, заголовок, картинка во всю ширину ── */
-  .card--stove { height: var(--m-card); }
-  .card--stove.is-open { height: calc(var(--m-card) + var(--m-open)); }
-  .card--stove > .label {
-    left: var(--m-pad); top: var(--m-pad); margin: 0;
-    font-size: max(12.5px, calc(17 * var(--u))); line-height: var(--m-row);
-  }
-  .card--stove > h2 {
-    left: var(--m-pad); right: var(--m-pad); top: calc(var(--m-pad) + var(--m-row)); margin: 0;
-    font-size: max(21px, calc(34 * var(--u))); line-height: 1.12;
-  }
-  /* листалка — на картинке, внизу слева, стеклянной плашкой: в строке с подписью на русском не помещалась */
-  .note-deck {
-    top: auto; right: auto; left: calc(var(--m-pad) + max(8px, calc(12 * var(--u)))); bottom: calc(var(--m-pad) + max(8px, calc(12 * var(--u))));
-    height: auto; max-width: calc(100% - 2 * var(--m-pad) - max(64px, calc(82 * var(--u)))); padding: 3px; gap: 0; border-radius: 999px;
-    background: rgba(248, 248, 244, 0.86); box-shadow: 0 6px 18px rgba(20, 24, 16, 0.18);
-  }
-  .note-deck__btn { width: max(36px, calc(42 * var(--u))); height: max(36px, calc(42 * var(--u))); background: transparent; }
-  .note-deck__count { font-size: max(12px, calc(17 * var(--u))); min-width: 3em; }
-  .card figure {
-    left: var(--m-pad); right: var(--m-pad); bottom: var(--m-pad); top: auto;
-    width: auto; height: var(--m-fig); border-radius: max(18px, calc(30 * var(--u)));
-  }
-  .card .knob {
-    right: calc(var(--m-pad) + max(10px, calc(16 * var(--u)))); bottom: calc(var(--m-pad) + max(10px, calc(16 * var(--u))));
-    width: max(44px, calc(60 * var(--u))); height: max(44px, calc(60 * var(--u)));
-  }
-  .card .knob svg { width: max(17px, calc(22 * var(--u))); height: max(17px, calc(22 * var(--u))); }
-
-  /* оборот: крупный кегль; высоту под весь текст ставит fieldNote.ts (--m-open) — внутри ничего не прокручивается,
-     палец не застревает в карточке (v48) */
-  .card-note {
-    padding: var(--m-pad) var(--m-pad) calc(var(--m-pad) + max(64px, calc(90 * var(--u))));
-    overflow: hidden;
-  }
-  /* свайп вбок листает заметки: вертикаль — странице, горизонталь — карточке; лицевая сторона едет за пальцем */
-  .card--stove { touch-action: pan-y; }
-  .card--stove.is-dragging > .label, .card--stove.is-dragging > h2, .card--stove.is-dragging > figure {
-    translate: calc(var(--drag, 0) * 1px) 0; transition: none;
-  }
-  /* кнопки листалки — не меньше 44px под палец */
-  .note-deck__btn { min-width: 44px; min-height: 44px; }
-  .card-note .label { font-size: max(12.5px, calc(17 * var(--u))); }
-  .card-note h3 { font-size: max(20px, calc(32 * var(--u))); }
-  .card-note ul { gap: max(8px, calc(12 * var(--u))); }
-  .card-note li { font-size: max(13.5px, calc(19 * var(--u))); padding-left: max(14px, calc(20 * var(--u))); }
-  .card-note li::before { width: max(5px, calc(7 * var(--u))); height: max(5px, calc(7 * var(--u))); }
-  .note-links { gap: 8px 14px; margin-top: max(14px, calc(20 * var(--u))); }
-  .note-links a { font-size: max(13px, calc(19 * var(--u))); }
-  .note-links a:first-child { padding: max(9px, calc(10 * var(--u))) max(16px, calc(18 * var(--u))); }
 }
 
 /* Кресло сцены стоит посередине высоты экрана. На низком широком экране (планшет лёжа, телефон боком)

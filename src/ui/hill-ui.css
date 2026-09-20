@@ -103,15 +103,6 @@ body {
 
   /* v19: одна карточка справа — «How the hill was grown»; «Who sits here?» ушла в скролл-историю */
   .card--stove { left: calc(1213 * var(--u)); top: calc(300 * var(--u)); }
-  /* v46: подпись и листалка делят одну строку и не могут наехать друг на друга. Ширина листалки известна
-     (две кнопки не меньше 28px и счётчик), подписи остаётся остальное; не поместилась — многоточие, а не наложение.
-     Заголовок ограничен справа и переносится, а не упирается в край карточки. Карточка шире: 328 → 352. */
-  .card--stove { --deck-w: calc(2 * max(28px, 30 * var(--u)) + 3em * 0.84 + 12 * var(--u)); }
-  .card--stove > .label { max-width: calc(100% - 38 * var(--u) - 24 * var(--u) - var(--deck-w) - 14 * var(--u)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  /* листалка стоит по центру строки подписи; на небольшом окне кнопки не меньше 28px и не сжимаются вместе с
-     карточкой, поэтому заголовок начинается не выше их нижнего края */
-  .card--stove .note-deck { top: calc(54 * var(--u)); translate: 0 -50%; }
-  .card--stove > h2 { right: calc(24 * var(--u)); top: max(calc(70 * var(--u)), calc(54 * var(--u) + 14px + 6px)); }
 }
 
 /* ── узкий экран: статистика и «Дальше» стоят над небом, а не над травой ──── */
@@ -619,71 +610,6 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   .sf-logos__item:hover .sf-logos__disc { transform: none; }
 }
 
-/* ── карточка «How the hill was grown»: оборот с технической историей (v19) ── */
-.card-note {
-  position: absolute; inset: 0; z-index: 3; border-radius: inherit;
-  padding: calc(40 * var(--u)) calc(38 * var(--u)) calc(90 * var(--u));
-  background: var(--card); color: var(--card-ink);
-  clip-path: circle(0% at calc(100% - 53 * var(--u)) calc(100% - 53 * var(--u)));
-  transition: clip-path 0.7s cubic-bezier(0.7, 0, 0.2, 1);
-  pointer-events: none; overflow: hidden;
-}
-/* открытая карточка вытягивается вниз — список помещается целиком */
-.card--stove { transition: height 0.7s cubic-bezier(0.7, 0, 0.2, 1), box-shadow 0.8s ease; }
-@media (min-width: 901px) { .card--stove.is-open { height: calc(500 * var(--u)); } }
-.card--stove.is-open .card-note { clip-path: circle(150% at calc(100% - 53 * var(--u)) calc(100% - 53 * var(--u))); pointer-events: auto; }
-.card-note .label { position: static; margin: 0 0 calc(8 * var(--u)); }
-.card-note h3 { margin: 0 0 calc(14 * var(--u)); font-size: calc(22 * var(--u)); line-height: 1.1; font-weight: 400; letter-spacing: calc(-0.4 * var(--u)); }
-.card-note ul { margin: 0; padding: 0; list-style: none; display: grid; gap: calc(7 * var(--u)); }
-.card-note li { position: relative; padding-left: calc(14 * var(--u)); font-size: calc(12.4 * var(--u)); line-height: 1.38; font-weight: 300; color: #4b5046; }
-.card-note li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: calc(5 * var(--u)); height: calc(5 * var(--u)); border-radius: 50%; background: #9aa36f; }
-.card--stove .knob--note { z-index: 5; }
-.card--stove .knob--note svg { transition: rotate 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.card--stove.is-open .knob--note svg { rotate: 180deg; }
-/* текст оборота проявляется, когда круг почти раскрылся */
-.card-note > * { opacity: 0; translate: 0 8px; transition: opacity 0.3s ease, translate 0.3s ease; }
-.card--stove.is-open .card-note > * { opacity: 1; translate: 0 0; transition: opacity 0.5s ease 0.35s, translate 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.35s; }
-@media (max-width: 900px) {
-  .card-note { padding: calc(34 * var(--u)) calc(34 * var(--u)) calc(34 * var(--u)); padding-right: calc(110 * var(--u)); }
-  .card-note li { font-size: calc(19 * var(--u)); }
-  .card-note h3 { font-size: calc(30 * var(--u)); }
-}
-
-/* ── v28: заметки стопкой — переключатель «‹ 01/03 ›» и смена страницы ─────────────────────────
-   Карточка одна; меняются подписи, картинка и оборот (src/ui/fieldNote.ts). Лицевая сторона гаснет
-   и чуть съезжает в сторону листания, пока подставляется новая страница. */
-.note-deck {
-  position: absolute; z-index: 4; top: calc(36 * var(--u)); right: calc(24 * var(--u));
-  display: flex; align-items: center; gap: calc(4 * var(--u));
-  color: var(--card-label);
-}
-.note-deck__count {
-  min-width: 3em; text-align: center;
-  font-size: calc(13 * var(--u)); font-weight: 300; font-variant-numeric: tabular-nums; letter-spacing: 0.02em;
-}
-.note-deck__count b { font-weight: 500; color: var(--card-ink); }
-.note-deck__btn {
-  display: grid; place-items: center; padding: 0; border: 0; cursor: pointer;
-  width: max(28px, calc(30 * var(--u))); height: max(28px, calc(30 * var(--u))); border-radius: 50%;
-  background: rgba(35, 38, 31, 0.06); color: var(--card-ink);
-  transition: background 0.25s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.note-deck__btn svg { width: 55%; height: 55%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-.note-deck__btn:hover { background: rgba(35, 38, 31, 0.13); }
-.note-deck__btn:active { transform: scale(0.92); }
-.note-deck__btn:focus-visible { outline: 2px solid rgba(28, 34, 22, 0.9); outline-offset: 2px; }
-/* пока открыт оборот, листать нечего — переключатель уходит под него */
-.card--stove.is-open .note-deck { visibility: hidden; }
-
-.card--stove > .label, .card--stove > h2, .card--stove > figure {
-  transition: opacity 0.24s ease, translate 0.36s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.card--stove.is-swapping > .label, .card--stove.is-swapping > h2, .card--stove.is-swapping > figure {
-  opacity: 0; translate: calc(var(--swap-dir, 1) * -14px) 0;
-  transition: opacity 0.18s ease, translate 0.2s ease;
-}
-
-/* v29: живое превью проектов поверх картинки-постера; проявляется, когда ролик реально пошёл */
 .portal-media video {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;
   opacity: 0; transform: scale(1.08);
@@ -691,25 +617,6 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   pointer-events: none;
 }
 .card--stove.is-playing .portal-media video { opacity: 1; }
-.card--stove:hover .portal-media video { transform: scale(1.13); }
-
-/* ссылки на живое демо и код на обороте карточек проектов */
-.note-links { display: flex; flex-wrap: wrap; gap: calc(8 * var(--u)) calc(14 * var(--u)); margin: calc(16 * var(--u)) 0 0; }
-.note-links[hidden] { display: none; }
-.note-links a {
-  font-size: calc(13 * var(--u)); font-weight: 500; color: var(--card-ink);
-  text-decoration: underline; text-decoration-color: rgba(35, 38, 31, 0.3); text-underline-offset: 3px;
-  transition: text-decoration-color 0.2s ease;
-}
-.note-links a:hover { text-decoration-color: currentColor; }
-.note-links a:first-child { padding: calc(6 * var(--u)) calc(12 * var(--u)); border-radius: 999px; background: var(--card-ink); color: var(--card); text-decoration: none; }
-@media (max-width: 900px) {
-  .note-deck__count { font-size: max(12px, calc(20 * var(--u))); }
-  .note-links a { font-size: calc(19 * var(--u)); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .card--stove.is-swapping > .label, .card--stove.is-swapping > h2, .card--stove.is-swapping > figure { translate: none; }
-}
 
 /* ── глава «Кейсы» (v19) ───────────────────────────────────────────────────
    Лента по дуге поверх размытого поля: перспектива на секции, карточки по центру, положение

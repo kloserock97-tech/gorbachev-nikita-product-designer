@@ -1,18 +1,16 @@
-/* Заметки на первом экране (v28).
-   Раньше здесь была одна карточка «How the hill was grown»: кнопка-стрелка раскрывала оборот с короткой
-   технической историей травы. Теперь это стопка из трёх страниц — холм и два своих графических проекта
-   Никиты (Driftfield, Nightsail), — но на экране по-прежнему одна карточка: первый экран и так плотный,
-   ещё две рядом его бы задавили. Переключатель «‹ 01/03 ›» в углу, свайп пальцем по карточке, стрелки
-   на клавиатуре, пока фокус внутри.
+/* Заметки на первом экране.
+   v28: стопка страниц в одной карточке — свои графические проекты Никиты. Переключатель «‹ 01/04 ›», свайп
+   пальцем по карточке, стрелки на клавиатуре, пока фокус внутри.
+   v29: вместо картинки — зацикленное превью из самой демки (webm/mp4, 5,8 с, сотни килобайт). Пока ролик не
+   пошёл, видна картинка-постер — первый кадр того же ролика. При «меньше движения» и экономии трафика остаётся постер.
 
-   У каждой страницы тот же жест, что был: стрелка раскрывает оборот кругом из угла кнопки. У проектов
-   на обороте, кроме трёх пунктов, — ссылки на живое демо с панелью настроек и на код. Esc и клик мимо
-   закрывают оборот; переключение страницы тоже его закрывает.
-
-   v29: у проектов вместо картинки — зацикленное превью из самой демки (webm/mp4, 5,8 с, сотни килобайт).
-   Пока ролик не пошёл, видна картинка-постер — первый кадр того же ролика, поэтому смена незаметна.
-   Играет, только когда карточка на экране, вкладка открыта и оборот закрыт; при «меньше движения»
-   и экономии трафика остаётся постер. */
+   v58: новый вид карточки (референс Никиты — карточки маршрутов). Картинка сверху; на ней название, подпись и
+   стеклянная кнопка «Открыть демо» — демо доступно сразу, без раскрытия. Под картинкой шеврон: раскрывает
+   описание (заголовок, стек, три цифры, значок, абзацы, ссылка на код). Оборота больше нет, картинка остаётся
+   на месте и продолжает играть. Карточка растёт вниз; если низ не помещается в окно, она поднимается (--note-lift),
+   а в совсем низком окне описание прокручивается внутри (is-tight). На телефоне карточка просто растёт, высоту
+   кадра под неё считает CSS из --m-open, которую меряем здесь. Стили — hero/note-card.css. */
+import "./hero/note-card.css";
 import notes from "../data/notes";
 import { cue } from "../audio/bus";
 import { onLang, t, type Key } from "../i18n";
@@ -25,7 +23,8 @@ export function initFieldNote() {
   const card = document.querySelector<HTMLElement>(".card--stove");
   const knob = card?.querySelector<HTMLButtonElement>(".knob--note");
   const note = card?.querySelector<HTMLElement>(".card-note");
-  if (!card || !knob || !note) return;
+  const inner = card?.querySelector<HTMLElement>(".card-note__in");
+  if (!card || !knob || !note || !inner) return;
 
   const labels = [...card.querySelectorAll<HTMLElement>("[data-note-label]")];
   const titles = [...card.querySelectorAll<HTMLElement>("[data-note-title]")];
@@ -33,49 +32,93 @@ export function initFieldNote() {
   const video = card.querySelector<HTMLVideoElement>("[data-note-video]");
   const calm = matchMedia("(prefers-reduced-motion: reduce)").matches
     || !!(navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
+  const kind = card.querySelector<HTMLElement>("[data-note-kind]");
+  const meta = card.querySelector<HTMLElement>("[data-note-meta]");
+  const stats = card.querySelector<HTMLElement>("[data-note-stats]");
+  const glyph = card.querySelector<HTMLElement>("[data-note-glyph]");
   const points = card.querySelector<HTMLElement>("[data-note-points]");
   const links = card.querySelector<HTMLElement>("[data-note-links]");
+  const demo = card.querySelector<HTMLAnchorElement>("[data-note-demo]");
   const deck = card.querySelector<HTMLElement>(".note-deck");
   const count = card.querySelector<HTMLElement>(".note-deck__count");
   const steps = [...card.querySelectorAll<HTMLButtonElement>(".note-deck__btn")];
 
   let index = 0;
   let swapTimer = 0;
-  let fitOpenRef: () => void = () => {};
   let inView = true;
   const isOpen = () => card.classList.contains("is-open");
+  const narrow = matchMedia("(max-width: 900px)");
 
   /* превью играет, только когда его действительно видно: карточка в кадре, вкладка активна, интерфейс
-     холма не уехал в скролл-историю и оборот не закрывает картинку */
+     холма не уехал в скролл-историю. Раскрытое описание картинку не закрывает — ролик идёт дальше */
   const syncVideo = () => {
     if (!video?.dataset.note) return;
-    const want = inView && !document.hidden && !isOpen() && !document.body.classList.contains("story-away");
+    const want = inView && !document.hidden && !document.body.classList.contains("story-away");
     if (want && video.paused) void video.play().catch(() => {});
     else if (!want && !video.paused) video.pause();
   };
 
+  /* Куда растёт открытая карточка.
+     Телефон: вниз, страница прокручивается как обычно (вложенная прокрутка — ловушка для пальца, v48);
+     кадру нужна высота описания — --m-open.
+     Широкий экран: вниз, а если низ уходит за окно — карточка поднимается, но не выше звуковой кнопки и дока.
+     Не хватило и этого — описание получает потолок и прокручивается внутри. */
+  const fit = () => {
+    const root = document.documentElement;
+    const full = inner.scrollHeight;
+    if (narrow.matches) {
+      root.style.setProperty("--m-open", `${Math.ceil(full)}px`);
+      card.style.removeProperty("--note-lift");
+      card.style.removeProperty("--note-max");
+      card.style.removeProperty("--note-shrink");
+      card.classList.remove("is-tight");
+      return;
+    }
+    root.style.removeProperty("--m-open");
+    if (!isOpen()) { card.style.setProperty("--note-lift", "0"); card.style.setProperty("--note-shrink", "0px"); card.classList.remove("is-tight"); return; }
+    /* место карточки без подъёма: offsetTop уже включает отрицательный margin (в том числе посреди перехода) —
+       вычитаем его. По раскладке, а не по getBoundingClientRect: параллакс двигает карточку за курсором */
+    const parent = (card.offsetParent as HTMLElement | null)?.getBoundingClientRect().top ?? 0;
+    const restTop = parent + card.offsetTop - (parseFloat(getComputedStyle(card).marginTop) || 0);
+    /* высота закрытой карточки и картинки — из ширины (note-card.css: поля 12, картинка 246, шеврон 46 при ширине 352):
+       посреди перехода offsetHeight врёт */
+    const unit = card.offsetWidth / 352;
+    const figure = 246 * unit;
+    const closed = (12 + 246 + 46) * unit;
+    const gap = 14;
+    const fab = document.querySelector<HTMLElement>(".sound-fab")?.getBoundingClientRect();
+    const dock = document.querySelector<HTMLElement>(".dock")?.getBoundingClientRect();
+    const ceiling = Math.max(fab?.bottom ?? 0, dock?.bottom ?? 0, 64) + gap;
+    const overflow = restTop + closed + full + gap - innerHeight;
+    const room = Math.max(0, restTop - ceiling);
+    const next = Math.max(0, Math.min(overflow, room));
+    card.style.setProperty("--note-lift", next.toFixed(1));
+    /* подъёма не хватило — картинка отдаёт до 38 % своей высоты; не хватило и этого — описание прокручивается внутри */
+    const shrink = Math.max(0, Math.min(overflow - room, figure * 0.38));
+    card.style.setProperty("--note-shrink", `${shrink.toFixed(1)}px`);
+    const tight = overflow - room - shrink > 1;
+    card.classList.toggle("is-tight", tight);
+    if (tight) card.style.setProperty("--note-max", `${Math.max(120, Math.floor(innerHeight - gap - ceiling - closed + shrink))}px`);
+    else card.style.removeProperty("--note-max");
+  };
+
   const set = (open: boolean) => {
-    if (open && !isOpen()) fitOpenRef();
     if (open !== isOpen()) cue(open ? "expand" : "collapse");
     card.classList.toggle("is-open", open);
     knob.setAttribute("aria-expanded", String(open));
     knob.setAttribute("aria-label", open ? t("notes.close") : t("notes.open", { title: t(key(notes[index].id, "title")) }));
     note.setAttribute("aria-hidden", String(!open));
-    syncVideo();
-    /* ссылки на обороте доступны с клавиатуры только когда оборот открыт */
+    fit();
+    /* ссылка в описании доступна с клавиатуры только когда оно раскрыто; кнопка демо на картинке — всегда */
     links?.querySelectorAll("a").forEach((a) => (a.tabIndex = open ? 0 : -1));
   };
 
-  /* Тексты — из словаря текущего языка, картинка — из данных. Раскладка карточки не меняется,
-     поэтому ничего не мерится и не прыгает. */
+  /* Тексты — из словаря текущего языка, картинка, стек и значок — из данных */
   const paint = () => {
     const current = notes[index];
     const id = current.id;
     card.dataset.note = id;
-    /* v46: на лицевой стороне номер из подписи убран — его уже показывает листалка «01/04», а подпись с номером
-       не помещалась в одну строку с ней и залезала под кнопки. На обороте места хватает, там подпись полная */
-    const full = t(key(id, "label"));
-    labels.forEach((el) => (el.textContent = el.parentElement === card ? full.replace(/ +[0-9]+$/, "") : full));
+    labels.forEach((el) => (el.textContent = t(key(id, "label"))));
     titles.forEach((el) => (el.textContent = t(key(id, "title"))));
     if (img) {
       const src = `${BASE}${current.image}`;
@@ -100,19 +143,37 @@ export function initFieldNote() {
       }
       syncVideo();
     }
+    if (kind) kind.textContent = t(key(id, "kind"));
+    if (meta) meta.textContent = current.meta;
+    if (stats) {
+      stats.innerHTML = "";
+      for (let i = 1; i <= 3; i++) {
+        const cell = document.createElement("div");
+        const dd = document.createElement("dd");
+        const dt = document.createElement("dt");
+        dd.textContent = t(key(id, `s${i}v`));
+        dt.textContent = t(key(id, `s${i}l`));
+        cell.append(dd, dt);
+        stats.appendChild(cell);
+      }
+    }
+    if (glyph) glyph.innerHTML = `<svg viewBox="0 0 64 64" aria-hidden="true">${current.glyph}</svg>`;
     if (points) {
       points.innerHTML = "";
       for (let i = 1; i <= current.points; i++) {
-        const li = document.createElement("li");
-        li.textContent = t(key(id, `p${i}`));
-        points.appendChild(li);
+        const p = document.createElement("p");
+        p.textContent = t(key(id, `p${i}`));
+        points.appendChild(p);
       }
+    }
+    if (demo) {
+      demo.hidden = !current.links;
+      if (current.links) demo.href = current.links.demo;
+      demo.setAttribute("aria-label", `${t("notes.go")}: ${t(key(id, "title"))}`);
     }
     if (links) {
       links.hidden = !current.links;
-      links.innerHTML = current.links
-        ? `<a href="${current.links.demo}" target="_blank" rel="noopener">${t("notes.demo")}</a><a href="${current.links.repo}" target="_blank" rel="noopener">${t("notes.repo")}</a>`
-        : "";
+      links.innerHTML = current.links ? `<a href="${current.links.repo}" target="_blank" rel="noopener">${t("notes.repo")}</a>` : "";
       links.querySelectorAll("a").forEach((a) => (a.tabIndex = isOpen() ? 0 : -1));
     }
     if (count) count.innerHTML = `<b>${pad(index + 1)}</b>/${pad(notes.length)}`;
@@ -120,10 +181,12 @@ export function initFieldNote() {
     steps[0]?.setAttribute("aria-label", t("notes.prev"));
     steps[1]?.setAttribute("aria-label", t("notes.next"));
     knob.setAttribute("aria-label", isOpen() ? t("notes.close") : t("notes.open", { title: t(key(id, "title")) }));
+    fit();
   };
 
-  /* Смена страницы: лицевая сторона гаснет, пока меняются текст и картинка, и проявляется обратно.
-     Направление подсказывает сдвиг — вперёд уезжает влево, назад вправо. */
+  /* Смена страницы: картинка с подписью гаснут, пока меняются текст и картинка, и проявляются обратно.
+     Направление подсказывает сдвиг — вперёд уезжает влево, назад вправо. Раскрытое описание сворачивается:
+     у страниц оно разной высоты, и менять текст под открытой карточкой — значит дёргать её размер. */
   const go = (step: number) => {
     const next = (index + step + notes.length) % notes.length;
     if (next === index) return;
@@ -169,8 +232,8 @@ export function initFieldNote() {
   });
 
   /* Свайп пальцем по карточке (v48). У карточки touch-action: pan-y — вертикаль остаётся прокрутке страницы,
-     горизонталь приходит сюда. Раньше браузер забирал жест себе (pointercancel), и свайп срабатывал через раз.
-     Лицевая сторона едет за пальцем (--drag): видно, что карточка листается, ещё до того как палец отпущен. */
+     горизонталь приходит сюда. Картинка с подписью едут за пальцем (--drag): видно, что карточка листается,
+     ещё до того как палец отпущен. */
   let startX = 0, startY = 0, tracking = false, dragging = false;
   const drop = () => {
     tracking = dragging = false;
@@ -178,7 +241,7 @@ export function initFieldNote() {
     card.style.removeProperty("--drag");
   };
   card.addEventListener("pointerdown", (e) => {
-    if (e.pointerType === "mouse" || isOpen() || (e.target as Element).closest("a, button")) return;
+    if (e.pointerType === "mouse" || (e.target as Element).closest("a, button")) return;
     tracking = true; startX = e.clientX; startY = e.clientY;
   });
   card.addEventListener("pointermove", (e) => {
@@ -200,19 +263,6 @@ export function initFieldNote() {
   });
   card.addEventListener("pointercancel", drop);
 
-  /* Оборот на телефоне раскрывается на всю высоту своего текста (v48). Раньше высота была фиксированной, а лишнее
-     прокручивалось внутри карточки с overscroll-behavior: contain — палец застревал в карточке, страница не ехала.
-     Вложенная прокрутка на телефоне — известная ловушка; карточка просто растёт, страница прокручивается как обычно. */
-  const narrow = matchMedia("(max-width: 900px)");
-  let closedH = 0;
-  const fitOpen = () => {
-    const root = document.documentElement;
-    if (!narrow.matches) { root.style.removeProperty("--m-open"); return; }
-    /* высота закрытой карточки меряется, только пока она закрыта и не едет; высота текста — всегда */
-    if (!isOpen()) closedH = card.offsetHeight;
-    if (closedH) root.style.setProperty("--m-open", `${Math.max(0, Math.ceil(note.scrollHeight - closedH))}px`);
-  };
-
   addEventListener("keydown", (e) => { if (e.key === "Escape") set(false); });
   addEventListener("click", (e) => { if (!card.contains(e.target as Node)) set(false); });
   video?.addEventListener("playing", () => { if (video.dataset.note === notes[index].id) card.classList.add("is-playing"); });
@@ -221,8 +271,10 @@ export function initFieldNote() {
   let scrollRaf = 0;
   addEventListener("scroll", () => { if (!scrollRaf) scrollRaf = requestAnimationFrame(() => { scrollRaf = 0; syncVideo(); }); }, { passive: true });
 
-  fitOpenRef = fitOpen;
-  addEventListener("resize", () => { if (!isOpen()) fitOpen(); });
+  addEventListener("resize", fit);
+  narrow.addEventListener("change", fit);
+  /* шрифт приехал позже текста — высота описания другая */
+  document.fonts?.ready.then(fit).catch(() => {});
   onLang(paint);
   paint();
 }

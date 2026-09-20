@@ -1,0 +1,7 @@
+[
+  { "eval": "(() => { const c = document.querySelector('.card--stove'); window.scrollTo(0, c.getBoundingClientRect().top + scrollY - 120); window.__ev = []; ['pointerdown','pointerup','pointercancel','click','touchstart','touchend'].forEach(n => document.querySelector('.card--stove').addEventListener(n, e => __ev.push(n + ':' + (e.target.closest('button,a')?.className || e.target.tagName)), true)); })()" },
+  { "wait": 1200 },
+  { "tap": [330, 163] },
+  { "wait": 1700 },
+  { "probe": "document.querySelector('.note-deck__count').textContent + ' ' + JSON.stringify(__ev)", "as": "after tap" }
+]

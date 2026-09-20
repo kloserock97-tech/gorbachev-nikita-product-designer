@@ -1,0 +1,7 @@
+[
+  { "eval": "window.__ev = []; addEventListener('click', e => __ev.push('click:' + (e.target.closest('button,a')?.className || e.target.tagName)), true);" },
+  { "probe": "(() => { const b = document.querySelector('.sound-fab').getBoundingClientRect(); return Math.round(b.left + b.width/2) + ',' + Math.round(b.top + b.height/2); })()", "as": "fab" },
+  { "tap": [300, 805] },
+  { "wait": 800 },
+  { "probe": "JSON.stringify(__ev)", "as": "clicks" }
+]

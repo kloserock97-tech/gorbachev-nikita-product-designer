@@ -226,29 +226,12 @@ body.lang-ru .headline {
   transition: box-shadow 0.8s var(--ease);
 }
 .card--stove { z-index: 4; left: calc(1213 * var(--u)); top: calc(482 * var(--u)); width: calc(352 * var(--u)); height: calc(310 * var(--u)); }
-.card .label { position: absolute; left: calc(38 * var(--u)); top: calc(45 * var(--u)); font-size: calc(15.5 * var(--u)); font-weight: 300; color: var(--card-label); }
-.card h2 { position: absolute; left: calc(38 * var(--u)); top: calc(70 * var(--u)); font-size: calc(26.2 * var(--u)); line-height: calc(27 * var(--u)); font-weight: 400; letter-spacing: calc(-0.5 * var(--u)); color: var(--card-ink); }
-.card figure {
-  position: absolute; left: calc(14 * var(--u)); right: calc(14 * var(--u)); bottom: calc(14 * var(--u)); height: calc(158 * var(--u));
-  border-radius: calc(34 * var(--u)); overflow: hidden; isolation: isolate; background: #dfe0d8;
-}
-/* картинка чуть больше рамки: ей есть куда сдвигаться за курсором */
 .portal-media {
   position: absolute; inset: calc(-8 * var(--u)); display: block;
   transform: translate3d(calc(var(--px, 0) * -8px), calc(var(--py, 0) * -5px), 0);
 }
 .portal-media img { display: block; width: 100%; height: 100%; object-fit: cover; scale: 1.06; transition: scale 1.2s var(--ease-out), filter 0.8s var(--ease); }
 .card:hover .portal-media img { scale: 1.11; }
-.card .knob {
-  position: absolute; z-index: 4; right: calc(26 * var(--u)); bottom: calc(26 * var(--u));
-  width: calc(54 * var(--u)); height: calc(54 * var(--u)); border: 0; border-radius: 50%; cursor: pointer;
-  display: grid; place-items: center; background: #fbfcf8;
-  box-shadow: 0 calc(6 * var(--u)) calc(16 * var(--u)) rgba(16, 21, 13, 0.18);
-  transition: scale 0.45s var(--ease-out), rotate 0.45s var(--ease-out), background 0.3s var(--ease);
-}
-.card .knob svg { width: calc(19 * var(--u)); height: calc(19 * var(--u)); display: block; color: #3f453a; }
-.card .knob:hover { scale: 1.08; rotate: 6deg; background: #fff; }
-.card .knob:focus-visible { outline: 2px solid rgba(28, 34, 22, 0.9); outline-offset: calc(4 * var(--u)); }
 
 /* ── подсказка «Дальше» ───────────────────────────────────────────────────── */
 .scroll {
@@ -320,10 +303,6 @@ a:focus-visible, button:focus-visible { outline: 2px solid rgba(255, 255, 255, 0
   .stat--b { left: calc(396 * var(--u)); top: calc(540 * var(--u)); }
 
   .card { border-radius: calc(40 * var(--u)); }
-  .card--stove { left: calc(34 * var(--u)); top: calc(1324 * var(--u)); width: calc(692 * var(--u)); height: calc(268 * var(--u)); }
-  .card--stove h2 { font-size: calc(32 * var(--u)); }
-  .card figure { left: auto; right: calc(16 * var(--u)); bottom: calc(16 * var(--u)); width: calc(300 * var(--u)); height: calc(150 * var(--u)); }
-  .card .knob { right: calc(30 * var(--u)); bottom: calc(30 * var(--u)); }
 
   .scroll { left: calc(702 * var(--u)); top: calc(470 * var(--u)); }
 }

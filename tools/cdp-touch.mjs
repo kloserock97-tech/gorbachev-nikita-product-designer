@@ -65,7 +65,13 @@ for (const s of steps) {
     for (let i = 1; i <= n; i++) { await sleep(ms / n); await send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: pt(i / n) }); }
     if (s.fling === false) await sleep(250);
     await send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-  } else if (s.tap) await send("Input.synthesizeTapGesture", { x: s.tap[0], y: s.tap[1], gestureSourceType: "touch" });
+  } else if (s.tap) {
+    /* нажатие — тоже событиями касания: synthesizeTapGesture в headless доводит дело до touchend, но click не рождается */
+    const tp = [{ x: s.tap[0], y: s.tap[1], id: 1, radiusX: 8, radiusY: 8, force: 1 }];
+    await send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: tp });
+    await sleep(60);
+    await send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  }
   else if (s.wait) await sleep(s.wait);
   else if (s.shot) {
     const r = await send("Page.captureScreenshot", { format: "png" });

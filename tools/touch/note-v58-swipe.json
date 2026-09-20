@@ -1,0 +1,15 @@
+[
+  { "eval": "(() => { const c = document.querySelector('.card--stove'); window.scrollTo(0, c.getBoundingClientRect().top + scrollY - 120); })()" },
+  { "wait": 1200 },
+  { "probe": "Math.round(document.querySelector('.note-hero').getBoundingClientRect().top)", "as": "hero top" },
+  { "swipe": [300, 260, -200, 6], "speed": 900 },
+  { "wait": 1700 },
+  { "probe": "document.querySelector('.note-deck__count').textContent + ' ' + document.querySelector('.note-cap__title').textContent + ' | ' + document.querySelector('.note-kind').textContent + ' | ' + document.querySelector('.note-go').href", "as": "after swipe left" },
+  { "shot": "m-second" },
+  { "swipe": [120, 260, 200, -4], "speed": 900 },
+  { "wait": 1700 },
+  { "probe": "document.querySelector('.note-deck__count').textContent", "as": "after swipe right" },
+  { "tap": [330, 170] },
+  { "wait": 1700 },
+  { "probe": "document.querySelector('.note-deck__count').textContent", "as": "after tap on next" }
+]

@@ -1,0 +1,213 @@
+/* v58: карточка заметок в новом виде (по референсу Никиты — карточки маршрутов).
+   Сверху картинка-превью со скруглением; на ней, в тёмном градиенте у нижнего края, название проекта с подписью
+   и стеклянная кнопка «Открыть демо». Листалка «‹ 01/04 ›» — стеклянной плашкой в правом верхнем углу картинки.
+   Под картинкой шеврон: раскрывает описание (заголовок, стек, три цифры, значок проекта, абзацы, ссылка на код)
+   и сворачивает обратно. Картинка при раскрытии остаётся на месте — оборота больше нет.
+
+   Файл подключается из fieldNote.ts, то есть после hero.css, hill-ui.css и hero-mobile.css, и перекрывает их.
+   Положение карточки в кадре (left/top/width) задают прежние файлы; здесь — всё, что внутри.
+   Высота карточки теперь от содержимого. На телефоне высоту кадра считает CSS из --m-card и --m-open:
+   первая собирается ниже из тех же переменных, что и сама карточка, вторую меряет fieldNote.ts. */
+
+.card--stove {
+  --nc-pad: calc(12 * var(--u));
+  --nc-fig: calc(246 * var(--u));
+  --nc-chev: calc(46 * var(--u));
+  --nc-r: calc(36 * var(--u));
+  height: auto; box-sizing: border-box; padding: var(--nc-pad) var(--nc-pad) 0;
+  display: flex; flex-direction: column;
+  margin-top: calc(var(--note-lift, 0) * -1px);
+}
+/* у правила появления (.is-ready .card.rise) свой список transition — дописываем к нему подъём карточки */
+.is-ready .card.card--stove.rise {
+  transition:
+    opacity 0.45s var(--ease-enter) calc(var(--d, 0ms) * 0.6),
+    translate 0.8s var(--ease-enter) calc(var(--d, 0ms) * 0.6),
+    scale 0.8s var(--ease-enter) calc(var(--d, 0ms) * 0.6),
+    filter 0.5s var(--ease-enter) calc(var(--d, 0ms) * 0.6),
+    margin-top 0.7s cubic-bezier(0.7, 0, 0.2, 1),
+    box-shadow 0.8s ease;
+}
+
+/* ── картинка с подписью и кнопкой ─────────────────────────────────────────── */
+.note-hero {
+  position: relative; flex: none; margin: 0; height: calc(var(--nc-fig) - var(--note-shrink, 0px));
+  transition: height 0.7s cubic-bezier(0.7, 0, 0.2, 1);
+  border-radius: var(--nc-r); overflow: hidden; isolation: isolate; background: #dfe0d8;
+  box-shadow: 0 calc(14 * var(--u)) calc(26 * var(--u)) rgba(20, 24, 16, 0.22);
+}
+.note-hero::after {
+  content: ""; position: absolute; inset: 38% 0 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(12, 15, 10, 0), rgba(12, 15, 10, 0.5) 52%, rgba(12, 15, 10, 0.86));
+}
+.note-cap {
+  position: absolute; z-index: 2; left: calc(24 * var(--u)); right: calc(20 * var(--u)); bottom: calc(22 * var(--u));
+  display: flex; align-items: center; justify-content: space-between; gap: calc(12 * var(--u));
+}
+.note-cap__text { min-width: 0; display: grid; gap: calc(3 * var(--u)); }
+.note-cap__title {
+  margin: 0; font-size: max(14px, calc(17 * var(--u))); line-height: 1.15; font-weight: 500; letter-spacing: -0.01em; color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.note-cap__label {
+  margin: 0; font-size: max(10.5px, calc(11.5 * var(--u))); line-height: 1.2; font-weight: 300; color: rgba(255, 255, 255, 0.72);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* стеклянная кнопка: размытие только под самой кнопкой, площадь маленькая — поверх видео это дёшево */
+.note-go {
+  flex: none; display: inline-flex; align-items: center; gap: calc(7 * var(--u));
+  padding: 0 calc(18 * var(--u)); height: max(34px, calc(38 * var(--u))); border-radius: calc(13 * var(--u));
+  font-size: max(12px, calc(13.5 * var(--u))); font-weight: 500; letter-spacing: 0.01em; color: #fff; text-decoration: none;
+  background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.16);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
+  transition: background 0.25s ease, scale 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.note-go svg { width: 0.85em; height: 0.85em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; transition: translate 0.3s ease; }
+.note-go:hover { background: rgba(255, 255, 255, 0.32); }
+.note-go:hover svg { translate: 1.5px -1.5px; }
+.note-go:active { scale: 0.97; }
+.note-go:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.note-go[hidden] { display: none; }
+
+/* ── листалка на картинке ──────────────────────────────────────────────────── */
+.note-deck {
+  position: absolute; z-index: 3; top: calc(14 * var(--u)); right: calc(14 * var(--u));
+  display: flex; align-items: center; gap: 0; padding: 2px; border-radius: 999px; color: #fff;
+  background: rgba(18, 22, 15, 0.34); border: 1px solid rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+.note-deck__count {
+  min-width: 3em; text-align: center; color: rgba(255, 255, 255, 0.7);
+  font-size: max(11px, calc(12 * var(--u))); font-weight: 300; font-variant-numeric: tabular-nums; letter-spacing: 0.02em;
+}
+.note-deck__count b { font-weight: 500; color: #fff; }
+.note-deck__btn {
+  display: grid; place-items: center; padding: 0; border: 0; cursor: pointer;
+  width: max(28px, calc(30 * var(--u))); height: max(28px, calc(30 * var(--u))); border-radius: 50%;
+  background: transparent; color: #fff;
+  transition: background 0.25s ease, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.note-deck__btn svg { width: 52%; height: 52%; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.note-deck__btn:hover { background: rgba(255, 255, 255, 0.2); }
+.note-deck__btn:active { transform: scale(0.92); }
+.note-deck__btn:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+
+/* ── шеврон: раскрыть и свернуть ───────────────────────────────────────────── */
+.card--stove .knob--note {
+  order: 3; flex: none; align-self: stretch; height: var(--nc-chev); padding: 0; border: 0; cursor: pointer;
+  display: grid; place-items: center; background: transparent; color: var(--card-ink);
+  border-radius: 0 0 var(--nc-r) var(--nc-r);
+}
+.card--stove .knob--note svg {
+  width: max(16px, calc(18 * var(--u))); height: max(16px, calc(18 * var(--u))); display: block;
+  fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+  transition: rotate 0.55s cubic-bezier(0.2, 0.8, 0.2, 1), translate 0.35s ease;
+}
+.card--stove .knob--note:hover svg { translate: 0 2px; }
+.card--stove.is-open .knob--note svg { rotate: 180deg; }
+.card--stove.is-open .knob--note:hover svg { translate: 0 -2px; }
+.card--stove .knob--note:focus-visible { outline: 2px solid rgba(28, 34, 22, 0.9); outline-offset: -6px; }
+
+/* ── описание: высота от содержимого, раскрывается сеткой 0fr → 1fr ─────────── */
+.card-note {
+  order: 2; display: grid; grid-template-rows: 0fr; min-height: 0; color: var(--card-ink);
+  transition: grid-template-rows 0.7s cubic-bezier(0.7, 0, 0.2, 1);
+}
+.card--stove.is-open .card-note { grid-template-rows: 1fr; }
+.card-note__in {
+  min-height: 0; overflow: hidden; visibility: hidden;
+  padding: 0 calc(16 * var(--u));
+  opacity: 0; translate: 0 -6px;
+  transition: opacity 0.25s ease, translate 0.3s ease, visibility 0s linear 0.7s;
+}
+.card--stove.is-open .card-note__in {
+  visibility: visible; opacity: 1; translate: 0 0;
+  transition: opacity 0.5s ease 0.25s, translate 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.25s, visibility 0s;
+}
+/* не влезла даже поднятая карточка (очень низкое окно) — описание прокручивается внутри */
+.card--stove.is-tight.is-open .card-note__in { max-height: var(--note-max, none); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(35, 38, 31, 0.25) transparent; }
+
+.note-head { display: flex; align-items: center; gap: calc(14 * var(--u)); padding-top: calc(20 * var(--u)); }
+.note-head__text { flex: 1; min-width: 0; }
+.note-kind { margin: 0; font-size: max(13px, calc(14.5 * var(--u))); line-height: 1.2; font-weight: 500; letter-spacing: -0.01em; }
+.note-meta { margin: calc(4 * var(--u)) 0 0; font-size: max(10.5px, calc(11 * var(--u))); line-height: 1.3; font-weight: 300; color: var(--card-label); }
+.note-stats {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(12 * var(--u));
+  margin: calc(14 * var(--u)) 0 0; padding-top: calc(12 * var(--u)); border-top: 1px solid rgba(35, 38, 31, 0.14);
+}
+.note-stats div { min-width: 0; }
+.note-stats dt { order: 2; margin: calc(2 * var(--u)) 0 0; font-size: max(9.5px, calc(9.5 * var(--u))); line-height: 1.2; font-weight: 300; color: var(--card-label); }
+.note-stats dd { margin: 0; font-size: max(13px, calc(15 * var(--u))); line-height: 1.15; font-weight: 500; letter-spacing: -0.01em; white-space: nowrap; }
+.note-stats div { display: flex; flex-direction: column; }
+.note-glyph {
+  flex: none; align-self: center; display: grid; place-items: center;
+  width: calc(64 * var(--u)); height: calc(52 * var(--u)); border-radius: calc(18 * var(--u));
+  background: rgba(35, 38, 31, 0.055); color: var(--card-ink);
+}
+.note-glyph svg { width: 74%; height: 86%; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+.note-body { display: grid; gap: calc(9 * var(--u)); margin-top: calc(18 * var(--u)); }
+.note-body p { margin: 0; font-size: max(11.5px, calc(12.2 * var(--u))); line-height: 1.45; font-weight: 300; color: #565b50; }
+.note-links { display: flex; flex-wrap: wrap; gap: calc(8 * var(--u)) calc(14 * var(--u)); margin: calc(14 * var(--u)) 0 0; }
+.note-links[hidden] { display: none; }
+.note-links a {
+  font-size: max(12px, calc(12.5 * var(--u))); font-weight: 500; color: var(--card-ink);
+  text-decoration: underline; text-decoration-color: rgba(35, 38, 31, 0.3); text-underline-offset: 3px;
+  transition: text-decoration-color 0.2s ease;
+}
+.note-links a:hover { text-decoration-color: currentColor; }
+
+/* ── смена страницы: картинка, подпись и описание гаснут и чуть съезжают в сторону листания ── */
+.note-hero .portal-media, .note-cap, .card-note__in > * {
+  transition: opacity 0.24s ease, translate 0.36s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.card--stove.is-swapping .portal-media, .card--stove.is-swapping .note-cap {
+  opacity: 0; translate: calc(var(--swap-dir, 1) * -14px) 0;
+  transition: opacity 0.18s ease, translate 0.2s ease;
+}
+.card--stove:hover .portal-media video { transform: scale(1.13); }
+
+/* ── узкий экран ───────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  :root {
+    --m-fig: max(210px, calc(430 * var(--u)));
+    --m-chev: max(44px, calc(60 * var(--u)));
+    --m-cpad: max(10px, calc(16 * var(--u)));
+    --m-card: calc(var(--m-cpad) + var(--m-fig) + var(--m-chev));
+    --m-open: 420px;
+  }
+  .card--stove {
+    --nc-pad: var(--m-cpad); --nc-fig: var(--m-fig); --nc-chev: var(--m-chev); --nc-r: max(20px, calc(34 * var(--u)));
+    top: calc(1324 * var(--u)); margin-top: 0; touch-action: pan-y;
+  }
+  .note-cap { left: max(16px, calc(26 * var(--u))); right: max(14px, calc(22 * var(--u))); bottom: max(16px, calc(24 * var(--u))); gap: 10px; }
+  .note-cap__title { font-size: max(16px, calc(26 * var(--u))); }
+  .note-cap__label { font-size: max(11.5px, calc(17 * var(--u))); }
+  .note-go { height: 44px; padding: 0 max(16px, calc(24 * var(--u))); border-radius: 14px; font-size: max(13px, calc(19 * var(--u))); gap: 7px; }
+  .note-deck { top: max(10px, calc(16 * var(--u))); right: max(10px, calc(16 * var(--u))); padding: 0; }
+  .note-deck__btn { width: 44px; height: 44px; }
+  .note-deck__count { font-size: max(12px, calc(17 * var(--u))); min-width: 2.6em; }
+
+  .card-note__in { padding: 0 max(8px, calc(14 * var(--u))); }
+  .note-head { gap: 14px; padding-top: max(18px, calc(28 * var(--u))); }
+  .note-kind { font-size: max(15px, calc(24 * var(--u))); }
+  .note-meta { font-size: max(12px, calc(17 * var(--u))); margin-top: 4px; }
+  .note-stats { margin-top: 12px; padding-top: 12px; gap: 10px; }
+  .note-stats dd { font-size: max(15px, calc(24 * var(--u))); }
+  .note-stats dt { font-size: max(11px, calc(15 * var(--u))); margin-top: 2px; }
+  .note-glyph { width: max(64px, calc(110 * var(--u))); height: max(52px, calc(90 * var(--u))); border-radius: max(16px, calc(28 * var(--u))); }
+  .note-hero { transition: none; }
+  .note-body { gap: 10px; margin-top: 18px; }
+  .note-body p { font-size: max(13.5px, calc(19 * var(--u))); line-height: 1.5; }
+  .note-links { margin-top: 14px; }
+  .note-links a { font-size: max(13px, calc(19 * var(--u))); padding: 6px 0; }
+
+  /* палец тянет карточку вбок — картинка с подписью едут за ним */
+  .card--stove.is-dragging .portal-media, .card--stove.is-dragging .note-cap { translate: calc(var(--drag, 0) * 1px) 0; transition: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-note, .card-note__in, .card--stove.is-open .card-note__in, .note-hero { transition: none; }
+  .card--stove.is-swapping .portal-media, .card--stove.is-swapping .note-cap { translate: none; }
+  .is-ready .card.card--stove.rise { transition: none; }
+}

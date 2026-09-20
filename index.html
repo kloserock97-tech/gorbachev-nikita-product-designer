@@ -172,37 +172,52 @@
       <div><dt><span data-i18n="stat.weather.label">Weather</span> <span class="stat-hint" data-i18n="stat.weather.hint" aria-hidden="true">· tap to change</span></dt><dd data-stat="wind">clear, gentle breeze</dd></div>
     </dl>
 
-    <!-- v28: заметки — одна карточка, три страницы (холм, Driftfield, Nightsail); тексты и картинку
-         подставляет src/ui/fieldNote.ts, переключатель в правом верхнем углу -->
+    <!-- v58: заметки — одна карточка, четыре страницы. Картинка с названием и стеклянной кнопкой демо, под ней шеврон
+         раскрывает описание. Тексты, картинку, цифры и значок подставляет src/ui/fieldNote.ts, стили — src/ui/hero/note-card.css -->
     <article class="card card--stove rise" style="--d:880ms; --pd:22; --pr:2.4" data-note="hill" aria-roledescription="carousel">
-      <p class="label" data-note-label>Side project 01</p>
-      <div class="note-deck" role="group" aria-label="Notes">
-        <button class="note-deck__btn" type="button" data-step="-1" aria-label="Previous note">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg>
-        </button>
-        <span class="note-deck__count" aria-live="polite"><b>01</b>/03</span>
-        <button class="note-deck__btn" type="button" data-step="1" aria-label="Next note">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
-        </button>
-      </div>
-      <h2 data-note-title>Windcrest</h2>
-      <figure class="portal">
+      <figure class="note-hero portal">
         <span class="portal-media"><img src="/ui/card-windcrest.webp" data-note-img alt="The crest of a hill under a grey sky, grass bent by a strong wind" loading="eager" decoding="async"><video data-note-video muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"></video></span>
+        <div class="note-deck" role="group" aria-label="Notes">
+          <button class="note-deck__btn" type="button" data-step="-1" aria-label="Previous note">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg>
+          </button>
+          <span class="note-deck__count" aria-live="polite"><b>01</b>/04</span>
+          <button class="note-deck__btn" type="button" data-step="1" aria-label="Next note">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
+          </button>
+        </div>
+        <figcaption class="note-cap">
+          <span class="note-cap__text">
+            <h2 class="note-cap__title" data-note-title>Windcrest</h2>
+            <span class="note-cap__label" data-note-label>Side project 01</span>
+          </span>
+          <a class="note-go" data-note-demo href="https://kloserock97-tech.github.io/windcrest/" target="_blank" rel="noopener"><span data-i18n="notes.go">Open demo</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9 9 3"/><path d="M4.2 3H9v4.8"/></svg></a>
+        </figcaption>
       </figure>
       <div class="card-note" id="field-note" aria-hidden="true">
-        <p class="label" data-note-label>Side project 01</p>
-        <h3 data-note-title>Windcrest</h3>
-        <ul data-note-points>
-          <li>The grass from the first screen of this site as a demo of its own. The graphics card draws 380,000 real blades with one command (instancing), and the processor rests.</li>
-          <li>Wind comes in gusts, grass grows in tufts, and the cursor leaves a trail like a hand on a carpet. The graphics card does all of it (in a vertex shader).</li>
-          <li>To keep far grass from shimmering, a blade is never thinner than a pixel and gets wider with distance. You can play with everything on a panel, and the link keeps your settings.</li>
-        </ul>
-        <p class="note-links" data-note-links hidden></p>
+        <div class="card-note__in">
+          <div class="note-head">
+            <div class="note-head__text">
+              <h3 class="note-kind" data-note-kind>A field of grass in the wind</h3>
+              <p class="note-meta" data-note-meta>three.js · GLSL · 2026</p>
+            </div>
+            <span class="note-glyph" data-note-glyph aria-hidden="true"></span>
+          </div>
+          <dl class="note-stats" data-note-stats>
+            <div><dd>380k</dd><dt>blades of grass</dt></div>
+            <div><dd>7</dd><dt>vertices a blade</dt></div>
+            <div><dd>5</dd><dt>ready-made looks</dt></div>
+          </dl>
+          <div class="note-body" data-note-points>
+            <p>The grass from the first screen of this site as a demo of its own. The graphics card draws 380,000 real blades with one command (instancing), and the processor rests.</p>
+            <p>Wind comes in gusts, grass grows in tufts, and the cursor leaves a trail like a hand on a carpet. The graphics card does all of it (in a vertex shader).</p>
+            <p>To keep far grass from shimmering, a blade is never thinner than a pixel and gets wider with distance. You can play with everything on a panel, and the link keeps your settings.</p>
+          </div>
+          <p class="note-links" data-note-links hidden></p>
+        </div>
       </div>
-      <button class="knob knob--note" aria-label="Open note: Windcrest" aria-expanded="false" aria-controls="field-note">
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M5.5 14.5 14 6"/><path d="M7.5 5.5H14.5V12.5"/>
-        </svg>
+      <button class="knob knob--note" type="button" aria-label="Open note: Windcrest" aria-expanded="false" aria-controls="field-note">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 7.5 10 13l5.5-5.5"/></svg>
       </button>
     </article>
 

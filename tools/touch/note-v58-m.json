@@ -1,0 +1,17 @@
+[
+  { "swipe": [200, 600, 0, -360], "speed": 700, "fling": false },
+  { "wait": 1200 },
+  { "shot": "m-closed" },
+  { "eval": "document.querySelector('.knob--note').click()" },
+  { "wait": 1800 },
+  { "probe": "(() => { const c = document.querySelector('.card--stove'); const r = c.getBoundingClientRect(); const st = document.querySelector('.stat--a').getBoundingClientRect(); const i = c.querySelector('.card-note__in'); return JSON.stringify({cardTop: Math.round(r.top + scrollY), cardBottom: Math.round(r.bottom + scrollY), statTop: Math.round(st.top + scrollY), stageH: document.querySelector('.stage').offsetHeight, full: i.scrollHeight, shown: i.clientHeight, docW: document.documentElement.scrollWidth, go: document.querySelector('.note-go').offsetHeight}); })()", "as": "open" },
+  { "shot": "m-open" },
+  { "swipe": [200, 700, 0, -420], "speed": 700, "fling": false },
+  { "wait": 1200 },
+  { "shot": "m-open-scrolled" },
+  { "eval": "document.querySelector('.knob--note').click()" },
+  { "wait": 1500 },
+  { "swipe": [300, 300, -200, 6], "speed": 900 },
+  { "wait": 1600 },
+  { "probe": "document.querySelector('.note-deck__count').textContent + ' ' + document.querySelector('.note-cap__title').textContent", "as": "after swipe" }
+]
