@@ -55,7 +55,7 @@ const en = {
 
   "notes.hill.label": "Side project 01",
   "notes.hill.title": "Windcrest",
-  "notes.hill.alt": "The crest of a hill in thick grass under the moon",
+  "notes.hill.alt": "The crest of a hill under a grey sky, grass bent by a strong wind",
   "notes.hill.p1": "The grass from the first screen of this site as a demo of its own: 380,000 blades of real geometry in one instanced draw call, and the CPU spends nothing on them.",
   "notes.hill.p2": "Wind comes in patches of gusts, grass grows in Voronoi tufts, and the cursor leaves a trail. The vertex shader does all of it.",
   "notes.hill.p3": "Two tricks against shimmer: a blade is never thinner than a pixel and gets wider with distance. Every value is on a live panel, and the setup fits in a link.",
