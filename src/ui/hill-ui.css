@@ -91,7 +91,16 @@ body {
   .stat--b { left: calc(300 * var(--u)); top: calc(730 * var(--u)); }
 
   /* v19: одна карточка справа — «How the hill was grown»; «Who sits here?» ушла в скролл-историю */
-  .card--stove { left: calc(1237 * var(--u)); top: calc(300 * var(--u)); }
+  .card--stove { left: calc(1213 * var(--u)); top: calc(300 * var(--u)); }
+  /* v46: подпись и листалка делят одну строку и не могут наехать друг на друга. Ширина листалки известна
+     (две кнопки не меньше 28px и счётчик), подписи остаётся остальное; не поместилась — многоточие, а не наложение.
+     Заголовок ограничен справа и переносится, а не упирается в край карточки. Карточка шире: 328 → 352. */
+  .card--stove { --deck-w: calc(2 * max(28px, 30 * var(--u)) + 3em * 0.84 + 12 * var(--u)); }
+  .card--stove > .label { max-width: calc(100% - 38 * var(--u) - 24 * var(--u) - var(--deck-w) - 14 * var(--u)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* листалка стоит по центру строки подписи; на небольшом окне кнопки не меньше 28px и не сжимаются вместе с
+     карточкой, поэтому заголовок начинается не выше их нижнего края */
+  .card--stove .note-deck { top: calc(54 * var(--u)); translate: 0 -50%; }
+  .card--stove > h2 { right: calc(24 * var(--u)); top: max(calc(70 * var(--u)), calc(54 * var(--u) + 14px + 6px)); }
 }
 
 /* ── узкий экран: статистика и «Дальше» стоят над небом, а не над травой ──── */
@@ -266,6 +275,8 @@ body {
   opacity: 1; scale: 1; translate: 0 0;
   transition: opacity 0.2s var(--ease-menu), scale 0.26s var(--ease-menu), translate 0.26s var(--ease-menu), visibility 0s;
 }
+/* v46: на широком экране панель вынесена в body (workMenu.ts) и стоит над всеми главами истории и кнопкой звука */
+.work-menu--float { position: fixed; z-index: 45; }
 /* панель живёт в .dock-wrap; пока меню открыто, док поднимается над карточками и заголовком */
 .work-open .dock-wrap { z-index: 60; }
 .work-open .dock a[href='#work']:not(.is-active) { color: #fff; background: rgba(255, 255, 255, 0.12); }
@@ -636,7 +647,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   color: var(--card-label);
 }
 .note-deck__count {
-  min-width: 3.4em; text-align: center;
+  min-width: 3em; text-align: center;
   font-size: calc(13 * var(--u)); font-weight: 300; font-variant-numeric: tabular-nums; letter-spacing: 0.02em;
 }
 .note-deck__count b { font-weight: 500; color: var(--card-ink); }

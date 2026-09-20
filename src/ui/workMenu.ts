@@ -136,18 +136,32 @@ export function initWorkMenu(opts: { onOpenComputer?: () => void; onAllCases?: (
   let closeTimer = 0;
   let openTimer = 0;
 
+  /* v46: на широком экране панель живёт в body, а не в доке. Док лежит внутри закреплённого первого экрана,
+     а тот целиком — слой ниже глав истории (About, кейсы, эксперименты, футер): z-index панели внутри него
+     ничего не решал, и на любом экране после первого карточка открывалась под контентом. Наведение, клавиатура
+     и закрытие от родителя не зависят. На узком экране док прокручивается вместе с первым экраном, меню
+     открывается только там — панель остаётся в доке. */
+  const float = () => {
+    const wide = innerWidth > 900;
+    const home = wide ? document.body : wrap;
+    if (panel.parentElement !== home) home.appendChild(panel);
+    panel.classList.toggle("work-menu--float", wide);
+    return wide;
+  };
   /* панель встаёт под доком по центру пункта Work, но не вылезает за край экрана */
   const place = () => {
-    if (innerWidth <= 900) { panel.style.left = ""; return; }
+    if (!float()) { panel.style.left = ""; panel.style.top = ""; return; }
     const w = wrap.getBoundingClientRect();
     const tr = trigger.getBoundingClientRect();
     const pw = panel.offsetWidth;
     const margin = 16;
     const centre = tr.left + tr.width / 2;
     const left = Math.min(Math.max(centre - pw / 2, margin), innerWidth - pw - margin);
-    panel.style.left = `${left - w.left}px`;
+    panel.style.left = `${left}px`;
+    panel.style.top = `${w.bottom + 10}px`;
     panel.style.setProperty("--origin-x", `${centre - left}px`);
   };
+  float();
 
   const setOpen = (on: boolean) => {
     clearTimeout(closeTimer);
@@ -208,7 +222,7 @@ export function initWorkMenu(opts: { onOpenComputer?: () => void; onAllCases?: (
       e.preventDefault();
     }
   });
-  addEventListener("resize", () => open && place());
+  addEventListener("resize", () => (open ? place() : float()));
 
   return { close: () => setOpen(false) };
 }

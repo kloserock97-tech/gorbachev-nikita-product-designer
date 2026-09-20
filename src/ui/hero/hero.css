@@ -225,7 +225,7 @@ body.lang-ru .headline {
   position: absolute; background: var(--card); border-radius: calc(46 * var(--u));
   transition: box-shadow 0.8s var(--ease);
 }
-.card--stove { z-index: 4; left: calc(1237 * var(--u)); top: calc(482 * var(--u)); width: calc(328 * var(--u)); height: calc(310 * var(--u)); }
+.card--stove { z-index: 4; left: calc(1213 * var(--u)); top: calc(482 * var(--u)); width: calc(352 * var(--u)); height: calc(310 * var(--u)); }
 .card .label { position: absolute; left: calc(38 * var(--u)); top: calc(45 * var(--u)); font-size: calc(15.5 * var(--u)); font-weight: 300; color: var(--card-label); }
 .card h2 { position: absolute; left: calc(38 * var(--u)); top: calc(70 * var(--u)); font-size: calc(26.2 * var(--u)); line-height: calc(27 * var(--u)); font-weight: 400; letter-spacing: calc(-0.5 * var(--u)); color: var(--card-ink); }
 .card figure {

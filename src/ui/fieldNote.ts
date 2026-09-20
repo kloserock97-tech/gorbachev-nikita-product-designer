@@ -70,7 +70,10 @@ export function initFieldNote() {
     const current = notes[index];
     const id = current.id;
     card.dataset.note = id;
-    labels.forEach((el) => (el.textContent = t(key(id, "label"))));
+    /* v46: на лицевой стороне номер из подписи убран — его уже показывает листалка «01/04», а подпись с номером
+       не помещалась в одну строку с ней и залезала под кнопки. На обороте места хватает, там подпись полная */
+    const full = t(key(id, "label"));
+    labels.forEach((el) => (el.textContent = el.parentElement === card ? full.replace(/ +[0-9]+$/, "") : full));
     titles.forEach((el) => (el.textContent = t(key(id, "title"))));
     if (img) {
       const src = `${BASE}${current.image}`;
