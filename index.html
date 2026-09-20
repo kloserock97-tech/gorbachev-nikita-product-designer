@@ -175,7 +175,7 @@
     <!-- v28: заметки — одна карточка, три страницы (холм, Driftfield, Nightsail); тексты и картинку
          подставляет src/ui/fieldNote.ts, переключатель в правом верхнем углу -->
     <article class="card card--stove rise" style="--d:880ms; --pd:22; --pr:2.4" data-note="hill" aria-roledescription="carousel">
-      <p class="label" data-note-label>Field note 01</p>
+      <p class="label" data-note-label>Side project 01</p>
       <div class="note-deck" role="group" aria-label="Notes">
         <button class="note-deck__btn" type="button" data-step="-1" aria-label="Previous note">
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5"/></svg>
@@ -185,23 +185,21 @@
           <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
         </button>
       </div>
-      <h2 data-note-title>How the hill was grown</h2>
+      <h2 data-note-title>Windcrest</h2>
       <figure class="portal">
-        <span class="portal-media"><img src="/ui/card-grass.webp" data-note-img alt="Close-up of the grass bending in the wind" loading="eager" decoding="async"><video data-note-video muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"></video></span>
+        <span class="portal-media"><img src="/ui/card-windcrest.webp" data-note-img alt="The crest of a hill in thick grass against a sunset sky" loading="eager" decoding="async"><video data-note-video muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"></video></span>
       </figure>
       <div class="card-note" id="field-note" aria-hidden="true">
-        <p class="label" data-note-label>Field note 01</p>
-        <h3 data-note-title>How the hill was grown</h3>
+        <p class="label" data-note-label>Side project 01</p>
+        <h3 data-note-title>Windcrest</h3>
         <ul data-note-points>
-          <li>Every blade is real geometry: hundreds of thousands of them in one instanced draw call, bent by wind in the vertex shader.</li>
-          <li>Two levels of detail, like Ghost of Tsushima: seven vertices up close, a single triangle far away.</li>
-          <li>Light from a baked HDRI: sun colour plus nine spherical-harmonics terms for the sky, god rays at quarter resolution.</li>
-          <li>Chair, computer and dog were assembled headless in Blender and squeezed with Draco.</li>
-          <li>On load the hill benchmarks your GPU and picks a quality tier. No grass was harmed.</li>
+          <li>The grass from the first screen of this site as a demo of its own: 380,000 blades of real geometry in one instanced draw call, and the CPU spends nothing on them.</li>
+          <li>Wind comes in patches of gusts, grass grows in Voronoi tufts, and the cursor leaves a trail. The vertex shader does all of it.</li>
+          <li>Two tricks against shimmer: a blade is never thinner than a pixel and gets wider with distance. Every value is on a live panel, and the setup fits in a link.</li>
         </ul>
         <p class="note-links" data-note-links hidden></p>
       </div>
-      <button class="knob knob--note" aria-label="Open note: How the hill was grown" aria-expanded="false" aria-controls="field-note">
+      <button class="knob knob--note" aria-label="Open note: Windcrest" aria-expanded="false" aria-controls="field-note">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M5.5 14.5 14 6"/><path d="M7.5 5.5H14.5V12.5"/>
         </svg>

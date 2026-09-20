@@ -8,7 +8,13 @@ export type NoteVideo = { webm: string; mp4: string };
 export type Note = { id: "hill" | "drift" | "sail" | "meadow"; image: string; points: number; links?: NoteLinks; video?: NoteVideo };
 
 const notes: Note[] = [
-  { id: "hill", image: "ui/card-grass.webp", points: 5 },
+  {
+    id: "hill",
+    image: "ui/card-windcrest.webp",
+    video: { webm: "ui/card-windcrest.webm", mp4: "ui/card-windcrest.mp4" },
+    points: 3,
+    links: { demo: "https://kloserock97-tech.github.io/windcrest/", repo: "https://github.com/kloserock97-tech/windcrest" },
+  },
   {
     id: "drift",
     image: "ui/card-driftfield.webp",

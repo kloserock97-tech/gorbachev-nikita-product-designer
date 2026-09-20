@@ -53,14 +53,12 @@ const en = {
   "notes.demo": "Open the live demo ↗",
   "notes.repo": "Source on GitHub ↗",
 
-  "notes.hill.label": "Field note 01",
-  "notes.hill.title": "How the hill was grown",
-  "notes.hill.alt": "Close-up of the grass bending in the wind",
-  "notes.hill.p1": "Every blade is real geometry: hundreds of thousands of them in one instanced draw call, bent by wind in the vertex shader.",
-  "notes.hill.p2": "Two levels of detail, like Ghost of Tsushima: seven vertices up close, a single triangle far away.",
-  "notes.hill.p3": "Light from a baked HDRI: sun colour plus nine spherical-harmonics terms for the sky, god rays at quarter resolution.",
-  "notes.hill.p4": "Chair, computer and dog were assembled headless in Blender and squeezed with Draco.",
-  "notes.hill.p5": "On load the hill benchmarks your GPU and picks a quality tier. No grass was harmed.",
+  "notes.hill.label": "Side project 01",
+  "notes.hill.title": "Windcrest",
+  "notes.hill.alt": "The crest of a hill in thick grass against a sunset sky",
+  "notes.hill.p1": "The grass from the first screen of this site as a demo of its own: 380,000 blades of real geometry in one instanced draw call, and the CPU spends nothing on them.",
+  "notes.hill.p2": "Wind comes in patches of gusts, grass grows in Voronoi tufts, and the cursor leaves a trail. The vertex shader does all of it.",
+  "notes.hill.p3": "Two tricks against shimmer: a blade is never thinner than a pixel and gets wider with distance. Every value is on a live panel, and the setup fits in a link.",
 
   "notes.drift.label": "Side project 02",
   "notes.drift.title": "Driftfield",
@@ -113,7 +111,7 @@ const en = {
   "walk.sub": "Enterprise tools, public services and AI products. Each case covers the role, the context and the outcome.",
   "shelf.kicker": "Side projects",
   "shelf.title": "WebGL experiments",
-  "shelf.sub": "Real-time 3D: the hill scene of this site and three open-source demos with a live settings panel.",
+  "shelf.sub": "Real-time 3D: four open-source demos with a live settings panel. The grass of the first one grows on the hill of this site.",
   "shelf.of": "of",
 
   /* меню Work в доке */

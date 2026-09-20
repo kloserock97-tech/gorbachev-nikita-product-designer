@@ -20,7 +20,7 @@ Scrolling drives a three-part story:
 2. The page tears away from the bottom. Behind it the same meadow is blurred and seen from the grass, and six case cards move along an arc. Each case opens as its own page inside the site (`#/work/<id>`), with the facts, the problem, the solution, results and what I learned.
 3. The camera returns to the hill at dusk. Fireflies come out, Kelly sleeps curled up in the armchair, and the footer holds the contacts: a mail button, Telegram, LinkedIn and the address itself, which copies when you click it.
 
-The note card on the first screen flips through four pages: how the hill was made, and two of my side projects, [Driftfield](https://github.com/kloserock97-tech/driftfield) (a particle cloud in a curl-noise field) and [Nightsail](https://github.com/kloserock97-tech/nightsail) (a giant marble head surfacing from a night sea under a column of light). Both have live demos with every parameter on a panel.
+The note card on the first screen flips through four of my side projects: [Windcrest](https://github.com/kloserock97-tech/windcrest) (the grass of this hill as a demo of its own), [Driftfield](https://github.com/kloserock97-tech/driftfield) (a particle cloud in a curl-noise field), [Nightsail](https://github.com/kloserock97-tech/nightsail) (a giant marble head surfacing from a night sea under a column of light) and [Meadow Walk](https://github.com/kloserock97-tech/meadow-walk) (an endless flight over a windy meadow). Each has a live demo with every parameter on a panel.
 
 The retro computer can also be clicked on the hill. Its screen shows a small 2000s-style home page.
 
