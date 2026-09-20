@@ -105,7 +105,10 @@ body {
 .dock-item[data-near="true"] .glyph { opacity: 1; }
 /* знак сайта — единственная светлая плитка в тёмном доке */
 .dock-mark { width: calc(36 * var(--u)); padding: 0; background: #eef1e7; border-color: #eef1e7; color: #23261f; }
-.dock-mark svg { width: 58%; height: 58%; display: block; fill: currentColor; }
+.dock-mark svg { width: 70%; height: 70%; display: block; fill: currentColor; overflow: visible; }
+/* v45: фонтан кита оживает под курсором */
+.dock-mark-spout { transform-origin: 6.3px 5.5px; transition: scale 0.35s var(--ease); }
+.dock-mark[data-near="true"] .dock-mark-spout, .dock-mark:focus-visible .dock-mark-spout { scale: 1.25; }
 .dock-mark[data-near="true"] { background: #fff; border-color: #fff; color: #1b1e18; }
 /* текущий раздел — из той же бумаги, что карточки */
 .dock-item.is-active { background: var(--card); border-color: var(--card); color: var(--card-ink); box-shadow: 0 calc(5 * var(--u)) calc(14 * var(--u)) rgba(12, 17, 9, 0.22); }
@@ -298,7 +301,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid rgba(255, 255, 255, 0
   .dock-item { width: max(44px, calc(46 * var(--u))); height: max(44px, calc(46 * var(--u))); padding: 0; border-radius: max(12px, calc(13 * var(--u))); }
   .dock-item span:not(.glyph) { display: none; }
   .dock-item .glyph { width: max(19px, calc(20 * var(--u))); height: max(19px, calc(20 * var(--u))); }
-  .dock-mark svg { width: 52%; height: 52%; }
+  .dock-mark svg { width: 64%; height: 64%; }
 
   .headline { left: calc(34 * var(--u)); top: calc(128 * var(--u)); font-size: calc(62 * var(--u)); line-height: calc(66 * var(--u)); }
   .lede { left: calc(34 * var(--u)); top: calc(288 * var(--u)); width: calc(400 * var(--u)); font-size: calc(19 * var(--u)); line-height: calc(27 * var(--u)); }

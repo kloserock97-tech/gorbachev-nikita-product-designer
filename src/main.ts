@@ -12,19 +12,21 @@ import { initFieldNote } from "./ui/fieldNote";
 import { initWalkChapter, renderShelf } from "./ui/walkChapter";
 import { initSound } from "./ui/soundToggle";
 import { initFooter } from "./ui/footer";
-import { initDockNav } from "./ui/dockNav";
+import { initDockNav, trackByScroll, type DockSection } from "./ui/dockNav";
 import { initCaseView } from "./ui/caseView";
 import { liteReason, enterLite, rememberLite } from "./ui/lite";
 import { initLangToggle } from "./ui/langToggle";
 import { initI18n, onLang, t } from "./i18n";
 import { cue } from "./audio/bus";
-import { CASES, CHAPTER, CHAPTER2, TIMELINE } from "./scene/story";
+import { CASES, CHAPTER, CHAPTER2, TIMELINE, chapters } from "./scene/story";
 import { topFor } from "./ui/storyScroll";
 import { smoothWheel } from "./ui/smoothScroll";
 
 
 const params = new URLSearchParams(location.search);
 const body = document.body;
+/* объявлено до запуска: start3d() вызывается ниже по файлу раньше, чем выполнились бы объявления после него */
+let liteTracking: (() => void) | null = null;
 
 /* v27: язык страницы (?lang=ru, сохранённый выбор или язык браузера) — до того, как модули соберут
    свою разметку; переключатель стоит в доке */
@@ -50,14 +52,18 @@ function startLite(reason: string) {
   initFieldNote();
   initWorkMenu({ onOpenComputer: () => {}, onAllCases: () => document.getElementById("work")?.scrollIntoView({ behavior: "smooth" }) });
   initFooter({ go: (to) => document.querySelector(to === "cases" ? "#work" : to === "about" ? ".story-hero" : "#hero")?.scrollIntoView({ behavior: "smooth" }) });
-  initDockNav({
+  const liteGo = (sel: string) => document.querySelector(sel)?.scrollIntoView({ behavior: "smooth" });
+  const dockNav = initDockNav({
     top: () => scrollTo({ top: 0, behavior: "smooth" }),
-    contact: () => document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" }),
+    about: () => liteGo(".story-hero"),
+    lab: () => liteGo("#notes"),
+    contact: () => liteGo("#contact"),
   });
   document.querySelectorAll("[data-action='explore']").forEach((el) =>
     el.addEventListener("click", (e) => { e.preventDefault(); document.getElementById("work")?.scrollIntoView({ behavior: "smooth" }); }),
   );
   enterLite(reason);
+  if (dockNav) trackByScroll(dockNav.track);
   /* v43: в лёгкой версии страница прокручивается сама — то же мягкое колесо, что на страницах кейсов */
   smoothWheel(window, () => body.classList.contains("case-open"));
   initCaseView();
@@ -162,6 +168,7 @@ function start3d() {
     renderCases();
     renderShelf();
     enterLite(why);
+    liteTracking?.();
     smoothWheel(window, () => body.classList.contains("case-open"));
     ui.ready();
   };
@@ -235,18 +242,43 @@ function start3d() {
   });
   /* v24: остальные пункты дока вели в никуда (клик гасился ради анимации пилюли) — теперь Hill к холму,
      Say hi к контактам в футере */
-  initDockNav({
+  const isLite = () => body.classList.contains("lite");
+  const liteGo = (sel: string) => document.querySelector(sel)?.scrollIntoView({ behavior: "smooth" });
+  const dockNav = initDockNav({
     top: () => {
-      if (body.classList.contains("lite")) return scrollTo({ top: 0, behavior: "smooth" });
+      if (isLite()) return scrollTo({ top: 0, behavior: "smooth" });
       closePc();
       story?.toTop();
     },
+    about: () => {
+      if (isLite()) return liteGo(".story-hero");
+      closePc();
+      story?.toAbout();
+    },
+    lab: () => {
+      if (isLite()) return liteGo("#notes");
+      closePc();
+      story?.toNotes();
+    },
     contact: () => {
-      if (body.classList.contains("lite")) return document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
+      if (isLite()) return liteGo("#contact");
       closePc();
       story?.toFooter();
     },
   });
+  /* v45: активный пункт дока — раздел истории, в котором сейчас человек */
+  if (dockNav) {
+    const sectionAt = (p: number): DockSection => {
+      const { s, c, f } = chapters(p);
+      if (f > 0.2) return "contact";
+      if (c >= CASES.notesIn[0]) return "lab";
+      if (c > CASES.intro[0]) return "work";
+      return s > 0.5 ? "about" : "home";
+    };
+    const prevStory = scene.onStory;
+    scene.onStory = (p) => { prevStory?.(p); if (!isLite()) dockNav.track(sectionAt(p)); };
+    liteTracking = () => trackByScroll(dockNav.track);
+  }
   initLangToggle();
   document.querySelector(".pc-back")?.addEventListener("click", closePc);
   window.addEventListener("wheel", (e) => {

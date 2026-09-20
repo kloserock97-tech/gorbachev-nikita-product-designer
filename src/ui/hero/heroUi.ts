@@ -84,10 +84,7 @@ export function initHeroUi(hooks: Hooks = {}) {
     const item = (e.target as HTMLElement).closest<HTMLElement>("[data-dock]");
     if (!item) return;
     e.preventDefault();
-    if (!item.matches(".dock-mark, .dock-sound, .dock-lang")) {
-      items.forEach((el) => el.classList.remove("is-active"));
-      item.classList.add("is-active");
-    }
+    /* v45: активный пункт ставит dockNav.ts по разделу, где находится человек, а не по последнему клику */
     hooks.burstAt?.(e.clientX, e.clientY);
   });
 

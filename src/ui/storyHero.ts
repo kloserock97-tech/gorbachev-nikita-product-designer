@@ -242,6 +242,8 @@ export function initStory(scene: Scene) {
     /** к главе «Кейсы»: лента уже поднялась */
     toCases: () => scrollToProgress(CHAPTER + (CHAPTER2 - CHAPTER) * CASES.strip[0]),
     toAbout: () => scrollToProgress(CHAPTER),
+    /** к своим проектам: первая заметка уже встала */
+    toNotes: () => jumpTo(CHAPTER + (CHAPTER2 - CHAPTER) * CASES.notesRun[0]),
     /** к холму и к контактам: из середины истории плавная прокрутка тянулась бы секунды — прыжок ближе, остаток плавно */
     toTop: () => jumpTo(0),
     toFooter: () => jumpTo(1),

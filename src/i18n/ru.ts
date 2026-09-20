@@ -10,15 +10,17 @@ const ru: Record<keyof typeof en, string> = {
   "scene.alt": "Кресло на травяном холме на закате",
 
   /* док */
-  "nav.home": "Никита Горбачёв — на холм",
-  "nav.hill": "Холм",
+  "nav.home": "Никита Горбачёв: в начало",
+  "nav.about": "Обо мне",
   "nav.work": "Кейсы",
-  "nav.notes": "Заметки",
+  "nav.lab": "Эксперименты",
   "nav.hi": "Написать",
   "nav.lang": "Read in English",
   "nav.lang.short": "EN",
-  "nav.sound.on": "Звук включён — выключить",
-  "nav.sound.off": "Звук выключен — включить",
+  "nav.sound.on": "Звук включён. Выключить",
+  "nav.sound.off": "Звук выключен. Включить",
+  "sound.label.on": "Звук включён",
+  "sound.label.off": "Включить звук",
 
   /* компьютер на столике */
   "pc.tip": "Почитать журнал",

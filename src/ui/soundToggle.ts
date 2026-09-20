@@ -3,7 +3,9 @@ import type { SoundState } from "../audio/ambient";
 import { chapters } from "../scene/story";
 import { onLang, t as tr } from "../i18n";
 
-/* Кнопка звука в доке (docs/prompts/sound.md).
+/* Кнопка звука (docs/prompts/sound.md). v45: вынесена из дока в угол экрана — динамик, подпись состояния и полоски;
+   подпись раскрывается на три секунды при каждой смене состояния (в том числе когда звук включился сам по первому
+   клику — человеку видно, откуда звук и где его выключить). Кольцо-подсказка крутится, пока кнопку ни разу не трогали.
    - Браузер не даёт играть без жеста, скролл жестом не считается: звук включается по кнопке или по
      первому клику/тапу/клавише, если человек его раньше не выключал (localStorage) и не просил
      экономить трафик (Save-Data).
@@ -22,8 +24,9 @@ type Scene = {
 const KEY = "hill-sound";
 
 export function initSound(scene: Scene) {
-  const btn = document.querySelector<HTMLButtonElement>(".dock-sound");
+  const btn = document.querySelector<HTMLButtonElement>(".sound-fab");
   if (!btn) return;
+  const label = btn.querySelector<HTMLElement>("[data-sound-label]");
   const read = () => { try { return localStorage.getItem(KEY); } catch { return null; } };
   const save = (v: string) => { try { localStorage.setItem(KEY, v); } catch { /* приватный режим */ } };
   const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
@@ -38,10 +41,19 @@ export function initSound(scene: Scene) {
   const paint = () => {
     btn.setAttribute("aria-pressed", String(enabled));
     btn.setAttribute("aria-label", tr(enabled ? "nav.sound.on" : "nav.sound.off"));
+    if (label) label.textContent = tr(enabled ? "sound.label.on" : "sound.label.off");
     document.body.classList.toggle("sound-on", enabled);
   };
   paint();
   onLang(paint);
+  if (read() === null) btn.classList.add("is-new");
+  let tellTimer = 0;
+  const tell = () => {
+    btn.classList.remove("is-new");
+    btn.classList.add("is-tell");
+    clearTimeout(tellTimer);
+    tellTimer = window.setTimeout(() => btn.classList.remove("is-tell"), 3200);
+  };
 
   const tick = () => {
     if (!engine) return;
@@ -62,6 +74,7 @@ export function initSound(scene: Scene) {
     void ctx.resume();
     enabled = true;
     paint();
+    tell();
     loading ??= import("../audio/ambient").then((m) => { engine = m.createAmbient(ctx!); });
     loading.then(() => {
       if (!enabled || !engine) return;
@@ -76,6 +89,7 @@ export function initSound(scene: Scene) {
     if (!enabled) return;
     enabled = false;
     paint();
+    tell();
     clearInterval(timer);
     engine?.fadeOut();
     window.setTimeout(() => { if (!enabled) void ctx?.suspend(); }, 700);
@@ -94,7 +108,7 @@ export function initSound(scene: Scene) {
   /* первый жест на странице включает фон, если звук не выключали */
   if (read() !== "off" && !conn?.saveData) {
     const first = (e: Event) => {
-      if ((e.target as Element | null)?.closest?.(".dock-sound")) return; // кнопку обработает её click
+      if ((e.target as Element | null)?.closest?.(".sound-fab")) return; // кнопку обработает её click
       if (e instanceof KeyboardEvent && (e.key === "m" || e.key === "M")) return;
       off();
       enable(false);

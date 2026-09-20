@@ -7,15 +7,17 @@ const en = {
   "scene.alt": "A chair on a grassy hill at sunset",
 
   /* док */
-  "nav.home": "Nikita Gorbachev: home",
-  "nav.hill": "Hill",
+  "nav.home": "Nikita Gorbachev: back to the start",
+  "nav.about": "About",
   "nav.work": "Work",
-  "nav.notes": "Notes",
+  "nav.lab": "Experiments",
   "nav.hi": "Say hi",
   "nav.lang": "Читать по-русски",
   "nav.lang.short": "RU",
-  "nav.sound.on": "Sound on: mute",
-  "nav.sound.off": "Sound off: turn on",
+  "nav.sound.on": "Sound is on. Turn it off",
+  "nav.sound.off": "Sound is off. Turn it on",
+  "sound.label.on": "Sound is on",
+  "sound.label.off": "Turn sound on",
 
   /* компьютер на столике */
   "pc.tip": "Read the magazine",

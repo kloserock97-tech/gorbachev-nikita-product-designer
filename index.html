@@ -78,48 +78,45 @@
 
   <div class="dock-wrap">
     <nav class="dock" style="--pd:5" aria-label="Primary">
-      <a class="dock-item dock-mark" data-dock href="#" style="--d:120ms" data-i18n-label="nav.home" aria-label="Nikita Gorbachev: home">
-        <!-- метка: кресло -->
+      <a class="dock-item dock-mark" data-dock data-nav="home" href="#" style="--d:120ms" data-i18n-label="nav.home" aria-label="Nikita Gorbachev: back to the start">
+        <!-- v45: знак — кит-горбач (Горбачёв → горбач). Свой рисунок, тот же в public/favicon.svg -->
         <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M6.2 3.5h9.6a1.6 1.6 0 0 1 1.6 1.8l-.9 7.2H5.5l-.9-7.2a1.6 1.6 0 0 1 1.6-1.8Z"/>
-          <path d="M3.2 11.4a1.3 1.3 0 0 1 2.1-.9l.8.7h11.8l.8-.7a1.3 1.3 0 0 1 2.1.9v3.1a1.6 1.6 0 0 1-1.6 1.6H4.8a1.6 1.6 0 0 1-1.6-1.6Z"/>
-          <path d="M5.3 16.8h2.1l-.9 4.2H5Zm11.3 0h2.1l.3 4.2h-1.5Z"/>
+          <path fill-rule="evenodd" d="M1.6 13.4C1.8 9.6 5.6 7.4 9.8 7.6c1.5.1 2.8.5 4 1.1l.8-1.1.7 1.9c1.2.7 2.2 1.2 3.1 1.2.3-1.7-.2-3.4-1.6-5 1.6.1 2.9.8 3.7 2 .5-1.3 1.4-2.2 2.800-2.600 0 2.300-1 4-2.600 5.100-.3 2.200-1.600 4.100-3.600 5.500-1.400 1-3.100 1.600-4.900 1.900l2.600 4.300c-2.600-.2-4.700-1.500-6-3.900-4-.3-7.200-1.600-7.200-4.600Zm3.900-.5a.8.8 0 1 0 0-1.600.8.8 0 0 0 0 1.600Zm-3.100 1.300c1.900.9 4 1.200 6.300.8l.13.68c-2.450.43-4.700.1-6.730-.86Z"/>
+          <path class="dock-mark-spout" d="M5.700 5.500c0-1.200-.6-2-1.700-2.300M7 5.500c0-1.200.6-2 1.700-2.300" fill="none" stroke="currentColor" stroke-width="1.150" stroke-linecap="round"/>
         </svg>
       </a>
-      <a class="dock-item is-active" data-dock href="#" style="--d:180ms">
+      <!-- v45: «Холм» заменён на «Обо мне» — пункт ведёт к экрану About; в начало возвращает знак -->
+      <a class="dock-item" data-dock data-nav="about" href="#about" style="--d:180ms">
         <span class="glyph" aria-hidden="true">
-          <svg viewBox="0 0 16 16"><path d="M1.5 13.5c1.8-3.6 3.9-5.4 6.5-5.4s4.7 1.8 6.5 5.4"/><path d="M8 8.1V5.3"/><path d="M6.4 6.4h3.2"/></svg>
+          <svg viewBox="0 0 16 16"><circle cx="8" cy="5.4" r="2.7"/><path d="M2.800 13.800c.7-2.700 2.500-4.100 5.200-4.100s4.500 1.400 5.200 4.100"/></svg>
         </span>
-        <span data-i18n="nav.hill">Hill</span>
+        <span data-i18n="nav.about">About</span>
       </a>
-      <a class="dock-item" data-dock href="#work" style="--d:230ms">
+      <a class="dock-item" data-dock data-nav="work" href="#work" style="--d:230ms">
         <span class="glyph" aria-hidden="true">
-          <svg viewBox="0 0 16 16"><rect x="2.2" y="2.6" width="11.6" height="8.4" rx="1.4"/><path d="M5.6 13.6h4.8"/></svg>
+          <svg viewBox="0 0 16 16"><rect x="2.200" y="2.600" width="11.600" height="8.400" rx="1.400"/><path d="M5.600 13.600h4.800"/></svg>
         </span>
         <span data-i18n="nav.work">Work</span>
       </a>
-      <a class="dock-item" data-dock href="#notes" style="--d:280ms">
+      <!-- v45: «Заметки» → «Эксперименты»: пункт ведёт к своим WebGL-проектам после кейсов -->
+      <a class="dock-item" data-dock data-nav="lab" href="#notes" style="--d:280ms">
         <span class="glyph" aria-hidden="true">
-          <svg viewBox="0 0 16 16"><rect x="3" y="2.5" width="10" height="11" rx="1.6"/><path d="M5.8 6h4.4M5.8 8.6h4.4M5.8 11.2h2.6"/></svg>
+          <svg viewBox="0 0 16 16"><path d="M6.200 2.300h3.600M6.900 2.300v3.900l-3.500 5.900a1.300 1.300 0 0 0 1.100 2h7a1.300 1.300 0 0 0 1.100-2L9.100 6.200V2.300"/><path d="M5 10.400h6"/></svg>
         </span>
-        <span data-i18n="nav.notes">Notes</span>
+        <span data-i18n="nav.lab">Experiments</span>
       </a>
-      <a class="dock-item dock-item--enter" data-dock href="#contact" style="--d:330ms">
+      <a class="dock-item dock-item--enter" data-dock data-nav="contact" href="#contact" style="--d:330ms">
         <span class="glyph" aria-hidden="true">
-          <svg viewBox="0 0 16 16"><path d="M2.4 4.2h11.2v7.6H2.4z"/><path d="m2.6 4.5 5.4 4.2 5.4-4.2"/></svg>
+          <svg viewBox="0 0 16 16"><path d="M2.400 4.200h11.200v7.600H2.400z"/><path d="m2.600 4.500 5.400 4.200 5.400-4.200"/></svg>
         </span>
         <span data-i18n="nav.hi">Say hi</span>
       </a>
       <!-- v27: язык страницы; подпись — язык, на который переключит (src/ui/langToggle.ts) -->
       <button class="dock-item dock-lang" data-dock type="button" style="--d:355ms" data-i18n-label="nav.lang" aria-label="Читать по-русски">
         <span class="glyph" aria-hidden="true">
-          <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M2.2 8h11.6"/><path d="M8 2.1c1.7 1.7 2.6 3.7 2.6 5.9S9.7 12.2 8 13.9C6.3 12.2 5.4 10.2 5.4 8s.9-4.2 2.6-5.9Z"/></svg>
+          <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M2.200 8h11.600"/><path d="M8 2.100c1.700 1.700 2.600 3.700 2.600 5.900S9.700 12.200 8 13.900C6.300 12.200 5.400 10.200 5.400 8s.9-4.200 2.600-5.900Z"/></svg>
         </span>
         <span class="dock-lang-l" data-i18n="nav.lang.short">RU</span>
-      </button>
-      <!-- звук: фон холма и тихие UI-сигналы (docs/prompts/sound.md), полоски пляшут, пока звук включён -->
-      <button class="dock-item dock-sound" data-dock type="button" style="--d:380ms" aria-pressed="false" data-i18n-label="nav.sound.off" aria-label="Sound off: turn on">
-        <span class="glyph sound-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
       </button>
     </nav>
   </div>
@@ -223,6 +220,22 @@
      (Main page/EN/Hero screen.en.html, .sf-about): слева «Hi there!» и абзац, в центре —
      компьютер с фотографией, справа два абзаца и логотипы компаний -->
 <div class="story-progress" aria-hidden="true"></div>
+
+<!-- v45: звук — отдельная кнопка в углу, а не четыре полоски в доке. Динамик с волнами и подпись состояния:
+     «Включить звук» / «Звук включён». Подпись раскрыта первые секунды, при смене состояния и под курсором,
+     потом кнопка сворачивается до значка (src/ui/soundToggle.ts, hill-ui.css) -->
+<button class="sound-fab" type="button" aria-pressed="false" data-i18n-label="nav.sound.off" aria-label="Sound is off. Turn it on">
+  <span class="sound-fab__ico" aria-hidden="true">
+    <svg viewBox="0 0 24 24">
+      <path class="sf-spk" d="M3.800 9.600h3.100l4.400-3.500v11.800l-4.400-3.500H3.800z"/>
+      <path class="sf-w sf-w1" d="M14.400 9.300a3.900 3.900 0 0 1 0 5.400"/>
+      <path class="sf-w sf-w2" d="M16.900 6.900a7.300 7.300 0 0 1 0 10.200"/>
+      <path class="sf-x" d="m15 9.700 4.600 4.600m0-4.600L15 14.300"/>
+    </svg>
+  </span>
+  <span class="sound-fab__label"><span class="sound-fab__text" data-sound-label>Turn sound on</span><kbd>M</kbd></span>
+  <span class="sound-fab__bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+</button>
 <div class="vf" aria-hidden="true">
   <i class="vf-c vf-c--tl"></i><i class="vf-c vf-c--tr"></i><i class="vf-c vf-c--bl"></i><i class="vf-c vf-c--br"></i>
   <i class="vf-t vf-t--t"></i><i class="vf-t vf-t--b"></i><i class="vf-t vf-t--l"></i><i class="vf-t vf-t--r"></i>
