@@ -1,0 +1,5 @@
+[
+  { "wait": 1500 },
+  { "probe": "JSON.stringify({docW: document.documentElement.scrollWidth, vw: innerWidth, skipBottom: Math.round(document.querySelector('.nature-loader__skip').getBoundingClientRect().bottom), vh: innerHeight, stage: (()=>{const r=document.querySelector('.nature-loader__stage').getBoundingClientRect();return [Math.round(r.left),Math.round(r.top),Math.round(r.width)]})(), title: Math.round(document.querySelector('.nature-loader__title').getBoundingClientRect().top)})", "as": "layout" },
+  { "shot": "garden-m" }
+]

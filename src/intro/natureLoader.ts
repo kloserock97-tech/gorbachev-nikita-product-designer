@@ -44,7 +44,7 @@ export function createNatureLoader(onDone: () => void, onLite: () => void): Natu
   let view: NatureScene | null = null;
   let target = .04, growth = 0, elapsed = 0, last = performance.now(), lastDraw = 0;
   let ready = false, skipped = false, leaving = false, disposed = false, raf = 0, exitTimer = 0;
-  let statusIndex = -1;
+  let statusIndex = -1, completedAt = -1, renderedGrowth = -1;
   const resize = () => { const { width, height } = stage.getBoundingClientRect(); view?.resize(width, height); };
   try { view = new NatureScene(canvas, reduced); resize(); }
   catch (error) { console.warn("Garden renderer unavailable; using static loader", error); }
@@ -73,7 +73,6 @@ export function createNatureLoader(onDone: () => void, onLite: () => void): Natu
     if (skipped) return;
     skipped = true; button.setAttribute("aria-disabled", "true");
     button.textContent = ru ? "Открываю портфолио…" : "Opening portfolio…";
-    if (ready) finish();
   };
   button.addEventListener("click", skip);
   fallback.addEventListener("click", () => { dispose(); onLite(); });
@@ -95,33 +94,38 @@ export function createNatureLoader(onDone: () => void, onLite: () => void): Natu
     if (document.hidden) return;
     elapsed += dt;
     // Loading phases gate growth; elapsed time is only choreography, never a fake byte count.
-    const desired = frozen ?? (reduced || skipped ? .99 : Math.min(target * .94 + .04, elapsed / 4.6));
+    const desired = frozen ?? (reduced || skipped ? target : Math.min(target, elapsed / 4.3));
     growth += (desired - growth) * (1 - Math.exp(-dt * 4.5));
     if (frozen !== null) growth = frozen;
+    else if (reduced || skipped || (ready && desired === 1 && growth > .995)) growth = desired;
     root.dataset.growth = growth.toFixed(3);
-    if (now - lastDraw >= (reduced ? 220 : 1000 / 60)) {
-      view?.render(reduced ? .97 : growth, elapsed);
-      if (view?.isReady) stage.classList.add("has-render");
+    if (now - lastDraw >= (reduced ? 220 : 1000 / 60) || (growth === 1 && renderedGrowth !== 1)) {
+      view?.render(growth, elapsed);
+      if (view?.isReady) { stage.classList.add("has-render"); renderedGrowth = growth; }
       lastDraw = now;
     }
-    const index = ready ? 3 : target < .36 ? 0 : target < .72 ? 1 : 2;
+    // 100 means both a ready portfolio AND a rendered, fully grown scene (ice melted back, moss and flowers up).
+    const complete = ready && growth === 1 && (!view || renderedGrowth === 1);
+    const progress = complete ? 1 : Math.min(.99, growth, target);
+    root.style.setProperty("--garden-progress", String(progress));
+    track.setAttribute("aria-valuenow", String(Math.floor(progress * 100)));
+    if (complete && completedAt < 0) completedAt = elapsed;
+    const index = complete ? 3 : progress < .36 ? 0 : progress < .72 ? 1 : 2;
     if (index !== statusIndex) {
       statusIndex = index;
       label.textContent = (ru ? ["Подготавливаю свет и материалы", "Собираю пространство", "Последние детали", "Можно исследовать"] : ["Preparing light and materials", "Building the scene", "Finishing touches", "Ready to explore"])[index];
     }
-    if (ready && (reduced || skipped || (elapsed > 4.8 && growth > .96))) finish();
+    // Let the finished slab read before the dissolve begins.
+    if (complete && (reduced || skipped || elapsed - completedAt >= .32)) finish();
   };
   raf = requestAnimationFrame(frame);
   return {
     progress(value) {
       target = Math.max(target, Math.min(.94, value));
-      root.style.setProperty("--garden-progress", String(target));
-      track.setAttribute("aria-valuenow", String(Math.round(target * 100)));
     },
     ready() {
       if (disposed) return;
       ready = true; target = 1;
-      root.style.setProperty("--garden-progress", "1"); track.setAttribute("aria-valuenow", "100");
     },
     dispose,
   };
