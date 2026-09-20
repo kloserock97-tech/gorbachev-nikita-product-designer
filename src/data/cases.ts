@@ -10,11 +10,11 @@ export type CaseItem = { id: string; title: string; subtitle: string; tag: strin
 type Ru = { title: string; subtitle: string; tag: string };
 
 const cases: CaseItem[] = [
-  { id: "grif-ai", title: "GRIF AI", subtitle: "A proactive assistant that brings ready-made actions, designed solo", tag: "AI assistant · 2026", cover: "cases/grif-ai.jpg" },
+  { id: "grif-ai", title: "GRIF AI", subtitle: "An assistant that brings ready-made actions. One designer: me", tag: "AI assistant · 2026", cover: "cases/grif-ai.jpg" },
   { id: "ai-agents", title: "AI Agent Risk Management", subtitle: "Agent risk assessment out of Jira and Excel: 6 manual handoffs → 0", tag: "Sber · Enterprise · 2025", cover: "cases/ai-agents.jpg" },
-  { id: "community", title: "Community", subtitle: "City-stories platform for Mos.ru: zero to MVP in nine months", tag: "Web platform · Mos.ru · 2024", cover: "cases/community.jpg" },
+  { id: "community", title: "Community", subtitle: "City stories for Mos.ru: from zero to a first version in nine months", tag: "Web platform · Mos.ru · 2024", cover: "cases/community.jpg" },
   { id: "moderator-dashboard", title: "Moderator Dashboard", subtitle: "A workspace of their own for moderators: −38% steps per task", tag: "B2B dashboard · Mos.ru · 2024", cover: "cases/moderator-dashboard.jpg" },
-  { id: "stop-spam", title: "Stop Spam", subtitle: "Permission onboarding for an anti-spam app: +25% conversion", tag: "iOS · Android · 2026", cover: "cases/stop-spam.jpg" },
+  { id: "stop-spam", title: "Stop Spam", subtitle: "First-run setup for an anti-spam app: +25% reach working protection", tag: "iOS · Android · 2026", cover: "cases/stop-spam.jpg" },
   { id: "electronic-house", title: "Electronic House", subtitle: "UX audit of a housing-services app with four main screens rebuilt", tag: "UX audit · Mobile app · 2024", cover: "cases/electronic-house.jpg" },
 ].map((item) => ({
   ...item,
@@ -30,11 +30,11 @@ const cases: CaseItem[] = [
 }));
 
 const ru: Record<string, Ru> = {
-  "grif-ai": { title: "GRIF AI", subtitle: "Проактивный ассистент с готовыми действиями: дизайн в одиночку", tag: "ИИ-ассистент · 2026" },
-  "ai-agents": { title: "Управление ИИ-агентами", subtitle: "Оценка рисков агентов вместо Jira и Excel: 6 ручных передач → 0", tag: "Сбер · Enterprise · 2025" },
-  "community": { title: "Сообщество", subtitle: "Платформа городских историй для Mos.ru: с нуля до MVP за 9 месяцев", tag: "Веб-платформа · Mos.ru · 2024" },
-  "moderator-dashboard": { title: "Кабинет модератора", subtitle: "Отдельный кабинет модератора «Сообщества»: −38% шагов на задачу", tag: "B2B-кабинет · Mos.ru · 2024" },
-  "stop-spam": { title: "Стоп Спам", subtitle: "Онбординг антиспам-приложения с доступами: +25% к конверсии", tag: "iOS · Android · 2026" },
+  "grif-ai": { title: "GRIF AI", subtitle: "Ассистент сам приносит готовые действия. Дизайнер в проекте один", tag: "ИИ-ассистент · 2026" },
+  "ai-agents": { title: "Управление ИИ-агентами", subtitle: "Оценка рисков агентов без Jira и Excel: 6 передач из рук в руки → 0", tag: "Сбер · Enterprise · 2025" },
+  "community": { title: "Сообщество", subtitle: "Городские истории для Mos.ru: с нуля до первой версии за 9 месяцев", tag: "Веб-платформа · Mos.ru · 2024" },
+  "moderator-dashboard": { title: "Кабинет модератора", subtitle: "Свой кабинет для модераторов: −38% шагов на задачу", tag: "B2B-кабинет · Mos.ru · 2024" },
+  "stop-spam": { title: "Стоп Спам", subtitle: "Первый запуск антиспама: +25% доходят до включённой защиты", tag: "iOS · Android · 2026" },
   "electronic-house": { title: "Электронный дом", subtitle: "UX-аудит приложения ЖКХ и четыре главных экрана, собранных заново", tag: "UX-аудит · Мобильное приложение · 2024" },
 };
 

@@ -1,0 +1,17 @@
+[
+  { "eval": "window.__fit = []; window.__probe = () => { const n = document.querySelector('.card-note'); const c = document.querySelector('.card--stove'); const r = c.getBoundingClientRect(); return { title: c.querySelector('.label')?.textContent, open: c.classList.contains('is-open'), fits: n.scrollHeight <= n.clientHeight + 1, sh: n.scrollHeight, ch: n.clientHeight, top: Math.round(r.top), bottom: Math.round(r.bottom), vh: innerHeight }; }" },
+  { "eval": "document.querySelector('.knob--note').click()" },
+  { "wait": 1600 },
+  { "probe": "JSON.stringify(__probe())", "as": "note 1" },
+  { "shot": "note-1" },
+  { "eval": "document.querySelector('.note-deck__btn[data-step=\"1\"]').click()" },
+  { "wait": 1600 },
+  { "probe": "JSON.stringify(__probe())", "as": "note 2" },
+  { "eval": "document.querySelector('.note-deck__btn[data-step=\"1\"]').click()" },
+  { "wait": 1600 },
+  { "probe": "JSON.stringify(__probe())", "as": "note 3" },
+  { "shot": "note-3" },
+  { "eval": "document.querySelector('.note-deck__btn[data-step=\"1\"]').click()" },
+  { "wait": 1600 },
+  { "probe": "JSON.stringify(__probe())", "as": "note 4" }
+]

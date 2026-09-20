@@ -1,0 +1,80 @@
+[
+ {
+  "eval": "location.hash=\"#/work/ai-agents\""
+ },
+ {
+  "wait": 3500
+ },
+ {
+  "probe": "(() => { const root=document.querySelector(\".case-view, .cs, [class^=cs-]\")||document.body; const bad=[]; document.querySelectorAll(\"[class*=cs-] , [class*=cv-]\").forEach(e=>{ const r=e.getBoundingClientRect(); if(r.width>0 && (r.right>innerWidth+1 || r.left<-1) && !e.closest(\"[class*=film],[class*=strip],[class*=gallery],[class*=bento],[class*=scroll]\")) bad.push(e.className.toString().slice(0,40)+\":\"+Math.round(r.right)); if(e.children.length===0 && e.scrollWidth>e.clientWidth+1 && getComputedStyle(e).overflow!==\"visible\") bad.push(\"clip:\"+e.className.toString().slice(0,30)); }); return JSON.stringify({docW:document.documentElement.scrollWidth, vw:innerWidth, n:document.querySelectorAll(\"[class*=cs-]\").length, bad:[...new Set(bad)].slice(0,12)}); })()",
+  "as": "ai-agents"
+ },
+ {
+  "shot": "case-ai-agents"
+ },
+ {
+  "eval": "location.hash=\"#/work/grif-ai\""
+ },
+ {
+  "wait": 3500
+ },
+ {
+  "probe": "(() => { const root=document.querySelector(\".case-view, .cs, [class^=cs-]\")||document.body; const bad=[]; document.querySelectorAll(\"[class*=cs-] , [class*=cv-]\").forEach(e=>{ const r=e.getBoundingClientRect(); if(r.width>0 && (r.right>innerWidth+1 || r.left<-1) && !e.closest(\"[class*=film],[class*=strip],[class*=gallery],[class*=bento],[class*=scroll]\")) bad.push(e.className.toString().slice(0,40)+\":\"+Math.round(r.right)); if(e.children.length===0 && e.scrollWidth>e.clientWidth+1 && getComputedStyle(e).overflow!==\"visible\") bad.push(\"clip:\"+e.className.toString().slice(0,30)); }); return JSON.stringify({docW:document.documentElement.scrollWidth, vw:innerWidth, n:document.querySelectorAll(\"[class*=cs-]\").length, bad:[...new Set(bad)].slice(0,12)}); })()",
+  "as": "grif-ai"
+ },
+ {
+  "shot": "case-grif-ai"
+ },
+ {
+  "eval": "location.hash=\"#/work/community\""
+ },
+ {
+  "wait": 3500
+ },
+ {
+  "probe": "(() => { const root=document.querySelector(\".case-view, .cs, [class^=cs-]\")||document.body; const bad=[]; document.querySelectorAll(\"[class*=cs-] , [class*=cv-]\").forEach(e=>{ const r=e.getBoundingClientRect(); if(r.width>0 && (r.right>innerWidth+1 || r.left<-1) && !e.closest(\"[class*=film],[class*=strip],[class*=gallery],[class*=bento],[class*=scroll]\")) bad.push(e.className.toString().slice(0,40)+\":\"+Math.round(r.right)); if(e.children.length===0 && e.scrollWidth>e.clientWidth+1 && getComputedStyle(e).overflow!==\"visible\") bad.push(\"clip:\"+e.className.toString().slice(0,30)); }); return JSON.stringify({docW:document.documentElement.scrollWidth, vw:innerWidth, n:document.querySelectorAll(\"[class*=cs-]\").length, bad:[...new Set(bad)].slice(0,12)}); })()",
+  "as": "community"
+ },
+ {
+  "shot": "case-community"
+ },
+ {
+  "eval": "location.hash=\"#/work/moderator-dashboard\""
+ },
+ {
+  "wait": 3500
+ },
+ {
+  "probe": "(() => { const root=document.querySelector(\".case-view, .cs, [class^=cs-]\")||document.body; const bad=[]; document.querySelectorAll(\"[class*=cs-] , [class*=cv-]\").forEach(e=>{ const r=e.getBoundingClientRect(); if(r.width>0 && (r.right>innerWidth+1 || r.left<-1) && !e.closest(\"[class*=film],[class*=strip],[class*=gallery],[class*=bento],[class*=scroll]\")) bad.push(e.className.toString().slice(0,40)+\":\"+Math.round(r.right)); if(e.children.length===0 && e.scrollWidth>e.clientWidth+1 && getComputedStyle(e).overflow!==\"visible\") bad.push(\"clip:\"+e.className.toString().slice(0,30)); }); return JSON.stringify({docW:document.documentElement.scrollWidth, vw:innerWidth, n:document.querySelectorAll(\"[class*=cs-]\").length, bad:[...new Set(bad)].slice(0,12)}); })()",
+  "as": "moderator-dashboard"
+ },
+ {
+  "shot": "case-moderator-dashboard"
+ },
+ {
+  "eval": "location.hash=\"#/work/stop-spam\""
+ },
+ {
+  "wait": 3500
+ },
+ {
+  "probe": "(() => { const root=document.querySelector(\".case-view, .cs, [class^=cs-]\")||document.body; const bad=[]; document.querySelectorAll(\"[class*=cs-] , [class*=cv-]\").forEach(e=>{ const r=e.getBoundingClientRect(); if(r.width>0 && (r.right>innerWidth+1 || r.left<-1) && !e.closest(\"[class*=film],[class*=strip],[class*=gallery],[class*=bento],[class*=scroll]\")) bad.push(e.className.toString().slice(0,40)+\":\"+Math.round(r.right)); if(e.children.length===0 && e.scrollWidth>e.clientWidth+1 && getComputedStyle(e).overflow!==\"visible\") bad.push(\"clip:\"+e.className.toString().slice(0,30)); }); return JSON.stringify({docW:document.documentElement.scrollWidth, vw:innerWidth, n:document.querySelectorAll(\"[class*=cs-]\").length, bad:[...new Set(bad)].slice(0,12)}); })()",
+  "as": "stop-spam"
+ },
+ {
+  "shot": "case-stop-spam"
+ },
+ {
+  "eval": "location.hash=\"#/work/electronic-house\""
+ },
+ {
+  "wait": 3500
+ },
+ {
+  "probe": "(() => { const root=document.querySelector(\".case-view, .cs, [class^=cs-]\")||document.body; const bad=[]; document.querySelectorAll(\"[class*=cs-] , [class*=cv-]\").forEach(e=>{ const r=e.getBoundingClientRect(); if(r.width>0 && (r.right>innerWidth+1 || r.left<-1) && !e.closest(\"[class*=film],[class*=strip],[class*=gallery],[class*=bento],[class*=scroll]\")) bad.push(e.className.toString().slice(0,40)+\":\"+Math.round(r.right)); if(e.children.length===0 && e.scrollWidth>e.clientWidth+1 && getComputedStyle(e).overflow!==\"visible\") bad.push(\"clip:\"+e.className.toString().slice(0,30)); }); return JSON.stringify({docW:document.documentElement.scrollWidth, vw:innerWidth, n:document.querySelectorAll(\"[class*=cs-]\").length, bad:[...new Set(bad)].slice(0,12)}); })()",
+  "as": "electronic-house"
+ },
+ {
+  "shot": "case-electronic-house"
+ }
+]

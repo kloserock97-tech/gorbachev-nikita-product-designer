@@ -2,8 +2,8 @@
    иначе сборка не пройдёт. Тексты — те же, что стояли в разметке до v27. */
 const en = {
   "doc.title": "Gorbachev Nikita — Product Designer",
-  "doc.desc": "Nikita Gorbachev, Senior/Lead Product Designer: complex products and AI-enabled services, from discovery to final UI, metrics and scale.",
-  "doc.og": "Complex products and AI-enabled services, from discovery to final UI, metrics and scale.",
+  "doc.desc": "Nikita Gorbachev, Senior/Lead Product Designer. I make complex products and AI services simple, from research to final screens, numbers and growth.",
+  "doc.og": "I make complex products and AI services simple, from research to final screens, numbers and growth.",
   "scene.alt": "A chair on a grassy hill at sunset",
 
   /* док */
@@ -27,8 +27,8 @@ const en = {
   /* первый экран */
   "hero.name": "Nikita Gorbachev,",
   "hero.role": "product designer",
-  "hero.lede": "I design complex products and AI-enabled services, from discovery to final UI, metrics and scale. Scroll down, the computer will explain.",
-  "hero.lede.lite": "I design complex products and AI-enabled services, from discovery to final UI, metrics and scale. Scroll down for the work.",
+  "hero.lede": "I make complex products and AI services simple, from research to final screens, numbers and growth. Scroll down, the computer will explain.",
+  "hero.lede.lite": "I make complex products and AI services simple, from research to final screens, numbers and growth. Scroll down for the work.",
   "hero.explore": "See the work",
   "hero.gust": "Call the wind",
   "hero.scroll": "Discover",
@@ -56,30 +56,30 @@ const en = {
   "notes.hill.label": "Side project 01",
   "notes.hill.title": "Windcrest",
   "notes.hill.alt": "The crest of a hill under a grey sky, grass bent by a strong wind",
-  "notes.hill.p1": "The grass from the first screen of this site as a demo of its own: 380,000 blades of real geometry in one instanced draw call, and the CPU spends nothing on them.",
-  "notes.hill.p2": "Wind comes in patches of gusts, grass grows in Voronoi tufts, and the cursor leaves a trail. The vertex shader does all of it.",
-  "notes.hill.p3": "Two tricks against shimmer: a blade is never thinner than a pixel and gets wider with distance. Every value is on a live panel, and the setup fits in a link.",
+  "notes.hill.p1": "The grass from the first screen of this site as a demo of its own. The graphics card draws 380,000 real blades with one command (instancing), and the processor rests.",
+  "notes.hill.p2": "Wind comes in gusts, grass grows in tufts, and the cursor leaves a trail like a hand on a carpet. The graphics card does all of it (in a vertex shader).",
+  "notes.hill.p3": "To keep far grass from shimmering, a blade is never thinner than a pixel and gets wider with distance. You can play with everything on a panel, and the link keeps your settings.",
 
   "notes.drift.label": "Side project 02",
   "notes.drift.title": "Driftfield",
   "notes.drift.alt": "A cloud of white particles torn into shreds by a flow field",
-  "notes.drift.p1": "A cloud of 80,000 points traced along the streamlines of a curl-noise field, recomputed from scratch on the GPU every frame.",
-  "notes.drift.p2": "Nothing is simulated, so you can freeze time or rewind it and the shape holds.",
-  "notes.drift.p3": "A thin-lens depth of field with a real f-stop, and every parameter on a live panel.",
+  "notes.drift.p1": "A cloud of 80,000 points drifts like smoke in a draught (a curl-noise field). The graphics card works out every point from scratch in every frame.",
+  "notes.drift.p2": "The demo does not remember past frames, so you can stop time and rewind it like a video. The shape holds.",
+  "notes.drift.p3": "Background blur like in a camera, with a real f-stop (the thin-lens formula). You can play with everything on a panel.",
 
   "notes.sail.label": "Side project 03",
   "notes.sail.title": "Nightsail",
   "notes.sail.alt": "A giant marble head surfacing from a night sea under a column of light",
   "notes.sail.p1": "A giant marble head under a column of light. The tide drowns it and gives it back.",
-  "notes.sail.p2": "The stone reads the same wave sum the sea draws, so the waterline is exact: foam at the surface, and wet dark marble that dries slowly after the water leaves.",
-  "notes.sail.p3": "Built on WebGPU and TSL. Every value sits on a panel, tide and flare included, and the setup fits into a link.",
+  "notes.sail.p2": "The stone knows the height of the same waves the sea draws, so the water touches it exactly. There is foam at the edge, and the wet marble goes dark and dries slowly, like a pebble on a beach.",
+  "notes.sail.p3": "Built on WebGPU, the new graphics for browsers (shaders in TSL). Everything is on the panel, even the tide and the flare. The settings are saved in the link.",
 
   "notes.meadow.label": "Side project 04",
   "notes.meadow.title": "Meadow Walk",
   "notes.meadow.alt": "Dark hills covered in dense grass under a low sun",
-  "notes.meadow.p1": "An endless flight over a windy meadow: half a million blades of grass placed and bent by wind on the GPU.",
+  "notes.meadow.p1": "An endless flight over a windy meadow. The graphics card places half a million blades of grass and bends them in the wind.",
   "notes.meadow.p2": "The cursor sends soft waves through the field. Pebbles and dust ride the crest and settle back.",
-  "notes.meadow.p3": "One heightmap per frame feeds terrain, grass and shadows, and every number is on a live panel.",
+  "notes.meadow.p3": "Hills, grass and shadows take their height from one shared map that updates every frame. You can play with everything on a panel.",
 
   /* рамка видоискателя, пока компьютер летит */
   "vf.obj": "OBJ_01 / CRT·2000",
@@ -91,7 +91,7 @@ const en = {
   "about.hi": "Hi there!",
   "about.intro": "I'm Nikita, a Senior/Lead Product Designer. I make complex services feel simple, both the ones millions of people use and the internal tools tens of thousands of employees open every morning. I also lead a team of designers.",
   "about.p1": "My work mixes product design, systems thinking and AI",
-  "about.p2": "Research and product structure first, then launch, metrics and scaling what works.",
+  "about.p2": "Research and product structure come first. Then launch, numbers and growing what works.",
   "about.logos": "Companies I've worked for",
   "about.logo.ozon": "Ozon, 2022",
   "about.logo.mos": "Mos.ru, 2023 to 2025",
@@ -108,10 +108,10 @@ const en = {
   /* v32: заставка главы «Кейсы» над лугом и заметки после ленты */
   "walk.kicker": "Case studies · 2024–2026",
   "walk.title": "Six products, from research to launch",
-  "walk.sub": "Enterprise tools, public services and AI products. Each case covers the role, the context and the outcome.",
+  "walk.sub": "Internal tools, city services and AI products. Each case tells what was there, what I did and what came of it.",
   "shelf.kicker": "Side projects",
   "shelf.title": "WebGL experiments",
-  "shelf.sub": "Real-time 3D: four demos with the code on GitHub and a live settings panel. The grass of the first one grows on the hill of this site.",
+  "shelf.sub": "3D right in the browser: four demos with code on GitHub and a panel to play with. The grass from the first one grows on this site's hill.",
   "shelf.of": "of",
 
   /* меню Work в доке */

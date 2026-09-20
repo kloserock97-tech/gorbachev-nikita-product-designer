@@ -1,0 +1,6 @@
+[
+  { "eval": "window.scrollTo(0, __story.topFor(0.2))" }, { "wait": 3000 },
+  { "eval": "window.scrollTo(0, __story.topFor(0.3))" }, { "wait": 6000 },
+  { "probe": "(() => { const q = s => { const r = document.querySelector(s).getBoundingClientRect(); return [Math.round(r.top), Math.round(r.bottom)]; }; return JSON.stringify({intro: q('.story-intro'), p2: q('[data-i18n=\"about.p2\"]'), logos: q('.story-logos, [class*=logos]'), vh: innerHeight}); })()", "as": "about 0.3" },
+  { "shot": "about-30" }
+]
