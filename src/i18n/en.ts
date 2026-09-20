@@ -122,8 +122,7 @@ const en = {
   "work.all": "All",
   "work.web": "Web",
   "work.mobile": "Mobile",
-  "work.note": "Six case studies from 2024 to 2026. Each one opens right here.",
-  "work.pcShort": "On the 2000s computer",
+  "work.note": "Six case studies, 2024 to 2026: web, mobile and AI products",
   "work.allCases": "All case studies",
 
   /* страница кейса */

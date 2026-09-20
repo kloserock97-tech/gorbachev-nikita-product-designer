@@ -68,7 +68,6 @@ export function initWorkMenu(opts: { onOpenComputer?: () => void; onAllCases?: (
     <div class="work-menu__foot">
       <p class="work-menu__note"></p>
       <div class="work-menu__actions">
-        <button class="work-menu__pc" type="button"></button>
         <button class="work-menu__all" type="button"><span class="work-menu__all-l"></span> <span aria-hidden="true">→</span></button>
       </div>
     </div>`;
@@ -96,7 +95,6 @@ export function initWorkMenu(opts: { onOpenComputer?: () => void; onAllCases?: (
       li.querySelector(".work-menu__sub")!.textContent = c.tag;
     });
     panel.querySelector(".work-menu__note")!.textContent = t("work.note");
-    panel.querySelector(".work-menu__pc")!.textContent = t("work.pcShort");
     panel.querySelector(".work-menu__all-l")!.textContent = t("work.allCases");
   };
   paint();
@@ -198,10 +196,7 @@ export function initWorkMenu(opts: { onOpenComputer?: () => void; onAllCases?: (
     a.addEventListener("click", () => setOpen(false));
     a.addEventListener("pointerenter", (e) => { if ((e as PointerEvent).pointerType === "mouse") cue("hover", 0.5); });
   });
-  panel.querySelector(".work-menu__pc")?.addEventListener("click", () => {
-    setOpen(false);
-    opts.onOpenComputer?.();
-  });
+  /* v51: кнопка «На компьютере из нулевых» убрана по просьбе Никиты; компьютер по-прежнему открывается кликом по нему в сцене */
   panel.querySelector(".work-menu__all")?.addEventListener("click", () => {
     setOpen(false);
     cue("press", 0.7);
