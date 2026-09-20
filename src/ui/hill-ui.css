@@ -52,6 +52,9 @@ body {
 .dock-item--enter {
   color: #fff;
 }
+/* v49: знак светлый, под курсором он белеет — рисунок остаётся тёмным. Общее правило выше красило его в белый,
+   и кит (а до него кресло) под курсором исчезал: белое на белом */
+.dock-mark[data-near="true"] { color: #1b1e18; }
 
 /* статистика и подсказка «Discover» стоят на траве */
 .stat .mark {
@@ -85,12 +88,17 @@ body {
   /* кнопка ветра меньше и в ряду со статистикой травы и погоды — она про ту же траву */
   /* v47: кадр первого экрана стал как в футере — гребень ниже, у левого края трава начинается на ~40u ниже.
      Статистика и кнопка ветра опущены на столько же, чтобы светлые подписи стояли на траве, а не на кромке неба */
-  .play-wrap { left: calc(470 * var(--u)); top: calc(704 * var(--u)); width: calc(106 * var(--u)); height: calc(106 * var(--u)); }
+  /* v49: кадр первого экрана — 880u в высоту, и на широком невысоком окне (ноутбук с масштабом 225 %: 1348×684)
+     он выше окна. Всё, что стоит у нижнего края кадра, привязано и к высоте окна: статистика, кнопка ветра и
+     «Дальше» поднимаются вместе с нижним краем и не обрезаются */
+  .stage { --stat-top: min(calc(770 * var(--u)), calc(100svh - 40 * var(--u) - 26px)); }
+  .scroll { top: min(calc(690 * var(--u)), calc(100svh - 150 * var(--u) - 14px)); }
+  .play-wrap { left: calc(470 * var(--u)); top: calc(var(--stat-top) - 66 * var(--u)); width: calc(106 * var(--u)); height: calc(106 * var(--u)); }
   .gust { width: calc(56 * var(--u)); height: calc(56 * var(--u)); margin: calc(-28 * var(--u)) 0 0 calc(-28 * var(--u)); }
   .gust svg { width: calc(19 * var(--u)); height: calc(19 * var(--u)); margin-left: calc(3 * var(--u)); }
 
-  .stat--a { left: calc(64 * var(--u)); top: calc(770 * var(--u)); }
-  .stat--b { left: calc(300 * var(--u)); top: calc(770 * var(--u)); }
+  .stat--a { left: calc(64 * var(--u)); top: var(--stat-top); }
+  .stat--b { left: calc(300 * var(--u)); top: var(--stat-top); }
 
   /* v19: одна карточка справа — «How the hill was grown»; «Who sits here?» ушла в скролл-историю */
   .card--stove { left: calc(1213 * var(--u)); top: calc(300 * var(--u)); }

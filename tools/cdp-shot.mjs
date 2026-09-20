@@ -63,7 +63,7 @@ const evaluate = async (expr) => (await send("Runtime.evaluate", { expression: e
 
 await send("Runtime.enable");
 await send("Page.enable");
-await send("Emulation.setDeviceMetricsOverride", { width: W, height: H, deviceScaleFactor: 1, mobile: false });
+await send("Emulation.setDeviceMetricsOverride", { width: W, height: H, deviceScaleFactor: +arg("dpr", 1), mobile: false });
 await send("Page.navigate", { url: URL_ });
 await sleep(WAIT);
 if (SCROLL) {
