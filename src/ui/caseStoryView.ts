@@ -228,7 +228,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
   const ap = s.approach;
   const r = s.research;
   const html = `
-  <article class="cs" data-case="${esc(s.id)}" style="${lookVars(card)}">
+  <article class="cs" data-case="${esc(s.id)}" style="${lookVars(card, "mono")}">
     <div class="cs-top">
       <button type="button" class="cs-back"><span aria-hidden="true">←</span> ${t("cs.back")}</button>
       <div class="cs-top-title" aria-hidden="true"><b>${esc(card.title)}</b><i class="cs-progress"></i></div>
@@ -254,7 +254,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           <p class="cs-tags" data-reveal style="--rd:4">${s.hero.tags.map((x) => `<span>${esc(x)}</span>`).join("")}</p>
         </header>
 
-        ${s.kpis.length ? `<section class="cs-kpis" aria-label="${t("cs.results")}">${s.kpis.map((m, k) => `<div class="cs-kpi" data-reveal style="--rd:${k}"><b data-count="${esc(m.value)}">${esc(m.value)}</b><span>${esc(m.label)}</span></div>`).join("")}</section>` : ""}
+        ${s.kpis.length ? `<section class="cs-kpis" aria-label="${t("cs.results")}">${s.kpis.map((m, k) => `<div class="cs-kpi${m.value.length > 7 ? " cs-kpi--long" : ""}" data-reveal style="--rd:${k}"><b data-count="${esc(m.value)}">${esc(m.value)}</b><span>${esc(m.label)}</span></div>`).join("")}</section>` : ""}
 
         <section class="cs-sec">
           ${head(++sec, "brief", t("cs.brief"))}
@@ -378,7 +378,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           ${s.quote ? `<blockquote class="cs-quote cs-quote--big" data-reveal style="--rd:2">${esc(s.quote)}</blockquote>` : ""}
         </section>
 
-        <a class="cs-next" href="#/work/${esc(next.id)}" style="${lookVars(next)}" data-reveal>
+        <a class="cs-next" href="#/work/${esc(next.id)}" style="${lookVars(next, "mono")}" data-reveal>
           <span class="cs-next-text"><span class="cs-mini">${t("cs.nextcase")}</span><b>${esc(next.title)}</b><span class="cs-next-sub">${esc(next.subtitle)}</span></span>
           ${objectPicture(next, "cs-next-obj")}
           <span class="cs-go">${goArrow}</span>

@@ -1020,8 +1020,8 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
    Бумага в цвет About поверх сцены; сцена под страницей не рисуется. Раскладка самой страницы — в case-v41.css
    (v41), здесь только окно, прокрутка и то, чем пользуется экран «кейса нет». */
 .case-view {
-  /* v64: тёплая бумага посветлее и белые плитки без обводок — язык страницы кейса (case-story.css) */
-  --paper: #f5f4f0; --card: #ffffff; --ink: #1d1d1f; --soft: #6e6e73; --line: rgba(0, 0, 0, 0.09);
+  /* v65: холодная светло-серая бумага Apple и белые плитки без обводок — язык страницы кейса (case-story.css) */
+  --paper: #f5f5f7; --card: #ffffff; --ink: #1d1d1f; --soft: #6e6e73; --line: rgba(0, 0, 0, 0.09);
   position: fixed; inset: 0; z-index: 50; overflow: hidden; background: var(--paper); color: var(--ink);
   font-family: var(--font);
   opacity: 0; translate: 0 24px; transition: opacity 0.35s ease, translate 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -1034,7 +1034,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 .cv-bar {
   position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 16px;
   padding: 16px 0; margin-bottom: clamp(12px, 3vh, 36px);
-  background: linear-gradient(var(--paper) 78%, rgba(245, 244, 240, 0));
+  background: linear-gradient(var(--paper) 78%, rgba(245, 245, 247, 0));
 }
 .cv-back {
   display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px;

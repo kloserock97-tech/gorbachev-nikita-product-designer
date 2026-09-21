@@ -14,7 +14,9 @@ const SHORT = /(^|[\s («„“"'])([A-Za-zА-Яа-яЁё]{1,2}) (?=\S)/g;
 const PARTICLE = / (же|бы|ли|б|ж)(?=[\s.,;:!?»)]|$)/g;
 const DASH = / ([—–])/g;
 const NUMBER = /(\d[\d.,]*%?) (?=[A-Za-zА-Яа-яЁё%→₽$€])/g;
-const ARROW = / ?→ ?/g;
+/* v65: стрелка намертво клеится только между числами («6 → 0»). В словесной цепочке «new → assessment → approval»
+   после стрелки обычный пробел: иначе вся цепочка — одно неразрывное слово, и на телефоне оно рвётся посреди буквы */
+const ARROW = /[  ]?→[  ]?(\d)?/g;
 const TAIL = / (\S{1,5})$/;
 
 export function tidy(text: string): string {
@@ -25,7 +27,7 @@ export function tidy(text: string): string {
   s = s.replace(PARTICLE, `${NB}$1`);
   s = s.replace(DASH, `${NB}$1`);
   s = s.replace(NUMBER, `$1${NB}`);
-  s = s.replace(ARROW, `${NB}→${NB}`);
+  s = s.replace(ARROW, (_m, digit?: string) => (digit !== undefined ? `${NB}→${NB}${digit}` : `${NB}→ `));
   if (s.length > 40) s = s.replace(TAIL, `${NB}$1`);
   return s;
 }

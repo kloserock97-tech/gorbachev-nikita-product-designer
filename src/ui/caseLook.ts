@@ -5,9 +5,16 @@ import { caseObject, type CaseItem } from "../data/cases";
 const BASE = import.meta.env.BASE_URL;
 const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
 
+/** v65: внутри кейса цвет один на всех — графит на холодном светло-сером, как у Apple. Шесть палитр на длинной
+   странице спорили с экранами продукта и между собой; цвет кейса теперь несёт только предмет-обложка.
+   Карточка в ленте и меню «Кейсы» остаются в цвете кейса (tone "color"). */
+export const MONO = { stage: ["#f0f0f3", "#e2e2e7"], ink: "#1d1d1f", accent: "#1d1d1f" } as const;
+export type LookTone = "color" | "mono";
+
 /** переменные вида для атрибута style: тона сцены, чернила, акцент и раскладка предмета */
-export const lookVars = (c: CaseItem) => {
-  const { stage, ink, accent, object: o } = c.look;
+export const lookVars = (c: CaseItem, tone: LookTone = "color") => {
+  const { object: o } = c.look;
+  const { stage, ink, accent } = tone === "mono" ? MONO : c.look;
   return `--s1:${stage[0]};--s2:${stage[1]};--ink:${ink};--accent:${accent};--ow:${pct(o.w)};--ox:${pct(o.x)};--oy:${pct(o.y)};--oar:${o.ratio.toFixed(4)}`;
 };
 

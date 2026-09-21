@@ -27,8 +27,8 @@ const en = {
   /* первый экран */
   "hero.name": "Nikita Gorbachev,",
   "hero.role": "product designer",
-  "hero.lede": "I make complex products and AI services simple, from research to final screens, numbers and growth. Scroll down, the computer will explain.",
-  "hero.lede.lite": "I make complex products and AI services simple, from research to final screens, numbers and growth. Scroll down for the work.",
+  "hero.lede": "Senior/Lead. I make complex products and AI services simple, from research to final screens, numbers and growth. Scroll down, the computer will explain.",
+  "hero.lede.lite": "Senior/Lead. I make complex products and AI services simple, from research to final screens, numbers and growth. Scroll down for the work.",
   "hero.explore": "See the work",
   "hero.gust": "Call the wind",
   "hero.scroll": "Discover",

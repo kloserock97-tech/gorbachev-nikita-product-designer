@@ -3,7 +3,8 @@
    · одна гарнитура, заголовки всегда 600, текст 400, лёгких начертаний нет; контраст делает размер, а не вес;
    · трекинг от кегля: −0.025em на самом крупном, около нуля на 24–28, ноль на тексте;
    · плитки без теней и обводок: белая плитка на тёплой бумаге, крупные radius 28, мелкие 20; глубину даёт смена фона;
-   · цвет кейса везде один (src/data/cases.ts, look): сцена --s1 → --s2, чернила --ink, акцент --accent.
+   · v65: страница кейса серая у всех кейсов (caseLook.ts, MONO): сцена --s1 → --s2, чернила --ink, акцент --accent — графит.
+     Цвет кейса несёт только предмет-обложка; карточка в ленте остаётся в цвете кейса (src/data/cases.ts, look).
      Тёмные плашки красятся чернилами кейса, а не общим зелёным стеклом;
    · серый абзац с чёрным «заходом» (.cs-run) вместо отдельных подзаголовков;
    · числа: мелко — крупно — мелко, крупное акцентом;
@@ -17,7 +18,7 @@
   --soft: color-mix(in srgb, var(--ink) 62%, transparent);
   --faint: color-mix(in srgb, var(--ink) 44%, transparent);
   --line: color-mix(in srgb, var(--ink) 11%, transparent);
-  --tile: #ffffff; --tile-2: color-mix(in srgb, var(--s2) 30%, #efeee9);
+  --tile: #ffffff; --tile-2: color-mix(in srgb, var(--s2) 30%, #ececf0);
   --stage: linear-gradient(180deg, var(--s1), var(--s2));
   --warn: #cf4a2f;
   position: relative; color: var(--ink); font-weight: 400; font-size: 17px; line-height: 1.5;
@@ -102,6 +103,8 @@ body.lang-ru .cs-hero h1 { line-height: 1.05; letter-spacing: -0.024em; }
 .cs-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 12px; margin-top: clamp(28px, 5vh, 56px); }
 .cs-kpi { display: grid; align-content: start; gap: 12px; min-width: 0; padding: 26px 26px 28px; border-radius: 24px; background: var(--tile); }
 .cs-kpi b { font-size: clamp(38px, 3.9vw, 64px); line-height: 1; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; color: var(--accent); white-space: nowrap; }
+/* v65: длинное значение («2 платформы») крупным кеглем не влезает в плитку — ему кегль меньше */
+.cs-kpi--long b { font-size: clamp(28px, 2.7vw, 44px); letter-spacing: -0.025em; }
 .cs-kpi span { max-width: 20em; font-size: 15px; font-weight: 500; line-height: 1.4; color: var(--soft); text-wrap: pretty; }
 .cs-kpis--s { margin-top: 20px; }
 .cs-kpis--s .cs-kpi { background: var(--tile-2); padding: 20px 22px; }
@@ -261,7 +264,7 @@ html[lang="en"] .cs-hyp q { quotes: "\201C" "\201D"; }
 .cs-basis i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); translate: 0 -1px; }
 .cs-divelink { display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; border-radius: 999px; background: var(--tile-2); color: var(--ink); font-size: 15px; font-weight: 500; text-decoration: none; transition: background 0.25s var(--ease); }
 .cs-divelink span { color: var(--accent); transition: translate 0.3s var(--ease); }
-.cs-divelink:hover { background: color-mix(in srgb, var(--s2) 60%, #e6e5df); }
+.cs-divelink:hover { background: color-mix(in srgb, var(--s2) 60%, #e3e3e8); }
 .cs-divelink:hover span { translate: 3px 0; }
 
 /* разборы в глубину */
@@ -539,7 +542,10 @@ body.case-open .lite-bar { opacity: 0; pointer-events: none; }
   .cs-facts--hero .ic { grid-row: auto; margin-bottom: 4px; }
   .cs-facts--hero dd { font-size: 15px; }
   .cs-methods, .cs-flow, .cs-fdw--2 { grid-template-columns: 1fr; }
-  .cs-constraints li, .cs-props li, .cs-levels li { grid-template-columns: 34px 1fr; }
+  /* v65: minmax(0, 1fr), а не 1fr: типограф склеивает цепочки вроде «new → assessment → approval» неразрывными пробелами,
+     колонка 1fr росла по самой длинной строке и текст уезжал за правый край телефона */
+  .cs-constraints li, .cs-props li, .cs-levels li { grid-template-columns: 34px minmax(0, 1fr); }
+  .cs-constraints li p, .cs-props li p, .cs-levels li p, .cs-levels li b { overflow-wrap: anywhere; }
   .cs-constraints li p, .cs-props li p, .cs-levels li p { grid-column: 2; }
   .cs-levels li { margin-left: 0; }
   .cs-rules div { grid-template-columns: 1fr; gap: 4px; }
@@ -556,6 +562,7 @@ body.case-open .lite-bar { opacity: 0; pointer-events: none; }
   .cs-kpi { padding: 18px 16px 20px; border-radius: 20px; }
   /* «2 платформы» и «169,4 тыс.» должны помещаться в половину экрана целиком, без переноса посреди слова */
   .cs-kpi b { font-size: clamp(24px, 7.4vw, 40px); white-space: normal; overflow-wrap: break-word; }
+  .cs-kpi--long b { font-size: clamp(20px, 5.6vw, 30px); }
   .cs-method, .cs-decision, .cs-mistake { padding: 22px; border-radius: 24px; }
   .cs-outcomes li { padding: 22px; border-radius: 24px; grid-template-columns: 1fr; }
   .cs-outcomes li > div { grid-column: 1; }
