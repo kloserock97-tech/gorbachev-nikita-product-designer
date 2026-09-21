@@ -1,57 +1,63 @@
-/* v65: глава «Кейсы», вариант «колесо» (?cases=wheel) — стили к casesWheel.ts.
-   Справа названия кейсов на дуге, слева сцена с предметом активного кейса и текст о нём. Сцена — та же светлая
-   плитка в цвет кейса, что и карточка ленты (case-cards.css): radius 32, предмет крупный и срезан краем.
-   Положение названий, прозрачность сцен и ход предметов пишет скрипт от прокрутки; здесь — раскладка и вид.
-   --e — появление главы (0…1), --R, --cx, --cy — радиус и центр окружности в координатах блока .cw-wheel. */
-.cases[data-mode="wheel"] { perspective: none; --e: 0; }
+/* v65–v66: глава «Кейсы», вид «колесо» — стили к casesWheel.ts.
+   Справа названия кейсов на дуге, слева предмет активного кейса и текст о нём. v66: у превью нет плитки-фона —
+   предмет стоит прямо над размытым полем. Предмет живёт в своей зоне между заголовком и текстом; к верхнему и нижнему краю зона гасится
+   маской, поэтому проезжающий предмет растворяется и ни на заголовок, ни на текст не наезжает.
+   Положение названий и ход предметов пишет скрипт от прокрутки; здесь — раскладка и вид.
+   --e — появление главы (0…1); --R, --cx, --cy — радиус и центр окружности в координатах блока .cw-wheel;
+   --head-top и --kick — верх и кегль заголовка главы: от них считается верх зоны предмета, чтобы расстояние
+   «заголовок — предмет» было одним на любом экране. */
+.cases[data-mode="wheel"] {
+  perspective: none; --e: 0;
+  --head-top: clamp(96px, 14vh, 150px); --kick: clamp(36px, 4.4vw, 76px);
+  --side: clamp(20px, 4.4vw, 88px);
+}
 .cases[data-mode="wheel"] .cases-strip, .cases[data-mode="wheel"] .cases-count, .cases[data-mode="wheel"] .cases-hint { display: none; }
 .cases[data-mode="wheel"] .cases-bar { display: none; } /* прогресс показывает само колесо */
-.cases[data-mode="wheel"] .cases-head { opacity: var(--e); }
+.cases[data-mode="wheel"] .cases-head { top: var(--head-top); opacity: var(--e); }
+.cases[data-mode="wheel"] .cases-kicker { font-size: var(--kick); }
+
+/* число кейсов у заголовка — верхним индексом, курсивной антиквой */
+.cases-sup {
+  font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 0.36em; line-height: 1; letter-spacing: 0;
+  vertical-align: top; position: relative; top: 0.3em; margin-left: 0.2em; opacity: 0.85; font-variant-numeric: lining-nums;
+}
 
 .cw { position: absolute; inset: 0; pointer-events: none; font-family: var(--font); color: #fff; }
 
-/* ── превью слева ─────────────────────────────────────────────────────── */
+/* ── превью слева: зона предмета и текст под ней ───────────────────────── */
 .cw-preview {
-  position: absolute; left: clamp(20px, 4.4vw, 88px); top: clamp(200px, 27vh, 270px); bottom: clamp(30px, 6vh, 64px);
-  width: min(45vw, 720px); display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: clamp(16px, 2.6vh, 26px);
+  position: absolute; left: var(--side); width: min(44vw, 720px);
+  top: calc(var(--head-top) + var(--kick) + 30px + clamp(14px, 3vh, 32px)); bottom: clamp(28px, 5.4vh, 60px);
+  display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: clamp(14px, 2.6vh, 28px);
   opacity: var(--e); translate: 0 calc((1 - var(--e)) * 38vh); pointer-events: auto;
 }
-.cw-stage {
-  position: relative; min-height: 0; border-radius: 32px; overflow: hidden; isolation: isolate; container-type: size; cursor: pointer;
-  background: #e9e9e6; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.34);
-  transition: scale 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+.cw-stage { position: relative; min-height: 0; container-type: size; cursor: pointer; isolation: isolate; }
+.cw-objs, .cw-gl {
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 9%, #000 90%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 9%, #000 90%, transparent 100%);
 }
-.cw-stage:hover { scale: 1.008; }
-.cw-bg { position: absolute; inset: 0; background: linear-gradient(180deg, var(--s1), var(--s2)); will-change: opacity; }
-.cw-bg::after { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 70% at 22% 10%, rgba(255, 255, 255, 0.7), transparent 70%); }
-.cw-objs { position: absolute; inset: 0; translate: calc(var(--px, 0) * 1.4cqw) calc(var(--py, 0) * 1.1cqw); transition: translate 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.cw-objbox { position: absolute; inset: 0; will-change: transform, opacity; transform-origin: 60% 70%; }
-.cw-obj {
-  position: absolute; left: 54%; bottom: -6cqh; height: 98cqh; width: calc(98cqh * var(--oar, 1.2)); max-width: 92cqw; translate: -50% 0; display: block; pointer-events: none;
-  filter: drop-shadow(0 4cqh 5cqh color-mix(in srgb, var(--ink) 28%, transparent));
+.cw-objs {
+  position: absolute; z-index: 2; inset: 0; translate: calc(var(--px, 0) * 1.4cqw) calc(var(--py, 0) * 1.1cqw);
+  transition: translate 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), scale 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.cw-obj img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; user-select: none; -webkit-user-drag: none; }
-.cw-gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.cw-stage:hover .cw-objs { scale: 1.02; }
+.cw-objbox { position: absolute; inset: 0; will-change: transform, opacity; transform-origin: 46% 60%; }
+.cw-obj { position: absolute; inset: 1cqh 2cqw 2cqh 0; display: block; pointer-events: none; }
+.cw-obj img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: 38% 60%; user-select: none; -webkit-user-drag: none; }
+.cw-gl { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
 .cases.has-gl .cw-objs { visibility: hidden; }
-/* номер кейса на сцене — курсивной антиквой, как акцентное слово заголовка */
-.cw-num {
-  position: absolute; z-index: 3; left: clamp(20px, 5cqw, 40px); top: clamp(14px, 4cqh, 30px);
-  font-family: var(--serif); font-style: italic; font-weight: 400; font-size: clamp(40px, 15cqh, 84px); line-height: 1; letter-spacing: -0.02em;
-  color: rgba(20, 22, 28, 0.82); font-variant-numeric: lining-nums;
-}
 
+/* метка, подзаголовок и кнопка в двух строках: кнопка стоит рядом с текстом, а не под ним — высота уходит предмету */
 .cw-info {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 28px; align-items: end;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 28px; align-items: end;
   transition: opacity 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), translate 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .cw-info.is-out { opacity: 0; translate: 0 -10px; transition-duration: 0.16s; }
 .cw-info.is-in { opacity: 0; translate: 0 14px; transition: none; }
 .cw-tag { grid-column: 1 / -1; margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 0.01em; color: color-mix(in srgb, var(--s2, #fff) 78%, #fff); font-variant-numeric: tabular-nums; }
-.cw-sub { margin: 0; max-width: 24em; font-size: clamp(19px, 1.65vw, 26px); font-weight: 500; line-height: 1.3; letter-spacing: -0.008em; text-wrap: pretty; text-shadow: 0 1px 18px rgba(0, 0, 0, 0.35); }
-.cw-chips { grid-column: 1; display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 0; }
-.cw-chips span { padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.12); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14); font-size: 13px; font-weight: 500; color: rgba(255, 255, 255, 0.86); }
+.cw-sub { grid-column: 1; margin: 0; max-width: 24em; font-size: clamp(19px, 1.65vw, 26px); font-weight: 500; line-height: 1.3; letter-spacing: -0.008em; text-wrap: pretty; text-shadow: 0 1px 18px rgba(0, 0, 0, 0.35); }
 .cw-open {
-  grid-column: 2; grid-row: 2 / span 2; align-self: end; display: inline-flex; align-items: center; gap: 4px; height: 48px; padding: 0 8px 0 22px; border-radius: 999px;
+  grid-column: 2; grid-row: 2; display: inline-flex; align-items: center; gap: 4px; height: 48px; padding: 0 8px 0 22px; border-radius: 999px;
   background: #fff; color: #1d1d1f; font-size: 15px; font-weight: 600; text-decoration: none; white-space: nowrap;
   transition: scale 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -94,23 +100,28 @@
 }
 .cw-item.is-active:hover .cw-t::after { translate: 3px -3px; opacity: 1; }
 
-@media (max-height: 760px) {
-  .cw-preview { top: clamp(150px, 24vh, 200px); }
-  .cw-sub { font-size: clamp(17px, 1.4vw, 21px); }
+/* невысокое окно: заголовок компактнее, тексту меньше воздуха — предмету остаётся место */
+@media (max-height: 820px) {
+  .cases[data-mode="wheel"] { --head-top: clamp(84px, 11.5vh, 100px); --kick: clamp(32px, 3.7vw, 56px); }
+  .cw-sub { font-size: clamp(17px, 1.45vw, 22px); }
+  .cw-open { height: 44px; }
+}
+@media (max-height: 640px) {
+  .cases[data-mode="wheel"] .cases-meta { display: none; }
 }
 
-/* ── телефон и планшет под палец: сцена сверху, дуга с названиями снизу ─── */
-.cases.is-narrow[data-mode="wheel"] .cases-head { left: 18px; right: 18px; top: calc(66px + env(safe-area-inset-top)); }
-.cases.is-narrow[data-mode="wheel"] .cases-kicker { font-size: clamp(28px, 7.8vw, 46px); }
+/* ── телефон и планшет под палец: предмет сверху, дуга с названиями снизу ─── */
+.cases.is-narrow[data-mode="wheel"] { --head-top: calc(66px + env(safe-area-inset-top)); --kick: clamp(30px, 8.4vw, 48px); --side: 18px; }
+.cases.is-narrow[data-mode="wheel"] .cases-head { left: 18px; right: 18px; }
 .cases.is-narrow[data-mode="wheel"] .cases-meta { display: none; }
-.cases.is-narrow[data-mode="wheel"] .cases-bar { display: none; }
-.cases.is-narrow .cw-preview { left: 16px; right: 16px; width: auto; top: calc(124px + env(safe-area-inset-top)); bottom: calc(176px + env(safe-area-inset-bottom)); gap: 14px; }
-.cases.is-narrow .cw-stage { border-radius: 26px; }
-.cases.is-narrow .cw-info { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; }
+.cases.is-narrow .cw-preview { left: 16px; right: 16px; width: auto; top: calc(var(--head-top) + var(--kick) + 14px); bottom: calc(176px + env(safe-area-inset-bottom)); gap: 10px; }
+.cases.is-narrow .cw-obj { inset: 2cqh 0 2cqh 0; }
+.cases.is-narrow .cw-obj img { object-position: 50% 60%; }
+.cases.is-narrow .cw-info { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; align-items: center; }
+.cases.is-narrow .cw-tag { font-size: 13px; }
 .cases.is-narrow .cw-sub { font-size: clamp(16px, 4.5vw, 20px); line-height: 1.28; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
-.cases.is-narrow .cw-chips { display: none; }
-/* на телефоне кнопка — круглая стрелка: подзаголовку нужна вся ширина, а кейс открывают ещё и сцена, и активное название */
-.cases.is-narrow .cw-open { grid-row: 2; width: 46px; height: 46px; padding: 0; justify-content: center; }
+/* на телефоне кнопка — круглая стрелка: подзаголовку нужна ширина, а кейс открывают ещё и предмет, и активное название */
+.cases.is-narrow .cw-open { width: 46px; height: 46px; padding: 0; justify-content: center; }
 .cases.is-narrow .cw-open-l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .cases.is-narrow .cw-open svg { width: 40px; height: 40px; padding: 11px; }
 .cases.is-narrow .cw-wheel {

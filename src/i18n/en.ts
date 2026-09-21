@@ -129,8 +129,8 @@ const en = {
   "about.logo.grif": "Grif AI, 2026",
 
   /* глава «Кейсы» */
-  "cases.kicker": 'Selected <em class="serif-accent">work</em>',
-  "cases.meta": "06 case studies · 2024–2026",
+  "cases.kicker": 'Case studies<sup class="cases-sup">06</sup>',
+  "cases.meta": "Web, mobile and AI · 2024–2026",
   "cases.of": "/ 06",
   "cases.cta": "View case",
   "cases.swipe": "Swipe sideways",

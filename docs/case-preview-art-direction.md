@@ -67,3 +67,13 @@ The rectangular covers are gone. Nikita liked the object-led direction but not a
 - Light stages only. On a dark background the glass keeps a pale fringe from the original studio light; on a stage close to the original background it disappears.
 - A card with both the object and a UI screen was prototyped and rejected as crowded. The card has one hero; the real interface lives on the case page hero.
 - Working files (masks, mattes, scripts) stay in `assets-src/`, outside the repository.
+
+## v66 (2026-09-22): objects without any background
+
+Nikita chose the wheel as the Work chapter and asked to drop the card background: only the 3D objects on the field. A matte made for a light stage does not survive on a dark one, so the objects were cut again (`assets-src/matte2.mjs`):
+
+- the render has a pale studio glow around every object; it is removed by its signature (light, almost colourless, close to the fitted background) in a band along the contour, so the object's own highlights stay;
+- the two-pixel ring at the contour is repainted with colour propagated from inside the object, otherwise a light outline remains;
+- the model mask is blurred before use (it arrives at a lower resolution and its contour is stepped) and the final alpha is smoothed instead of eroded: erosion by a square leaves a saw on diagonals;
+- islands smaller than 2600 px are dropped (`specks.mjs`), which removes stray sparks of the original highlights;
+- what the mask encloses deep inside is made opaque, so a lens you can see the background through does not turn into a hole.

@@ -17,7 +17,7 @@ The first screen is a real-time scene. Every blade of grass is geometry (up to 2
 Scrolling drives a three-part story:
 
 1. The computer lifts off the table and lands on a white page with the About text. A kinetic line of type slows down and becomes the "Hi there!" heading.
-2. The page tears away from the bottom. Behind it the same meadow is blurred and seen from the grass, and six case cards move along an arc. A card is a tall light stage in the colour of its case with one large object on it, cut out of its background and cropped by the card's edge. The object shifts against the card as the ribbon turns and follows the cursor. Each case opens as its own page inside the site (`#/work/<id>`): a hero stage with the real product screen in a device, then the facts, the problem, the solution, results and what I learned. The case colour, the ink and the accent are the same on the card, in the Work menu, on the case page and in the "next case" block.
+2. The page tears away from the bottom. Behind it the same meadow is blurred and seen from the grass. Case titles stand on an arc on the right and turn with the scroll; on the left the object of the current case floats over the field with no card behind it, and under it the text about the case. The object has no background at all: it is cut out of its render, and on a screen with a mouse it is drawn in WebGL, where a depth map gives it volume and it turns after the cursor. Titles and objects are on two different drums: the titles ride with the scroll like a scale, the objects snap to whole cases, so the object is always whole. Each case opens as its own page inside the site (`#/work/<id>`): a hero stage with the real product screen in a device, then the facts, the problem, the solution, results and what I learned. The case colour, the ink and the accent are the same on the card in the Work menu, on the case page and in the "next case" block.
 3. The camera returns to the hill at dusk. Fireflies come out, Kelly sleeps curled up in the armchair, and the footer holds the contacts: a mail button, Telegram, LinkedIn and the address itself, which copies when you click it.
 
 The note card on the first screen flips through four of my side projects: [Windcrest](https://github.com/kloserock97-tech/windcrest) (the grass of this hill as a demo of its own), [Driftfield](https://github.com/kloserock97-tech/driftfield) (a particle cloud in a curl-noise field), [Nightsail](https://github.com/kloserock97-tech/nightsail) (a giant marble head surfacing from a night sea under a column of light) and [Meadow Walk](https://github.com/kloserock97-tech/meadow-walk) (an endless flight over a windy meadow). Each has a live demo with every parameter on a panel.
@@ -52,7 +52,7 @@ Useful URL parameters while developing:
 | --- | --- |
 | `?intro=0` / `?intro=1` | skip or force the loading screen |
 | `?garden=0.5` / `?gardentier=0..4` | freeze the loading screen at a growth value; pin its quality step |
-| `?cases=ribbon` / `deck` / `wheel` / `wheel3d` | variants of the Work chapter for comparison: the default ribbon, a stack, a wheel of titles on an arc with a preview on the left, and the same wheel with the object drawn in WebGL (depth-map parallax on a rolling drum). Any value shows a small switcher at the bottom |
+| `?cases=ribbon` / `deck` / `wheel2d` / `wheel3d` | other views of the Work chapter: the old ribbon of cards, a stack, the wheel without WebGL, the wheel with WebGL forced on phones too. Any value shows a small switcher at the bottom |
 | `?story=0.62` | jump to a point of the scroll story (0 to 1) |
 | `?lite=1` / `?lite=0` | force the lite version or force 3D |
 | `?debug=1` | show the quality tier, DPR and FPS |
@@ -84,7 +84,7 @@ src/
     icons.ts         one icon set in the style of the dock icons
     caseLook.ts      the look of a case (stage colours, object) shared by the card, the menu and the case page
     case-cards.css   the case card; case-story.css — the case page
-    casesWheel.ts    the "wheel" variant of the Work chapter, loaded only with ?cases=wheel; casesWheelGl.ts draws its preview in WebGL
+    casesWheel.ts    the Work chapter: titles on an arc, the object and the text; casesWheelGl.ts draws the object in WebGL
     hero/            first screen: layout, dock, metal buttons, parallax
   audio/             nature ambience and UI sound cues
   data/              texts and case list; case stories are one file per language, loaded on demand
@@ -131,7 +131,7 @@ Measure against `npm run build` + `npm run preview`. The dev server loads dozens
 
 The armchair, the computer and the dog are prepared headless in Blender 5.1 with the scripts in `tools/blender-build-*.py`, then compressed with Draco (`npx @gltf-transform/cli draco`). Source `.blend` files are not in the repository.
 
-The objects on the case cards are cut out of generated still lifes (prompts and provenance in [docs/case-preview-art-direction.md](docs/case-preview-art-direction.md)). A plain background remover eats glass, so the matte is built from two parts: the model's mask, and the colour difference from the fitted studio background inside everything the mask encloses. The cut-outs ship as AVIF with a WebP fallback and sit on light stages only: on a dark one the half-transparent glass would show a pale fringe.
+The objects are cut out of generated still lifes (prompts and provenance in [docs/case-preview-art-direction.md](docs/case-preview-art-direction.md)). A plain background remover eats glass, so the matte is built from two parts: the model's mask, and the colour difference from the fitted studio background inside everything the mask encloses. For the Work chapter the objects stand on the dark field with nothing behind them, so the matte also drops the pale glow the render has around every object, repaints the two-pixel ring at the contour with colour taken from inside, and smooths the contour instead of eroding it. The cut-outs ship as AVIF with a WebP fallback, plus a small depth map per object for the WebGL view.
 
 ## Deploying
 

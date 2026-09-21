@@ -132,8 +132,8 @@ const ru: Record<keyof typeof en, string> = {
   "about.logo.grif": "Grif AI, 2026",
 
   /* глава «Кейсы» */
-  "cases.kicker": 'Избранные <em class="serif-accent">работы</em>',
-  "cases.meta": "06 кейсов · 2024–2026",
+  "cases.kicker": 'Кейсы<sup class="cases-sup">06</sup>',
+  "cases.meta": "Веб, мобайл и ИИ · 2024–2026",
   "cases.of": "/ 06",
   "cases.swipe": "Листайте вбок",
   "cases.cta": "Смотреть кейс",

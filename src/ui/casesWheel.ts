@@ -1,4 +1,4 @@
-/* v65: глава «Кейсы», вариант «колесо» (?cases=wheel). Идея Никиты: названия кейсов справа стоят на дуге и прокручиваются
+/* v65: глава «Кейсы» — «колесо». Идея Никиты: названия кейсов справа стоят на дуге и прокручиваются
    полукругом, слева — превью кейса и текст о нём.
 
    Устройство. Колесо — шесть ссылок, каждая поставлена на окружность поворотом вокруг общего центра:
@@ -13,10 +13,14 @@
    Клик по неактивному названию довозит колесо до него, по активному — открывает кейс. На телефоне колесо ещё и
    листается пальцем вбок.
 
-   Модуль подгружается только по параметру в адресе, основная сборка его не несёт. Разметку строит сам, внутри той же
-   секции .cases; ленту не трогает. Превью умеет рисовать предмет в WebGL (?cases=wheel3d, casesWheelGl.ts): тогда
-   картинки-предметы остаются под холстом как запасной вид. */
-import { getCases, type CaseItem } from "../data/cases";
+   v66: колесо — основной вид главы (Никита выбрал его из вариантов v65); лента и стопка остались по ?cases=ribbon|deck.
+   У превью больше нет плитки-фона: предмет стоит прямо над полем, за ним — огромный курсивный номер кейса. Поэтому
+   предметы перевырезаны под тёмный фон (assets-src/matte2.mjs), а зона предмета гасится к верхнему и нижнему краю
+   маской: проезжающий предмет растворяется, а не наезжает на заголовок и текст.
+   Разметку модуль строит сам, внутри секции .cases. На экране с мышью предмет рисует WebGL (casesWheelGl.ts): объём по
+   карте глубины и барабан; картинки остаются под холстом как запасной вид. ?cases=wheel2d — только картинки,
+   ?cases=wheel3d — WebGL и на телефоне. */
+import { getCases } from "../data/cases";
 import notes from "../data/notes";
 import { pad2 as pad } from "../lib/format";
 import { CASES, CHAPTER, CHAPTER2, chapters, dwell, ramp } from "../scene/story";
@@ -34,7 +38,7 @@ export type WheelGl = { set(active: number, pointerX: number, pointerY: number):
 const esc = (s: string) => tidy(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 
-export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boolean } = {}) {
+export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boolean | "auto" } = {}) {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let list = getCases();
   const n = list.length;
@@ -45,14 +49,11 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
   wrap.innerHTML = `
     <div class="cw-preview">
       <div class="cw-stage">
-        ${list.map((c) => `<div class="cw-bg" style="${lookVars(c)}"></div>`).join("")}
         <div class="cw-objs">${list.map((c) => `<div class="cw-objbox" style="${lookVars(c)}">${objectPicture(c, "cw-obj", true)}</div>`).join("")}</div>
-        <span class="cw-num" aria-hidden="true">01</span>
       </div>
       <div class="cw-info" aria-live="polite">
         <p class="cw-tag"></p>
         <p class="cw-sub"></p>
-        <p class="cw-chips"></p>
         <a class="cw-open" href="#"><span class="cw-open-l"></span>${goArrow}</a>
       </div>
     </div>
@@ -64,11 +65,9 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
   root.insertBefore(wrap, root.querySelector(".cases-foot"));
 
   const stage = wrap.querySelector<HTMLElement>(".cw-stage")!;
-  const bgs = [...wrap.querySelectorAll<HTMLElement>(".cw-bg")];
   const objs = [...wrap.querySelectorAll<HTMLElement>(".cw-objbox")];
   const items = [...wrap.querySelectorAll<HTMLAnchorElement>(".cw-item")];
   const info = wrap.querySelector<HTMLElement>(".cw-info")!;
-  const num = wrap.querySelector<HTMLElement>(".cw-num")!;
   const wheel = wrap.querySelector<HTMLElement>(".cw-wheel")!;
   const ticks = wrap.querySelector<SVGGElement>(".cw-ticks")!;
   const ring = wrap.querySelector<SVGCircleElement>(".cw-ring")!;
@@ -84,7 +83,6 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
       a.setAttribute("aria-label", `${list[i].title}. ${list[i].subtitle}`);
     });
   };
-  const kinds = (c: CaseItem) => c.kind.map((k) => t(k === "web" ? "work.web" : "work.mobile"));
   let shownInfo = -1;
   const paintInfo = (i: number, animate: boolean) => {
     const c = list[i];
@@ -93,10 +91,8 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
       info.style.cssText = lookVars(c);
       info.querySelector(".cw-tag")!.textContent = `${pad(i + 1)} · ${c.tag}`;
       info.querySelector(".cw-sub")!.innerHTML = esc(c.subtitle);
-      info.querySelector(".cw-chips")!.innerHTML = kinds(c).map((k) => `<span>${esc(k)}</span>`).join("");
       info.querySelector(".cw-open-l")!.textContent = t("cases.cta");
       info.querySelector<HTMLAnchorElement>(".cw-open")!.href = `#/work/${c.id}`;
-      num.textContent = pad(i + 1);
     };
     if (!animate || reduced) { put(); return; }
     /* старый текст уходит вверх, новый приходит снизу: два коротких такта вместо перекрёстного затухания */
@@ -144,6 +140,7 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
   let lastP = 0;
   const layout = () => {
     measure();
+    placeObjects();
     /* один кейс — 0,7 экрана прокрутки: колесо успевает довернуться, текст слева — прочитаться */
     applyTimeline({ narrow: innerWidth <= 900, cases: n, notes: notes.length, step: 0.7 });
     gl?.resize();
@@ -158,6 +155,37 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
   let current = -1;
   let shown = false;
   let lastKey = "";
+
+  /* Барабан предметов. Названия на дуге едут вместе с прокруткой (это шкала), а предмет — вещь: он должен
+     стоять целым, а не таять на полпути. Поэтому у предметов своя координата: она догоняет ближайший целый
+     кейс за ~0,4 с. Между кейсами всегда виден один предмет, а смена читается как поворот барабана. */
+  let drum = 0, drumTo = 0, drumRaf = 0, drumLast = 0;
+  const placeObjects = () => {
+    objs.forEach((o, i) => {
+      const d = i - drum;
+      const ad = Math.abs(d);
+      if (ad > 1) { o.style.visibility = "hidden"; return; }
+      o.style.visibility = "visible";
+      o.style.opacity = clamp(1 - ad * 1.45, 0, 1).toFixed(3);
+      o.style.transform = reduced ? "none" : `translate3d(${(d * 6).toFixed(2)}%, ${(d * 96).toFixed(2)}%, 0) rotate(${(d * -7).toFixed(2)}deg) scale(${(1 - ad * 0.12).toFixed(3)})`;
+    });
+    gl?.set(drum, px, py);
+  };
+  const spin = (now: number) => {
+    drumRaf = 0;
+    const dt = Math.min(0.05, (now - drumLast) / 1000);
+    drumLast = now;
+    const k = 1 - Math.exp(-dt * 11);
+    drum += (drumTo - drum) * k;
+    if (Math.abs(drumTo - drum) < 0.002) drum = drumTo; else drumRaf = requestAnimationFrame(spin);
+    placeObjects();
+  };
+  const turnTo = (i: number) => {
+    if (drumTo === i && current >= 0) return;
+    drumTo = i;
+    if (reduced) { drum = i; placeObjects(); return; }
+    if (!drumRaf) { drumLast = performance.now(); drumRaf = requestAnimationFrame(spin); }
+  };
   const place = (active: number, e: number) => {
     const key = `${active.toFixed(4)}|${e.toFixed(3)}|${narrow}`;
     if (key === lastKey) return;
@@ -186,23 +214,13 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
       tk.setAttribute("x2", (ux * r1).toFixed(1)); tk.setAttribute("y2", (uy * r1).toFixed(1));
       tk.style.opacity = clamp(1 - ad * 0.28, 0.12, 1).toFixed(2);
     });
-    /* превью: сцены перетекают цветом, предметы проезжают снизу вверх */
-    bgs.forEach((b, i) => (b.style.opacity = clamp(1 - Math.abs(i - active), 0, 1).toFixed(3)));
-    objs.forEach((o, i) => {
-      const d = i - active;
-      const ad = Math.abs(d);
-      if (ad > 1.2) { o.style.visibility = "hidden"; return; }
-      o.style.visibility = "visible";
-      o.style.opacity = clamp(1 - ad * 1.25, 0, 1).toFixed(3);
-      o.style.transform = reduced ? "none" : `translate3d(${(d * 9).toFixed(2)}%, ${(d * 58).toFixed(2)}%, 0) rotate(${(d * -10).toFixed(2)}deg) scale(${(1 - ad * 0.16).toFixed(3)})`;
-    });
-    gl?.set(active, px, py);
     const idx = clamp(Math.round(active), 0, n - 1);
     if (idx !== current) {
       if (current >= 0) cue("progress-step", 0.5);
       current = idx;
       if (now) now.textContent = pad(idx + 1);
       paintInfo(idx, shown);
+      turnTo(idx);
     }
     if (bar) bar.style.transform = `scaleX(${(active / Math.max(1, n - 1)).toFixed(4)})`;
   };
@@ -228,9 +246,9 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
     py = ((e.clientY - r.top) / r.height) * 2 - 1;
     stage.style.setProperty("--px", px.toFixed(3));
     stage.style.setProperty("--py", py.toFixed(3));
-    gl?.set(lastActive, px, py);
+    gl?.set(drum, px, py);
   });
-  stage.addEventListener("pointerleave", () => { px = 0; py = 0; stage.style.setProperty("--px", "0"); stage.style.setProperty("--py", "0"); gl?.set(lastActive, 0, 0); });
+  stage.addEventListener("pointerleave", () => { px = 0; py = 0; stage.style.setProperty("--px", "0"); stage.style.setProperty("--py", "0"); gl?.set(drum, 0, 0); });
 
   /* телефон: колесо листается пальцем вбок */
   let downX = 0, downY = 0, swiping = false;
@@ -243,7 +261,6 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
   });
   wheel.addEventListener("pointercancel", () => (swiping = false));
 
-  let lastActive = 0;
   const prev = scene.onStory;
   scene.onStory = (p) => {
     prev?.(p);
@@ -261,8 +278,7 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
     const inK = ramp(c, ...CASES.cardsIn);
     const e = 1 - (1 - inK) ** 3;
     const run = ramp(c, ...CASES.strip) * (n - 1);
-    lastActive = reduced ? Math.round(run) : dwell(run);
-    place(lastActive, e);
+    place(reduced ? Math.round(run) : dwell(run), e);
   };
 
   addEventListener("resize", layout);
@@ -270,13 +286,15 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
   layout();
   if (consumeReviewJump()) requestAnimationFrame(() => scrollTo({ top: topForCase(0), behavior: "instant" as ScrollBehavior }));
 
-  if (opts.gl && !reduced) {
+  /* WebGL по умолчанию — там, где есть мышь: объём предмета раскрывается за курсором. На телефоне хватает картинок */
+  const wantGl = opts.gl === true || (opts.gl === "auto" && matchMedia("(hover: hover) and (pointer: fine)").matches);
+  if (wantGl && !reduced) {
     /* предметы в WebGL: объём по карте глубины и переход шейдером. Если холст не поднялся, остаются картинки */
     void import("./casesWheelGl").then((m) => m.createWheelGl(stage, list)).then((g) => {
       if (!g) return;
       gl = g;
       root.classList.add("has-gl");
-      gl.set(lastActive, px, py);
+      gl.set(drum, px, py);
     }).catch(() => {});
   }
 }

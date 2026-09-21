@@ -7,7 +7,8 @@
      настоящий, хотя это одна плоскость. Из той же карты берётся нормаль — по предмету ходит блик;
    · барабан. Шесть плоскостей стоят на цилиндре вокруг горизонтальной оси и прокатываются вместе с колесом названий:
      уходящий предмет заваливается назад и вверх, приходящий выкатывается снизу — с настоящей перспективой камеры;
-   · мягкая тень из размытых уровней той же текстуры, без отдельного прохода.
+   v66: плитки-фона у превью больше нет, предмет стоит над тёмным полем — тень в шейдере убрана (ей не на что падать),
+   раскладка плоскости повторяет картинку: вписать в зону, прижать влево.
 
    Свой маленький рендерер, а не сцена холма: HillScene в этот момент рисует размытое поле, и вмешиваться в его
    проходы ради одной плоскости дороже, чем держать второй контекст с одним вызовом отрисовки на кадр.
@@ -28,7 +29,6 @@ const FRAG = /* glsl */ `
   uniform sampler2D uMap, uDepth;
   uniform vec2 uTilt;      // наклон «камеры»: курсор, ход колеса, лёгкое дыхание
   uniform float uOpacity;
-  uniform vec3 uInk;       // чернила кейса — цвет тени
   varying vec2 vUv;
 
   void main() {
@@ -49,14 +49,7 @@ const FRAG = /* glsl */ `
     float spec = pow(max(dot(n, normalize(l + vec3(0.0, 0.0, 1.0))), 0.0), 36.0);
     c.rgb = clamp(c.rgb + diff * 0.22 + spec * 0.16, 0.0, 1.0);
 
-    /* тень: размытая альфа той же картинки, смещённая вниз и против наклона */
-    vec2 suv = vUv + vec2(uTilt.x * 0.02, 0.05);
-    /* к краям плоскости тень гаснет: размытая альфа широкая, и без этого край плоскости виден прямоугольником */
-    vec2 edge = smoothstep(vec2(0.0), vec2(0.14), vUv) * smoothstep(vec2(0.0), vec2(0.14), 1.0 - vUv);
-    float sh = texture2D(uMap, suv, 4.2).a * 0.3 * edge.x * edge.y * step(suv.y, 1.0);
-    float a = c.a + sh * (1.0 - c.a);
-    vec3 rgb = (c.rgb * c.a + uInk * sh * (1.0 - c.a)) / max(a, 0.0001);
-    gl_FragColor = vec4(rgb, a * uOpacity);
+    gl_FragColor = vec4(c.rgb, c.a * uOpacity);
   }
 `;
 
@@ -101,12 +94,11 @@ export async function createWheelGl(stage: HTMLElement, list: CaseItem[]): Promi
   camera.position.set(0, 0, DIST);
 
   const geo = new THREE.PlaneGeometry(1, 1);
-  const meshes = list.map((c, i) => {
+  const meshes = list.map((_c, i) => {
     const mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false, depthTest: false,
       uniforms: {
         uMap: { value: maps[i] }, uDepth: { value: depths[i] }, uTilt: { value: new THREE.Vector2() }, uOpacity: { value: 0 },
-        uInk: { value: new THREE.Color(c.look.ink) },
       },
     });
     const mesh = new THREE.Mesh(geo, mat);
@@ -124,16 +116,19 @@ export async function createWheelGl(stage: HTMLElement, list: CaseItem[]): Promi
     aspect = w / h;
     camera.aspect = aspect;
     camera.updateProjectionMatrix();
-    /* та же раскладка, что у картинок: высота предмета 98 % сцены, не шире 92 %, центр на 54 %, низ на 6 % ниже края */
+    /* та же раскладка, что у картинок (cases-wheel.css, .cw-obj): поле 3 % сверху, 4 % снизу и справа, предмет вписан
+       целиком и прижат влево (38 %) и чуть вниз (60 %); на телефоне — по центру */
+    const narrow = stage.closest(".cases")?.classList.contains("is-narrow") ?? false;
+    const boxW = (narrow ? 1 : 0.98) * 2 * aspect, boxH = narrow ? 2 - 0.04 : 2 - 0.06;
+    const top = narrow ? 1 - 0.02 : 1 - 0.02;
     list.forEach((c, i) => {
       const ratio = c.look.object.ratio;
-      let ph = 0.98 * 2, pw = ph * ratio;
-      const maxW = 0.92 * 2 * aspect;
-      if (pw > maxW) { pw = maxW; ph = pw / ratio; }
+      let ph = boxH, pw = ph * ratio;
+      if (pw > boxW) { pw = boxW; ph = pw / ratio; }
       const m = meshes[i];
       m.scale.set(pw, ph, 1);
-      m.userData.x = 0.08 * aspect;
-      m.userData.y = -1 - 0.12 + ph / 2;
+      m.userData.x = -aspect + (boxW - pw) * (narrow ? 0.5 : 0.38) + pw / 2;
+      m.userData.y = top - (boxH - ph) * 0.6 - ph / 2;
     });
     dirty = true;
   };
@@ -142,7 +137,7 @@ export async function createWheelGl(stage: HTMLElement, list: CaseItem[]): Promi
   let tx = 0, ty = 0, cx = 0, cy = 0;
   let dirty = true, visible = true, raf = 0, last = performance.now();
   const RD = 1.7;        // радиус барабана
-  const STEP = 1.05;     // радиан между соседними предметами на барабане
+  const STEP = 1.5;      // радиан между соседними предметами на барабане: сосед успевает уйти за край зоны
 
   const frame = (now: number) => {
     raf = 0;
@@ -151,7 +146,7 @@ export async function createWheelGl(stage: HTMLElement, list: CaseItem[]): Promi
     /* наклон догоняет курсор; ход колеса добавляет наклон по вертикали и затухает */
     const k = 1 - Math.exp(-dt * 7);
     cx += (tx - cx) * k; cy += (ty - cy) * k;
-    spin += ((active - lastActive) * 5 - spin) * (1 - Math.exp(-dt * 9));
+    spin += ((active - lastActive) * 9 - spin) * (1 - Math.exp(-dt * 7));
     lastActive = active;
     const breathe = now * 0.00055;
     const tiltX = cx * 0.9 + Math.sin(breathe) * 0.16;
@@ -159,15 +154,15 @@ export async function createWheelGl(stage: HTMLElement, list: CaseItem[]): Promi
     meshes.forEach((m, i) => {
       const d = i - active;
       const ad = Math.abs(d);
-      const on = ad < 1.25;
+      const on = ad < 1;
       m.visible = on;
       if (!on) return;
       const phi = d * STEP;
-      m.position.set(m.userData.x + d * 0.12 * aspect, m.userData.y - Math.sin(phi) * RD, (Math.cos(phi) - 1) * RD);
+      m.position.set(m.userData.x + d * 0.08 * aspect, m.userData.y - Math.sin(phi) * RD, (Math.cos(phi) - 1) * RD);
       m.rotation.set(phi * 0.9, -tiltX * 0.12, d * -0.12);
       const u = (m.material as THREE.ShaderMaterial).uniforms;
       (u.uTilt.value as THREE.Vector2).set(tiltX, tiltY);
-      u.uOpacity.value = Math.max(0, Math.min(1, 1 - ad * 1.5));
+      u.uOpacity.value = Math.max(0, Math.min(1, 1 - ad * 2.1));
     });
     renderer.render(scene, camera);
     /* кадры нужны, пока глава на экране: предмет слегка «дышит» даже без курсора */

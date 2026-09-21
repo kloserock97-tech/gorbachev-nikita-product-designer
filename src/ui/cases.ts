@@ -9,6 +9,7 @@ import { onLang, t } from "../i18n";
 import { goArrow, lookVars, objectPicture } from "./caseLook";
 import "./case-cards.css";
 import { consumeReviewJump, mountReviewBar } from "./casesReview";
+import { initCasesWheel } from "./casesWheel";
 
 /* Глава «Кейсы» (docs/prompts/scroll.md, промпт 2). По мотивам 3D-сайтов Awwwards: скролл — повествование,
    один кейс — один такт. Лента карточек стоит на дуге (CSS 3D): центральная крупная и ровная,
@@ -74,15 +75,15 @@ export function initCases(scene: Scene) {
   const root = document.querySelector<HTMLElement>(".cases");
   const strip = renderCases();
   if (!root || !strip) return;
-  /* v65: варианты главы для сравнения — ?cases=wheel (названия на дуге справа, превью слева), ?cases=wheel3d
-     (то же, предмет рисуется в WebGL) и ?cases=deck (стопка вместо ленты). Модуль колеса подгружается только
-     по параметру; стопка — другая расстановка тех же карточек, она живёт здесь. */
+  /* v66: основной вид главы — «колесо» (casesWheel.ts): названия на дуге справа, предмет и текст слева. Никита выбрал
+     его из вариантов v65. Прежние виды остались для сравнения: ?cases=ribbon (лента на дуге) и ?cases=deck (стопка) —
+     это другая расстановка тех же карточек, она живёт в этом файле. ?cases=wheel2d — колесо без WebGL. */
   const variant = new URLSearchParams(location.search).get("cases");
   const deck = variant === "deck";
   mountReviewBar(variant);
   if (deck) root.dataset.variant = "deck";
-  if ((variant === "wheel" || variant === "wheel3d") && !document.body.classList.contains("lite")) {
-    void import("./casesWheel").then((m) => m.initCasesWheel(scene, root, { gl: variant === "wheel3d" }));
+  if (variant !== "ribbon" && variant !== "deck" && !document.body.classList.contains("lite")) {
+    initCasesWheel(scene, root, { gl: variant === "wheel3d" ? true : variant === "wheel2d" ? false : "auto" });
     return;
   }
   const now = root.querySelector<HTMLElement>(".cases-now");
