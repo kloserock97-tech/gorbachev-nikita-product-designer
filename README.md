@@ -52,6 +52,7 @@ Useful URL parameters while developing:
 | --- | --- |
 | `?intro=0` / `?intro=1` | skip or force the loading screen |
 | `?garden=0.5` / `?gardentier=0..4` | freeze the loading screen at a growth value; pin its quality step |
+| `?cases=ribbon` / `deck` / `wheel` / `wheel3d` | variants of the Work chapter for comparison: the default ribbon, a stack, a wheel of titles on an arc with a preview on the left, and the same wheel with the object drawn in WebGL (depth-map parallax on a rolling drum). Any value shows a small switcher at the bottom |
 | `?story=0.62` | jump to a point of the scroll story (0 to 1) |
 | `?lite=1` / `?lite=0` | force the lite version or force 3D |
 | `?debug=1` | show the quality tier, DPR and FPS |
@@ -83,6 +84,7 @@ src/
     icons.ts         one icon set in the style of the dock icons
     caseLook.ts      the look of a case (stage colours, object) shared by the card, the menu and the case page
     case-cards.css   the case card; case-story.css — the case page
+    casesWheel.ts    the "wheel" variant of the Work chapter, loaded only with ?cases=wheel; casesWheelGl.ts draws its preview in WebGL
     hero/            first screen: layout, dock, metal buttons, parallax
   audio/             nature ambience and UI sound cues
   data/              texts and case list; case stories are one file per language, loaded on demand

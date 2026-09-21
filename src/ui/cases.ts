@@ -8,6 +8,7 @@ import { cue } from "../audio/bus";
 import { onLang, t } from "../i18n";
 import { goArrow, lookVars, objectPicture } from "./caseLook";
 import "./case-cards.css";
+import { consumeReviewJump, mountReviewBar } from "./casesReview";
 
 /* Глава «Кейсы» (docs/prompts/scroll.md, промпт 2). По мотивам 3D-сайтов Awwwards: скролл — повествование,
    один кейс — один такт. Лента карточек стоит на дуге (CSS 3D): центральная крупная и ровная,
@@ -73,6 +74,17 @@ export function initCases(scene: Scene) {
   const root = document.querySelector<HTMLElement>(".cases");
   const strip = renderCases();
   if (!root || !strip) return;
+  /* v65: варианты главы для сравнения — ?cases=wheel (названия на дуге справа, превью слева), ?cases=wheel3d
+     (то же, предмет рисуется в WebGL) и ?cases=deck (стопка вместо ленты). Модуль колеса подгружается только
+     по параметру; стопка — другая расстановка тех же карточек, она живёт здесь. */
+  const variant = new URLSearchParams(location.search).get("cases");
+  const deck = variant === "deck";
+  mountReviewBar(variant);
+  if (deck) root.dataset.variant = "deck";
+  if ((variant === "wheel" || variant === "wheel3d") && !document.body.classList.contains("lite")) {
+    void import("./casesWheel").then((m) => m.initCasesWheel(scene, root, { gl: variant === "wheel3d" }));
+    return;
+  }
   const now = root.querySelector<HTMLElement>(".cases-now");
   const bar = root.querySelector<HTMLElement>(".cases-bar i");
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -86,6 +98,7 @@ export function initCases(scene: Scene) {
   let shown = false;
   let current = -1;
   let spacing = 0;
+  let cardW = 360;
   let lastP = 0;
 
   /* ── лента под палец (v43) ── */
@@ -137,6 +150,7 @@ export function initCases(scene: Scene) {
     setMode();
     /* v64: высота карточки задана пропорцией (case-cards.css), выравнивать по самой высокой больше не нужно */
     const w = cards[0]?.offsetWidth ?? 360;
+    cardW = w;
     /* v43: шаг дуги считается от зазора, а не от доли ширины. Соседняя карточка повёрнута на 24°, уменьшена до 0,92
        и отодвинута на 150px при перспективе 1600px: её ближний край виден на (spacing − 0,42w)·0,954 от центра.
        Отсюда spacing для зазора gap: (w/2 + gap) / 0,954 + 0,42w. Раньше шаг был 1,02w (и 0,92w на узком
@@ -227,8 +241,18 @@ export function initCases(scene: Scene) {
       const ry = reduced ? 0 : Math.max(-1, Math.min(1, d)) * 24 + (d - Math.max(-1, Math.min(1, d))) * 6;
       const y = (1 - e) * (innerHeight * 0.55 + i * 40);
       const sc = 1 - Math.min(ad, 2) * 0.08;
-      const tr = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, ${z.toFixed(1)}px) rotateY(${ry.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
-      const o = (Math.max(0, Math.min(1, 2.6 - ad)) * Math.min(1, e * 1.4)).toFixed(3);
+      let tr = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, ${z.toFixed(1)}px) rotateY(${ry.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
+      let o = (Math.max(0, Math.min(1, 2.6 - ad)) * Math.min(1, e * 1.4)).toFixed(3);
+      if (deck && !reduced) {
+        /* стопка: активная карточка сверху, следующие выглядывают из-под неё веером вправо и уходят вглубь,
+           пройденная снимается со стопки влево с разворотом */
+        const ahead = Math.max(0, d), past = Math.max(0, -d);
+        const dx = ahead * cardW * 0.21 - past * cardW * 1.3 - cardW * 0.32;
+        const dy = y + ahead * 12 - past * 26;
+        const dz = -ahead * 130 + past * 60;
+        tr = `translate3d(${dx.toFixed(1)}px, ${dy.toFixed(1)}px, ${dz.toFixed(1)}px) rotateY(${(ahead * -6 + past * 22).toFixed(2)}deg) rotateZ(${(ahead * 2.6 - past * 9).toFixed(2)}deg) scale(${(1 - Math.min(ahead, 4) * 0.05).toFixed(3)})`;
+        o = (Math.max(0, Math.min(1, 1 - past * 1.5)) * Math.max(0, Math.min(1, 4.4 - ahead)) * Math.min(1, e * 1.4)).toFixed(3);
+      }
       const key = tr + o;
       if (last[i] !== key) {
         last[i] = key;
@@ -241,4 +265,6 @@ export function initCases(scene: Scene) {
     showIndex(Math.round(active), active / (cards.length - 1));
   };
   layout();
+  /* пришли по переключателю вариантов — сразу к главе, чтобы сравнивать, а не искать её заново */
+  if (consumeReviewJump()) requestAnimationFrame(() => scrollTo({ top: topForCard(0), behavior: "instant" as ScrollBehavior }));
 }

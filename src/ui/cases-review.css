@@ -1,0 +1,24 @@
+/* v65: переключатель вариантов главы «Кейсы» (casesReview.ts). Служебная плашка: видна только с ?cases=… в адресе. */
+.cases-review {
+  position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); translate: -50% 0; z-index: 40;
+  display: flex; align-items: center; gap: 2px; max-width: calc(100vw - 24px); padding: 4px; border-radius: 999px; overflow-x: auto; scrollbar-width: none;
+  background: rgba(18, 20, 16, 0.78); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 14px 34px rgba(0, 0, 0, 0.35);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5); backdrop-filter: blur(16px) saturate(1.5);
+  font: 500 13px/1 var(--font); color: rgba(255, 255, 255, 0.7); white-space: nowrap;
+}
+.cases-review::-webkit-scrollbar { display: none; }
+.cases-review__l { padding: 0 8px 0 12px; font-size: 12px; letter-spacing: 0.02em; opacity: 0.7; }
+.cases-review a { padding: 9px 14px; border-radius: 999px; color: inherit; text-decoration: none; transition: background 0.2s ease, color 0.2s ease; }
+.cases-review a:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+.cases-review a[aria-current="true"] { background: #fff; color: #1d1d1f; }
+.cases-review a:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+body.case-open .cases-review { display: none; }
+/* на телефоне плашка занимает низ экрана — главе нужно подвинуться */
+@media (max-width: 900px) {
+  .has-review .cases[data-mode="swipe"] { padding-bottom: calc(66px + env(safe-area-inset-bottom)); }
+  .has-review .cases.is-narrow .cw-wheel { bottom: calc(54px + env(safe-area-inset-bottom)); }
+  .has-review .cases.is-narrow .cw-preview { bottom: calc(230px + env(safe-area-inset-bottom)); }
+  .has-review .sound-fab { translate: 0 -58px; }
+}
+/* на широком экране плашка стоит под превью «колеса» — превью поднимается, чтобы кнопка кейса её не касалась */
+@media (min-width: 901px) { .has-review .cw-preview { bottom: 78px; } }

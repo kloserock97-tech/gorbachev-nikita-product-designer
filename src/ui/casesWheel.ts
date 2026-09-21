@@ -1,0 +1,282 @@
+/* v65: глава «Кейсы», вариант «колесо» (?cases=wheel). Идея Никиты: названия кейсов справа стоят на дуге и прокручиваются
+   полукругом, слева — превью кейса и текст о нём.
+
+   Устройство. Колесо — шесть ссылок, каждая поставлена на окружность поворотом вокруг общего центра:
+   rotate(угол) translateX(−R). Центр окружности лежит за правым краем окна, поэтому видна её левая дуга, а текст
+   названия идёт от дуги к центру. Активное название стоит на «трёх часах» напротив метки, соседние уходят по дуге
+   вверх и вниз, мельчают и гаснут. На телефоне та же окружность лежит под нижним краем: дуга выгибается вверх,
+   названия идут по касательной.
+   Всё — функция прокрутки, как и в ленте: дробный номер активного кейса приходит из истории (story.ts, dwell),
+   из него считаются угол каждого названия, прозрачность сцен и положение предметов. Предметы не переключаются, а
+   проезжают: уходящий поднимается и поворачивается, приходящий выезжает снизу. Текст слева меняется дискретно, когда
+   сменился целый номер: читать текст, который ползёт вместе с прокруткой, неудобно.
+   Клик по неактивному названию довозит колесо до него, по активному — открывает кейс. На телефоне колесо ещё и
+   листается пальцем вбок.
+
+   Модуль подгружается только по параметру в адресе, основная сборка его не несёт. Разметку строит сам, внутри той же
+   секции .cases; ленту не трогает. Превью умеет рисовать предмет в WebGL (?cases=wheel3d, casesWheelGl.ts): тогда
+   картинки-предметы остаются под холстом как запасной вид. */
+import { getCases, type CaseItem } from "../data/cases";
+import notes from "../data/notes";
+import { pad2 as pad } from "../lib/format";
+import { CASES, CHAPTER, CHAPTER2, chapters, dwell, ramp } from "../scene/story";
+import { applyTimeline, topFor } from "./storyScroll";
+import { cue } from "../audio/bus";
+import { onLang, t } from "../i18n";
+import { goArrow, lookVars, objectPicture } from "./caseLook";
+import { tidy } from "../lib/typograph";
+import "./cases-wheel.css";
+import { consumeReviewJump } from "./casesReview";
+
+type Scene = { onStory?: (p: number) => void };
+export type WheelGl = { set(active: number, pointerX: number, pointerY: number): void; resize(): void; dispose(): void };
+
+const esc = (s: string) => tidy(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
+
+export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boolean } = {}) {
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let list = getCases();
+  const n = list.length;
+  root.dataset.mode = "wheel";
+
+  const wrap = document.createElement("div");
+  wrap.className = "cw";
+  wrap.innerHTML = `
+    <div class="cw-preview">
+      <div class="cw-stage">
+        ${list.map((c) => `<div class="cw-bg" style="${lookVars(c)}"></div>`).join("")}
+        <div class="cw-objs">${list.map((c) => `<div class="cw-objbox" style="${lookVars(c)}">${objectPicture(c, "cw-obj", true)}</div>`).join("")}</div>
+        <span class="cw-num" aria-hidden="true">01</span>
+      </div>
+      <div class="cw-info" aria-live="polite">
+        <p class="cw-tag"></p>
+        <p class="cw-sub"></p>
+        <p class="cw-chips"></p>
+        <a class="cw-open" href="#"><span class="cw-open-l"></span>${goArrow}</a>
+      </div>
+    </div>
+    <nav class="cw-wheel">
+      <svg class="cw-arc" aria-hidden="true"><circle class="cw-ring"/><g class="cw-ticks"></g></svg>
+      <i class="cw-needle" aria-hidden="true"></i>
+      <ol class="cw-list">${list.map((c, i) => `<li><a class="cw-item" href="#/work/${c.id}" data-i="${i}"><span class="cw-n">${pad(i + 1)}</span><span class="cw-t"></span></a></li>`).join("")}</ol>
+    </nav>`;
+  root.insertBefore(wrap, root.querySelector(".cases-foot"));
+
+  const stage = wrap.querySelector<HTMLElement>(".cw-stage")!;
+  const bgs = [...wrap.querySelectorAll<HTMLElement>(".cw-bg")];
+  const objs = [...wrap.querySelectorAll<HTMLElement>(".cw-objbox")];
+  const items = [...wrap.querySelectorAll<HTMLAnchorElement>(".cw-item")];
+  const info = wrap.querySelector<HTMLElement>(".cw-info")!;
+  const num = wrap.querySelector<HTMLElement>(".cw-num")!;
+  const wheel = wrap.querySelector<HTMLElement>(".cw-wheel")!;
+  const ticks = wrap.querySelector<SVGGElement>(".cw-ticks")!;
+  const ring = wrap.querySelector<SVGCircleElement>(".cw-ring")!;
+  const now = root.querySelector<HTMLElement>(".cases-now");
+  const bar = root.querySelector<HTMLElement>(".cases-bar i");
+
+  /* подписи на текущем языке */
+  const paintTitles = () => {
+    list = getCases();
+    wheel.setAttribute("aria-label", t("work.title"));
+    items.forEach((a, i) => {
+      a.querySelector(".cw-t")!.textContent = list[i].title;
+      a.setAttribute("aria-label", `${list[i].title}. ${list[i].subtitle}`);
+    });
+  };
+  const kinds = (c: CaseItem) => c.kind.map((k) => t(k === "web" ? "work.web" : "work.mobile"));
+  let shownInfo = -1;
+  const paintInfo = (i: number, animate: boolean) => {
+    const c = list[i];
+    shownInfo = i;
+    const put = () => {
+      info.style.cssText = lookVars(c);
+      info.querySelector(".cw-tag")!.textContent = `${pad(i + 1)} · ${c.tag}`;
+      info.querySelector(".cw-sub")!.innerHTML = esc(c.subtitle);
+      info.querySelector(".cw-chips")!.innerHTML = kinds(c).map((k) => `<span>${esc(k)}</span>`).join("");
+      info.querySelector(".cw-open-l")!.textContent = t("cases.cta");
+      info.querySelector<HTMLAnchorElement>(".cw-open")!.href = `#/work/${c.id}`;
+      num.textContent = pad(i + 1);
+    };
+    if (!animate || reduced) { put(); return; }
+    /* старый текст уходит вверх, новый приходит снизу: два коротких такта вместо перекрёстного затухания */
+    info.classList.add("is-out");
+    window.setTimeout(() => { put(); info.classList.remove("is-out"); info.classList.add("is-in"); requestAnimationFrame(() => requestAnimationFrame(() => info.classList.remove("is-in"))); }, 170);
+  };
+  paintTitles();
+  paintInfo(0, false);
+  onLang(() => { paintTitles(); paintInfo(Math.max(0, shownInfo), false); });
+
+  /* ── геометрия колеса ── */
+  let narrow = false;
+  let R = 480;
+  let step = 17; // градусов между соседними названиями
+  const measure = () => {
+    narrow = matchMedia("(max-width: 900px), (pointer: coarse) and (max-width: 1100px)").matches;
+    root.classList.toggle("is-narrow", narrow);
+    const r = wheel.getBoundingClientRect();
+    if (narrow) {
+      /* окружность под нижним краем: радиус от ширины окна, чтобы соседние названия выглядывали с боков */
+      R = clamp(innerWidth * 1.15, 380, 760);
+      step = clamp((Math.asin(Math.min(0.9, (innerWidth * 0.62) / R)) * 180) / Math.PI, 22, 40);
+      wheel.style.setProperty("--cx", `${(r.width / 2).toFixed(1)}px`);
+      wheel.style.setProperty("--cy", `${(R + 30).toFixed(1)}px`);
+    } else {
+      R = clamp(innerHeight * 0.56, 340, 620);
+      step = 16.5;
+      wheel.style.setProperty("--cx", `${(R + 56).toFixed(1)}px`);
+      wheel.style.setProperty("--cy", `${(r.height / 2).toFixed(1)}px`);
+    }
+    wheel.style.setProperty("--R", `${R.toFixed(1)}px`);
+    ring.setAttribute("r", R.toFixed(1));
+    ring.setAttribute("cx", "0"); ring.setAttribute("cy", "0");
+  };
+
+  /** прокрутка страницы, при которой история стоит на кейсе i */
+  const topForCase = (i: number) => {
+    const c = CASES.strip[0] + (CASES.strip[1] - CASES.strip[0]) * (i / Math.max(1, n - 1));
+    return topFor(CHAPTER + (CHAPTER2 - CHAPTER) * c);
+  };
+  const goTo = (i: number) => scrollTo({ top: topForCase(clamp(i, 0, n - 1)), behavior: reduced ? ("instant" as ScrollBehavior) : "smooth" });
+
+  let gl: WheelGl | null = null;
+  let px = 0, py = 0;
+  let lastP = 0;
+  const layout = () => {
+    measure();
+    /* один кейс — 0,7 экрана прокрутки: колесо успевает довернуться, текст слева — прочитаться */
+    applyTimeline({ narrow: innerWidth <= 900, cases: n, notes: notes.length, step: 0.7 });
+    gl?.resize();
+    lastKey = "";
+    scene.onStory?.(lastP);
+  };
+
+  /* деления на дуге: короткий штрих у каждого кейса, они едут вместе с названиями */
+  ticks.innerHTML = list.map(() => `<line class="cw-tick" x1="0" y1="0" x2="0" y2="0"/>`).join("");
+  const tickEls = [...ticks.querySelectorAll<SVGLineElement>(".cw-tick")];
+
+  let current = -1;
+  let shown = false;
+  let lastKey = "";
+  const place = (active: number, e: number) => {
+    const key = `${active.toFixed(4)}|${e.toFixed(3)}|${narrow}`;
+    if (key === lastKey) return;
+    lastKey = key;
+    root.style.setProperty("--e", e.toFixed(3));
+    items.forEach((a, i) => {
+      const d = i - active;
+      const ad = Math.abs(d);
+      const ang = reduced ? Math.round(d) * step : d * step;
+      /* широкий экран: следующие кейсы ниже активного, угол против часовой; телефон: следующие правее */
+      const tr = narrow
+        ? `rotate(${ang.toFixed(2)}deg) translateY(${(-R).toFixed(1)}px)`
+        : `rotate(${(-ang).toFixed(2)}deg) translateX(${(-R).toFixed(1)}px)`;
+      a.style.transform = tr;
+      a.style.setProperty("--k", clamp(1 - ad, 0, 1).toFixed(3)); // 1 у активного, 0 у соседей: размер и яркость
+      a.style.opacity = clamp(1.15 - ad * 0.34, 0, 1).toFixed(3);
+      a.classList.toggle("is-active", ad < 0.5);
+      a.tabIndex = shown && ad < 3.2 ? 0 : -1;
+      /* штрих на дуге в той же точке, что и название: единичный вектор от центра к точке */
+      const tk = tickEls[i];
+      const rad = (ang * Math.PI) / 180;
+      const ux = narrow ? Math.sin(rad) : -Math.cos(rad);
+      const uy = narrow ? -Math.cos(rad) : Math.sin(rad);
+      const r0 = R - 6, r1 = R + 6 + clamp(1 - ad, 0, 1) * 12;
+      tk.setAttribute("x1", (ux * r0).toFixed(1)); tk.setAttribute("y1", (uy * r0).toFixed(1));
+      tk.setAttribute("x2", (ux * r1).toFixed(1)); tk.setAttribute("y2", (uy * r1).toFixed(1));
+      tk.style.opacity = clamp(1 - ad * 0.28, 0.12, 1).toFixed(2);
+    });
+    /* превью: сцены перетекают цветом, предметы проезжают снизу вверх */
+    bgs.forEach((b, i) => (b.style.opacity = clamp(1 - Math.abs(i - active), 0, 1).toFixed(3)));
+    objs.forEach((o, i) => {
+      const d = i - active;
+      const ad = Math.abs(d);
+      if (ad > 1.2) { o.style.visibility = "hidden"; return; }
+      o.style.visibility = "visible";
+      o.style.opacity = clamp(1 - ad * 1.25, 0, 1).toFixed(3);
+      o.style.transform = reduced ? "none" : `translate3d(${(d * 9).toFixed(2)}%, ${(d * 58).toFixed(2)}%, 0) rotate(${(d * -10).toFixed(2)}deg) scale(${(1 - ad * 0.16).toFixed(3)})`;
+    });
+    gl?.set(active, px, py);
+    const idx = clamp(Math.round(active), 0, n - 1);
+    if (idx !== current) {
+      if (current >= 0) cue("progress-step", 0.5);
+      current = idx;
+      if (now) now.textContent = pad(idx + 1);
+      paintInfo(idx, shown);
+    }
+    if (bar) bar.style.transform = `scaleX(${(active / Math.max(1, n - 1)).toFixed(4)})`;
+  };
+
+  /* клик по названию: неактивное — довезти колесо, активное — открыть кейс */
+  items.forEach((a, i) => {
+    a.addEventListener("click", (e) => {
+      if (i !== current) { e.preventDefault(); goTo(i); return; }
+      cue("forward");
+    });
+    a.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") cue("hover", 0.6); });
+    /* с клавиатуры: фокус на названии довозит колесо до него */
+    a.addEventListener("focus", () => { if (a.matches(":focus-visible") && i !== current) goTo(i); });
+  });
+  info.querySelector(".cw-open")!.addEventListener("click", () => cue("forward"));
+  stage.addEventListener("click", () => { location.hash = `#/work/${list[Math.max(0, current)].id}`; cue("forward"); });
+
+  /* курсор над сценой разводит слои превью */
+  stage.addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "mouse" || reduced) return;
+    const r = stage.getBoundingClientRect();
+    px = ((e.clientX - r.left) / r.width) * 2 - 1;
+    py = ((e.clientY - r.top) / r.height) * 2 - 1;
+    stage.style.setProperty("--px", px.toFixed(3));
+    stage.style.setProperty("--py", py.toFixed(3));
+    gl?.set(lastActive, px, py);
+  });
+  stage.addEventListener("pointerleave", () => { px = 0; py = 0; stage.style.setProperty("--px", "0"); stage.style.setProperty("--py", "0"); gl?.set(lastActive, 0, 0); });
+
+  /* телефон: колесо листается пальцем вбок */
+  let downX = 0, downY = 0, swiping = false;
+  wheel.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse") return; downX = e.clientX; downY = e.clientY; swiping = true; });
+  wheel.addEventListener("pointerup", (e) => {
+    if (!swiping) return;
+    swiping = false;
+    const dx = e.clientX - downX, dy = e.clientY - downY;
+    if (Math.abs(dx) > 34 && Math.abs(dx) > Math.abs(dy) * 1.2) goTo(current + (dx < 0 ? 1 : -1));
+  });
+  wheel.addEventListener("pointercancel", () => (swiping = false));
+
+  let lastActive = 0;
+  const prev = scene.onStory;
+  scene.onStory = (p) => {
+    prev?.(p);
+    lastP = p;
+    const { c, f } = chapters(p);
+    const vis = c > CASES.cardsIn[0] && c < CASES.stripOut[1] && f <= 0;
+    root.style.setProperty("--leave", ramp(c, ...CASES.stripOut).toFixed(3));
+    if (vis !== shown) {
+      shown = vis;
+      root.classList.toggle("is-on", vis);
+      root.setAttribute("aria-hidden", String(!vis));
+      lastKey = "";
+    }
+    if (!vis) return;
+    const inK = ramp(c, ...CASES.cardsIn);
+    const e = 1 - (1 - inK) ** 3;
+    const run = ramp(c, ...CASES.strip) * (n - 1);
+    lastActive = reduced ? Math.round(run) : dwell(run);
+    place(lastActive, e);
+  };
+
+  addEventListener("resize", layout);
+  onLang(() => requestAnimationFrame(layout));
+  layout();
+  if (consumeReviewJump()) requestAnimationFrame(() => scrollTo({ top: topForCase(0), behavior: "instant" as ScrollBehavior }));
+
+  if (opts.gl && !reduced) {
+    /* предметы в WebGL: объём по карте глубины и переход шейдером. Если холст не поднялся, остаются картинки */
+    void import("./casesWheelGl").then((m) => m.createWheelGl(stage, list)).then((g) => {
+      if (!g) return;
+      gl = g;
+      root.classList.add("has-gl");
+      gl.set(lastActive, px, py);
+    }).catch(() => {});
+  }
+}
