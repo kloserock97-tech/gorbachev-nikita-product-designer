@@ -18,6 +18,7 @@ export class NatureScene {
   private camera = new THREE.PerspectiveCamera(23, 1, 1, 40);
   private world = new THREE.Group();
   private rt: THREE.WebGLRenderTarget;
+  private pollen: THREE.ShaderMaterial | null = null;
   private env: THREE.WebGLRenderTarget | null = null;
   private quad: FullScreenQuad;
   private post: THREE.ShaderMaterial;
@@ -90,6 +91,8 @@ export class NatureScene {
     this.buildGrass(); lap("grass");
     this.buildFlowers(); lap("flowers");
     this.buildDrops(); lap("drops");
+    this.buildLabels();
+    this.buildPollen(); lap("extras");
     this.rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, format: THREE.RGBAFormat, samples: this.small ? 2 : 4 });
     this.post = new THREE.ShaderMaterial({
       uniforms: { tScene: { value: this.rt.texture }, uPixel: { value: new THREE.Vector2() } },
@@ -163,7 +166,7 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
       shader.uniforms.uGardenTime = this.clock;
       shader.vertexShader = "varying vec3 vTile; varying vec3 vTileN;\n" + shader.vertexShader;
       shader.vertexShader = shader.vertexShader.replace("#include <begin_vertex>", "#include <begin_vertex>\nvTile=position; vTileN=normal;");
-      shader.fragmentShader = "varying vec3 vTile; varying vec3 vTileN; uniform float uGarden; uniform float uGardenTime;\n" + shader.fragmentShader;
+      shader.fragmentShader = "varying vec3 vTile; varying vec3 vTileN; uniform float uGarden; uniform float uGardenTime; float gWet;\n" + shader.fragmentShader;
       shader.fragmentShader = shader.fragmentShader.replace("#include <color_fragment>", `
         #include <color_fragment>
         float x=vTile.x,z=vTile.z;
@@ -202,8 +205,22 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
           shade=max(shade,(1.-smoothstep(.45,1.15,d))*(.7+.3*sin(fi*7.)));
         }
         diffuseColor.rgb*=1.-shade*.26*top;
+        // Where the ice has gone it leaves a film of water: darker, and much glossier than the matted glass.
+        float iu=max(0.,(x+1.685)/1.7), iv=max(0.,(z+1.785)/3.0);
+        float it=pow(iu,1.15)+pow(iv,1.6);
+        float gone=.14+max(0.,1.-it)*.40;
+        gWet=(1.-smoothstep(.95,1.2,it))*smoothstep(gone+.12,gone+.32,uGarden)*(1.-moss)*top;
+        diffuseColor.rgb*=1.-gWet*.07;
+        // The mound stands on the glass: a soft contact shadow runs just ahead of the moss.
+        float ahead=uGarden-arrive;
+        float contact=smoothstep(-.10,.0,ahead)*(1.-smoothstep(.0,.14,ahead));
+        diffuseColor.rgb*=1.-contact*.2*top;
       `);
       /* cast glass is never optically flat: a slow wave in the normal makes the reflections of the room wander */
+      shader.fragmentShader = shader.fragmentShader.replace("#include <roughnessmap_fragment>", `
+        #include <roughnessmap_fragment>
+        roughnessFactor*=mix(1.,.28,gWet);
+      `);
       shader.fragmentShader = shader.fragmentShader.replace("#include <normal_fragment_maps>", `
         #include <normal_fragment_maps>
         normal=normalize(normal+vec3(sin(vTile.x*3.1+vTile.z*1.7),0.,cos(vTile.z*3.6-vTile.x*1.3))*.035);
@@ -502,6 +519,75 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
 
   /** Condensation on the bare glass, thickest along the retreating ice; it goes when the moss arrives.
       A little dew stays on the moss itself. */
+  /** Small engraved captions along the four edges, as on the reference, with our own words: the run goes from cold to
+      warm and from quiet to alive. They lie on the glass, so the ice hides some of them at first and the moss takes
+      them all in the end. */
+  private buildLabels() {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1024; canvas.height = Math.round(1024 * TILE.depth / TILE.width);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 4;
+    const draw = () => {
+      const ctx = canvas.getContext("2d")!;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.font = '700 27px Manrope, "Segoe UI", sans-serif';
+      (ctx as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = "7px";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#1f3138";
+      const put = (text: string, u: number, v: number, turn: number) => {
+        ctx.save(); ctx.translate(u * canvas.width, v * canvas.height); ctx.rotate(turn); ctx.fillText(text, 0, 0); ctx.restore();
+      };
+      put("COLD", .60, .085, 0); put("WARM", .40, .918, 0);
+      put("QUIET", .082, .56, -Math.PI / 2); put("ALIVE", .920, .44, Math.PI / 2);
+      texture.needsUpdate = true;
+    };
+    draw();
+    /* the page font may arrive after the scene: draw again with it */
+    void document.fonts?.ready.then(() => { if (!this.disposed) draw(); });
+    const labels = new THREE.Mesh(new THREE.PlaneGeometry(TILE.width, TILE.depth),
+      new THREE.MeshBasicMaterial({ map: texture, transparent: true, opacity: .78, depthWrite: false }));
+    labels.rotation.x = -Math.PI / 2; labels.position.y = .003;
+    this.world.add(labels);
+  }
+
+  /** Pollen in the light above the warm corner, once it blooms: a few dozen soft specks that rise and drift. */
+  private buildPollen() {
+    if (this.reduced) return;
+    const count = this.small ? 28 : 52;
+    const base = new Float32Array(count * 3), seed = new Float32Array(count);
+    for (let i = 0; i < count; i++) {
+      base.set([-.5 + rand(i * 3 + 3101) * 2.1, .12, -1.0 + rand(i * 3 + 3102) * 2.4], i * 3);
+      seed[i] = rand(i * 3 + 3103);
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(base, 3));
+    geometry.setAttribute("aSeed", new THREE.BufferAttribute(seed, 1));
+    this.pollen = new THREE.ShaderMaterial({
+      uniforms: { uGarden: this.growth, uGardenTime: this.clock, uSize: { value: 6 } },
+      vertexShader: `
+        uniform float uGarden, uGardenTime, uSize; attribute float aSeed; varying float vAlpha;
+        void main(){
+          float life=fract(uGardenTime*(.035+aSeed*.03)+aSeed*7.);
+          vec3 p=position+vec3(sin(uGardenTime*.31+aSeed*40.)*.16, life*1.25, cos(uGardenTime*.27+aSeed*23.)*.16);
+          vec4 mv=modelViewMatrix*vec4(p,1.);
+          gl_Position=projectionMatrix*mv;
+          gl_PointSize=uSize*(.55+aSeed*.7)*(12.9/-mv.z);
+          // born softly, gone softly, and only once the corner is in bloom
+          vAlpha=smoothstep(0.,.18,life)*(1.-smoothstep(.7,1.,life))*smoothstep(.42,.7,uGarden);
+        }`,
+      fragmentShader: `
+        varying float vAlpha;
+        void main(){
+          float d=length(gl_PointCoord-.5);
+          float a=(1.-smoothstep(.12,.5,d))*vAlpha*.7;
+          gl_FragColor=vec4(vec3(1.,.93,.70)*2.4,a);
+        }`,
+      transparent: true, depthWrite: false,
+    });
+    const points = new THREE.Points(geometry, this.pollen);
+    points.frustumCulled = false;
+    this.world.add(points);
+  }
+
   private buildDrops() {
     const glass = this.small ? 260 : 480, dew = this.small ? 40 : 80, total = glass + dew;
     /* A drop on white glass is a lens: clear in the middle, a dark rim where it bends the view, one hard highlight.
@@ -548,6 +634,8 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
     const dpr = this.renderer.getPixelRatio();
     this.rt.setSize(Math.round(width * dpr), Math.round(height * dpr));
     this.post.uniforms.uPixel.value.set(1 / (width * dpr), 1 / (height * dpr));
+    /* specks keep their size relative to the slab, whatever the canvas is */
+    if (this.pollen) this.pollen.uniforms.uSize.value = Math.max(2.5, height * dpr / 150);
   }
 
   render(progress: number, time: number) {
