@@ -6,21 +6,24 @@ import { applyTimeline, topFor } from "./storyScroll";
 import { swipeStrip, type SwipeStrip } from "./swipeStrip";
 import { cue } from "../audio/bus";
 import { onLang, t } from "../i18n";
+import { goArrow, lookVars, objectPicture } from "./caseLook";
+import "./case-cards.css";
 
 /* Глава «Кейсы» (docs/prompts/scroll.md, промпт 2). По мотивам 3D-сайтов Awwwards: скролл — повествование,
    один кейс — один такт. Лента карточек стоит на дуге (CSS 3D): центральная крупная и ровная,
    соседние развёрнуты от зрителя и отступают вглубь. Вертикальный скролл везёт ленту вбок;
-   фон — то же поле под другим ракурсом, размытое (сцена). Карточки — в стиле стеклянных
-   карточек холма: обложка, метка, название, подзаголовок, «View case» → страница кейса внутри сайта
-   (#/work/<id>, src/ui/caseView.ts).
+   фон — то же поле под другим ракурсом, размытое (сцена).
+   v64: карточка по схеме Apple «Get to know» (docs/prompts/v64-research-apple.md): высокая светлая сцена в цвет
+   кейса, сверху метка и название, ниже крупный предмет без фона, срезанный краем, справа внизу круглая кнопка,
+   которая при наведении раскрывается в «Смотреть кейс». Стили — case-cards.css. Предмет «приподнят» над карточкой:
+   его сдвиг считается от поворота карточки в ленте (--tilt) и от курсора (--px, --py), потому что настоящую
+   глубину (preserve-3d) внутри карточки съедает overflow: hidden. Ведёт на страницу кейса (#/work/<id>, caseView.ts).
 
    Всё — функция от прогресса: transform пишется только когда поменялся, без чтения DOM в кадре.
    (v21 пробовали 3D-карточки в WebGL — Никите не понравились, вернули эту ленту; v26 пробовали сетку
    «Selected work» с фильтрами — Никита попросил вернуть ленту.)
    v27: при смене языка меняются только подписи внутри карточек — сами карточки остаются на местах
    вместе со своим положением в ленте. */
-
-const BASE = import.meta.env.BASE_URL;
 
 type Scene = { onStory?: (p: number) => void };
 
@@ -48,17 +51,14 @@ export function renderCases() {
   if (!strip || strip.childElementCount) return strip;
   strip.innerHTML = getCases()
     .map(
-      (c, i) => `<a class="case" role="listitem" href="#/work/${c.id}" tabindex="-1" style="--i:${i}">
-        <span class="case-cover">
-          <img class="case-art" src="${BASE}${c.cover}" alt="" loading="lazy" decoding="async" width="1120" height="630">
-          ${c.brand ? `<span class="case-brand case-brand--${c.id}" aria-hidden="true"><img src="${BASE}cases/brands/${c.brand}" alt="" loading="lazy" decoding="async" width="64" height="32"></span>` : ""}
-        </span>
-        <span class="case-body">
+      (c, i) => `<a class="case" role="listitem" href="#/work/${c.id}" tabindex="-1" style="--i:${i};${lookVars(c)}">
+        <span class="case-text">
           <span class="case-tag">${pad(i + 1)} · ${c.tag}</span>
           <span class="case-title">${c.title}</span>
           <span class="case-sub">${c.subtitle}</span>
-          <span class="case-cta"><span class="case-cta-l">${t("cases.cta")}</span> <span aria-hidden="true">↗</span></span>
         </span>
+        ${objectPicture(c, "case-obj")}
+        <span class="case-go"><span class="case-cta-l">${t("cases.cta")}</span>${goArrow}</span>
       </a>`,
     )
     .join("");
@@ -114,7 +114,7 @@ export function initCases(scene: Scene) {
     swipe?.destroy();
     swipe = null;
     current = -1;
-    cards.forEach((c) => { c.style.transform = ""; c.style.opacity = ""; c.classList.remove("is-active"); });
+    cards.forEach((c) => { c.style.transform = ""; c.style.opacity = ""; c.style.removeProperty("--tilt"); c.classList.remove("is-active"); });
     last.fill("");
     if (mode !== "swipe") return;
     swipe = swipeStrip(strip, {
@@ -135,11 +135,7 @@ export function initCases(scene: Scene) {
 
   const layout = () => {
     setMode();
-    /* v33: все карточки одной высоты. Тексты подобраны на две строки подзаголовка, CSS держит место под две строки
-       названия и подзаголовка; остаток (узкий экран, длинное русское название) выравниваем по самой высокой */
-    cards.forEach((c) => c.style.removeProperty("min-height"));
-    const tallest = Math.max(0, ...cards.map((c) => c.offsetHeight));
-    if (tallest > 0) cards.forEach((c) => (c.style.minHeight = `${tallest}px`));
+    /* v64: высота карточки задана пропорцией (case-cards.css), выравнивать по самой высокой больше не нужно */
     const w = cards[0]?.offsetWidth ?? 360;
     /* v43: шаг дуги считается от зазора, а не от доли ширины. Соседняя карточка повёрнута на 24°, уменьшена до 0,92
        и отодвинута на 150px при перспективе 1600px: её ближний край виден на (spacing − 0,42w)·0,954 от центра.
@@ -165,11 +161,13 @@ export function initCases(scene: Scene) {
     const card = (e.target as HTMLElement).closest<HTMLElement>(".case");
     if (!card) return;
     const r = card.getBoundingClientRect();
-    card.style.setProperty("--mx", `${(((e.clientX - r.left) / r.width) * 100).toFixed(1)}%`);
-    card.style.setProperty("--my", `${(((e.clientY - r.top) / r.height) * 100).toFixed(1)}%`);
+    const mx = (e.clientX - r.left) / r.width, my = (e.clientY - r.top) / r.height;
+    card.style.setProperty("--mx", `${(mx * 100).toFixed(1)}%`);
+    card.style.setProperty("--my", `${(my * 100).toFixed(1)}%`);
+    /* предмет тянется за курсором: −1…1 от центра карточки */
+    card.style.setProperty("--px", (mx * 2 - 1).toFixed(3));
+    card.style.setProperty("--py", (my * 2 - 1).toFixed(3));
   });
-  /* обложки подгружаются лениво — высота может измениться, когда картинка получила размер */
-  cards.forEach((c) => c.querySelector("img")?.addEventListener("load", () => requestAnimationFrame(layout), { once: true }));
   /* русские подписи длиннее английских — после смены языка карточки мерим заново */
   onLang(() => requestAnimationFrame(layout));
 
@@ -236,6 +234,7 @@ export function initCases(scene: Scene) {
         last[i] = key;
         el.style.transform = tr;
         el.style.opacity = o;
+        el.style.setProperty("--tilt", Math.max(-1, Math.min(1, d)).toFixed(3));
         el.classList.toggle("is-active", ad < 0.5);
       }
     });

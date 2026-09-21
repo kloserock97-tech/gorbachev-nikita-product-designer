@@ -4,21 +4,46 @@
    подзадачи) вложены в раздел «Решения» и открываются на месте, адрес #/work/<кейс>/<разбор> сохраняется.
    Галереи вместо рамок: film (экран едет внутри рамки по прокрутке), compare (ползунок), spot (точки,
    привязанные к решениям), stack (веер телефонов), bento (сетка с лайтбоксом).
-   caseView.ts решает, есть ли рассказ, и зовёт renderStory/mountStory. */
+   caseView.ts решает, есть ли рассказ, и зовёт renderStory/mountStory.
+
+   v64: подача «по-эпловски» (docs/prompts/v64-apple-cards.md). Структура рассказа и тексты прежние, меняется вид:
+   герой — сцена в цвет кейса с настоящим экраном и предметом (caseHero.ts); левой рельсы больше нет, оглавление
+   живёт в плавающей капсуле внизу и на широком экране (она же показывает текущий раздел); у разделов иконки
+   (icons.ts); первое предложение лида и подписи набрано чернилами, продолжение серым (runIn) — так Apple ведёт
+   глаз по длинному абзацу; экраны стоят на светлой сцене в цвет кейса. Стили — case-story.css. */
 import type { CaseStory, Gallery, Decision, CaseImage, Method } from "../data/caseStory";
 import { pad2 as pad } from "../lib/format";
 import type { CaseTrack, TrackPart } from "../data/caseTracks";
 import { getCases } from "../data/cases";
 import { t } from "../i18n";
-import { heroAccent, mountHero } from "./caseHero";
+import { heroStage, mountHero } from "./caseHero";
+import { goArrow, lookVars, objectPicture } from "./caseLook";
 import { demoBlock, mountDemos } from "./caseDemos";
+import { icon, type IconName } from "./icons";
 import { smoothWheel } from "./smoothScroll";
-import "./case-v41.css";
+import { tidy } from "../lib/typograph";
+import "./case-story.css";
 
 const BASE = import.meta.env.BASE_URL;
-const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+/* всё, что уходит в разметку, проходит типограф показа: неразрывные пробелы после предлогов, у чисел и перед тире */
+const esc = (s: string) => tidy(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
-const arrow = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8.5 7H17v8.5"/></svg>`;
+
+/** «Заход»: первое предложение (или часть до двоеточия) — чернилами, продолжение — серым. Одно предложение
+    остаётся как есть. Граница ищется в первых 140 знаках, чтобы заходом не стал весь абзац. */
+function runIn(text: string) {
+  const head = text.slice(0, 140);
+  let cut = -1;
+  for (const mark of [": ", ". ", "? ", "! "]) {
+    const i = head.indexOf(mark);
+    if (i > 12 && (cut < 0 || i < cut)) cut = i + mark.length - 1;
+  }
+  if (cut < 0 || cut >= text.length - 1) return esc(text);
+  return `<b class="cs-run">${esc(text.slice(0, cut))}</b> ${esc(text.slice(cut + 1))}`;
+}
+
+/** слово с дефисом не рвётся по дефису: «ИИ-агентов» переносится целиком, а не «ИИ-» в конце строки */
+const keepHyphens = (html: string) => html.split(" ").map((w) => (w.includes("-") ? `<span class="cs-nw">${w}</span>` : w)).join(" ");
 
 type Section = { id: string; label: string; children?: { id: string; label: string }[] };
 
@@ -36,13 +61,14 @@ const stage = (g: CaseImage) =>
 
 /** экран внутри текста: решение, метод, подход, вариант */
 const fig = (g: CaseImage, cls = "") =>
-  `<figure class="cs-fig cs-fig--inline ${cls}">${stage(g)}<figcaption>${esc(g.caption)}</figcaption></figure>`;
+  `<figure class="cs-fig cs-fig--inline ${cls}">${stage(g)}<figcaption>${runIn(g.caption)}</figcaption></figure>`;
 
 /* ── куски ─────────────────────────────────────────────────────────────────── */
+const SEC_ICON: Record<string, IconName> = { brief: "brief", context: "context", approach: "approach", research: "research", flow: "flow", decisions: "decisions", split: "split", mistakes: "mistakes", results: "results", screens: "screens", roadmap: "roadmap", takeaways: "takeaways" };
 const head = (n: number, id: string, label: string, lead?: string) => `
   <header class="cs-head" id="cs-${id}">
-    <p class="cs-num"><span>${pad(n)}</span>${esc(label)}</p>
-    ${lead ? `<h2 class="cs-lead" data-reveal>${esc(lead)}</h2>` : ""}
+    <p class="cs-num">${icon(SEC_ICON[id] ?? "brief")}<span>${pad(n)}</span>${esc(label)}</p>
+    ${lead ? `<h2 class="cs-lead" data-reveal>${keepHyphens(esc(lead))}</h2>` : ""}
   </header>`;
 
 /** абзацы разделяются пустой строкой в данных */
@@ -140,7 +166,7 @@ const gallery = (g: Gallery, k: number) => {
       return `<figure class="cs-gal cs-fig cs-film" data-reveal style="--rd:${k % 3}">${title}
         <div class="cs-film-pin"><div class="cs-film-sticky">
           <div class="cs-stage cs-film-stage"><div class="cs-film-track">${pic(g.image, ' draggable="false"')}</div><button type="button" class="cs-stage-zoom" data-zoom aria-label="${t("cs.open")}"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M8 3H3v5M12 3h5v5M8 17H3v-5M12 17h5v-5"/></svg></button></div>
-          <figcaption>${esc(g.image.caption)}</figcaption>
+          <figcaption>${runIn(g.image.caption)}</figcaption>
         </div><div class="cs-film-run" aria-hidden="true"></div></div></figure>`;
     case "compare":
       return `<figure class="cs-gal cs-fig cs-compare" data-reveal style="--rd:${k % 3}">${title}
@@ -188,7 +214,7 @@ export function sectionsOf(s: CaseStory): Section[] {
 
 const toc = (sections: Section[], cls: string) => `
   <ol class="${cls}">${sections.map((s, k) => `<li>
-    <a href="#cs-${s.id}" data-sec="${s.id}"><span>${pad(k + 1)}</span>${esc(s.label)}</a>
+    <a href="#cs-${s.id}" data-sec="${s.id}" data-n="${pad(k + 1)}">${icon(SEC_ICON[s.id] ?? "brief")}<span>${pad(k + 1)}</span><em>${esc(s.label)}</em></a>
     ${s.children?.length ? `<ol>${s.children.map((c) => `<li><a href="#cs-${c.id}" data-sec="${c.id}">${esc(c.label)}</a></li>`).join("")}</ol>` : ""}
   </li>`).join("")}</ol>`;
 
@@ -202,7 +228,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
   const ap = s.approach;
   const r = s.research;
   const html = `
-  <article class="cs" data-case="${esc(s.id)}">
+  <article class="cs" data-case="${esc(s.id)}" style="${lookVars(card)}">
     <div class="cs-top">
       <button type="button" class="cs-back"><span aria-hidden="true">←</span> ${t("cs.back")}</button>
       <div class="cs-top-title" aria-hidden="true"><b>${esc(card.title)}</b><i class="cs-progress"></i></div>
@@ -214,28 +240,25 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
     </div>
 
     <div class="cs-layout">
-      <aside class="cs-rail" aria-label="${t("cs.contents")}">
-        <p class="cs-rail-label">${t("cs.contents")}</p>
-        ${toc(sections, "cs-toc")}
-      </aside>
-
       <div class="cs-body">
         <header class="cs-hero">
-          <div class="cs-hero-text">
-            <p class="cs-kicker" data-reveal>${esc(s.hero.kicker)}</p>
-            <h1 id="cv-title" data-reveal style="--rd:1">${esc(s.hero.title)}</h1>
-            <p class="cs-tagline" data-reveal style="--rd:2">${esc(s.hero.tagline)}</p>
-            <dl class="cs-facts cs-facts--hero" data-reveal style="--rd:3">${s.hero.facts.map(([a, b]) => `<div><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join("")}</dl>
-            <p class="cs-tags" data-reveal style="--rd:4">${s.hero.tags.map((x) => `<span>${esc(x)}</span>`).join("")}</p>
+          <div class="cs-hero-stage">
+            <div class="cs-hero-text">
+              <p class="cs-kicker" data-reveal>${esc(s.hero.kicker)}</p>
+              <h1 id="cv-title" data-reveal style="--rd:1">${keepHyphens(esc(s.hero.title))}</h1>
+              <p class="cs-tagline" data-reveal style="--rd:2">${esc(s.hero.tagline)}</p>
+            </div>
+            ${heroStage(card, card.title)}
           </div>
-          <div class="cs-hero-art" data-reveal style="--rd:2">${heroAccent(s.id, card.title)}</div>
+          <dl class="cs-facts cs-facts--hero" data-reveal style="--rd:3">${s.hero.facts.map(([a, b], k) => `<div>${icon((["role", "company", "time", "platform"] as const)[k] ?? "brief")}<dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join("")}</dl>
+          <p class="cs-tags" data-reveal style="--rd:4">${s.hero.tags.map((x) => `<span>${esc(x)}</span>`).join("")}</p>
         </header>
 
         ${s.kpis.length ? `<section class="cs-kpis" aria-label="${t("cs.results")}">${s.kpis.map((m, k) => `<div class="cs-kpi" data-reveal style="--rd:${k}"><b data-count="${esc(m.value)}">${esc(m.value)}</b><span>${esc(m.label)}</span></div>`).join("")}</section>` : ""}
 
         <section class="cs-sec">
           ${head(++sec, "brief", t("cs.brief"))}
-          <p class="cs-summary" data-reveal>${esc(s.hero.summary)}</p>
+          <p class="cs-summary" data-reveal>${runIn(s.hero.summary)}</p>
         </section>
 
         <section class="cs-sec">
@@ -297,7 +320,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
 
         <section class="cs-sec">
           ${head(++sec, "decisions", t("cs.decisions"))}
-          <p class="cs-text cs-text--lead" data-reveal>${esc(s.decisions.lead)}</p>
+          <p class="cs-text cs-text--lead" data-reveal>${runIn(s.decisions.lead)}</p>
           ${demoBlock(s.id)}
           <div class="cs-decisions">${s.decisions.items.map((d, k) => decision(d, k, s.deepDives)).join("")}</div>
           ${s.deepDives.length ? `<div class="cs-deeps">${mini(t("cs.deep"))}${s.deepDives.map(deepDive).join("")}</div>` : ""}
@@ -355,15 +378,15 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           ${s.quote ? `<blockquote class="cs-quote cs-quote--big" data-reveal style="--rd:2">${esc(s.quote)}</blockquote>` : ""}
         </section>
 
-        <a class="cs-next" href="#/work/${esc(next.id)}" data-reveal>
-          <span class="cs-next-text"><span class="cs-mini">${t("cs.nextcase")}</span><b>${esc(next.title)}</b><span>${esc(next.subtitle)}</span></span>
-          <span class="cs-next-img"><img src="${BASE}${next.cover}" alt="" loading="lazy" decoding="async"></span>
-          <span class="cs-go">${arrow}</span>
+        <a class="cs-next" href="#/work/${esc(next.id)}" style="${lookVars(next)}" data-reveal>
+          <span class="cs-next-text"><span class="cs-mini">${t("cs.nextcase")}</span><b>${esc(next.title)}</b><span class="cs-next-sub">${esc(next.subtitle)}</span></span>
+          ${objectPicture(next, "cs-next-obj")}
+          <span class="cs-go">${goArrow}</span>
         </a>
       </div>
     </div>
 
-    <button type="button" class="cs-toc-btn" aria-haspopup="dialog" aria-expanded="false"><i></i>${t("cs.contents")}</button>
+    <button type="button" class="cs-toc-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="${t("cs.contents")}">${icon("list")}<span class="cs-toc-now"><b>01</b><em>${t("cs.contents")}</em></span><i class="cs-toc-ring" aria-hidden="true"></i></button>
     <div class="cs-sheet" hidden role="dialog" aria-label="${t("cs.contents")}">
       <div class="cs-sheet-panel"><div class="cs-sheet-head"><b>${t("cs.contents")}</b><button type="button" class="cs-sheet-close" aria-label="${t("cs.close")}">×</button></div>${toc(sections, "cs-toc cs-toc--sheet")}</div>
     </div>
@@ -431,12 +454,20 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
     if (sec === lastSec) return;
     lastSec = sec;
     links.forEach((a) => a.classList.toggle("is-on", a.dataset.sec === sec));
+    /* капсула оглавления показывает, где сейчас читают: номер и название раздела (у разбора — его раздел «Решения») */
+    const top = links.find((a) => a.dataset.sec === sec)?.closest(".cs-toc > li")?.querySelector<HTMLAnchorElement>("a");
+    if (top && nowN && nowL) { nowN.textContent = top.dataset.n ?? ""; nowL.textContent = top.querySelector("em")?.textContent ?? top.textContent ?? ""; }
   };
 
+  const nowN = root.querySelector<HTMLElement>(".cs-toc-now b");
+  const nowL = root.querySelector<HTMLElement>(".cs-toc-now em");
+  const tocBtn = root.querySelector<HTMLElement>(".cs-toc-btn");
   const progress = root.querySelector<HTMLElement>(".cs-progress")!;
   const top = root.querySelector<HTMLElement>(".cs-top")!;
   const hero = root.querySelector<HTMLElement>(".cs-hero")!;
   const films = [...root.querySelectorAll<HTMLElement>(".cs-film-pin")].map((pin) => ({ pin, over: 0 }));
+  const heroStageEl = root.querySelector<HTMLElement>(".cs-hero-stage");
+  let lastHs = -1;
   const stageTop = 92;
   let raf = 0;
   const onScroll = () => {
@@ -444,7 +475,13 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
     raf = requestAnimationFrame(() => {
       raf = 0;
       const max = scroller.scrollHeight - scroller.clientHeight;
-      progress.style.setProperty("--p", String(max > 0 ? scroller.scrollTop / max : 0));
+      const read = max > 0 ? scroller.scrollTop / max : 0;
+      progress.style.setProperty("--p", String(read));
+      tocBtn?.style.setProperty("--p", read.toFixed(4));
+      /* герой: устройство выпрямляется, пока сцену прокручивают (caseHero.css, --hs) */
+      const hs = Math.min(1, Math.max(0, scroller.scrollTop / Math.max(1, hero.offsetHeight * 0.8)));
+      if (hs !== lastHs) { lastHs = hs; heroStageEl?.style.setProperty("--hs", hs.toFixed(3)); }
+      top.classList.toggle("is-scrolled", scroller.scrollTop > 8);
       top.classList.toggle("is-past", scroller.scrollTop > hero.offsetTop + hero.offsetHeight - 120);
       markSection();
       /* film: сцена закреплена под панелью, экран внутри проезжает ровно на столько, на сколько прокрутили страницу */
@@ -512,7 +549,7 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
   box.querySelector(".cs-lightbox-close")!.addEventListener("click", closeBox);
   box.addEventListener("click", (e) => { if (e.target === box) closeBox(); });
 
-  /* нижний лист с оглавлением на телефоне */
+  /* лист с оглавлением: его открывает капсула внизу; на широком экране он встаёт панелью над капсулой */
   const btn = root.querySelector<HTMLButtonElement>(".cs-toc-btn")!;
   const sheet = root.querySelector<HTMLElement>(".cs-sheet")!;
   const closeSheet = () => { sheet.hidden = true; btn.setAttribute("aria-expanded", "false"); };

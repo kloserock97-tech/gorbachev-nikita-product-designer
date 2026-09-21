@@ -1,5 +1,10 @@
-Copyright 2018 The Lexend Project Authors (https://github.com/googlefonts/lexend),
-with Reserved Font Name "Lexend".
+Fonts in this folder, each under the SIL Open Font License 1.1 (full text below):
+
+Onest — Copyright 2021 The Onest Project Authors (https://github.com/googlefonts/onest)
+Playfair Display — Copyright 2005–2023 The Playfair Project Authors (https://github.com/clauseggers/Playfair)
+Caveat — Copyright 2014 The Caveat Project Authors (https://github.com/googlefonts/caveat)
+
+The files are the unmodified subsets served by Google Fonts (woff2, split by unicode-range).
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:

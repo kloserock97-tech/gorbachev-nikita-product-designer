@@ -1,5 +1,6 @@
 import { getLang } from "../i18n";
 import { NatureScene } from "./NatureScene";
+import "../ui/fonts.css";
 import "./natureLoader.css";
 
 export type NatureLoader = { progress: (value: number) => void; ready: () => void; dispose: () => void };

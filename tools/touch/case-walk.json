@@ -1,0 +1,5 @@
+[
+  { "eval": "location.hash = '#/work/ai-agents'" }, { "wait": 4000 },
+  { "probe": "document.querySelector('.cv-scroll').scrollHeight", "as": "page height" },
+  { "frames": 16, "each": "document.querySelector('.cv-scroll').scrollTop = i * 860; document.querySelectorAll('[data-reveal]').forEach(e => e.classList.add('is-in'))", "prefix": "w" }
+]

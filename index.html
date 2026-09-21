@@ -42,20 +42,15 @@
 "sameAs":["https://www.linkedin.com/in/nikita-gorbachev-productdesigner","https://t.me/Gorbachev_Nikita_Designer","https://github.com/kloserock97-tech"]}
 </script>
 <script>document.documentElement.className += " js";</script>
-<link rel="preload" href="/fonts/lexend-latin.woff2" as="font" type="font/woff2" crossorigin>
-<!-- шрифт экрана About портфолио на Tilda -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- не блокирует первый кадр: нужен только экрану About, бегущая строка перерисуется, когда шрифт приедет -->
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=Caveat:wght@600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&family=Caveat:wght@600&display=swap"></noscript>
+<!-- v64: шрифты свои (public/fonts), Google Fonts не нужен. Латинский кусок Onest нужен обоим языкам: в нём цифры и знаки -->
+<link rel="preload" href="/fonts/onest-latin.woff2" as="font" type="font/woff2" crossorigin>
 </head>
 <body>
 
 <!-- Скрипты выключены (корпоративный браузер, блокировщик): холм не соберётся, лента кейсов и заметки
      останутся пустыми. Стили здесь inline — общий CSS в разработке подключает тот же скрипт. -->
 <noscript>
-  <div style="position:fixed;left:0;right:0;bottom:0;z-index:99;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:14px 20px;background:#1f231c;color:#f4f1ea;font:400 14px/1.45 Manrope,system-ui,sans-serif;box-shadow:0 -10px 30px rgba(10,14,8,.35)">
+  <div style="position:fixed;left:0;right:0;bottom:0;z-index:99;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:14px 20px;background:#1f231c;color:#f4f1ea;font:400 14px/1.45 Onest,system-ui,sans-serif;box-shadow:0 -10px 30px rgba(10,14,8,.35)">
     <span style="display:grid;gap:3px;min-width:min(100%,280px)">
       <span>This site needs JavaScript: the hill, the case studies and the notes are built in the browser.</span>
       <span style="opacity:.62">Сайту нужен JavaScript: холм, кейсы и заметки собираются в браузере.</span>
@@ -360,7 +355,7 @@
 <footer class="site-footer" id="contact" aria-hidden="true">
   <div class="sf-top">
     <p class="sf-kicker" data-i18n="footer.kicker">Open to new projects</p>
-    <h2 class="sf-title"><span data-i18n="footer.title1">Let's make something</span> <span data-i18n="footer.title2">complex feel simple.</span></h2>
+    <h2 class="sf-title"><span data-i18n="footer.title1">Let's make something</span> <span data-i18n-html="footer.title2">complex feel <em class="serif-accent">simple.</em></span></h2>
     <!-- v27: было три кнопки подряд, и «Copy» не говорила, что копирует. Теперь действие и адрес
          разделены: пилюли — «написать» и Telegram, а сам адрес и есть кнопка копирования -->
     <div class="sf-contacts">
@@ -401,7 +396,7 @@
      размытое поле под другим ракурсом и лента кейсов по дуге; карточки собирает src/ui/cases.ts -->
 <section class="cases" id="work" aria-label="Selected work" aria-hidden="true">
   <header class="cases-head">
-    <p class="cases-kicker" data-i18n="cases.kicker">Selected work</p>
+    <p class="cases-kicker" data-i18n-html="cases.kicker">Selected <em class="serif-accent">work</em></p>
     <p class="cases-meta" data-i18n="cases.meta">06 case studies · 2024–2026</p>
   </header>
   <div class="cases-strip" role="list"></div>

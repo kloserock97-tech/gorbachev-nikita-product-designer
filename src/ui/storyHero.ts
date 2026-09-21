@@ -99,14 +99,14 @@ export function initStory(scene: Scene) {
   }
   addEventListener("resize", () => { b = bounds(); schedule(); measure(); });
   document.fonts?.ready.then(measure);
-  /* стиль Manrope грузится асинхронно — перемерить, когда шрифт реально подгрузился */
+  /* шрифт грузится асинхронно — перемерить, когда шрифт реально подгрузился */
   document.fonts?.addEventListener("loadingdone", measure);
-  /* v24: пока Manrope не приехал, страница About скрыта (visibility) — перенос строк при подмене шрифта
+  /* v24: пока шрифт не приехал, страница About скрыта (visibility) — перенос строк при подмене шрифта
      давал сдвиг раскладки CLS 0.09 на телефоне */
   const fontsReady = () => document.documentElement.classList.add("fonts-ready");
-  /* ждём именно Manrope: fonts.check() отвечает «готово» и для ещё не объявленного шрифта */
-  document.fonts?.addEventListener("loadingdone", (e) => { if ((e as FontFaceSetLoadEvent).fontfaces.some((f) => /manrope/i.test(f.family))) fontsReady(); });
-  if ([...(document.fonts ?? [])].some((f) => /manrope/i.test(f.family) && f.status === "loaded")) fontsReady();
+  /* ждём именно Onest: fonts.check() отвечает «готово» и для ещё не объявленного шрифта */
+  document.fonts?.addEventListener("loadingdone", (e) => { if ((e as FontFaceSetLoadEvent).fontfaces.some((f) => /onest/i.test(f.family))) fontsReady(); });
+  if ([...(document.fonts ?? [])].some((f) => /onest/i.test(f.family) && f.status === "loaded")) fontsReady();
   window.setTimeout(fontsReady, 5000);
   read();
   measure();

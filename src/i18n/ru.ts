@@ -132,7 +132,7 @@ const ru: Record<keyof typeof en, string> = {
   "about.logo.grif": "Grif AI, 2026",
 
   /* глава «Кейсы» */
-  "cases.kicker": "Избранные работы",
+  "cases.kicker": 'Избранные <em class="serif-accent">работы</em>',
   "cases.meta": "06 кейсов · 2024–2026",
   "cases.of": "/ 06",
   "cases.swipe": "Листайте вбок",
@@ -227,7 +227,7 @@ const ru: Record<keyof typeof en, string> = {
   /* футер */
   "footer.kicker": "Открыт к новым проектам",
   "footer.title1": "Давайте сделаем сложное",
-  "footer.title2": "понятным.",
+  "footer.title2": '<em class="serif-accent">понятным.</em>',
   "footer.mail": "Написать письмо",
   "footer.tg": "Telegram",
   "footer.copy": "Скопировать адрес",

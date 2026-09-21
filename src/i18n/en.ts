@@ -129,7 +129,7 @@ const en = {
   "about.logo.grif": "Grif AI, 2026",
 
   /* глава «Кейсы» */
-  "cases.kicker": "Selected work",
+  "cases.kicker": 'Selected <em class="serif-accent">work</em>',
   "cases.meta": "06 case studies · 2024–2026",
   "cases.of": "/ 06",
   "cases.cta": "View case",
@@ -224,7 +224,7 @@ const en = {
   /* футер */
   "footer.kicker": "Open to new projects",
   "footer.title1": "Let's make something",
-  "footer.title2": "complex feel simple.",
+  "footer.title2": 'complex feel <em class="serif-accent">simple.</em>',
   "footer.mail": "Write an e-mail",
   "footer.tg": "Telegram",
   "footer.copy": "Copy the address",

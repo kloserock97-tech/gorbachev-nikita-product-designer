@@ -210,7 +210,7 @@ body {
 .pc-tip {
   position: fixed; left: 0; top: 0; z-index: 30; pointer-events: none;
   padding: 6px 11px 7px; border-radius: 999px;
-  font: 500 13px/1 Lexend, Manrope, "Segoe UI", sans-serif; letter-spacing: 0.01em;
+  font: 500 13px/1 var(--font); letter-spacing: 0.01em;
   color: #f4efe2; background: rgba(30, 36, 27, 0.82);
   box-shadow: 0 6px 18px rgba(40, 36, 20, 0.2);
   opacity: 0; scale: 0.92;
@@ -233,7 +233,7 @@ body {
 }
 .pc-focus .pc-hud { opacity: 1; translate: 0 0; transition-delay: 0.9s; pointer-events: auto; }
 .pc-back {
-  font: 500 15px/1 Lexend, Manrope, "Segoe UI", sans-serif; color: #f4efe2; cursor: pointer;
+  font: 500 15px/1 var(--font); color: #f4efe2; cursor: pointer;
   padding: 12px 18px 13px; border: 0; border-radius: 999px;
   background: rgba(30, 36, 27, 0.84); box-shadow: 0 10px 28px rgba(40, 36, 20, 0.24);
   transition: scale 0.16s var(--ease-enter), background 0.2s;
@@ -241,7 +241,7 @@ body {
 .pc-back:hover { background: rgba(30, 36, 27, 0.95); }
 .pc-back:active { scale: 0.97; }
 .pc-back:focus-visible { outline: 2px solid #f4efe2; outline-offset: 3px; }
-.pc-hint { margin: 0; padding: 5px 10px 6px; border-radius: 999px; font: 400 12px/1 Lexend, Manrope, "Segoe UI", sans-serif; color: rgba(244, 239, 226, 0.86); background: rgba(30, 36, 27, 0.6); }
+.pc-hint { margin: 0; padding: 5px 10px 6px; border-radius: 999px; font: 400 12px/1 var(--font); color: rgba(244, 239, 226, 0.86); background: rgba(30, 36, 27, 0.6); }
 .pc-hint kbd { font: inherit; padding: 2px 5px; border-radius: 4px; background: rgba(255, 255, 255, 0.14); }
 @media (hover: none) { .pc-tip { display: none; } }
 @media (prefers-reduced-motion: reduce) {
@@ -266,7 +266,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.07);
   box-shadow: 0 30px 80px rgba(10, 12, 8, 0.45), 0 2px 10px rgba(10, 12, 8, 0.25);
   color: var(--wm-ink);
-  font-family: Lexend, Manrope, "Segoe UI", sans-serif;
+  font-family: var(--font);
   pointer-events: none; visibility: hidden;
   opacity: 0; scale: 0.97; translate: 0 -6px;
   transform-origin: var(--origin-x, 50%) 0;
@@ -293,7 +293,7 @@ body {
   display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
   padding: 14px 18px; border: 0; border-radius: 16px; cursor: pointer; text-align: left;
   background: transparent; color: var(--wm-soft);
-  font: 400 22px/1.1 Lexend, Manrope, "Segoe UI", sans-serif; letter-spacing: -0.01em;
+  font: 400 22px/1.1 var(--font); letter-spacing: -0.01em;
   transition: background 0.2s ease-out, color 0.2s ease-out;
 }
 .work-menu__filter-n { font-size: 12px; font-variant-numeric: tabular-nums; color: rgba(243, 242, 236, 0.32); transition: color 0.2s ease-out; }
@@ -302,7 +302,7 @@ body {
 .work-menu__filter:focus-visible { outline: 2px solid var(--wm-ink); outline-offset: 2px; }
 .work-menu__filter:active { scale: 0.98; }
 
-/* сетка карточек: превью 16:10, под ним название и метка */
+/* сетка карточек: превью 16:10 — та же светлая сцена и предмет, что у карточки в ленте (v64), под ним название и метка */
 .work-menu__grid {
   list-style: none; margin: 0; padding: 4px 4px 0 0;
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 18px;
@@ -318,13 +318,13 @@ body {
 .work-menu__card { display: grid; gap: 4px; color: inherit; text-decoration: none; border-radius: 16px; }
 .work-menu__thumb {
   position: relative; display: block; aspect-ratio: 16 / 10; margin-bottom: 8px;
-  border-radius: 14px; overflow: hidden; background: #22251f;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  border-radius: 14px; overflow: hidden; background: linear-gradient(180deg, var(--s1, #f1f1ee), var(--s2, #dcdcd6));
 }
-.work-menu__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: scale 0.5s var(--ease-menu); }
+.work-menu__obj { position: absolute; inset: 7% 8% -8%; display: block; transition: scale 0.5s var(--ease-menu); transform-origin: 50% 90%; }
+.work-menu__obj img { width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; display: block; filter: drop-shadow(0 10px 12px color-mix(in srgb, var(--ink, #1d1d1f) 24%, transparent)); }
 .work-menu__go {
   position: absolute; right: 10px; bottom: 10px; width: 34px; height: 34px; border-radius: 50%;
-  display: grid; place-items: center; background: #f3f2ec; color: #141613;
+  display: grid; place-items: center; background: var(--ink, #141613); color: #fff;
   opacity: 0; scale: 0.8; transition: opacity 0.2s ease-out, scale 0.3s var(--ease-menu);
 }
 .work-menu__go svg { width: 15px; height: 15px; }
@@ -343,7 +343,7 @@ body {
 .work-menu__actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .work-menu__all {
   height: 46px; padding: 0 20px; border-radius: 999px; cursor: pointer;
-  font: 400 15px/1 Lexend, Manrope, "Segoe UI", sans-serif;
+  font: 400 15px/1 var(--font);
   transition: background 0.2s ease-out, color 0.2s ease-out, border-color 0.2s ease-out;
 }
 
@@ -353,7 +353,7 @@ body {
 
 @media (hover: hover) and (pointer: fine) {
   .work-menu__filter:not(.is-on):hover { color: var(--wm-ink); background: rgba(255, 255, 255, 0.035); }
-  .work-menu__card:hover .work-menu__thumb img { scale: 1.05; }
+  .work-menu__card:hover .work-menu__obj { scale: 1.06; }
   .work-menu__card:hover .work-menu__go { opacity: 1; scale: 1; }
 
   .work-menu__all:hover { background: #f3f2ec; color: #141613; }
@@ -430,7 +430,7 @@ body {
   gap: clamp(16px, 2vw, 40px);
   padding: 0 clamp(20px, 4.4vw, 88px);
   color: #14140F;
-  font-family: Manrope, "Segoe UI", sans-serif;
+  font-family: var(--font);
 }
 /* подложки не нужны: к моменту текстов заливка уже превратила кадр в светлую страницу */
 .story-col { position: relative; z-index: 1; display: flex; flex-direction: column; min-width: 0; }
@@ -625,7 +625,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 .cases {
   position: fixed; inset: 0; z-index: 18; pointer-events: none;
   visibility: hidden; opacity: 0; transition: opacity 0.4s ease, visibility 0s 0.4s;
-  font-family: Lexend, Manrope, "Segoe UI", sans-serif; color: #fff;
+  font-family: var(--font); color: #fff;
   perspective: 1600px; perspective-origin: 50% 48%;
   --w: clamp(260px, 27vw, 420px);
 }
@@ -640,57 +640,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   position: absolute; left: 50%; top: 55%; width: 0; height: 0;
   transform-style: preserve-3d;
 }
-/* v33: карточки кейсов в стиле карточек заметок (strip v32): тёмное стекло с тонкой светлой кромкой,
-   подсветка под курсором (--mx/--my пишет cases.ts). Высота у всех одна: под название и подзаголовок
-   зарезервировано по две строки, тексты подобраны на две строки, остаток выравнивает cases.ts */
-.case {
-  position: absolute; left: calc(var(--w) / -2); top: 0; width: var(--w);
-  translate: 0 -50%;
-  display: flex; flex-direction: column; gap: 16px; padding: 12px 12px 22px;
-  border-radius: 30px; background: rgba(24, 27, 21, 0.72); color: #f4f1ea; text-decoration: none;
-  box-shadow: inset 0 0 0 1px rgba(244, 241, 234, 0.12), 0 24px 50px rgba(0, 0, 0, 0.35);
-  pointer-events: auto; opacity: 0; will-change: transform, opacity;
-  transform-origin: 50% 50%; overflow: hidden;
-  transition: box-shadow 0.5s ease;
-}
-.case::after {
-  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.4s ease;
-  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 30%), rgba(214, 232, 170, 0.16), transparent 60%);
-}
-.case-cover { position: relative; display: block; aspect-ratio: 16 / 9; border-radius: 20px; overflow: hidden; background: #e5e9e7; isolation: isolate; }
-.case-art { display: block; width: 100%; height: 100%; object-fit: cover; transition: scale 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.case-brand { position: absolute; top: 14px; left: 14px; display: grid; place-items: center; width: 64px; height: 44px; border-radius: 12px; background: rgba(255,255,255,.88); border: 1px solid rgba(255,255,255,.7); box-shadow: 0 3px 12px rgba(24,35,48,.06); pointer-events: none; }
-.case-brand img { display: block; width: 42px; height: 28px; object-fit: contain; }
-.case-brand--ai-agents { width: 112px; }
-.case-brand--ai-agents img { width: 88px; height: 24px; }
-.case-brand--stop-spam, .case-brand--electronic-house { width: 44px; }
-.case-brand--stop-spam img { width: 34px; height: 34px; }
-.case-brand--electronic-house { background: #222; border-color: rgba(255,255,255,.12); }
-.case-brand--electronic-house img { width: 36px; height: 36px; }
-@media (prefers-reduced-motion: reduce) { .case-art { transition: none; } }
-.case-body { display: flex; flex: 1; flex-direction: column; gap: 6px; padding: 0 12px; }
-.case-tag { font-size: 12.5px; font-weight: 300; color: rgba(244, 241, 234, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.case-title {
-  font-size: clamp(20px, 1.7vw, 28px); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
-}
-.case-sub {
-  font-size: 14px; font-weight: 300; line-height: 1.4; color: rgba(244, 241, 234, 0.74);
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
-  min-height: calc(2em * 1.4);
-}
-.case-cta {
-  align-self: flex-start; margin-top: auto; padding: 9px 16px; border-radius: 999px;
-  background: #f4f1ea; color: #1f231c; font-size: 13px; font-weight: 400;
-  transition: background 0.3s ease;
-}
-.case-sub + .case-cta { margin-top: 10px; }
-.case:hover { box-shadow: inset 0 0 0 1px rgba(244, 241, 234, 0.2), 0 28px 56px rgba(0, 0, 0, 0.42); }
-.case:hover::after { opacity: 1; }
-.case:hover .case-art { scale: 1.035; }
-@media (prefers-reduced-motion: reduce) { .case:hover .case-art { scale: 1; } }
-.case:hover .case-cta { background: #fff; }
-.case:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+/* v64: сама карточка — в case-cards.css (светлая сцена и предмет без фона); здесь остались лента и её режимы */
 .cases-count {
   position: absolute; left: clamp(20px, 4.4vw, 88px); bottom: clamp(28px, 6vh, 64px);
   display: flex; align-items: baseline; gap: 10px; font-weight: 300;
@@ -706,7 +656,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 /* ── v43: лента подстраивается под окно ─────────────────────────────────────
    Дуга (мышь): ширина карточки — от ширины И высоты окна, чтобы карточка целиком помещалась между заголовком
    и счётчиком на невысоком экране; шаг и зазоры считает cases.ts. */
-.cases[data-mode="arc"] { --w: clamp(230px, min(27vw, calc((100vh - 350px) * 0.92)), 420px); }
+.cases[data-mode="arc"] { --w: clamp(220px, min(27vw, calc((100vh - 330px) * 0.7)), 400px); }
 @media (max-height: 700px) {
   .cases[data-mode="arc"] .cases-head { top: 84px; }
   .cases[data-mode="arc"] .cases-kicker { font-size: clamp(28px, 3.4vw, 48px); }
@@ -719,7 +669,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
    лента, счётчик; каждому своё место, ничего не накладывается при любой высоте окна. Один свайп — одна карточка,
    соседняя выглядывает на 8–10 % ширины и подсказывает, что ленту можно тянуть (swipeStrip.ts). */
 .cases[data-mode="swipe"] {
-  --w: min(76vw, 400px); --gap: 14px; --e: 0;
+  --w: min(76vw, 400px, calc((100svh - 270px) * 0.7)); --gap: 14px; --e: 0;
   perspective: none; display: flex; flex-direction: column; justify-content: center;
   gap: clamp(14px, 2.6svh, 30px);
   padding: calc(64px + env(safe-area-inset-top)) 0 max(26px, env(safe-area-inset-bottom));
@@ -743,7 +693,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   scroll-snap-align: center; scroll-snap-stop: always;
   opacity: 0.7; scale: 0.94; will-change: auto;
   transition: opacity 0.35s ease, scale 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s ease;
-  box-shadow: inset 0 0 0 1px rgba(244, 241, 234, 0.12), 0 14px 28px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.3);
 }
 .cases[data-mode="swipe"] .case.is-active { opacity: 1; scale: 1; }
 .cases[data-mode="swipe"] .cases-foot { opacity: var(--e); }
@@ -765,9 +715,8 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 @media (max-height: 560px) {
   .cases[data-mode="swipe"] { --w: min(76vw, 560px); padding-top: calc(16px + env(safe-area-inset-top)); gap: 10px; }
   .cases[data-mode="swipe"] .cases-head { display: none; }
-  .cases[data-mode="swipe"] .case { flex-direction: row; align-items: center; gap: 14px; padding: 10px; }
-  .cases[data-mode="swipe"] .case-cover { flex: none; width: 46%; }
-  .cases[data-mode="swipe"] .case-body { padding: 0 6px 0 0; }
+  /* карточка ложится набок: текст слева, предмет справа (case-cards.css — контейнерный запрос по пропорции) */
+  .cases[data-mode="swipe"] .case { aspect-ratio: auto; height: calc(100svh - 96px); }
   .cases[data-mode="swipe"] .cases-now { font-size: 24px; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -794,7 +743,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   display: inline-flex; align-items: center; height: var(--h); min-width: var(--h); padding: 0; margin: 0;
   border: 1px solid rgba(248, 250, 240, 0.14); border-radius: 999px; cursor: pointer;
   background: var(--glass, rgba(30, 36, 27, 0.8)); color: rgba(244, 241, 234, 0.82);
-  font: 400 13px/1 Lexend, Manrope, "Segoe UI", sans-serif; letter-spacing: 0.01em; white-space: nowrap;
+  font: 400 13px/1 var(--font); letter-spacing: 0.01em; white-space: nowrap;
   box-shadow: 0 10px 28px rgba(12, 17, 9, 0.22);
   opacity: 0; translate: 0 -8px; pointer-events: none;
   transition: opacity 0.5s ease, translate 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
@@ -893,7 +842,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   position: fixed; inset: 0; z-index: 17; pointer-events: none;
   display: flex; flex-direction: column; justify-content: space-between;
   padding: clamp(96px, 16vh, 150px) clamp(20px, 4.4vw, 88px) clamp(20px, 3.4vh, 36px);
-  font-family: Lexend, Manrope, "Segoe UI", sans-serif; color: #fff;
+  font-family: var(--font); color: #fff;
   visibility: hidden;
 }
 .site-footer.is-on { visibility: visible; }
@@ -922,7 +871,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   display: inline-flex; align-items: center; gap: 10px; height: 52px; padding: 0 22px; border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 45%), rgba(30, 30, 38, 0.72);
-  color: #fff; font: 400 16px/1 Lexend, Manrope, "Segoe UI", sans-serif; text-decoration: none; cursor: pointer;
+  color: #fff; font: 400 16px/1 var(--font); text-decoration: none; cursor: pointer;
   box-shadow: 0 6px 16px rgba(20, 12, 30, 0.24);
   transition: background 0.3s ease, translate 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -982,7 +931,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 .lite .cases-head { position: static; margin-bottom: clamp(28px, 5vh, 56px); }
 .lite .cases-strip {
   position: static; width: auto; height: auto; transform-style: flat;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: clamp(16px, 2vw, 28px);
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, max(280px, 30%)), 1fr)); gap: clamp(16px, 2vw, 28px);
 }
 .lite .case { position: relative; left: auto; width: auto; translate: none; transform: none !important; opacity: 1 !important; will-change: auto; }
 .lite .site-footer {
@@ -1023,7 +972,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 .lite .cases-head { position: static; margin-bottom: clamp(28px, 5vh, 56px); }
 .lite .cases-strip {
   position: static; width: auto; height: auto; transform-style: flat;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: clamp(16px, 2vw, 28px);
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, max(280px, 30%)), 1fr)); gap: clamp(16px, 2vw, 28px);
 }
 .lite .case { position: relative; left: auto; width: auto; translate: none; transform: none !important; opacity: 1 !important; will-change: auto; }
 .lite .site-footer {
@@ -1036,7 +985,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   position: fixed; left: 50%; bottom: 14px; z-index: 60; translate: -50% 0; margin: 0;
   display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; max-width: calc(100vw - 24px);
   align-items: center; padding: 2px 16px; border-radius: 999px; background: rgba(30, 36, 27, 0.84); color: rgba(255, 255, 255, 0.82);
-  font: 300 13px/1.3 Lexend, Manrope, "Segoe UI", sans-serif; text-align: center;
+  font: 300 13px/1.3 var(--font); text-align: center;
 }
 .lite-bar a { display: inline-block; padding: 8px 2px; color: #fff; font-weight: 400; text-underline-offset: 3px; }
 @media (max-width: 900px) {
@@ -1071,9 +1020,10 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
    Бумага в цвет About поверх сцены; сцена под страницей не рисуется. Раскладка самой страницы — в case-v41.css
    (v41), здесь только окно, прокрутка и то, чем пользуется экран «кейса нет». */
 .case-view {
-  --paper: #efeee8; --card: #f8f8f4; --ink: #1e2219; --soft: #5d6258; --line: rgba(30, 34, 25, 0.1);
+  /* v64: тёплая бумага посветлее и белые плитки без обводок — язык страницы кейса (case-story.css) */
+  --paper: #f5f4f0; --card: #ffffff; --ink: #1d1d1f; --soft: #6e6e73; --line: rgba(0, 0, 0, 0.09);
   position: fixed; inset: 0; z-index: 50; overflow: hidden; background: var(--paper); color: var(--ink);
-  font-family: Lexend, Manrope, "Segoe UI", sans-serif;
+  font-family: var(--font);
   opacity: 0; translate: 0 24px; transition: opacity 0.35s ease, translate 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .case-view.is-on { opacity: 1; translate: 0 0; }
@@ -1084,11 +1034,11 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 .cv-bar {
   position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 16px;
   padding: 16px 0; margin-bottom: clamp(12px, 3vh, 36px);
-  background: linear-gradient(var(--paper) 78%, rgba(239, 238, 232, 0));
+  background: linear-gradient(var(--paper) 78%, rgba(245, 244, 240, 0));
 }
 .cv-back {
   display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; border: 1px solid var(--line); border-radius: 999px;
-  background: var(--card); color: var(--ink); font: 400 13.5px/1 Lexend, Manrope, "Segoe UI", sans-serif; cursor: pointer; transition: background 0.25s ease;
+  background: var(--card); color: var(--ink); font: 400 13.5px/1 var(--font); cursor: pointer; transition: background 0.25s ease;
 }
 .cv-back:hover { background: #fff; }
 .cv-label { margin: 0 0 14px; font-size: 12.5px; font-weight: 400; letter-spacing: 0.04em; text-transform: uppercase; color: #7c8177; }

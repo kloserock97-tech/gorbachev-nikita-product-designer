@@ -7,7 +7,7 @@
   position: fixed; inset: 0; z-index: 17; pointer-events: none;
   display: grid; place-content: center; justify-items: center; gap: 18px;
   padding: 0 6vw; text-align: center;
-  font-family: Lexend, Manrope, "Segoe UI", sans-serif; color: #f4f1ea;
+  font-family: var(--font); color: #f4f1ea;
   visibility: hidden;
   --out: 0;
 }
@@ -44,7 +44,7 @@
 /* ── заметки: общее ───────────────────────────────────────────────────────── */
 .shelf {
   position: fixed; inset: 0; z-index: 18; pointer-events: none;
-  font-family: Lexend, Manrope, "Segoe UI", sans-serif; color: #f4f1ea;
+  font-family: var(--font); color: #f4f1ea;
   visibility: hidden; opacity: 0;
   --enter: 0; --leave: 0;
 }

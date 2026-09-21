@@ -57,3 +57,13 @@ Use case: stylized-concept. Landscape 16:9 premium editorial 3D product illustra
 
 Use case: stylized-concept. Landscape 16:9 premium editorial 3D product illustration for Electronic House, an apartment building residents services app. A refined miniature white ceramic apartment building with warm softly lit square windows, encircled protectively by one large translucent amber glass key whose circular bow frames the building and whose short key blade rests diagonally on the studio surface. Sculptural architectural collectible, conveys access, home, belonging, digital services. Warm pale limestone seamless studio background, directional morning light, beautiful amber caustics and long grounded shadow, restrained brushed aluminium details. Exquisite tactile high-end product photography render. Simple central sculpture fills 65% width, clear breathing space in upper left for official brand overlay. No text, no typography, no logo, no screens, no people, no watermark.
 
+
+## v64 (2026-09-21): objects without backgrounds
+
+The rectangular covers are gone. Nikita liked the object-led direction but not a picture with a studio background inside a card, and asked to keep only the object. Each object is now cut out of its original PNG and placed on a light stage in the colour of its case (`src/data/cases.ts`, `look`), following Apple's "Get to know" card: label and title on top, one large object below, cropped by the card's edge.
+
+- Matte: a neural background remover treats glass as transparent and hollows the object out. The final alpha is the maximum of the model's mask and a colour-difference matte against a plane fitted to the studio background, limited to the region the mask encloses (flood fill from the frame edges). Semi-transparent pixels are decontaminated from the background colour.
+- Delivery: `public/cases/objects/<id>.avif` (32–65 KB) with `.webp` as a fallback, 900 px wide, trimmed to the object.
+- Light stages only. On a dark background the glass keeps a pale fringe from the original studio light; on a stage close to the original background it disappears.
+- A card with both the object and a UI screen was prototyped and rejected as crowded. The card has one hero; the real interface lives on the case page hero.
+- Working files (masks, mattes, scripts) stay in `assets-src/`, outside the repository.

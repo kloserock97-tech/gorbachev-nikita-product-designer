@@ -122,7 +122,7 @@ ${shader.fragmentShader.replace("#include <tonemapping_fragment>", `gl_FragColor
   const draw = () => {
     const ctx = canvas.getContext("2d")!;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.font = '700 27px Manrope, "Segoe UI", sans-serif';
+    ctx.font = '700 27px Onest, "Segoe UI", system-ui, sans-serif';
     (ctx as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = "7px";
     ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#1f3138";
     const put = (text: string, u: number, v: number, turn: number) => {

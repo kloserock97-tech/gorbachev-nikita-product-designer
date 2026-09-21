@@ -1,0 +1,6 @@
+[
+  { "eval": "window.__go = (k) => { const [a, b] = __story.chapter(); const s = __story.CASES.strip; window.scrollTo(0, __story.topFor(a + (b - a) * (s[0] + (s[1] - s[0]) * k))); }" },
+  { "eval": "__go(0)" }, { "wait": 5000 }, { "shot": "c1" },
+  { "eval": "__go(0.4)" }, { "wait": 3500 }, { "shot": "c3" },
+  { "eval": "__go(0.8)" }, { "wait": 3500 }, { "shot": "c5" }
+]

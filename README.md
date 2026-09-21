@@ -17,7 +17,7 @@ The first screen is a real-time scene. Every blade of grass is geometry (up to 2
 Scrolling drives a three-part story:
 
 1. The computer lifts off the table and lands on a white page with the About text. A kinetic line of type slows down and becomes the "Hi there!" heading.
-2. The page tears away from the bottom. Behind it the same meadow is blurred and seen from the grass, and six case cards move along an arc. Each case opens as its own page inside the site (`#/work/<id>`), with the facts, the problem, the solution, results and what I learned.
+2. The page tears away from the bottom. Behind it the same meadow is blurred and seen from the grass, and six case cards move along an arc. A card is a tall light stage in the colour of its case with one large object on it, cut out of its background and cropped by the card's edge. The object shifts against the card as the ribbon turns and follows the cursor. Each case opens as its own page inside the site (`#/work/<id>`): a hero stage with the real product screen in a device, then the facts, the problem, the solution, results and what I learned. The case colour, the ink and the accent are the same on the card, in the Work menu, on the case page and in the "next case" block.
 3. The camera returns to the hill at dusk. Fireflies come out, Kelly sleeps curled up in the armchair, and the footer holds the contacts: a mail button, Telegram, LinkedIn and the address itself, which copies when you click it.
 
 The note card on the first screen flips through four of my side projects: [Windcrest](https://github.com/kloserock97-tech/windcrest) (the grass of this hill as a demo of its own), [Driftfield](https://github.com/kloserock97-tech/driftfield) (a particle cloud in a curl-noise field), [Nightsail](https://github.com/kloserock97-tech/nightsail) (a giant marble head surfacing from a night sea under a column of light) and [Meadow Walk](https://github.com/kloserock97-tech/meadow-walk) (an endless flight over a windy meadow). Each has a live demo with every parameter on a panel.
@@ -79,11 +79,15 @@ src/
   intro/             the loading screen: a slab of frosted glass that overgrows with moss while the hill loads
     garden/          what lies on the slab: glass, ice, moss, flowers, water, post-processing
   ui/                HTML/CSS interface: hero, story texts, case strip and case pages, footer, lite version
+    fonts.css        self-hosted fonts and the serif accent class
+    icons.ts         one icon set in the style of the dock icons
+    caseLook.ts      the look of a case (stage colours, object) shared by the card, the menu and the case page
+    case-cards.css   the case card; case-story.css — the case page
     hero/            first screen: layout, dock, metal buttons, parallax
   audio/             nature ambience and UI sound cues
   data/              texts and case list; case stories are one file per language, loaded on demand
   i18n/              the two dictionaries and the language switch
-  lib/               small shared helpers (math, formatting)
+  lib/               small shared helpers (math, formatting, display-time typography)
 public/              models (Draco GLB), HDRI, fonts, images, sounds
 tools/               Blender build scripts and Chrome DevTools measurement scripts
 docs/                dev log, prompts behind each iteration, load test report
@@ -111,6 +115,7 @@ The `tools/` scripts drive a headless Chrome over the DevTools protocol:
 - `pre-shader-stalls.js` with `cdp-eval.mjs --pre tools/pre-shader-stalls.js --fresh` lists shader programs that block the main thread on a cold cache. `cdp-profile.mjs --lines <function>` splits a function's self time by source line.
 - `cdp-touch.mjs` emulates a phone with a real finger in Chrome and runs gesture scripts from `tools/touch/*.json` (swipe, fling, screenshot, probe).
 - `crop.ps1` crops and enlarges a screenshot region without smoothing, to inspect single pixels.
+- `site-study.mjs` studies somebody else's page for reference: screenshots while scrolling plus the numbers behind the look (the type scale actually used, tracking, line height, tile radii and backgrounds, button sizes). Nothing from the page is stored except numbers and frames for yourself.
 - `audit-nature-loader.mjs` checks the loading screen: growth phases, focus, clean-up, reduced motion, deep links, context loss, frame pace.
 - `unused.mjs` lists dictionary keys, CSS classes and `public/` files that nothing refers to. `bundle-report.mjs` splits every built script by source file through its source map.
 - `lib/chrome.mjs` is the shared Chrome launcher: it frees the debugging port from a browser left by an interrupted run and shuts the browser down on any exit.
@@ -123,6 +128,8 @@ Measure against `npm run build` + `npm run preview`. The dev server loads dozens
 ### Assets pipeline
 
 The armchair, the computer and the dog are prepared headless in Blender 5.1 with the scripts in `tools/blender-build-*.py`, then compressed with Draco (`npx @gltf-transform/cli draco`). Source `.blend` files are not in the repository.
+
+The objects on the case cards are cut out of generated still lifes (prompts and provenance in [docs/case-preview-art-direction.md](docs/case-preview-art-direction.md)). A plain background remover eats glass, so the matte is built from two parts: the model's mask, and the colour difference from the fitted studio background inside everything the mask encloses. The cut-outs ship as AVIF with a WebP fallback and sit on light stages only: on a dark one the half-transparent glass would show a pale fringe.
 
 ## Deploying
 
@@ -139,8 +146,7 @@ The armchair, the computer and the dog are prepared headless in Blender 5.1 with
 | Mug and saucer | made in code, `tools/blender-build-props.py` | this project |
 | HDRI `qwantani_sunset_puresky` | Poly Haven | CC0 |
 | UI sound cues | uisfx (uisfx.com), "zen" set | CC0 |
-| Lexend font | Google Fonts | OFL, text in `public/fonts/OFL.txt` |
-| Manrope, Caveat fonts | Google Fonts | OFL |
+| Onest, Playfair Display (italic), Caveat fonts | Google Fonts, self-hosted in `public/fonts` | OFL, text in `public/fonts/OFL.txt` |
 | three.js, Draco decoder | three.js authors; Google | MIT; Apache-2.0 |
 | "Hash without Sine" in the grass shader | David Hoskins | MIT |
 | Grass rendering ideas | "Procedural Grass in Ghost of Tsushima", GDC 2021 | reference only |

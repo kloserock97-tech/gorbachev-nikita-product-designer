@@ -28,7 +28,7 @@ export type Kinetic = {
 /** onTexture — заранее залить текстуру в видеопамять (renderer.initTexture) */
 export function createKinetic(onTexture?: (t: THREE.Texture) => void): Kinetic {
   const H = 300;
-  const font = `700 ${Math.round(H * KINETIC_FONT)}px Manrope, "Segoe UI", sans-serif`;
+  const font = `700 ${Math.round(H * KINETIC_FONT)}px Onest, "Segoe UI", system-ui, sans-serif`;
   let offLang = () => {};
   const k: Kinetic = { texture: null!, ratio: 1, headFrac: 0.2, dispose: () => { offLang(); k.texture.dispose(); } };
   /* размер канваса у загруженной текстуры не меняем (three хранит её неизменяемой) —
@@ -61,10 +61,10 @@ export function createKinetic(onTexture?: (t: THREE.Texture) => void): Kinetic {
     onTexture?.(texture);
   };
   draw();
-  /* Manrope грузится с Google Fonts асинхронно: пока стиль не приехал, шрифт даже не объявлен
+  /* Шрифт грузится асинхронно: пока стили страницы не приехали, он даже не объявлен
      (fonts.check() тогда врёт «готово»). load() вернёт пустой список — ждём следующей загрузки шрифтов */
   const ensure = () => {
-    /* текст передаём обязательно: Google Fonts режет Manrope по unicode-range, и без него
+    /* текст передаём обязательно: шрифт порезан по unicode-range (fonts.css), и без него
        кириллический кусок шрифта не запросится — русская строка нарисуется запасным шрифтом */
     document.fonts?.load(font, kineticText()).then((faces) => {
       if (faces.length) draw();

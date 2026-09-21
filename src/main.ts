@@ -1,3 +1,4 @@
+import "./ui/fonts.css";
 import "./ui/hero/hero.css";
 import "./ui/hill-ui.css";
 import "./ui/walk.css";

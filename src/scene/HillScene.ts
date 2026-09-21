@@ -350,7 +350,7 @@ export class HillScene {
     c.width = 2048; c.height = 512;
     const g = c.getContext("2d")!;
     g.fillStyle = "#fff";
-    g.font = "400 430px Lexend, 'Segoe UI', sans-serif";
+    g.font = "400 430px Onest, 'Segoe UI', sans-serif";
     g.textAlign = "center";
     g.textBaseline = "alphabetic";
     const draw = () => {
@@ -361,7 +361,7 @@ export class HillScene {
     };
     const tex = new THREE.CanvasTexture(c);
     draw();
-    document.fonts?.load("400 430px Lexend").then(draw).catch(() => {});
+    document.fonts?.load("400 430px Onest").then(draw).catch(() => {});
     const mat = new THREE.ShaderMaterial({
       vertexShader: ghostVertex,
       fragmentShader: ghostFragment,

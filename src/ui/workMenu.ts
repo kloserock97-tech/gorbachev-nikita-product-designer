@@ -2,6 +2,7 @@ import { getCases, type CaseItem } from "../data/cases";
 import { pad2 as pad } from "../lib/format";
 import { cue } from "../audio/bus";
 import { onLang, t, type Key } from "../i18n";
+import { lookVars, objectPicture } from "./caseLook";
 
 /* Меню «Кейсы» в доке (v29): большая выпадашка по шаблону «Templates» — слева категории, справа сетка
    кейсов с превью, внизу строка с подписью и кнопками. Категория фильтрует сетку; число рядом с ней —
@@ -15,8 +16,6 @@ import { onLang, t, type Key } from "../i18n";
    стартом, масштаб от 0.97 от пункта дока, короткий каскад карточек; закрытие быстрее открытия.
    Категорию переключает только клик: при наведении она менялась бы под курсором, пока его ведут
    по диагонали к карточкам. */
-
-const BASE = import.meta.env.BASE_URL;
 
 type Filter = "all" | "web" | "mobile";
 const FILTERS: Filter[] = ["all", "web", "mobile"];
@@ -49,7 +48,7 @@ export function initWorkMenu(opts: { onOpenComputer?: () => void; onAllCases?: (
         ${all.map((c, i) => `
           <li style="--i:${i}" data-kinds="${kindOf(c).join(" ")}">
             <a class="work-menu__card" href="#/work/${c.id}">
-              <span class="work-menu__thumb"><img src="${BASE}${c.cover}" alt="" loading="lazy" decoding="async" width="560" height="350"><span class="work-menu__go">${arrow}</span></span>
+              <span class="work-menu__thumb" style="${lookVars(c)}">${objectPicture(c, "work-menu__obj")}<span class="work-menu__go">${arrow}</span></span>
               <span class="work-menu__name"></span>
               <span class="work-menu__sub"></span>
             </a>

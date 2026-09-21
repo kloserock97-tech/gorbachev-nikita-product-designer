@@ -1,6 +1,6 @@
 /* v37 (docs/prompts/v37.md): появление блоков по прокрутке и живые демо интерфейса (caseDemos.ts).
-   Опора — docs/design-system.md: бумага #efeee8, чернила #1e2219, тёмное стекло #26301f, акцент #9fe38b,
-   Lexend 300/400, радиусы 22/999, кривая (0.2, 0.8, 0.2, 1). Подключается после hill-ui.css. */
+   Подключается после hill-ui.css. v64: сцена демо — та же светлая сцена в цвет кейса, что у экранов страницы
+   (case-story.css), вместо тёмно-зелёной с вращающимся отсветом. */
 
 /* ── появление по прокрутке ─────────────────────────────────────────────── */
 .case-view [data-reveal] {
@@ -24,28 +24,17 @@
 
 .dm-stage {
   position: relative; isolation: isolate; border-radius: 28px; padding: clamp(14px, 2.4vw, 32px);
-  background: radial-gradient(90% 75% at 50% 2%, #405137, #242c20 52%, #181d16 100%);
-  box-shadow: 0 30px 60px rgba(30, 26, 12, 0.18);
+  background: linear-gradient(180deg, var(--s1, #f1f1ee), var(--s2, #dcdcd6));
   overflow: hidden;
 }
-.dm-stage::before {
-  content: ""; position: absolute; z-index: -1; inset: -35%; pointer-events: none;
-  background: conic-gradient(from 210deg at 50% 50%, transparent, rgba(159, 227, 139, .13), transparent 24%, rgba(239, 238, 232, .08), transparent 56%);
-  filter: blur(42px); animation: dm-ambient 14s linear infinite;
-}
-.dm-stage::after {
-  content: ""; position: absolute; z-index: 3; inset: 0; pointer-events: none; border-radius: inherit;
-  box-shadow: inset 0 1px rgba(255,255,255,.12), inset 0 -60px 90px rgba(5,8,4,.16);
-}
-@keyframes dm-ambient { to { rotate: 360deg; } }
-.dm-wrap figcaption { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 12px 4px 0; font-size: 13px; color: var(--soft); }
+.dm-wrap figcaption { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 14px 4px 0; font-size: 15px; color: var(--soft); }
 .dm-live { display: inline-flex; align-items: center; gap: 8px; }
-.dm-live i { width: 8px; height: 8px; border-radius: 50%; background: #9fe38b; box-shadow: 0 0 0 0 rgba(159, 227, 139, 0.6); }
+.dm-live i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent, #6f9a52); box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent, #6f9a52) 60%, transparent); }
 .dm-wrap.is-playing .dm-live i { animation: dm-pulse 1.6s ease-out infinite; }
-@keyframes dm-pulse { to { box-shadow: 0 0 0 8px rgba(159, 227, 139, 0); } }
+@keyframes dm-pulse { to { box-shadow: 0 0 0 8px transparent; } }
 .dm-replay {
   display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; cursor: pointer;
-  background: #f8f8f4; box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); font: inherit; font-size: 13px;
+  background: #fff; color: var(--ink); font: inherit; font-size: 14.5px; font-weight: 500;
 }
 .dm-replay svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .dm-replay:hover { background: #fff; }
@@ -53,9 +42,6 @@
 .dm button { font: inherit; }
 
 
-@media (prefers-reduced-motion: reduce) {
-  .dm-stage::before { animation: none; }
-}
 
 /* ── адрес кейса, которого нет (#/work/<опечатка>) ──────────────────────────────
    Раньше такая ссылка молча ничего не открывала. Теперь — тот же лист бумаги, что и кейс:
