@@ -1,8 +1,50 @@
 [
-  { "eval": "location.hash = '#/work/grif-ai'" }, { "wait": 4500 }, { "shot": "h1-grif" },
-  { "eval": "location.hash = '#/work/community'" }, { "wait": 3500 }, { "shot": "h3-community" },
-  { "eval": "location.hash = '#/work/moderator-dashboard'" }, { "wait": 3500 }, { "shot": "h4-moderator" },
-  { "eval": "location.hash = '#/work/stop-spam'" }, { "wait": 3500 }, { "shot": "h5-spam" },
-  { "eval": "location.hash = '#/work/electronic-house'" }, { "wait": 3500 }, { "shot": "h6-house" },
-  { "eval": "document.querySelector('.cv-scroll').scrollTop = 1e6" }, { "wait": 2500 }, { "shot": "h6-next" }
+ {
+  "eval": "location.hash = '#/work/grif-ai'"
+ },
+ {
+  "wait": 4500
+ },
+ {
+  "shot": "h1-grif"
+ },
+ {
+  "eval": "location.hash = '#/work/community'"
+ },
+ {
+  "wait": 3500
+ },
+ {
+  "shot": "h3-community"
+ },
+ {
+  "eval": "location.hash = '#/work/moderator-dashboard'"
+ },
+ {
+  "wait": 3500
+ },
+ {
+  "shot": "h4-moderator"
+ },
+ {
+  "eval": "location.hash = '#/work/stop-spam'"
+ },
+ {
+  "wait": 3500
+ },
+ {
+  "shot": "h5-spam"
+ },
+ {
+  "wait": 3500
+ },
+ {
+  "eval": "document.querySelector('.cv-scroll').scrollTop = 1e6"
+ },
+ {
+  "wait": 2500
+ },
+ {
+  "shot": "h6-next"
+ }
 ]

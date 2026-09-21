@@ -9,7 +9,7 @@ import { launch, sleep } from "./lib/chrome.mjs";
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i < 0 ? d : process.argv[i + 1] ?? true; };
 const BASE = arg("base", "http://127.0.0.1:5190/"), LANGS = String(arg("lang", "en,ru")).split(","), PORT = +arg("port", 9342);
-const IDS = String(arg("ids", "grif-ai,ai-agents,community,moderator-dashboard,stop-spam,electronic-house")).split(",");
+const IDS = String(arg("ids", "grif-ai,ai-agents,community,moderator-dashboard,stop-spam")).split(",");
 const SIZES = [[390, 844], [1280, 720], [1440, 900]];
 
 const { send, close } = await launch(PORT, [

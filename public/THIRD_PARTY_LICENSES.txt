@@ -70,7 +70,6 @@ Case preview brand marks (public/cases/brands):
   GRIF, Community and Stop Spam: exact exports from the designer-provided Figma files.
   Sberbank: original SVG, author Sberbank, retrieved via Wikimedia Commons:
   https://commons.wikimedia.org/wiki/File:Logo_Sberbank.svg
-  Electronic House: unchanged logo asset already supplied with this portfolio.
   Brand marks remain the property of their respective owners; excluded from
   the MIT code license. Used to identify case studies, not to imply endorsement.
   Detailed provenance and generated illustration prompts: docs/case-preview-art-direction.md.

@@ -29,7 +29,6 @@ const cases: CaseItem[] = [
   { id: "community", title: "Community", subtitle: "City stories for Mos.ru: from zero to a first version in nine months", tag: "Web platform · Mos.ru · 2024", kind: ["web"], look: { stage: ["#fcefe6", "#f6d9c6"], ink: "#3a1d12", accent: "#d9603b", object: { w: 1.32, x: -0.16, y: 0.02, ratio: 900 / 545 }, screen: { src: "cases/community/01.webp", w: 1473, h: 806, device: "browser" } }, brand: "community.svg" },
   { id: "moderator-dashboard", title: "Moderator Dashboard", subtitle: "A workspace of their own for moderators: −38% steps per task", tag: "B2B dashboard · Mos.ru · 2024", kind: ["web"], look: { stage: ["#f1eef9", "#dbd3ee"], ink: "#231a3a", accent: "#6b55c9", object: { w: 1.16, x: -0.02, y: -0.05, ratio: 900 / 760 }, screen: { src: "cases/figma/moderator-queue.png", w: 1440, h: 1156, device: "browser" } }, brand: "community.svg" },
   { id: "stop-spam", title: "Stop Spam", subtitle: "First-run setup for an anti-spam app: +25% reach working protection", tag: "iOS · Android · 2026", kind: ["mobile"], look: { stage: ["#e9f4f7", "#cbe3ea"], ink: "#0f2a31", accent: "#15899d", object: { w: 1.28, x: -0.12, y: -0.02, ratio: 900 / 712 }, screen: { src: "cases/figma/spam-welcome.png", w: 402, h: 874, device: "phone" } }, brand: "stop-spam.png" },
-  { id: "electronic-house", title: "Electronic House", subtitle: "UX audit of a housing-services app with four main screens rebuilt", tag: "UX audit · Mobile app · 2024", kind: ["mobile"], look: { stage: ["#f8f0e0", "#ecdcbc"], ink: "#33240d", accent: "#b97a12", object: { w: 1.28, x: -0.1, y: 0.04, ratio: 900 / 567 } }, brand: "electronic-house.webp" },
 ];
 
 const ru: Record<string, Ru> = {
@@ -38,7 +37,6 @@ const ru: Record<string, Ru> = {
   "community": { title: "Сообщество", subtitle: "Городские истории для Mos.ru: с нуля до первой версии за 9 месяцев", tag: "Веб-платформа · Mos.ru · 2024" },
   "moderator-dashboard": { title: "Кабинет модератора", subtitle: "Свой кабинет для модераторов: −38% шагов на задачу", tag: "B2B-кабинет · Mos.ru · 2024" },
   "stop-spam": { title: "Стоп Спам", subtitle: "Первый запуск антиспама: +25% доходят до включённой защиты", tag: "iOS · Android · 2026" },
-  "electronic-house": { title: "Электронный дом", subtitle: "UX-аудит приложения ЖКХ и четыре главных экрана, собранных заново", tag: "UX-аудит · Мобильное приложение · 2024" },
 };
 
 /** список на текущем языке: тот же порядок и те же обложки */

@@ -8,7 +8,6 @@ import { en as grif } from "./stories/grif-ai.en";
 import { en as community } from "./stories/community.en";
 import { en as moderator } from "./stories/moderator-dashboard.en";
 import { en as spam } from "./stories/stop-spam.en";
-import { en as house } from "./stories/electronic-house.en";
 
 const img = (src: string, w: number, h: number, caption: string, kind = "screen"): CaseImage => ({ src, w, h, caption, kind });
 
@@ -320,7 +319,6 @@ const stories: StorySet = {
   community,
   "moderator-dashboard": moderator,
   "stop-spam": spam,
-  "electronic-house": house,
 };
 
 export default stories;
