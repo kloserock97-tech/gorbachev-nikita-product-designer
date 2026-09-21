@@ -1,1 +1,1 @@
-[{ "probe": "document.querySelector(\".nature-loader\")?.dataset.buildMs + \" \" + document.querySelector(\".nature-loader\")?.dataset.build", "as": "scene build ms" }]
+[{ "probe": "(() => { const r = document.querySelector(\".nature-loader\"); return r?.dataset.buildMs + \" q\" + r?.dataset.quality + \" \" + r?.dataset.build; })()", "as": "scene build ms" }, { "shot": "m-03" }]

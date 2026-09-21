@@ -97,11 +97,12 @@ try {
   console.log("normal completion ms", Date.now() - start);
   await navigate("?lite=0");
   await delay(1500); await check("repeat visit skips loader", "!document.querySelector('.nature-loader')");
+  // v62: there is no skip control any more; the run must still end by itself and release the hill
   await navigate("?intro=1&lite=0");
-  await until("!!document.querySelector('.nature-loader__skip')");
-  await evaluate("document.querySelector('.nature-loader__skip').click()");
+  await until("!!document.querySelector('.nature-loader')");
+  await check("no skip control", "!document.querySelector('.nature-loader__skip') && !document.querySelector('.nature-loader button:not(.nature-loader__fallback)')");
   await until("!document.querySelector('.nature-loader')");
-  await check("skip cleanup", "!document.body.classList.contains('garden-loading') && window.__hill?.paused === false");
+  await check("run ends and releases the hill", "!document.body.classList.contains('garden-loading') && window.__hill?.paused === false");
   await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
   await navigate("?intro=1&lite=0&lang=en");
   await until("document.body.classList.contains('is-ready') && !document.querySelector('.nature-loader')");
@@ -114,11 +115,11 @@ try {
   await send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
   await navigate("?intro=1&garden=1&lite=0&lang=ru");
   await until("!!document.querySelector('.nature-loader__stage.has-render')");
-  await check("mobile fits", "document.documentElement.scrollWidth <= innerWidth && document.querySelector('.nature-loader__skip').getBoundingClientRect().bottom < innerHeight");
+  await check("mobile fits", "document.documentElement.scrollWidth <= innerWidth && document.querySelector('.nature-loader__track').getBoundingClientRect().bottom < innerHeight");
   await shot("mobile");
   await evaluate("document.querySelector('.nature-loader canvas').getContext('webgl2').getExtension('WEBGL_lose_context').loseContext()");
   await delay(500);
-  await check("context loss keeps fallback usable", "!!document.querySelector('.nature-loader__skip') && !document.querySelector('.nature-loader__stage.has-render')");
+  await check("context loss keeps fallback usable", "!!document.querySelector('.nature-loader__fallback') && !document.querySelector('.nature-loader__stage.has-render')");
   console.log(JSON.stringify({ checks, errors }, null, 2));
   writeFileSync("shots/garden-audit/results.json", JSON.stringify({ checks, errors }, null, 2));
   if (errors.length || checks.some(c => !c.passed)) process.exitCode = 1;
