@@ -7,10 +7,10 @@
            как трава раздвигается и остаётся след.
    Chrome запускается сам с отдельным профилем; окно не должно быть перекрыто
    (иначе Windows глушит rAF — см. флаги ниже). */
-import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
+import { launch, sleep } from "./lib/chrome.mjs";
 
 const arg = (k, d) => {
   const i = process.argv.indexOf(`--${k}`);
@@ -23,11 +23,9 @@ const WAIT = +arg("wait", 4000);
 const SCROLL = arg("scroll", "");
 const PORT = +arg("port", 9340);
 const DRAG = process.argv.includes("--drag");
-const CHROME = process.env.CHROME ?? "C:/Program Files/Google/Chrome/Application/chrome.exe";
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const chrome = spawn(CHROME, [
+const { chrome, ws, send } = await launch(PORT, [
   `--remote-debugging-port=${PORT}`,
   `--user-data-dir=${resolve(tmpdir(), "portfolio-3d-ts2-cdp")}`,
   `--window-size=${W},${H + 90}`,
@@ -36,29 +34,12 @@ const chrome = spawn(CHROME, [
   "--disable-backgrounding-occluded-windows", "--disable-renderer-backgrounding",
   "--disable-background-timer-throttling", "--remote-allow-origins=*", ...(process.argv.includes("--headless") ? ["--headless=new", "--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"] /* HEADLESS: окно не нужно, rAF не глушится */ : []),
   "about:blank",
-], { stdio: "ignore" });
-
-let target;
-for (let i = 0; i < 50 && !target; i++) {
-  await sleep(200);
-  try {
-    const list = await (await fetch(`http://127.0.0.1:${PORT}/json`)).json();
-    target = list.find((t) => t.type === "page");
-  } catch {}
-}
-if (!target) { console.error("Chrome не поднялся"); chrome.kill(); process.exit(1); }
-
-const ws = new WebSocket(target.webSocketDebuggerUrl);
-await new Promise((r) => ws.addEventListener("open", r, { once: true }));
-let id = 0;
-const pending = new Map();
-ws.addEventListener("message", (e) => {
-  const m = JSON.parse(e.data);
-  if (m.id && pending.has(m.id)) { pending.get(m.id)(m); pending.delete(m.id); }
-  if (m.method === "Runtime.consoleAPICalled") console.log("[console]", m.params.args.map((a) => a.value ?? a.description).join(" "));
-  if (m.method === "Runtime.exceptionThrown") console.log("[exception]", m.params.exceptionDetails.exception?.description ?? m.params.exceptionDetails.text);
+], {
+  onEvent: (m) => {
+    if (m.method === "Runtime.consoleAPICalled") console.log("[console]", m.params.args.map((a) => a.value ?? a.description).join(" "));
+    if (m.method === "Runtime.exceptionThrown") console.log("[exception]", m.params.exceptionDetails.exception?.description ?? m.params.exceptionDetails.text);
+  },
 });
-const send = (method, params = {}) => new Promise((r) => { const i = ++id; pending.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
 const evaluate = async (expr) => (await send("Runtime.evaluate", { expression: expr, awaitPromise: true, returnByValue: true })).result?.result?.value;
 
 await send("Runtime.enable");

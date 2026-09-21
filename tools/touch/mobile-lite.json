@@ -1,0 +1,6 @@
+[
+  { "probe": "JSON.stringify({ready: document.body.classList.contains('is-ready'), lite: document.body.classList.contains('lite'), docW: document.documentElement.scrollWidth, vw: innerWidth})", "as": "state" },
+  { "shot": "page" },
+  { "eval": "location.hash = '#/work/stop-spam'" }, { "wait": 4000 },
+  { "probe": "JSON.stringify({title: document.querySelector('.case-view h1')?.textContent?.trim(), docW: document.documentElement.scrollWidth})", "as": "case" }
+]

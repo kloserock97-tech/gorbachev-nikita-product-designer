@@ -15,6 +15,7 @@ import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
+import { freePort } from "./lib/chrome.mjs";
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i < 0 ? d : process.argv[i + 1]; };
 const URL_ = arg("url", "http://127.0.0.1:5191/");
@@ -93,6 +94,7 @@ async function runProfile(P, port) {
   const gpuFlags = P.gpu === "swiftshader" ? ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"]
     : P.gpu === "none" ? ["--disable-webgl", "--disable-3d-apis"]
     : ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist", P.gpu === "low" ? "--force_low_power_gpu" : "--force_high_performance_gpu"];
+  freePort(port); /* остаток прошлого прогона держал бы порт, и этот запуск завис бы вместе с ним */
   const chrome = spawn(process.env.CHROME ?? "C:/Program Files/Google/Chrome/Application/chrome.exe", [
     `--remote-debugging-port=${port}`, `--user-data-dir=${dir}`, "--headless=new", "--no-first-run", "--no-default-browser-check",
     "--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--remote-allow-origins=*", "--autoplay-policy=no-user-gesture-required",

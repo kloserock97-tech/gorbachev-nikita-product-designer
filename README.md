@@ -39,13 +39,19 @@ npm install
 npm run dev       # http://127.0.0.1:5190/
 npm run build     # production build into dist/
 npm run preview   # serve dist/ locally
+npm run check     # type check, build, and a report of unused dictionary keys, CSS classes and public files
+npm run bundle    # what each built script is made of, by source file
+npm run deadcode  # unused files and exports (knip, fetched on demand)
+npm run smoke     # walk through home, menu, story, cases and a case page in headless Chrome (needs preview on 5191)
+npm run audit:loader  # 17 checks of the loading screen (needs preview on 5191)
 ```
 
 Useful URL parameters while developing:
 
 | Parameter | Effect |
 | --- | --- |
-| `?intro=0` / `?intro=1` | skip or force the intro animation |
+| `?intro=0` / `?intro=1` | skip or force the loading screen |
+| `?garden=0.5` / `?gardentier=0..4` | freeze the loading screen at a growth value; pin its quality step |
 | `?story=0.62` | jump to a point of the scroll story (0 to 1) |
 | `?lite=1` / `?lite=0` | force the lite version or force 3D |
 | `?debug=1` | show the quality tier, DPR and FPS |
@@ -70,11 +76,14 @@ src/
     dog.ts           Kelly: poses, head tracking, sleep, umbrella hat
     weather.ts       clear / cloudy / rain / dusk
     ...
+  intro/             the loading screen: a slab of frosted glass that overgrows with moss while the hill loads
+    garden/          what lies on the slab: glass, ice, moss, flowers, water, post-processing
   ui/                HTML/CSS interface: hero, story texts, case strip and case pages, footer, lite version
     hero/            first screen: layout, dock, metal buttons, parallax
   audio/             nature ambience and UI sound cues
-  data/              texts and case list, English and Russian side by side
+  data/              texts and case list; case stories are one file per language, loaded on demand
   i18n/              the two dictionaries and the language switch
+  lib/               small shared helpers (math, formatting)
 public/              models (Draco GLB), HDRI, fonts, images, sounds
 tools/               Blender build scripts and Chrome DevTools measurement scripts
 docs/                dev log, prompts behind each iteration, load test report
@@ -102,6 +111,9 @@ The `tools/` scripts drive a headless Chrome over the DevTools protocol:
 - `pre-shader-stalls.js` with `cdp-eval.mjs --pre tools/pre-shader-stalls.js --fresh` lists shader programs that block the main thread on a cold cache. `cdp-profile.mjs --lines <function>` splits a function's self time by source line.
 - `cdp-touch.mjs` emulates a phone with a real finger in Chrome and runs gesture scripts from `tools/touch/*.json` (swipe, fling, screenshot, probe).
 - `crop.ps1` crops and enlarges a screenshot region without smoothing, to inspect single pixels.
+- `audit-nature-loader.mjs` checks the loading screen: growth phases, focus, clean-up, reduced motion, deep links, context loss, frame pace.
+- `unused.mjs` lists dictionary keys, CSS classes and `public/` files that nothing refers to. `bundle-report.mjs` splits every built script by source file through its source map.
+- `lib/chrome.mjs` is the shared Chrome launcher: it frees the debugging port from a browser left by an interrupted run and shuts the browser down on any exit.
 - `?tier=0..8` forces a quality tier and `?edgeaa=0|1` toggles edge anti-aliasing of the final pass.
 
 The scripts look for Chrome at the default Windows path. Set `CHROME=/path/to/chrome` on other systems.
