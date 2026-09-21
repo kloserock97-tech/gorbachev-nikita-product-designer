@@ -24,7 +24,7 @@ export function createNatureLoader(onDone: () => void, onLite: () => void): Natu
   root.setAttribute("aria-labelledby", "garden-title");
   root.innerHTML = `
     <header class="nature-loader__top">
-      <div class="nature-loader__identity"><b>NIKITA GORBACHEV</b><span>PRODUCT DESIGNER · SENIOR/LEAD</span><span class="nature-loader__pitch">${ru ? "Сложные продукты и сервисы с ИИ" : "Complex products and AI services"}</span></div>
+      <div class="nature-loader__identity"><b>NIKITA GORBACHEV</b><span>PRODUCT DESIGNER</span><span class="nature-loader__pitch">${ru ? "Сложные продукты и сервисы с ИИ" : "Complex products and AI services"}</span></div>
       <span class="nature-loader__edition">${ru ? "ЦИФРОВАЯ ПРИРОДА" : "DIGITAL NATURE"} · 01</span>
     </header>
     <div class="nature-loader__stage" aria-hidden="true"><canvas></canvas></div>

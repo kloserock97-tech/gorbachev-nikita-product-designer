@@ -1,6 +1,6 @@
 # Gorbachev Nikita — Product Designer
 
-Portfolio of Nikita Gorbachev, Senior/Lead Product Designer. It opens on a grassy hill at sunset with an armchair, an old CRT computer and Kelly the dog. Scroll down and the computer flies off the table to tell you who I am, then the page tears away to show the case studies, and the story ends back on the hill at dusk with contacts.
+Portfolio of Nikita Gorbachev, product designer. It opens on a grassy hill at sunset with an armchair, an old CRT computer and Kelly the dog. Scroll down and the computer flies off the table to tell you who I am, then the page tears away to show the case studies, and the story ends back on the hill at dusk with contacts.
 
 **Live site:** https://kloserock97-tech.github.io/gorbachev-nikita-product-designer/
 

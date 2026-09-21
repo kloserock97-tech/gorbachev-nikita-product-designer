@@ -2,7 +2,7 @@
    иначе сборка не пройдёт. Тексты — те же, что стояли в разметке до v27. */
 const en = {
   "doc.title": "Gorbachev Nikita — Product Designer",
-  "doc.desc": "Nikita Gorbachev, Senior/Lead Product Designer. I make complex products and AI services simple, from research to final screens, numbers and growth.",
+  "doc.desc": "Nikita Gorbachev, product designer. I make complex products and AI services simple, from research to final screens, numbers and growth.",
   "doc.og": "I make complex products and AI services simple, from research to final screens, numbers and growth.",
   "scene.alt": "A chair on a grassy hill at sunset",
 
@@ -27,8 +27,8 @@ const en = {
   /* первый экран */
   "hero.name": "Nikita Gorbachev,",
   "hero.role": "product designer",
-  "hero.lede": "Senior/Lead. I make complex products and AI services simple, from research to final screens, numbers and growth. Scroll down, the computer will explain.",
-  "hero.lede.lite": "Senior/Lead. I make complex products and AI services simple, from research to final screens, numbers and growth. Scroll down for the work.",
+  "hero.lede": "I make complex products and AI services simple, from research to final screens, numbers and growth. Scroll down, the computer will explain.",
+  "hero.lede.lite": "I make complex products and AI services simple, from research to final screens, numbers and growth. Scroll down for the work.",
   "hero.explore": "See the work",
   "hero.gust": "Call the wind",
   "hero.scroll": "Discover",
@@ -118,8 +118,8 @@ const en = {
 
   /* экран About */
   "about.hi": "Hi there!",
-  "about.marquee": "I’m Nikita, a Senior/Lead Product Designer",
-  "about.intro": "I'm Nikita, a Senior/Lead Product Designer. I make complex services feel simple, both the ones millions of people use and the internal tools tens of thousands of employees open every morning. I also lead a team of designers.",
+  "about.marquee": "I’m Nikita, a product designer",
+  "about.intro": "I'm Nikita, a product designer. I make complex services feel simple, both the ones millions of people use and the internal tools tens of thousands of employees open every morning. I also lead a team of designers.",
   "about.p1": "My work mixes product design, systems thinking and AI",
   "about.p2": "Research and product structure come first. Then launch, numbers and growing what works.",
   "about.logos": "Companies I've worked for",

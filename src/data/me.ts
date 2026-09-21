@@ -13,7 +13,7 @@ const me = {
   windowTitle: "Nikita Gorbachev | Home Page",
   address: "http://www.nikita-gorbachev.com/about.htm",
   site: "Nikita's Home Page",
-  tagline: "Senior/Lead Product Designer",
+  tagline: "Product Designer",
   nav: ["About me", "Now", "Hobbies", "Contact"],
   /* заголовки разделов на самой странице (полоски-плашки) */
   sections: ["About me", "What I'm doing now", "Hobbies", "Contact"],
@@ -21,12 +21,12 @@ const me = {
 
   profile: [
     ["Name", "Nikita Gorbachev"],
-    ["Occupation", "Senior/Lead Product Designer"],
+    ["Occupation", "Product Designer"],
     ["Languages", "English (C1), Russian"],
   ],
 
   hello:
-    "Hi there! I'm Nikita, a Senior/Lead Product Designer. I make complex services feel simple: public ones used by millions of people and internal tools that tens of thousands of employees open every morning. I also lead a team of designers.",
+    "Hi there! I'm Nikita, a product designer. I make complex services feel simple: public ones used by millions of people and internal tools that tens of thousands of employees open every morning. I also lead a team of designers.",
 
   now: [
     "I design products, often with AI inside. I look at the whole product, and a single screen is only one part of it. I cover the whole path: research, product structure, launch, numbers and growth.",

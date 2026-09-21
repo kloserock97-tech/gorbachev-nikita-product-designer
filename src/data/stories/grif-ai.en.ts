@@ -16,7 +16,7 @@ export const en: CaseStory = {
     summary:
       "At the start there was an idea, a couple of screens and not a single line of code. I was the only designer on the project. AI agents did the drawing, the assembling and the move into code. Claude worked right inside Figma (through an MCP connection). Finished interface parts went into a shared code repository on GitHub. Developers took them from Storybook, which is a showcase of ready-made parts, and built pages out of them. What stayed with me was the fine-tuning after which a mock-up starts to solve the task.",
     facts: [
-      ["Role", "Lead Product Designer"],
+      ["Role", "Product designer"],
       ["Team", "Agents instead of a design department; frontend and backend were people"],
       ["Timeline", "2025 to 2026, deadlines agreed for each task"],
       ["Platform", "Web, dark theme, RU / EN"],
@@ -40,7 +40,7 @@ export const en: CaseStory = {
       { title: "A real team and a limited budget", text: "The developers needed something to work with regularly and in a clear form. Their time cost money, and so did their idle time." },
     ],
     myRole:
-      "Lead Product Designer. There was no design department, so I put together a team of agents and worked with it the way you work with people. I set tasks, accepted work, sent it back for rework and answered to the business for quality. A deadline was agreed for each task separately, so every round ended with something that could be passed on.",
+      "Product designer. There was no design department, so I put together a team of agents and worked with it the way you work with people. I set tasks, accepted work, sent it back for rework and answered to the business for quality. A deadline was agreed for each task separately, so every round ended with something that could be passed on.",
   },
   approach: {
     lead: "First I described the product's character, then I derived the interface from it.",
