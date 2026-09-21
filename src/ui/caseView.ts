@@ -1,4 +1,5 @@
 import { getCases } from "../data/cases";
+import { getStory, hasStories, loadStories } from "../data/caseStory";
 import { pad2 as pad } from "../lib/format";
 import { cue } from "../audio/bus";
 import { onLang, t } from "../i18n";
@@ -8,16 +9,19 @@ import { onLang, t } from "../i18n";
    только тому, кто открыл кейс. Файл подгружается в простое после старта, по наведению на карточку кейса
    и сразу, если сайт открыли прямой ссылкой на кейс. Маршруты и история остаются здесь и работают синхронно. */
 type Kit = {
-  getStory: typeof import("../data/caseStory").getStory;
+  getStory: typeof getStory;
   renderStory: typeof import("./caseStoryView").renderStory;
   mountStory: typeof import("./caseStoryView").mountStory;
 };
 let kit: Kit | null = null;
-let kitLoading: Promise<Kit> | null = null;
+let viewLoading: Promise<typeof import("./caseStoryView")> | null = null;
+/* v63: тексты — только текущего языка (loadStories помнит, что уже приехало); вид страницы грузится один раз */
 const loadCaseKit = () =>
-  (kitLoading ??= Promise.all([import("../data/caseStory"), import("./caseStoryView")]).then(
-    ([d, v]) => (kit = { getStory: d.getStory, renderStory: v.renderStory, mountStory: v.mountStory }),
-  ));
+  Promise.all([loadStories(), (viewLoading ??= import("./caseStoryView"))]).then(
+    ([, v]) => (kit = { getStory, renderStory: v.renderStory, mountStory: v.mountStory }),
+  );
+/** всё ли есть, чтобы разобрать адрес кейса: вид и тексты текущего языка */
+const kitReady = () => !!kit && hasStories();
 
 /* Страница кейса внутри сайта (v26). Открывается поверх сцены по адресу #/work/<id>: карточка в главе
    «Кейсы», меню Work в доке, прямая ссылка. Закрывается кнопкой «Все кейсы», Esc и «назад» в браузере.
@@ -154,7 +158,7 @@ export function initCaseView(opts: Opts = {}) {
 
   const route = () => {
     /* адрес кейса, а данные ещё не приехали — дождаться и разобрать адрес заново */
-    if (!kit) {
+    if (!kitReady()) {
       if (location.hash.startsWith("#/work/")) void loadCaseKit().then(route, () => {});
       else if (current) hide();
       return;
@@ -181,7 +185,8 @@ export function initCaseView(opts: Opts = {}) {
 
   /* язык переключили прямо на открытом кейсе — пересобираем страницу тем же кейсом и разбором */
   onLang(() => {
-    if (current) render(current);
+    /* тексты нового языка могут быть ещё не скачаны: страница перерисуется, когда они приедут */
+    if (current) void loadCaseKit().then(() => { if (current) render(current); }, () => {});
   });
 
   /* клики по ссылкам #/work/<id>[/<разбор>] (карточки, меню Work, соседние кейсы, «Следующий кейс») — своя запись в истории */

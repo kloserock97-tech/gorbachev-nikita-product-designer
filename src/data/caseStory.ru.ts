@@ -4,11 +4,11 @@
    v56: тексты переписаны простым языком. Термин остаётся рядом с объяснением, факты и цифры те же. */
 import type { StorySet, CaseImage } from "./caseStory";
 import tracks from "./caseTracks.ru";
-import { ru as grif } from "./stories/grif-ai";
-import { ru as community } from "./stories/community";
-import { ru as moderator } from "./stories/moderator-dashboard";
-import { ru as spam } from "./stories/stop-spam";
-import { ru as house } from "./stories/electronic-house";
+import { ru as grif } from "./stories/grif-ai.ru";
+import { ru as community } from "./stories/community.ru";
+import { ru as moderator } from "./stories/moderator-dashboard.ru";
+import { ru as spam } from "./stories/stop-spam.ru";
+import { ru as house } from "./stories/electronic-house.ru";
 
 const img = (src: string, w: number, h: number, caption: string, kind = "screen"): CaseImage => ({ src, w, h, caption, kind });
 

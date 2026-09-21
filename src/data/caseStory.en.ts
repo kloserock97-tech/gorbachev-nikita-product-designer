@@ -4,11 +4,11 @@
    v56: rewritten in plain language. A term stays next to its explanation, facts and numbers are the same. */
 import type { StorySet, CaseImage } from "./caseStory";
 import tracks from "./caseTracks.en";
-import { en as grif } from "./stories/grif-ai";
-import { en as community } from "./stories/community";
-import { en as moderator } from "./stories/moderator-dashboard";
-import { en as spam } from "./stories/stop-spam";
-import { en as house } from "./stories/electronic-house";
+import { en as grif } from "./stories/grif-ai.en";
+import { en as community } from "./stories/community.en";
+import { en as moderator } from "./stories/moderator-dashboard.en";
+import { en as spam } from "./stories/stop-spam.en";
+import { en as house } from "./stories/electronic-house.en";
 
 const img = (src: string, w: number, h: number, caption: string, kind = "screen"): CaseImage => ({ src, w, h, caption, kind });
 

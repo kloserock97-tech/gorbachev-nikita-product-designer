@@ -3,10 +3,8 @@
    (caseDetails удалён в v63: меню Work хватает поля kind из cases.ts). Тексты и цифры — только из страниц кейсов на Tilda
    (Main cases/*.html, EN/*.en.html) и презентации «Open to lead roles»; чего там нет — поле пустое.
    Данные лежат в caseStory.ru.ts и caseStory.en.ts с одинаковой структурой: tsc ловит пропуски. */
-import { getLang } from "../i18n";
+import { getLang, type Lang } from "../i18n";
 import type { CaseTrack } from "./caseTracks";
-import ru from "./caseStory.ru";
-import en from "./caseStory.en";
 
 export type CaseImage = { src: string; w: number; h: number; caption: string; kind: string };
 
@@ -121,11 +119,16 @@ export type CaseStory = {
 
 export type StorySet = Record<string, CaseStory>;
 
-export function getStory(id: string): CaseStory | null {
-  const set: StorySet = getLang() === "ru" ? ru : en;
-  return set[id] ?? null;
+/* v63: тексты каждого языка — свой файл сборки (по ~130 КБ). Страница кейса качает только язык, на котором её
+   открыли; второй приезжает, если язык переключили. Раньше оба языка шли одним файлом в 266 КБ. */
+const loaded: Partial<Record<Lang, StorySet>> = {};
+const loading: Partial<Record<Lang, Promise<StorySet>>> = {};
+export function loadStories(lang: Lang = getLang()): Promise<StorySet> {
+  return (loading[lang] ??= (lang === "ru" ? import("./caseStory.ru") : import("./caseStory.en")).then((m) => (loaded[lang] = m.default)));
 }
-
-export function storyIds(): string[] {
-  return Object.keys(en);
+/** приехали ли тексты текущего языка */
+export const hasStories = () => !!loaded[getLang()];
+/** рассказ кейса на текущем языке; null — кейса нет (или тексты языка ещё не приехали: см. hasStories) */
+export function getStory(id: string): CaseStory | null {
+  return loaded[getLang()]?.[id] ?? null;
 }

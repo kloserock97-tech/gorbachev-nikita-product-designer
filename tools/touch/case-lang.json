@@ -1,0 +1,10 @@
+[
+  { "eval": "location.hash = '#/work/grif-ai'" }, { "wait": 4000 },
+  { "probe": "JSON.stringify({title: document.querySelector('.case-view h1')?.textContent?.trim(), lang: document.documentElement.lang, chunks: performance.getEntriesByType('resource').filter(r => r.name.includes('caseStory')).map(r => r.name.split('/').pop())})", "as": "ru case" },
+  { "eval": "document.querySelector('[data-lang], .dock-lang, .dock [data-nav=lang], .dock a[href*=lang], .dock button[aria-label*=English]')?.click()" }, { "wait": 3500 },
+  { "probe": "JSON.stringify({title: document.querySelector('.case-view h1')?.textContent?.trim(), lang: document.documentElement.lang, open: !document.querySelector('.case-view').hidden, chunks: performance.getEntriesByType('resource').filter(r => r.name.includes('caseStory')).map(r => r.name.split('/').pop())})", "as": "after language switch" },
+  { "eval": "location.hash = '#/work/ai-agents/lead'" }, { "wait": 3000 },
+  { "probe": "JSON.stringify({title: document.querySelector('.case-view h1')?.textContent?.trim(), hash: location.hash})", "as": "deep dive link" },
+  { "eval": "location.hash = '#/work/no-such-case'" }, { "wait": 2500 },
+  { "probe": "JSON.stringify({missing: !!document.querySelector('.cv-missing, .cv-missing-list'), title: document.querySelector('.case-view h1')?.textContent?.trim()})", "as": "missing case" }
+]
