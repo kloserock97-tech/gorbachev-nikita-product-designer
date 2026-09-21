@@ -143,6 +143,7 @@ export const en: CaseStory = {
         did: "The answer opens with the result: \"The brief is ready. The key points in a minute, and I drafted a follow-up\". Under it is a \"Based on\" line with source labels: Telegram, Gmail, Notion.",
         effect: "People started checking selectively. A person reads the conclusion and goes to the sources only if something bothers them.",
         why: "Source labels work like a signature under a statement. When a product acts on your behalf, the most important thing is to know where a fact came from.",
+        basis: "Shneiderman's rule: overview first, details on demand.",
         image: img(G + "04.webp", 1024, 300, "The conclusion first, under it the source labels and a memory note you can decline", "detail"),
       },
       {
@@ -161,6 +162,7 @@ export const en: CaseStory = {
         found: "Confirmation takes away only half of the fear. A person confirms quickly and often gets it wrong at that very moment. And then they are left alone with a sent email.",
         did: "After sending, \"Email sent. Undo\" appears at the top, and an entry with a \"Recall\" button stays in the conversation.",
         effect: "A mistake costs less, and confirming is not so scary. When you can take it back, people decide more boldly.",
+        basis: "Nielsen's user control rule: a person needs a clear way out of a mistake.",
         why: "People stop reading warnings by the third time, and undo always works. The entry in the conversation is also a trace: you can see what the system did on your behalf.",
       },
       {
@@ -170,6 +172,7 @@ export const en: CaseStory = {
         did: "The \"Edit\" button opens a side panel where the email looks like an ordinary document. The chat stays in place and is visible on the left.",
         effect: "To fix an email you no longer have to argue with the assistant: \"no, say it differently\".",
         why: "A chat message is a reply, and an email is a thing. It is odd to explain in words what you can fix by hand.",
+        basis: "Direct manipulation after Shneiderman: a person edits the thing itself instead of describing the edit in words.",
         image: img(G + "05.webp", 1024, 640, "Side panel: the email is edited like a document, and the chat stays in place"),
       },
       {

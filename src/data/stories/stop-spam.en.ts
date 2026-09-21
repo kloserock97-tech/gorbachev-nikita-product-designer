@@ -103,7 +103,8 @@ export const en: CaseStory = {
         found: "A person did not know how many windows were still ahead or why. The setup felt endless.",
         did: "I added a meter that works like a battery indicator. Every permission given raises the level and brings full protection closer.",
         effect: "You can see both the end of the road and the point of every step.",
-        basis: "Funnel breakdown; hypothesis 03.",
+        why: "People agree more readily when they can see how much is left. The meter shows the end of the road.",
+        basis: "A step-by-step breakdown of the path and hypothesis 03. Nielsen's rule: the system shows which step you are on.",
         image: img("cases/stop-spam/01.webp", 1300, 2642, "Statistics: protection level at 90% and counters for what was blocked in 30 days", "device"),
       },
       {
@@ -112,7 +113,8 @@ export const en: CaseStory = {
         found: "The app asked for access up front and gave nothing back right away.",
         did: "I put a counter next to each permission: this is how many calls and messages we will block. It is an estimate from the app's own data. We do not present it as a promise.",
         effect: "People give access more willingly when they see at once what it gets them.",
-        basis: "Store promise check; hypothesis 02.",
+        why: "Access gets asked for up front and the benefit arrives later. The counter hands over the benefit first.",
+        basis: "A check against the promise in the store and hypothesis 02.",
       },
       {
         id: "why",
@@ -120,7 +122,8 @@ export const en: CaseStory = {
         found: "The system window is dry and scary. A person does not see why an app wants their calls and messages, and the hand reaches for \"Don't Allow\" by itself.",
         did: "Before each system window I put a short \"why we need this\" screen. It is written in everyday words, with no official phrasing and no fine print.",
         effect: "Less anxiety, and fewer people refuse without reading.",
-        basis: "Engineering interviews: only the screen before the window can change; hypothesis 01.",
+        why: "The system window asks and explains nothing. The screen in front of it answers the question \"why do you want my calls\".",
+        basis: "Engineering interviews: only the screen before the system window can change; hypothesis 01.",
       },
       {
         id: "rhythm",
@@ -128,6 +131,8 @@ export const en: CaseStory = {
         found: "iOS and Android handle permissions differently, and the windows come in a different order.",
         did: "I made one and the same order for every permission and a shared look for the meter. A new permission is added the same way.",
         effect: "The setup reads as one story, and no longer as a string of random windows.",
+        why: "By the second permission the person walks a path they already know, with nothing to work out again.",
+        basis: "Nielsen's consistency rule: identical steps get recognised without reading.",
       },
     ],
   },
