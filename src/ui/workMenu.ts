@@ -1,5 +1,4 @@
 import { getCases, type CaseItem } from "../data/cases";
-import details from "../data/caseDetails";
 import { cue } from "../audio/bus";
 import { onLang, t, type Key } from "../i18n";
 
@@ -7,9 +6,8 @@ import { onLang, t, type Key } from "../i18n";
    кейсов с превью, внизу строка с подписью и кнопками. Категория фильтрует сетку; число рядом с ней —
    сколько кейсов останется.
 
-   Категории выводятся из данных, а не пишутся руками: у каждого кейса в caseDetails есть платформы
-   (web, desktop, ios, android), web и desktop — это «Веб», ios и android — «Мобайл». Добавится кейс —
-   фильтр подхватит его сам.
+   Категории выводятся из данных, а не пишутся руками: у каждого кейса в cases.ts есть поле kind
+   («Веб» или «Мобайл»). Добавится кейс — фильтр подхватит его сам.
 
    Поведение прежнее: открывается наведением (мышь) и кликом (палец, клавиатура), закрывается, когда
    курсор ушёл и с пункта, и с панели, по Esc и кликом мимо. Анимация по Emil Kowalski: ease-out с резким
@@ -23,14 +21,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 type Filter = "all" | "web" | "mobile";
 const FILTERS: Filter[] = ["all", "web", "mobile"];
 
-const platformsOf = new Map(details.map((d) => [d.id, d.platforms]));
-const kindOf = (c: CaseItem): Filter[] => {
-  const p = platformsOf.get(c.id) ?? [];
-  const out: Filter[] = [];
-  if (p.some((x) => x === "web" || x === "desktop")) out.push("web");
-  if (p.some((x) => x === "ios" || x === "android" || x === "mobile")) out.push("mobile");
-  return out;
-};
+const kindOf = (c: CaseItem): Filter[] => c.kind;
 
 const arrow = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8.5 7H17v8.5"/></svg>`;
 

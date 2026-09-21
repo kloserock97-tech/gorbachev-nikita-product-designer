@@ -1,13 +1,12 @@
-/* v35: подзадачи внутри кейса. Страница кейса открывается основным user flow (caseDetails), а чипсы
+/* v35: подзадачи внутри кейса (с v41 — разборы в глубину внутри рассказа, см. caseStory.ts). Здесь только типы;
+   данные лежат в caseTracks.en.ts и caseTracks.ru.ts и подключаются из caseStory.<язык>.ts.
+   Изначально: страница кейса открывалась основным user flow, а чипсы
    под шапкой переключают на отдельные задачи, решённые попутно: фильтр, сортировка, конвейер агентов,
    лидерство. У каждой свой адрес: #/work/<кейс>/<подзадача>. В основном flow пункты, у которых есть
    подробный разбор, помечены ссылкой на подзадачу (hints).
    Тексты — из страниц кейсов (Main cases/*.html, EN/*.en.html) и презентации «Open to lead roles»;
    ничего не досочинено. */
-import { getLang } from "../i18n";
-import type { CaseImage } from "./caseDetails";
-import en from "./caseTracks.en";
-import ru from "./caseTracks.ru";
+import type { CaseImage } from "./caseStory";
 
 export type TrackOption = { name: string; text: string; chosen?: boolean; image?: CaseImage };
 export type TrackStep = { title: string; text: string };
@@ -61,8 +60,3 @@ export type CaseTracks = {
 };
 
 export type TrackSet = Record<string, CaseTracks>;
-
-export function getTracks(caseId: string): CaseTracks | null {
-  const set: TrackSet = getLang() === "ru" ? ru : en;
-  return set[caseId] ?? null;
-}

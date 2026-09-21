@@ -1,15 +1,14 @@
 /* v41 (docs/prompts/v41.md): страница кейса как один рассказ — от контекста через исследование
-   к решениям, ошибкам и результату. Заменяет связку caseDetails + caseTracks на странице кейса
-   (caseDetails остаётся для меню Work и ленты). Тексты и цифры — только из страниц кейсов на Tilda
+   к решениям, ошибкам и результату. Заменил связку caseDetails + caseTracks на странице кейса
+   (caseDetails удалён в v63: меню Work хватает поля kind из cases.ts). Тексты и цифры — только из страниц кейсов на Tilda
    (Main cases/*.html, EN/*.en.html) и презентации «Open to lead roles»; чего там нет — поле пустое.
    Данные лежат в caseStory.ru.ts и caseStory.en.ts с одинаковой структурой: tsc ловит пропуски. */
 import { getLang } from "../i18n";
-import type { CaseImage } from "./caseDetails";
 import type { CaseTrack } from "./caseTracks";
 import ru from "./caseStory.ru";
 import en from "./caseStory.en";
 
-export type { CaseImage };
+export type CaseImage = { src: string; w: number; h: number; caption: string; kind: string };
 
 /** пронумерованная точка на экране: проценты от ширины и высоты, подпись и решение, к которому ведёт */
 export type Hotspot = { x: number; y: number; text: string; decision?: string };

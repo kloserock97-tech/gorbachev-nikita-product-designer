@@ -6,28 +6,19 @@
    языку (getCases()). Порядок, id и обложки от языка не зависят. */
 import { getLang } from "../i18n";
 
-export type CaseItem = { id: string; title: string; subtitle: string; tag: string; cover: string; brand?: string };
+/** kind — для фильтра в меню Work: веб (и десктоп) или мобайл */
+export type CaseKind = "web" | "mobile";
+export type CaseItem = { id: string; title: string; subtitle: string; tag: string; kind: CaseKind[]; cover: string; brand?: string };
 type Ru = { title: string; subtitle: string; tag: string };
 
 const cases: CaseItem[] = [
-  { id: "grif-ai", title: "GRIF AI", subtitle: "An assistant that brings ready-made actions. One designer: me", tag: "AI assistant · 2026", cover: "cases/grif-ai.jpg" },
-  { id: "ai-agents", title: "AI Agent Risk Management", subtitle: "Agent risk assessment out of Jira and Excel: 6 manual handoffs → 0", tag: "Sber · Enterprise · 2025", cover: "cases/ai-agents.jpg" },
-  { id: "community", title: "Community", subtitle: "City stories for Mos.ru: from zero to a first version in nine months", tag: "Web platform · Mos.ru · 2024", cover: "cases/community.jpg" },
-  { id: "moderator-dashboard", title: "Moderator Dashboard", subtitle: "A workspace of their own for moderators: −38% steps per task", tag: "B2B dashboard · Mos.ru · 2024", cover: "cases/moderator-dashboard.jpg" },
-  { id: "stop-spam", title: "Stop Spam", subtitle: "First-run setup for an anti-spam app: +25% reach working protection", tag: "iOS · Android · 2026", cover: "cases/stop-spam.jpg" },
-  { id: "electronic-house", title: "Electronic House", subtitle: "UX audit of a housing-services app with four main screens rebuilt", tag: "UX audit · Mobile app · 2024", cover: "cases/electronic-house.jpg" },
-].map((item) => ({
-  ...item,
-  cover: `cases/covers/${item.id}.webp`,
-  brand: ({
-    "grif-ai": "grif.svg",
-    "ai-agents": "sber.svg",
-    community: "community.svg",
-    "moderator-dashboard": "community.svg",
-    "stop-spam": "stop-spam.png",
-    "electronic-house": "electronic-house.webp",
-  } as Record<string, string>)[item.id],
-}));
+  { id: "grif-ai", title: "GRIF AI", subtitle: "An assistant that brings ready-made actions. One designer: me", tag: "AI assistant · 2026", kind: ["web"], cover: "cases/covers/grif-ai.webp", brand: "grif.svg" },
+  { id: "ai-agents", title: "AI Agent Risk Management", subtitle: "Agent risk assessment out of Jira and Excel: 6 manual handoffs → 0", tag: "Sber · Enterprise · 2025", kind: ["web"], cover: "cases/covers/ai-agents.webp", brand: "sber.svg" },
+  { id: "community", title: "Community", subtitle: "City stories for Mos.ru: from zero to a first version in nine months", tag: "Web platform · Mos.ru · 2024", kind: ["web"], cover: "cases/covers/community.webp", brand: "community.svg" },
+  { id: "moderator-dashboard", title: "Moderator Dashboard", subtitle: "A workspace of their own for moderators: −38% steps per task", tag: "B2B dashboard · Mos.ru · 2024", kind: ["web"], cover: "cases/covers/moderator-dashboard.webp", brand: "community.svg" },
+  { id: "stop-spam", title: "Stop Spam", subtitle: "First-run setup for an anti-spam app: +25% reach working protection", tag: "iOS · Android · 2026", kind: ["mobile"], cover: "cases/covers/stop-spam.webp", brand: "stop-spam.png" },
+  { id: "electronic-house", title: "Electronic House", subtitle: "UX audit of a housing-services app with four main screens rebuilt", tag: "UX audit · Mobile app · 2024", kind: ["mobile"], cover: "cases/covers/electronic-house.webp", brand: "electronic-house.webp" },
+];
 
 const ru: Record<string, Ru> = {
   "grif-ai": { title: "GRIF AI", subtitle: "Ассистент сам приносит готовые действия. Дизайнер в проекте один", tag: "ИИ-ассистент · 2026" },
@@ -47,4 +38,3 @@ export function getCases(): CaseItem[] {
   });
 }
 
-export default cases;
