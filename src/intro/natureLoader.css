@@ -28,6 +28,8 @@
 .nature-loader__identity { display: grid; gap: 5px; }
 .nature-loader__identity b { font-weight: 650; }
 .nature-loader__identity span { opacity: .7; font-size: 10px; }
+/* v65: строка позиционирования читается, пока растёт сад: имя и роль на экране с первой секунды загрузчика */
+.nature-loader__pitch { letter-spacing: .02em; text-transform: none; opacity: .52 !important; }
 .nature-loader__edition { font-size: 10px; opacity: .68; }
 /* The object is large in the frame. The stage is bigger than its grid row and overlaps the header and the title on
    purpose: the canvas is transparent, only the slab in the middle of it is opaque. */

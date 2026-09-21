@@ -24,7 +24,7 @@ export function createNatureLoader(onDone: () => void, onLite: () => void): Natu
   root.setAttribute("aria-labelledby", "garden-title");
   root.innerHTML = `
     <header class="nature-loader__top">
-      <div class="nature-loader__identity"><b>NIKITA GORBACHEV</b><span>PRODUCT DESIGNER</span></div>
+      <div class="nature-loader__identity"><b>NIKITA GORBACHEV</b><span>PRODUCT DESIGNER · SENIOR/LEAD</span><span class="nature-loader__pitch">${ru ? "Сложные продукты и сервисы с ИИ" : "Complex products and AI services"}</span></div>
       <span class="nature-loader__edition">${ru ? "ЦИФРОВАЯ ПРИРОДА" : "DIGITAL NATURE"} · 01</span>
     </header>
     <div class="nature-loader__stage" aria-hidden="true"><canvas></canvas></div>
@@ -98,7 +98,9 @@ export function createNatureLoader(onDone: () => void, onLite: () => void): Natu
     if (document.hidden) return;
     elapsed += dt;
     // Loading phases gate growth; elapsed time is only choreography, never a fake byte count.
-    const desired = frozen ?? (reduced ? target : Math.min(target, elapsed / 4.3));
+    /* v65: 2.8 вместо 4.3. Хореография начинается только после загрузки скриптов и сборки сада, поэтому к её
+       началу уже прошло около четырёх секунд; у смотрящего портфолио на решение всего полминуты. */
+    const desired = frozen ?? (reduced ? target : Math.min(target, elapsed / 2.8));
     growth += (desired - growth) * (1 - Math.exp(-dt * 4.5));
     if (frozen !== null) growth = frozen;
     else if (reduced || (ready && desired === 1 && growth > .995)) growth = desired;
