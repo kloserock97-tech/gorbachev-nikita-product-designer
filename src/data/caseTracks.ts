@@ -8,8 +8,8 @@
    ничего не досочинено. */
 import type { CaseImage } from "./caseStory";
 
-export type TrackOption = { name: string; text: string; chosen?: boolean; image?: CaseImage };
-export type TrackStep = { title: string; text: string };
+type TrackOption = { name: string; text: string; chosen?: boolean; image?: CaseImage };
+type TrackStep = { title: string; text: string };
 
 /** один раздел подзадачи; все поля кроме id/label/title необязательны — рисуется то, что заполнено */
 export type TrackPart = {
@@ -50,9 +50,9 @@ export type CaseTrack = {
 };
 
 /** пометка в основном flow: у пункта раздела есть подробный разбор в подзадаче */
-export type TrackHint = { section: "problem" | "solution" | "results"; point: number; track: string };
+type TrackHint = { section: "problem" | "solution" | "results"; point: number; track: string };
 
-export type CaseTracks = {
+type CaseTracks = {
   /** подпись первого чипса — основной flow кейса */
   main: string;
   tracks: CaseTrack[];

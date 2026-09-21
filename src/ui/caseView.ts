@@ -1,4 +1,5 @@
 import { getCases } from "../data/cases";
+import { pad2 as pad } from "../lib/format";
 import { cue } from "../audio/bus";
 import { onLang, t } from "../i18n";
 
@@ -13,7 +14,7 @@ type Kit = {
 };
 let kit: Kit | null = null;
 let kitLoading: Promise<Kit> | null = null;
-export const loadCaseKit = () =>
+const loadCaseKit = () =>
   (kitLoading ??= Promise.all([import("../data/caseStory"), import("./caseStoryView")]).then(
     ([d, v]) => (kit = { getStory: d.getStory, renderStory: v.renderStory, mountStory: v.mountStory }),
   ));
@@ -33,7 +34,6 @@ export const loadCaseKit = () =>
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const arrow = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8.5 7H17v8.5"/></svg>`;
-const pad = (x: number) => String(x).padStart(2, "0");
 
 type Opts = { onToggle?: (open: boolean) => void };
 /* missing — адрес вида #/work/<id>, которого нет: старая ссылка или опечатка */

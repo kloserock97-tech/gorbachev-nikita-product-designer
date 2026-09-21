@@ -1,8 +1,8 @@
 import * as THREE from "three";
+import { smooth } from "../../lib/math";
 import { TILE, DRAPE, iceAt, meltDelay } from "./surface";
 import { buildSheet, type Garden } from "./sheet";
 
-const smooth = (a: number, b: number, x: number) => THREE.MathUtils.smoothstep(x, a, b);
 
 /** Ice along the cold edge. Flat shading turns the ridged height field into crystal facets; the normals come from
     screen derivatives, so they stay right while the sheet melts. */

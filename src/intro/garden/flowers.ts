@@ -1,9 +1,9 @@
 import * as THREE from "three";
+import { smooth } from "../../lib/math";
 import { rand, seedDelay, anchorAt, mossAt, fbm } from "./surface";
 import { FUR } from "./moss";
 import type { Garden } from "./sheet";
 
-const smooth = (a: number, b: number, x: number) => THREE.MathUtils.smoothstep(x, a, b);
 
 function petalGeometry() {
   const geo = new THREE.PlaneGeometry(1, 1, 5, 9);

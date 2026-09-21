@@ -7,7 +7,7 @@ export type Garden = { growth: { value: number }; clock: { value: number }; smal
 /** How far a layer has come at a vertex, as GLSL over its `aDelay`. The pile of the moss uses the same curve, so it
     rides the cushion up instead of floating above it. */
 export const RISE = "smoothstep(aDelay+.07,aDelay+.34,uGarden)";
-export const MELT = "1.-smoothstep(aDelay,aDelay+.30,uGarden)";
+const MELT = "1.-smoothstep(aDelay,aDelay+.30,uGarden)";
 
 export type SheetOptions = {
   x0: number; x1: number; z0: number; z1: number; res: number; mode: "grow" | "melt";

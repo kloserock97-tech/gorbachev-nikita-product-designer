@@ -4,7 +4,7 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { fbm, heightAt, makeRng, normalAt } from "./terrain";
 import { loadHdri } from "./hdri";
 import { createPostFx, type PostFx } from "./postfx";
-import { Hologram, type HologramState } from "./hologram";
+import { Hologram } from "./hologram";
 import { PortfolioScreen } from "./portfolioScreen";
 import { Dog } from "./dog";
 import { Weather, type WeatherKind } from "./weather";
@@ -69,8 +69,6 @@ type TrailPoint = { pos: THREE.Vector3; s: number };
 export type HillSceneOptions = {
   /* ?cam=px,py,pz,tx,ty,tz — зафиксировать камеру (для рендера картинок карточек) */
   fixedCamera?: [number, number, number, number, number, number];
-  /* будет ли играть интро: только тогда реквизит получает срез и каркас голограммы */
-  intro?: boolean;
 };
 
 
@@ -290,7 +288,6 @@ export class HillScene {
   /* ---------------------------- интро --------------------------------- */
 
   private hologram!: Hologram;
-  private ghostMat!: THREE.ShaderMaterial;
   private propBox: THREE.Box3 | null = null;
   private resolveProps!: () => void;
   /* кресло, столик и компьютер загружены и получили каркас голограммы */
@@ -308,19 +305,7 @@ export class HillScene {
     return new THREE.Box3(new THREE.Vector3(-0.5, y, -0.5), new THREE.Vector3(1.0, y + 1.0, 0.5));
   }
 
-  private holoDetached = false;
-  setIntro(s: HologramState & { wave: [number, number, number]; ghost: number }) {
-    this.hologram.set(s);
-    this.renderer.shadowMap.needsUpdate = true;
-    /* интро закончилось: срез больше не нужен — материалы собираются заново без discard */
-    if (s.holo === 0 && s.cut >= 1e3 && this.opts.intro && !this.holoDetached) {
-      this.holoDetached = true;
-      this.hologram.detachProps();
-      this.compileFor(this.scene, this.camera);
-    }
-    this.uniforms.uWave.value.set(s.wave[0], this.reduced ? 0 : s.wave[1], s.wave[2]);
-    this.ghostMat.uniforms.uOpacity.value = 0.05 * s.ghost;
-  }
+
 
   /* точка мира → координаты в окне (CSS px); z > 1 — за камерой */
   worldToClient(v: THREE.Vector3) {
@@ -377,13 +362,13 @@ export class HillScene {
     const tex = new THREE.CanvasTexture(c);
     draw();
     document.fonts?.load("400 430px Lexend").then(draw).catch(() => {});
-    const mat = (this.ghostMat = new THREE.ShaderMaterial({
+    const mat = new THREE.ShaderMaterial({
       vertexShader: ghostVertex,
       fragmentShader: ghostFragment,
       transparent: true,
       depthWrite: false,
       uniforms: { uMap: { value: tex }, uColor: { value: new THREE.Color("#5d5a45") }, uOpacity: { value: 0.05 } },
-    }));
+    });
     const plane = new THREE.Mesh(new THREE.PlaneGeometry(18, 4.5), mat);
     plane.position.set(0, 3.2, -16);
     plane.renderOrder = -5;
@@ -1011,9 +996,7 @@ export class HillScene {
         this.assetsReady++;
         this.renderer.shadowMap.needsUpdate = true;
         this.bakePropShadow(props);
-        this.propBox = this.opts.intro ? this.hologram.attachProps(props) : new THREE.Box3().setFromObject(props);
-        /* компьютер живёт в сцене отдельно от реквизита — голограмме интро его передаём отдельно */
-        if (this.opts.intro && this.pc) this.hologram.attachProps(this.pc);
+        this.propBox = new THREE.Box3().setFromObject(props);
         this.resolveProps();
       });
     });
@@ -1182,8 +1165,7 @@ export class HillScene {
   }
 
   private updateStory(dt: number) {
-    const introOn = this.opts.intro && !this.holoDetached;
-    const target = introOn || this.focusOn ? 0 : this.storyTarget;
+    const target = this.focusOn ? 0 : this.storyTarget;
     /* v43: та же постоянная, что у мягкого колеса на страницах кейсов (ui/smoothScroll.ts) */
     this.storyS += (target - this.storyS) * (1 - Math.exp(-dt * SCROLL_LAMBDA));
     if (Math.abs(target - this.storyS) < 1e-5) this.storyS = target;
@@ -1193,7 +1175,6 @@ export class HillScene {
     this.storyCh2 = c;
     this.storyCh3 = f;
     this.onStory?.(this.storyS);
-    if (introOn) return;
     const t = this.uniforms.uTime.value;
     const fx = this.fx.params;
 
@@ -1259,7 +1240,6 @@ export class HillScene {
         reveal: 24 - 24.3 * k(ramp(s, ...STORY.reveal)),
         net: k(ramp(s, ...STORY.net)),
         walls: k(ramp(s, ...STORY.walls)),
-        cut: 1e3,
       });
     }
     const wu = ramp(s, ...STORY.wave);
@@ -1910,7 +1890,7 @@ export class HillScene {
 
     this.uniforms.uWind.value = (this.reduced ? 0.25 : 1) * this.weather.windScale + this.gustAmount(this.uniforms.uTime.value);
     /* пока играет интро, экспозицией и цветом постобработки управляет оно */
-    this.weather.update(dt, !(this.opts.intro && !this.holoDetached));
+    this.weather.update(dt, true);
     this.updateStory(dt);
 
     const fixed = this.opts.fixedCamera;
@@ -1933,7 +1913,7 @@ export class HillScene {
        22 % времени главного потока на быстром процессоре, на слабом — почти весь бюджет кадра */
     this.uniforms.uPixelWorld.value = (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2)) / Math.max(1, (this.canvasRect.height || window.innerHeight) * this.dpr);
     /* студийный свет и прямоугольник компьютера — по камере этого кадра, иначе фон и рамка отстают на кадр */
-    if (this.storyS > 0 && !(this.opts.intro && !this.holoDetached)) {
+    if (this.storyS > 0) {
       this.syncOverlayCam();
       this.fx.params.overlayCamera = this.overlayCam;
       this.updateStudio();
@@ -1955,14 +1935,14 @@ export class HillScene {
     if (this.assetsReady >= 2) this.resolvePresentation();
     gov?.end();
     if (gov && !gov.asleep) {
-      const idle = this.storyS === 0 && this.focus === 0 && !(this.opts.intro && !this.holoDetached) && !document.hidden;
+      const idle = this.storyS === 0 && this.focus === 0 && !document.hidden;
       const next = gov.poll(this.tier, idle);
       if (next !== null) {
         this.setTier(next, "governor");
         try { localStorage.setItem(this.tierKey(), JSON.stringify({ tier: this.tier, at: Date.now() })); } catch { /* ничего */ }
       }
     }
-    if (!this.storyWarm && this.tierLocked && this.pc && this.assetsReady >= 2 && !(this.opts.intro && !this.holoDetached)) this.warmStory();
+    if (!this.storyWarm && this.tierLocked && this.pc && this.assetsReady >= 2) this.warmStory();
     /* калибровка — после компиляции шейдеров, пока UI ещё проявляется */
     if (!this.tierLocked && this.assetsReady === 2) {
       /* ждём секунду после загрузки кресла и HDRI: PMREM, декодирование Draco и

@@ -15,7 +15,7 @@ import type { PostFx } from "./postfx";
    Всегда: редкие лепестки полевых цветов срываются ветром и летят по потоку. */
 
 export type WeatherKind = "clear" | "cloudy" | "rain" | "dusk";
-export const WEATHER_ORDER: WeatherKind[] = ["clear", "cloudy", "rain", "dusk"];
+const WEATHER_ORDER: WeatherKind[] = ["clear", "cloudy", "rain", "dusk"];
 
 type SkyUniforms = { uZenith: { value: THREE.Color }; uHigh: { value: THREE.Color }; uMid: { value: THREE.Color }; uHorizon: { value: THREE.Color }; uGlow: { value: THREE.Color }; uSunCol: { value: THREE.Color }; uSunDisc: { value: number } };
 type Palette = { zenith: THREE.Color; high: THREE.Color; mid: THREE.Color; horizon: THREE.Color; glow: THREE.Color };
@@ -34,7 +34,7 @@ const FOG_DUSK = new THREE.Color("#a98a86");
 const TMP = new THREE.Color();
 
 /* та же сумма синусоид, что cloudShade в шейдерах */
-export function cloudShadeAt(x: number, z: number, offset: THREE.Vector2, cover: number) {
+function cloudShadeAt(x: number, z: number, offset: THREE.Vector2, cover: number) {
   if (cover < 0.001) return 1;
   const px = x * 0.11 + offset.x, py = z * 0.11 + offset.y;
   const n = 0.5 + 0.22 * Math.sin(px + py * 0.6) + 0.18 * Math.sin(-0.7 * px + 1.3 * py + 1.7)

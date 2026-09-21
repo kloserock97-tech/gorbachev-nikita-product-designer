@@ -1,4 +1,5 @@
 import { getCases } from "../data/cases";
+import { pad2 as pad } from "../lib/format";
 import notes from "../data/notes";
 import { CASES, CHAPTER, CHAPTER2, chapters, dwell, ramp, stickyIndex } from "../scene/story";
 import { applyTimeline, topFor } from "./storyScroll";
@@ -20,7 +21,6 @@ import { onLang, t } from "../i18n";
    вместе со своим положением в ленте. */
 
 const BASE = import.meta.env.BASE_URL;
-const pad = (n: number) => String(n).padStart(2, "0");
 
 type Scene = { onStory?: (p: number) => void };
 
@@ -67,7 +67,7 @@ export function renderCases() {
 }
 
 /** лента под палец: узкий экран или устройство без мыши (планшет в альбомной ориентации тоже) */
-export const swipeMode = () => matchMedia("(max-width: 900px), (pointer: coarse)").matches;
+const swipeMode = () => matchMedia("(max-width: 900px), (pointer: coarse)").matches;
 
 export function initCases(scene: Scene) {
   const root = document.querySelector<HTMLElement>(".cases");

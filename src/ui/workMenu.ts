@@ -1,4 +1,5 @@
 import { getCases, type CaseItem } from "../data/cases";
+import { pad2 as pad } from "../lib/format";
 import { cue } from "../audio/bus";
 import { onLang, t, type Key } from "../i18n";
 
@@ -16,7 +17,6 @@ import { onLang, t, type Key } from "../i18n";
    по диагонали к карточкам. */
 
 const BASE = import.meta.env.BASE_URL;
-const pad = (n: number) => String(n).padStart(2, "0");
 
 type Filter = "all" | "web" | "mobile";
 const FILTERS: Filter[] = ["all", "web", "mobile"];

@@ -11,12 +11,12 @@
    а в совсем низком окне описание прокручивается внутри (is-tight). На телефоне карточка просто растёт, высоту
    кадра под неё считает CSS из --m-open, которую меряем здесь. Стили — hero/note-card.css. */
 import "./hero/note-card.css";
+import { pad2 as pad } from "../lib/format";
 import notes from "../data/notes";
 import { cue } from "../audio/bus";
 import { onLang, t, type Key } from "../i18n";
 
 const BASE = import.meta.env.BASE_URL;
-const pad = (n: number) => String(n).padStart(2, "0");
 const key = (id: string, part: string) => `notes.${id}.${part}` as Key;
 
 export function initFieldNote() {

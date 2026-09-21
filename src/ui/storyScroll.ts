@@ -26,7 +26,7 @@ export function topFor(p: number) {
   const b = storyBounds();
   return p <= 0 ? 0 : b.start + (b.end - b.start) * p;
 }
-export function progressNow() {
+function progressNow() {
   const b = storyBounds();
   return Math.min(1, Math.max(0, (scrollY - b.start) / Math.max(1, b.end - b.start)));
 }

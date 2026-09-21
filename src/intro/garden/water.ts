@@ -1,9 +1,9 @@
 import * as THREE from "three";
+import { smooth } from "../../lib/math";
 import { TILE, rand, seedDelay, meltDelay, topSurface, mossAt, iceAt } from "./surface";
 import { FUR } from "./moss";
 import type { Garden } from "./sheet";
 
-const smooth = (a: number, b: number, x: number) => THREE.MathUtils.smoothstep(x, a, b);
 
 /** Condensation on the bare glass, thickest along the retreating ice; it goes when the moss arrives.
     A little dew stays on the moss itself. Returns the per-frame update. */

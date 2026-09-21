@@ -14,7 +14,7 @@ type Ladder = readonly (readonly [number, number, number, boolean])[];
 /* стоимость ступени относительно верхней: вершины травы ∝ её доле, пиксели ∝ DPR² и MSAA.
    Замер на Intel Arc 140T при DPR 1.51: MSAA 4× — 20 мс, 2× — 15, без — 9 */
 const MSAA = (m: number) => (m >= 4 ? 1 : m >= 2 ? 0.72 : 0.42);
-export const tierCost = ([s, m, b]: readonly [number, number, number, boolean]) => 0.3 * b + 0.7 * s * s * MSAA(m);
+const tierCost = ([s, m, b]: readonly [number, number, number, boolean]) => 0.3 * b + 0.7 * s * s * MSAA(m);
 
 export class QualityGovernor {
   private ext: { TIME_ELAPSED_EXT: number; GPU_DISJOINT_EXT: number } | null;

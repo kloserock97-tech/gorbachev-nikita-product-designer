@@ -79,13 +79,11 @@ function start3d() {
   if (params.get("ui") === "0") body.classList.add("no-ui");
 
   /* Живой сад (docs/nature-loader.md): процедурная сцена растёт во время загрузки.
-     Один раз за сессию; ?intro=1 — всегда, ?intro=0 — никогда, ?ui=0 — тоже без интро.
-     Решается до создания сцены: без интро реквизит не получает срез голограммы. */
+     Один раз за сессию; ?intro=1 — всегда, ?intro=0 — никогда, ?ui=0 — тоже без заставки. */
   const introParam = params.get("intro");
   let seen = false;
   try { seen = sessionStorage.getItem("hill-intro") === "1"; } catch { /* приватный режим */ }
   const withIntro = !location.hash.startsWith("#/work/") && (introParam === "1" || (introParam !== "0" && !seen && params.get("ui") !== "0" && !opts.fixedCamera));
-  opts.intro = false; // Garden replaces the old holographic material cuts.
   const garden = withIntro ? createNatureLoader(() => {
     try { sessionStorage.setItem("hill-intro", "1"); } catch { /* private mode */ }
     scene.paused = body.classList.contains("case-open");

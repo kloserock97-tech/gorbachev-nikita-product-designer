@@ -5,6 +5,7 @@
    v32.1 сравнивали вживую четыре формата (колода, раскрытие, лента, лента с размытым фоном) — Никита выбрал колоду (v33).
    Всё ведёт прогресс главы (как лента кейсов в cases.ts): DOM-трансформы без собственных таймеров. */
 import notes, { type Note } from "../data/notes";
+import { pad2 as pad } from "../lib/format";
 import { cue } from "../audio/bus";
 import { onLang, t, type Key } from "../i18n";
 import { CASES, CHAPTER, CHAPTER2, FOOTER, chapters, dwell, ramp, stickyIndex } from "../scene/story";
@@ -15,7 +16,6 @@ type StoryScene = { onStory?: (p: number) => void };
 export type ShelfFormat = "stack" | "strip";
 
 const BASE = import.meta.env.BASE_URL;
-const pad = (n: number) => String(n).padStart(2, "0");
 const key = (id: string, part: string) => `notes.${id}.${part}` as Key;
 const ease = (x: number) => x * x * (3 - 2 * x);
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -23,7 +23,7 @@ const calm = reduced || !!(navigator as Navigator & { connection?: { saveData?: 
 const narrow = () => matchMedia("(max-width: 900px)").matches;
 
 /** колода; на телефоне — лента */
-export function shelfFormat(): ShelfFormat {
+function shelfFormat(): ShelfFormat {
   return narrow() ? "strip" : "stack";
 }
 

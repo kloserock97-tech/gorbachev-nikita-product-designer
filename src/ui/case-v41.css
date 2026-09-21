@@ -132,7 +132,6 @@ body.lang-ru .cs-lead { font-weight: 400; letter-spacing: -0.024em; }
 .cs-refusals li { position: relative; padding: 18px 20px 18px 50px; border-radius: 20px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); font-size: 14.5px; font-weight: 300; line-height: 1.55; }
 .cs-refusals li::before { content: ""; position: absolute; left: 20px; top: 22px; width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px #b0543a; background: linear-gradient(45deg, transparent 45%, #b0543a 45% 55%, transparent 55%); }
 
-
 /* ── исследование ─────────────────────────────────────────────────────────── */
 .cs-methods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .cs-method { display: grid; align-content: start; gap: 14px; padding: 26px; border-radius: 24px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); transition: box-shadow 0.35s var(--ease), translate 0.35s var(--ease); }

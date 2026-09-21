@@ -54,7 +54,7 @@ export function onLang(cb: (l: Lang) => void) {
 }
 
 /** подставить строки в готовую разметку */
-export function applyStatic(root: ParentNode = document) {
+function applyStatic(root: ParentNode = document) {
   const put = (attr: string, fn: (el: HTMLElement, s: string) => void) => {
     root.querySelectorAll<HTMLElement>(`[${attr}]`).forEach((el) => {
       const key = el.getAttribute(attr) as Key;

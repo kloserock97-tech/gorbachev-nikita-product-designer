@@ -2,9 +2,9 @@
    три своих графических проекта Никиты, у каждого живая демонстрация с панелью настроек и код.
    Тексты — в словарях (i18n/en.ts, ru.ts) под ключами notes.<id>.*; здесь только то, что от языка
    не зависит. Все проекты опубликованы: код на github.com/kloserock97-tech, демо на GitHub Pages. */
-export type NoteLinks = { demo: string; repo: string };
+type NoteLinks = { demo: string; repo: string };
 /** зацикленное превью: webm для Chrome и Firefox, mp4 для Safari; постер — первый кадр ролика */
-export type NoteVideo = { webm: string; mp4: string };
+type NoteVideo = { webm: string; mp4: string };
 /** meta — стек и год строкой под заголовком описания (от языка не зависит);
     glyph — свой штриховой значок проекта: содержимое svg с viewBox 0 0 64 64 (v58) */
 export type Note = { id: "hill" | "drift" | "sail" | "meadow"; image: string; points: number; meta: string; glyph: string; links?: NoteLinks; video?: NoteVideo };

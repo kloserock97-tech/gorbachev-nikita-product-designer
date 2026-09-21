@@ -1,4 +1,5 @@
 import { setCueImpl, type Cue } from "./bus";
+import { clamp01, ramp } from "../lib/math";
 
 /* Звук холма (docs/prompts/sound.md). Грузится отдельным чанком только когда человек включил звук.
 
@@ -22,8 +23,6 @@ export type SoundState = {
   focus: boolean; // камера у экрана компьютера
 };
 
-const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
-const ramp = (x: number, a: number, b: number) => clamp01((x - a) / (b - a));
 
 export function createAmbient(ctx: AudioContext) {
   const now = () => ctx.currentTime;

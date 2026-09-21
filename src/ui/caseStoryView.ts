@@ -6,6 +6,7 @@
    привязанные к решениям), stack (веер телефонов), bento (сетка с лайтбоксом).
    caseView.ts решает, есть ли рассказ, и зовёт renderStory/mountStory. */
 import type { CaseStory, Gallery, Decision, CaseImage, Method } from "../data/caseStory";
+import { pad2 as pad } from "../lib/format";
 import type { CaseTrack, TrackPart } from "../data/caseTracks";
 import { getCases } from "../data/cases";
 import { t } from "../i18n";
@@ -16,7 +17,6 @@ import "./case-v41.css";
 
 const BASE = import.meta.env.BASE_URL;
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-const pad = (x: number) => String(x).padStart(2, "0");
 const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const arrow = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8.5 7H17v8.5"/></svg>`;
 

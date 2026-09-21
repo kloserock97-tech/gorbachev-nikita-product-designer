@@ -5,7 +5,7 @@ export const TILE = { width: 3.05, depth: 3.25, modelHeight: 1.5, thickness: .42
 export const rand = (n: number) => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
 
 /** Order in which the moss takes the slab: small in the warm corner (+x, +z), .70 in the far, cold one. */
-export const delayAt = (x: number, z: number) => Math.min(.70, Math.max(.025,
+const delayAt = (x: number, z: number) => Math.min(.70, Math.max(.025,
   Math.hypot((x - 1.15) * .8, z - 1.1) / 4.5 + Math.sin(x * 5 + z * 3) * .035));
 export const GARDEN_DELAY_GLSL = "clamp(length(vec2((x-1.15)*.8,z-1.1))/4.5+sin(x*5.+z*3.)*.035,.025,.70)";
 
@@ -51,7 +51,7 @@ export function anchorAt(x: number, z: number): Anchor {
 
 const hash = (i: number, j: number) => rand(i * 157.31 + j * 311.7 + .5);
 const ease = (t: number) => t * t * (3 - 2 * t);
-export function noise(x: number, z: number) {
+function noise(x: number, z: number) {
   const i = Math.floor(x), j = Math.floor(z), u = ease(x - i), v = ease(z - j);
   return (hash(i, j) * (1 - u) + hash(i + 1, j) * u) * (1 - v) + (hash(i, j + 1) * (1 - u) + hash(i + 1, j + 1) * u) * v;
 }

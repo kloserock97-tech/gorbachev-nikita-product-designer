@@ -341,21 +341,21 @@ body {
 }
 .work-menu__note { margin: 0; font-size: 15px; font-weight: 300; color: var(--wm-soft); }
 .work-menu__actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.work-menu__pc, .work-menu__all {
+.work-menu__all {
   height: 46px; padding: 0 20px; border-radius: 999px; cursor: pointer;
   font: 400 15px/1 Lexend, Manrope, "Segoe UI", sans-serif;
   transition: background 0.2s ease-out, color 0.2s ease-out, border-color 0.2s ease-out;
 }
-.work-menu__pc { border: 1px solid rgba(255, 255, 255, 0.14); background: transparent; color: var(--wm-soft); }
+
 .work-menu__all { border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.06); color: var(--wm-ink); }
-.work-menu__pc:focus-visible, .work-menu__all:focus-visible { outline: 2px solid var(--wm-ink); outline-offset: 2px; }
-.work-menu__pc:active, .work-menu__all:active { scale: 0.98; }
+.work-menu__all:focus-visible { outline: 2px solid var(--wm-ink); outline-offset: 2px; }
+.work-menu__all:active { scale: 0.98; }
 
 @media (hover: hover) and (pointer: fine) {
   .work-menu__filter:not(.is-on):hover { color: var(--wm-ink); background: rgba(255, 255, 255, 0.035); }
   .work-menu__card:hover .work-menu__thumb img { scale: 1.05; }
   .work-menu__card:hover .work-menu__go { opacity: 1; scale: 1; }
-  .work-menu__pc:hover { color: var(--wm-ink); border-color: rgba(255, 255, 255, 0.3); }
+
   .work-menu__all:hover { background: #f3f2ec; color: #141613; }
 }
 
@@ -377,7 +377,7 @@ body {
   .work-menu__foot { padding: 12px 4px 2px; margin-top: 12px; }
   .work-menu__note { font-size: 13px; }
   .work-menu__actions { width: 100%; }
-  .work-menu__pc, .work-menu__all { flex: 1; height: 42px; padding: 0 12px; font-size: 13px; }
+  .work-menu__all { flex: 1; height: 42px; padding: 0 12px; font-size: 13px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .work-menu, .work-menu.is-open, .work-menu__grid li { scale: none; translate: none; }
@@ -462,7 +462,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   opacity: 0.001;
   transition: opacity 0.35s ease-in, translate 0.4s cubic-bezier(0.7, 0, 0.84, 0);
 }
-.story-reveal--l { translate: -40px 0; }
+
 .story-reveal--r { translate: 40px 0; }
 .story-on .story-reveal {
   opacity: 1; translate: 0 0;
@@ -543,7 +543,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { .vf-dot { animation: none; } .vf-c { transition: none; } .vf--lock .vf-c { animation: none; } }
 /* интерфейс холма ушёл целиком — его размытый слой не рисуется */
 .story-away .stage { visibility: hidden; }
-.story-on .story-logos-live, .story-on .sf-logos { pointer-events: auto; }
+.story-on .sf-logos { pointer-events: auto; }
 
 /* ===== логотипы компаний — стили .sf-logos с Tilda ===== */
 .sf-logos { display: flex; align-items: center; margin-top: 1.2em; }
@@ -602,7 +602,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   .story-hi { font-size: clamp(36px, 6.4vw, 60px); }
   .story-intro { font-size: clamp(15px, 2.3vw, 21px); max-width: 38em; }
   .story-p { font-size: clamp(14px, 2vw, 18px); max-width: 40em; }
-  .story-reveal--l, .story-reveal--r { translate: 0 20px; }
+  .story-reveal--r { translate: 0 20px; }
 
 }
 @media (prefers-reduced-motion: reduce) {
@@ -957,9 +957,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 /* ── v24: лёгкая версия без 3D (src/ui/lite.ts) ─────────────────────────────
    Та же страница обычной прокруткой: первый экран на постере холма, About на бумаге, сетка кейсов на
    тёмной траве, футер на закатном градиенте. Всё, что управлялось скроллом и сценой, — статично. */
-.lite #scene, .lite .scene-cover, .lite .story, .lite .story-progress, .lite .vf, .lite .kelly-note, .lite .kelly-zzz,
-.lite .pc-tip, .lite .pc-hud, .lite .play-wrap, .lite .stat, .lite .cases-count, .lite .cases-bar, .lite .dock-sound,
-.lite .guides, .lite .work-menu__pc { display: none !important; }
+.lite #scene, .lite .scene-cover, .lite .story, .lite .story-progress, .lite .vf, .lite .kelly-note, .lite .kelly-zzz, .lite .pc-tip, .lite .pc-hud, .lite .play-wrap, .lite .stat, .lite .cases-count, .lite .cases-bar, .lite .guides { display: none !important; }
 .lite .hero {
   position: relative; min-height: 100vh; min-height: 100svh;
   background: #e8e3d3 url("/ui/hill-poster.webp") 50% 62% / cover no-repeat;
@@ -1003,8 +1001,8 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   display: block; padding: clamp(72px, 12vh, 140px) clamp(20px, 4.4vw, 88px);
   background: linear-gradient(180deg, #33402a, #24301f);
 }
-.lite .cases-panel { width: min(1180px, 100%); margin: 0 auto; }
-.lite .cases[data-view="list"] .cases-panel { width: min(920px, 100%); }
+
+
 .lite .case, .lite .cases-head { opacity: 1; translate: none; }
 .lite .site-footer {
   position: relative; inset: auto; z-index: 1; visibility: visible; opacity: 1; translate: none; pointer-events: auto;

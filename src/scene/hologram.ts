@@ -1,14 +1,14 @@
 import * as THREE from "three";
 import { heightAt } from "./terrain";
 
-/* Голограмма «прогрузки локации» для интро (референс — картинки холма в
-   голубой сетке). Три части, все в тот же HDR-буфер сцены поверх травы:
+/* Голограмма «прогрузки локации» (референс — картинки холма в голубой сетке). Делалась для первого интро;
+   с v63 живёт только в скролл-истории: каркас реквизита и нити из неба ушли вместе с тем интро.
+   Две части, обе в тот же HDR-буфер сцены поверх травы:
    · сетка по рельефу чуть над травой: вне «загруженной» зоны тонирует траву
      в тёмную бирюзу и рисует линии; сначала треугольная сеть с узлами, потом
      квадратная;
    · изогнутые стены-экран вокруг сцены: сетка, точки на пересечениях, пакеты
-     и потоки данных;
-   · каркас реквизита выше линии материализации + нити из неба к креслу.
+     и потоки данных.
    Смешивание premultiplied: rgb = тонировка·a + линии, так одна выборка и
    затемняет, и светится. Вне интро группа скрыта — ноль стоимости. */
 
@@ -21,8 +21,6 @@ export type HologramState = {
   net: number;
   /* стены проявляются снизу вверх, 0..1 */
   walls: number;
-  /* высота линии материализации реквизита в мире: ниже — настоящий, выше — каркас */
-  cut: number;
 };
 
 const COLOR = new THREE.Color(0.32, 0.86, 1.25);
@@ -159,58 +157,9 @@ void main(){
 }
 `;
 
-const propVertex = /* glsl */ `
-varying vec3 vW;
-varying vec3 vN;
-void main(){
-  vec4 w = modelMatrix * vec4(position, 1.0);
-  vW = w.xyz;
-  vN = normalize(mat3(modelMatrix) * normal);
-  gl_Position = projectionMatrix * viewMatrix * w;
-}
-`;
-
-const propFragment = /* glsl */ `
-${common}
-uniform float uCut;
-varying vec3 vW;
-varying vec3 vN;
-void main(){
-  float above = smoothstep(uCut - 0.004, uCut + 0.004, vW.y);
-  if (above < 0.01) discard;
-  vec3 v = normalize(cameraPosition - vW);
-  float fres = pow(1.0 - abs(dot(normalize(vN), v)), 2.0);
-  /* каркас: мировая сетка 4 см по трём осям, каждая гаснет там, где идёт вдоль поверхности */
-  vec3 g = abs(fract(vW / 0.04 - 0.5) - 0.5) / max(fwidth(vW / 0.04), vec3(1e-5));
-  vec3 l = 1.0 - clamp(g / 1.0, 0.0, 1.0);
-  vec3 an = abs(normalize(vN));
-  float wire = max(max(l.x * (1.0 - an.x), l.y * (1.0 - an.y)), l.z * (1.0 - an.z));
-  float band = exp(-pow((vW.y - uCut) / 0.012, 2.0)) * 3.0;
-  vec3 lit = uColor * (wire * 0.9 + fres * 0.8 + 0.06 + band);
-  float a = 0.35 * above;
-  gl_FragColor = vec4((vec3(0.02, 0.06, 0.08) * a + lit * above) * uHolo, a * uHolo);
-}
-`;
-
-const threadFragment = /* glsl */ `
-uniform float uHolo;
-uniform vec3 uColor;
-varying float vY;
-void main(){
-  gl_FragColor = vec4(uColor * 0.5 * (1.0 - smoothstep(4.0, 12.0, vY)) * uHolo, 0.0);
-}
-`;
-const threadVertex = /* glsl */ `
-varying float vY;
-void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vY = w.y; gl_Position = projectionMatrix * viewMatrix * w; }
-`;
-
 export class Hologram {
   readonly group = new THREE.Group();
   private uniforms: Record<string, THREE.IUniform>;
-  private propMat: THREE.ShaderMaterial;
-  /* материалы реквизита, которым добавлен срез материализации */
-  private cutUniform = { value: 1e3 };
 
   constructor(shared: { uTime: THREE.IUniform; uWave: THREE.IUniform }) {
     this.uniforms = {
@@ -221,7 +170,6 @@ export class Hologram {
       uReveal: { value: 0 },
       uNet: { value: 1 },
       uWalls: { value: 0 },
-      uCut: this.cutUniform,
     };
     const premult = {
       transparent: true,
@@ -250,99 +198,16 @@ export class Hologram {
     walls.renderOrder = 3;
     walls.frustumCulled = false;
 
-    this.propMat = new THREE.ShaderMaterial({ ...premult, vertexShader: propVertex, fragmentShader: propFragment, uniforms: this.uniforms, side: THREE.DoubleSide });
-
     this.group.add(walls, ground);
     this.group.visible = false;
-  }
-
-  /* каркас поверх реквизита и срез материализации в его настоящих материалах */
-  attachProps(props: THREE.Object3D) {
-    props.updateMatrixWorld(true);
-    const box = new THREE.Box3().setFromObject(props);
-    props.traverse((o) => {
-      const mesh = o as THREE.Mesh;
-      if (!mesh.isMesh || mesh.userData.holo) return;
-      const ghost = new THREE.Mesh(mesh.geometry, this.propMat);
-      ghost.userData.holo = true;
-      ghost.renderOrder = 6;
-      ghost.visible = this.group.visible;
-      mesh.add(ghost);
-      this.ghosts.push(ghost);
-      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-      /* свои ShaderMaterial (экран компьютера) не патчим — прячем меш целиком, пока срез ниже него */
-      if (mats.some((m) => (m as THREE.ShaderMaterial).isShaderMaterial)) {
-        this.uncut.push({ mesh, minY: new THREE.Box3().setFromObject(mesh).min.y });
-        return;
-      }
-      for (const m of mats) this.addCut(m);
-    });
-    /* нити из неба к креслу, как тонкие вертикали на референсе */
-    if (!this.threads) {
-      const pts: number[] = [];
-      const c = box.getCenter(new THREE.Vector3());
-      for (const [dx, dz] of [[-0.35, 0.1], [0.3, -0.15], [0.85, 0.05]]) pts.push(c.x + dx, box.max.y - 0.1, c.z + dz, c.x + dx, 14, c.z + dz);
-      const g = new THREE.BufferGeometry();
-      g.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
-      this.threads = new THREE.LineSegments(g, new THREE.ShaderMaterial({
-        transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-        vertexShader: threadVertex, fragmentShader: threadFragment, uniforms: this.uniforms,
-      }));
-      this.threads.frustumCulled = false;
-      this.group.add(this.threads);
-    }
-    return box;
-  }
-
-  private ghosts: THREE.Mesh[] = [];
-  private uncut: { mesh: THREE.Mesh; minY: number }[] = [];
-  private threads?: THREE.LineSegments;
-  private cutMaterials = new Set<THREE.Material>();
-  private originalCompile = new Map<THREE.Material, THREE.Material["onBeforeCompile"]>();
-
-  /* После интро срез больше не нужен, а discard в шейдере отключает раннюю проверку глубины
-     у реквизита на всю сессию. Возвращаем материалам исходную сборку и убираем каркас. */
-  detachProps() {
-    for (const [m, prev] of this.originalCompile) {
-      m.onBeforeCompile = prev;
-      m.needsUpdate = true;
-    }
-    this.originalCompile.clear();
-    this.cutMaterials.clear();
-    for (const g of this.ghosts) g.removeFromParent();
-    this.ghosts = [];
-    for (const u of this.uncut) u.mesh.visible = true;
-    this.uncut = [];
-  }
-
-  private addCut(m: THREE.Material) {
-    if (this.cutMaterials.has(m)) return;
-    this.cutMaterials.add(m);
-    const cut = this.cutUniform;
-    const prev = m.onBeforeCompile;
-    this.originalCompile.set(m, prev);
-    m.onBeforeCompile = (shader, renderer) => {
-      prev?.call(m, shader, renderer);
-      shader.uniforms.uHoloCut = cut;
-      shader.vertexShader = shader.vertexShader
-        .replace("#include <common>", "#include <common>\nvarying float vHoloY;")
-        .replace("#include <project_vertex>", "#include <project_vertex>\nvHoloY = (modelMatrix * vec4(transformed, 1.0)).y;");
-      shader.fragmentShader = shader.fragmentShader
-        .replace("#include <common>", "#include <common>\nvarying float vHoloY;\nuniform float uHoloCut;")
-        .replace("void main() {", "void main() {\n  if (vHoloY > uHoloCut) discard;");
-    };
-    m.needsUpdate = true;
   }
 
   set(s: HologramState) {
     const on = s.holo > 0.001;
     this.group.visible = on;
-    for (const g of this.ghosts) g.visible = on;
     this.uniforms.uHolo.value = s.holo;
     this.uniforms.uReveal.value = s.reveal;
     this.uniforms.uNet.value = s.net;
     this.uniforms.uWalls.value = s.walls;
-    this.cutUniform.value = s.cut;
-    for (const u of this.uncut) u.mesh.visible = s.cut > u.minY + 0.02;
   }
 }

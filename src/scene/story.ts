@@ -1,3 +1,4 @@
+import { clamp01, ramp } from "../lib/math";
 import * as THREE from "three";
 
 /* Скролл-история (docs/prompts/scroll.md): прогресс p 0…1 → поза компьютера и эффекты.
@@ -201,8 +202,8 @@ export function storyCamera(s: number, rest: THREE.Vector3, restLook: THREE.Vect
   look.copy(restLook).add(tmpA.lerpVectors(LOOK_OFF[seg], LOOK_OFF[seg + 1], k));
 }
 
-export const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
-export const ramp = (x: number, a: number, b: number) => clamp01((x - a) / (b - a));
+/* ramp нужен почти всем, кто читает эту раскладку, поэтому отдаётся и отсюда */
+export { ramp };
 const smoother = (x: number) => x * x * x * (x * (x * 6 - 15) + 10);
 /** трапеция: 0 до a, 1 от b до c, 0 после d (со сглаживанием) */
 export const trap = (x: number, a: number, b: number, c: number, d: number) => {

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { clamp01 } from "../lib/math";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { heightAt } from "./terrain";
 import { createUmbrellaHat, type UmbrellaHat } from "./umbrellaHat";
@@ -43,7 +44,6 @@ type Pose = Map<string, { q: THREE.Quaternion; p: THREE.Vector3 }>;
 export type DogState = { rain: boolean; sleep: boolean };
 
 const easeOutBack = (x: number) => { const c = 1.6; return 1 + (c + 1) * (x - 1) ** 3 + c * (x - 1) ** 2; };
-const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
 export class Dog {
   readonly group = new THREE.Group();

@@ -38,8 +38,6 @@ const DEMOS: Record<string, { markup: () => string; play: (root: HTMLElement, ru
   "moderator-dashboard": { markup: moderatorMarkup, play: moderatorPlay },
 };
 
-export const hasDemo = (id: string) => id in DEMOS;
-
 /** разметка блока с демо для кейса (или пустая строка) */
 export function demoBlock(id: string) {
   const d = DEMOS[id];
