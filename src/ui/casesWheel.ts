@@ -182,8 +182,11 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
     objs.forEach((o, i) => {
       const d = i - drum;
       const ad = Math.abs(d);
-      if (ad > 1) { o.style.visibility = "hidden"; return; }
-      o.style.visibility = "visible";
+      /* v69: дальние предметы прячет класс, а не инлайновый visibility. Инлайн отменял и скрытие
+         всего слоя (.cases выключена через visibility: hidden), из-за чего невидимые боксы
+         перехватывали клики по первому экрану — погоду, «позвать ветер» и статистику травы */
+      o.classList.toggle("is-far", ad > 1);
+      if (ad > 1) return;
       o.style.opacity = clamp(1 - ad * 1.45, 0, 1).toFixed(3);
       o.style.transform = reduced ? "none" : `translate3d(${(d * 6).toFixed(2)}%, ${(d * 96).toFixed(2)}%, 0) rotate(${(d * -7).toFixed(2)}deg) scale(${(1 - ad * 0.12).toFixed(3)})`;
     });
