@@ -63,9 +63,10 @@ const stage = (g: CaseImage) =>
 const fig = (g: CaseImage, cls = "") =>
   `<figure class="cs-fig cs-fig--inline ${cls}">${stage(g)}<figcaption>${runIn(g.caption)}</figcaption></figure>`;
 
-/** v68: фотография-разделитель между главами. Не интерфейс, а воздух: подпись уходит в alt, не на экран */
-const interlude = (g: CaseImage) =>
-  `<div class="cs-interlude" data-reveal aria-hidden="true"><img src="${BASE}${g.src}" alt="" width="${g.w}" height="${g.h}" loading="lazy" decoding="async" draggable="false"></div>`;
+/* v68: картинка-разделитель между главами. Не интерфейс, а воздух: подпись уходит в alt, не на экран.
+   Фирменные материалы — это продуманные композиции, им полоса нужна выше, иначе от кадра остаётся обрезок. */
+const interlude = (g: CaseImage, focus = "50% 47%") =>
+  `<div class="cs-interlude cs-interlude--${esc(g.kind)}" data-reveal aria-hidden="true" style="--focus:${esc(focus)}"><img src="${BASE}${g.src}" alt="" width="${g.w}" height="${g.h}" loading="lazy" decoding="async" draggable="false"></div>`;
 
 /* ── куски ─────────────────────────────────────────────────────────────────── */
 const SEC_ICON: Record<string, IconName> = { brief: "brief", context: "context", approach: "approach", research: "research", flow: "flow", decisions: "decisions", split: "split", mistakes: "mistakes", results: "results", screens: "screens", roadmap: "roadmap", takeaways: "takeaways" };
@@ -202,9 +203,7 @@ const gallery = (g: Gallery, k: number) => {
 
 /* ── оглавление ───────────────────────────────────────────────────────────── */
 export function sectionsOf(s: CaseStory): Section[] {
-  const list: Section[] = [{ id: "brief", label: t("cs.brief") }];
-  if (s.identity) list.push({ id: "identity", label: t("cs.identity") });
-  list.push({ id: "context", label: t("cs.context") });
+  const list: Section[] = [{ id: "brief", label: t("cs.brief") }, { id: "context", label: t("cs.context") }];
   if (s.approach) list.push({ id: "approach", label: t("cs.approach") });
   list.push({ id: "research", label: t("cs.research") });
   if (s.flow) list.push({ id: "flow", label: t("cs.flow") });
@@ -234,7 +233,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
   const ap = s.approach;
   const r = s.research;
   /** фото-разделитель встаёт после названной главы, если он у кейса есть */
-  const brk = (after: string) => (s.interlude?.after === after ? interlude(s.interlude.image) : "");
+  const brk = (after: string) => (s.interludes ?? []).filter((x) => x.after === after).map((x) => interlude(x.image, x.focus)).join("");
   const html = `
   <article class="cs" data-case="${esc(s.id)}" style="${lookVars(card, "mono")}">
     <div class="cs-top">
@@ -270,13 +269,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           <p class="cs-summary" data-reveal>${runIn(s.hero.summary)}</p>
         </section>
 
-        ${s.identity ? `<section class="cs-sec">
-          ${head(++sec, "identity", t("cs.identity"), s.identity.lead)}
-          <div class="cs-identity">${s.identity.images.map((g, k) => `<figure class="cs-ident" data-reveal style="--rd:${k}">
-            <span class="cs-ident-media cs-ident-media--${esc(g.kind)}"><img src="${BASE}${esc(g.src)}" alt="${esc(g.caption)}" width="${g.w}" height="${g.h}" loading="lazy" decoding="async" draggable="false"></span>
-            <figcaption>${runIn(g.caption)}</figcaption>
-          </figure>`).join("")}</div>
-        </section>` : ""}
+        ${brk("brief")}
 
         <section class="cs-sec">
           ${head(++sec, "context", t("cs.context"), ctx.lead)}

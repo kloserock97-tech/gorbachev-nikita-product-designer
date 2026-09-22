@@ -76,7 +76,8 @@ The MIT License (three.js, Hash without Sine):
 
 Apache License 2.0 (Draco, Khronos PBR Neutral): https://www.apache.org/licenses/LICENSE-2.0
 
-Case preview brand marks (public/cases/brands):
+Case preview brand marks (public/cases/brands) and the GRIF brand material inside its case
+(public/cases/grif-ai/brand-*.webp: cover, key visual, product mark):
   GRIF, Community and Stop Spam: exact exports from the designer-provided Figma files.
   Sberbank: original SVG, author Sberbank, retrieved via Wikimedia Commons:
   https://commons.wikimedia.org/wiki/File:Logo_Sberbank.svg

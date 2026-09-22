@@ -29,6 +29,10 @@ const params = new URLSearchParams(location.search);
 const body = document.body;
 /* объявлено до запуска: start3d() вызывается ниже по файлу раньше, чем выполнились бы объявления после него */
 let liteTracking: (() => void) | null = null;
+/* v69: сцена появляется позже страницы кейса, поэтому пауза ставится через ссылку, а не прямо в замыкании */
+type CaseView = ReturnType<typeof initCaseView>;
+let scene3d: HillScene | null = null;
+const pauseForCase = (open: boolean) => { if (scene3d) scene3d.paused = open; };
 
 /* v27: язык страницы (?lang=ru, сохранённый выбор или язык браузера) — до того, как модули соберут
    свою разметку; переключатель стоит в доке */
@@ -38,13 +42,38 @@ initI18n();
    слишком медленным (нагрузочный прогон: SwiftShader 0.2 fps, без WebGL — исключение и пустой экран) */
 const lite = liteReason(params);
 if (lite) startLite(lite);
-else {
+/* v69: открыли прямой ссылкой на кейс — страница кейса собирается первой, холм поднимается после неё */
+else if (location.hash.startsWith("#/work/")) startCaseFirst();
+else boot3d();
+
+function boot3d(caseView?: CaseView) {
   try {
-    start3d();
+    start3d(caseView);
   } catch (e) {
     console.warn("3D не запустилось — лёгкая версия", e);
     startLite("error");
   }
+}
+
+/* Ссылка в отклике ведёт не на главную, а на конкретный кейс, и у смотрящего полторы минуты на всё портфолио.
+   Страница кейса — обычный HTML с картинками, ей 3D не нужно, но раньше она ждала, пока поднимется сцена:
+   на среднем ноутбуке заголовок кейса появлялся через 17 секунд вместо двух. Теперь сцена стартует после того,
+   как страница кейса оказалась на экране, — в первом же простое, чтобы не мешать чтению.
+   Порог держит tools/case-entry-test.mjs. */
+function startCaseFirst() {
+  const view = initCaseView({ onToggle: pauseForCase });
+  let booted = false;
+  const boot = () => { if (!booted) { booted = true; boot3d(view); } };
+  const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback
+    ?? ((cb: () => void) => window.setTimeout(cb, 1));
+  const wait = () => {
+    if (booted) return;
+    if (body.classList.contains("case-open")) idle(boot, { timeout: 1200 });
+    else requestAnimationFrame(wait);
+  };
+  requestAnimationFrame(wait);
+  /* кейс так и не открылся — опечатка в адресе или тексты не приехали: холм всё равно нужен */
+  setTimeout(boot, 4000);
 }
 
 function startLite(reason: string) {
@@ -73,7 +102,7 @@ function startLite(reason: string) {
   ui.ready();
 }
 
-function start3d() {
+function start3d(caseView?: CaseView) {
   const opts: HillSceneOptions = {};
   const cam = params.get("cam")?.split(",").map(Number);
   if (cam?.length === 6 && cam.every(Number.isFinite)) opts.fixedCamera = cam as HillSceneOptions["fixedCamera"];
@@ -95,6 +124,7 @@ function start3d() {
   let scene: HillScene;
   try { scene = new HillScene(canvas, opts); }
   catch (error) { garden?.dispose(); throw error; }
+  scene3d = scene;
 
   /* Погода: клик по «Weather» в углу перебирает ясно → облака → дождь → сумерки */
   const weatherLabel = (k: typeof scene.weatherKind) => t(`weather.${k}` as "weather.clear");
@@ -133,7 +163,9 @@ function start3d() {
   initSound(scene);
   initFooter({ go: (to) => (to === "cases" ? story?.toCases() : to === "about" ? story?.toAbout() : story?.toTop()) });
   /* v26: страница кейса поверх сцены — пока открыта, сцена кадры не рисует */
-  initCaseView({ onToggle: (open) => (scene.paused = open) });
+  /* v69: при входе по прямой ссылке страница кейса собрана до сцены — берём её, а не делаем вторую */
+  if (caseView) scene.paused = caseView.isOpen;
+  else initCaseView({ onToggle: pauseForCase });
 
   const blades = document.querySelector("[data-stat='blades']");
   const showBlades = () => { if (blades) blades.textContent = t("stat.blades.value", { n: Math.round(scene.blades / 1000) }); };

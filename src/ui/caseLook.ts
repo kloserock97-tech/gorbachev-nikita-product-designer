@@ -15,7 +15,9 @@ export type LookTone = "color" | "mono";
 export const lookVars = (c: CaseItem, tone: LookTone = "color") => {
   const { object: o } = c.look;
   const { stage, ink, accent } = tone === "mono" ? MONO : c.look;
-  return `--s1:${stage[0]};--s2:${stage[1]};--ink:${ink};--accent:${accent};--ow:${pct(o.w)};--ox:${pct(o.x)};--oy:${pct(o.y)};--oar:${o.ratio.toFixed(4)}`;
+  /* фирменная подложка — только в цветном виде: на странице кейса всё графитовое, и картинка там спорила бы */
+  const back = tone === "color" && c.look.backdrop ? `;--backdrop:url("${BASE}${c.look.backdrop}")` : "";
+  return `--s1:${stage[0]};--s2:${stage[1]};--ink:${ink};--accent:${accent};--ow:${pct(o.w)};--ox:${pct(o.x)};--oy:${pct(o.y)};--oar:${o.ratio.toFixed(4)}${back}`;
 };
 
 /** предмет кейса: avif, для старых браузеров webp. Размеры нужны, чтобы место под картинку было известно заранее */

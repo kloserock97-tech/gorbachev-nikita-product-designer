@@ -31,6 +31,7 @@ import { goArrow, lookVars, objectPicture } from "./caseLook";
 import { tidy } from "../lib/typograph";
 import "./cases-wheel.css";
 import { consumeReviewJump } from "./casesReview";
+import { createCardPreview, type CardPreview } from "./casesCardPreview";
 
 type Scene = { onStory?: (p: number) => void };
 export type WheelGl = { set(active: number, pointerX: number, pointerY: number): void; resize(): void; dispose(): void };
@@ -39,18 +40,22 @@ const esc = (s: string) => tidy(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const chevron = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>`;
 
-export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boolean | "auto" } = {}) {
+export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boolean | "auto"; preview?: "object" | "card" } = {}) {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let list = getCases();
   const n = list.length;
+  /* v70: слева от дуги — карточка кейса (casesCardPreview.ts). Прежний вырезанный предмет остался
+     по ?cases=wheel: Никита сказал, что 3D-объекты сделаны плохо, и на главной их больше нет. */
+  const asCard = opts.preview !== "object";
   root.dataset.mode = "wheel";
+  root.dataset.preview = asCard ? "card" : "object";
 
   const wrap = document.createElement("div");
   wrap.className = "cw";
   wrap.innerHTML = `
     <div class="cw-preview">
       <div class="cw-stage">
-        <div class="cw-objs">${list.map((c) => `<div class="cw-objbox" style="${lookVars(c)}">${objectPicture(c, "cw-obj", true)}</div>`).join("")}</div>
+        ${asCard ? "" : `<div class="cw-objs">${list.map((c) => `<div class="cw-objbox" style="${lookVars(c)}">${objectPicture(c, "cw-obj", true)}</div>`).join("")}</div>`}
       </div>
       <div class="cw-info" aria-live="polite">
         <p class="cw-tag"></p>
@@ -70,6 +75,7 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
   root.insertBefore(wrap, root.querySelector(".cases-foot"));
 
   const stage = wrap.querySelector<HTMLElement>(".cw-stage")!;
+  const card: CardPreview | null = asCard ? createCardPreview(stage, getCases) : null;
   const objs = [...wrap.querySelectorAll<HTMLElement>(".cw-objbox")];
   const items = [...wrap.querySelectorAll<HTMLAnchorElement>(".cw-item")];
   const info = wrap.querySelector<HTMLElement>(".cw-info")!;
@@ -159,6 +165,7 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
   let lastP = 0;
   const layout = () => {
     measure();
+    card?.layout();
     placeObjects();
     /* один кейс — 0,7 экрана прокрутки: колесо успевает довернуться, текст слева — прочитаться */
     applyTimeline({ narrow: innerWidth <= 900, cases: n, notes: notes.length, step: 0.7 });
@@ -179,6 +186,7 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
      кейс за ~0,4 с. Между кейсами всегда виден один предмет, а смена читается как поворот барабана. */
   let drum = 0, drumTo = 0, drumRaf = 0, drumLast = 0;
   const placeObjects = () => {
+    if (asCard) { card?.drum(drum); return; }
     objs.forEach((o, i) => {
       const d = i - drum;
       const ad = Math.abs(d);
@@ -242,6 +250,8 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
       if (now) now.textContent = pad(idx + 1);
       paintInfo(idx, shown);
       paintSteps();
+      /* спутники разлетаются заново на каждом новом кейсе */
+      if (card) { card.paint(idx); card.live(); }
       turnTo(idx);
     }
     if (bar) bar.style.transform = `scaleX(${(active / Math.max(1, n - 1)).toFixed(4)})`;
@@ -285,22 +295,31 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
   });
   stage.addEventListener("pointerleave", () => { px = 0; py = 0; stage.style.setProperty("--px", "0"); stage.style.setProperty("--py", "0"); gl?.set(drum, 0, 0); });
 
-  /* телефон: колесо листается пальцем вбок */
-  let downX = 0, downY = 0, swiping = false;
-  wheel.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse") return; downX = e.clientX; downY = e.clientY; swiping = true; });
-  wheel.addEventListener("pointerup", (e) => {
-    if (!swiping) return;
-    swiping = false;
-    const dx = e.clientX - downX, dy = e.clientY - downY;
+  /* Свайп по всей главе, не только по дуге: карточка занимает пол-экрана, и жест по ней — первое, что
+     пробуют пальцем. Слушаем именно касания: при жесте по карточке браузер отдаёт указатель ей во
+     владение, и «отпустили» до обёртки не доходит — touchend приходит всегда. */
+  let tx = 0, ty = 0, tSwipe = false;
+  addEventListener("touchstart", (ev) => {
+    const tt = ev.changedTouches[0];
+    if (!shown || !tt || ev.touches.length > 1 || !wrap.contains(tt.target as Node)) { tSwipe = false; return; }
+    tx = tt.clientX; ty = tt.clientY; tSwipe = true;
+  }, { passive: true });
+  addEventListener("touchend", (ev) => {
+    const tt = ev.changedTouches[0];
+    if (!tSwipe || !tt) return;
+    tSwipe = false;
+    const dx = tt.clientX - tx, dy = tt.clientY - ty;
     if (Math.abs(dx) > 34 && Math.abs(dx) > Math.abs(dy) * 1.2) goTo(current + (dx < 0 ? 1 : -1));
-  });
-  wheel.addEventListener("pointercancel", () => (swiping = false));
+  }, { passive: true });
+  addEventListener("touchcancel", () => (tSwipe = false), { passive: true });
 
   const prev = scene.onStory;
   scene.onStory = (p) => {
     prev?.(p);
     lastP = p;
     const { c, f } = chapters(p);
+    /* экраны продукта включаются, когда глава вот-вот покажется: до этого они только утяжеляют старт */
+    if (c > CASES.cardsIn[0] - 0.12) card?.warm();
     const vis = c > CASES.cardsIn[0] && c < CASES.stripOut[1] && f <= 0;
     root.style.setProperty("--leave", ramp(c, ...CASES.stripOut).toFixed(3));
     if (vis !== shown) {
@@ -308,6 +327,9 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
       root.classList.toggle("is-on", vis);
       root.setAttribute("aria-hidden", String(!vis));
       steps.forEach((b) => (b.tabIndex = vis ? 0 : -1));
+      card?.reach(vis);
+      /* глава показалась — спутники разлетаются; ушла — собираются обратно */
+      if (vis) card?.live(); else card?.calm();
       lastKey = "";
     }
     if (!vis) return;
@@ -323,7 +345,7 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
   if (consumeReviewJump()) requestAnimationFrame(() => scrollTo({ top: topForCase(0), behavior: "instant" as ScrollBehavior }));
 
   /* WebGL по умолчанию — там, где есть мышь: объём предмета раскрывается за курсором. На телефоне хватает картинок */
-  const wantGl = opts.gl === true || (opts.gl === "auto" && matchMedia("(hover: hover) and (pointer: fine)").matches);
+  const wantGl = !asCard && (opts.gl === true || (opts.gl === "auto" && matchMedia("(hover: hover) and (pointer: fine)").matches));
   if (wantGl && !reduced) {
     /* предметы в WebGL: объём по карте глубины и переход шейдером. Если холст не поднялся, остаются картинки */
     void import("./casesWheelGl").then((m) => m.createWheelGl(stage, list)).then((g) => {

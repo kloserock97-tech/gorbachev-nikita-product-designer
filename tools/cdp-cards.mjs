@@ -1,11 +1,11 @@
-/* Переход от карточки к карточке на телефоне: глава «Кейсы» (колесо) и заметки «по вечерам».
+/* Переход от карточки к карточке на телефоне: глава «Кейсы» (разворот) и заметки «по вечерам».
 
    Проверяет две вещи, на которых это ломалось (v68):
    1) Адресная строка. Браузер на телефоне прячет и показывает её на ходу, innerHeight меняется на 50–90 px,
       а страница не сдвигается. Если прогресс истории считать от innerHeight, глава уезжает сама по себе —
       экран моргает, карточка перескакивает, а шаг назад не слушается (прокрутка вверх как раз и вытаскивает
       адресную строку). Здесь innerHeight подменяется так же, как это делает браузер, и положение колеса
-      должно остаться прежним.
+      должно остаться прежним (показатель непрерывный — полоска прогресса главы).
    2) Вариативность. Кроме прокрутки и свайпа должны работать кнопки шага и стрелки на клавиатуре — в обе
       стороны, в обеих главах.
 
@@ -117,7 +117,7 @@ async function chapter(title, at, counter, prevSel, nextSel, swipeSel, swipeDx) 
   ok(n[4] === n[0], `вернулись на ту же карточку: ${path[0]} → ${path[4]}`);
 }
 
-await chapter("глава «Кейсы»", 0.55, ".cases-now", ".cw-step[data-d='-1']", ".cw-step--next", ".cw-wheel", 150);
+await chapter("глава «Кейсы»", 0.55, ".cases-now", ".cw-step[data-d='-1']", ".cw-step--next", ".cw-preview", 150);
 await chapter("заметки «по вечерам»", 0.80, ".shelf-now", ".shelf-step[data-d='-1']", ".shelf-step--next", ".shelf-stage", 220);
 
 console.log("\n── адресная строка телефона ──");
@@ -136,7 +136,7 @@ await setBar(H - BAR); await nudge();
 const during = await wheelAt();
 await setBar(H); await nudge();
 const after = await wheelAt();
-const cards = Math.max(1, (await ev(`document.querySelectorAll(".cw-item").length`)) - 1);
+const cards = Math.max(1, (await ev(`document.querySelectorAll(".cc-card").length`)) - 1);
 const shift = Math.abs(during - before) * cards;
 ok(shift < 0.01, `строка появилась — глава не сдвинулась (сдвиг ${(shift * 100).toFixed(0)}% карточки)`);
 ok(Math.abs(after - before) * cards < 0.01, "строка ушла — глава на прежнем месте");

@@ -68,6 +68,16 @@ export function renderCases() {
   return strip;
 }
 
+/* Число кейсов в шапке и в счётчике — из самих данных. Раньше оно стояло прописью в словарях и разошлось
+   со списком, как только кейсов стало больше: в шапке висело «Кейсы⁰⁵» при семи кейсах. */
+function paintCount(root: HTMLElement) {
+  const n = getCases().length;
+  const sup = root.querySelector(".cases-sup");
+  if (sup) sup.textContent = pad(n);
+  const of_ = root.querySelector(".cases-of");
+  if (of_) of_.textContent = `/ ${pad(n)}`;
+}
+
 /** лента под палец: узкий экран или устройство без мыши (планшет в альбомной ориентации тоже) */
 const swipeMode = () => matchMedia("(max-width: 900px), (pointer: coarse)").matches;
 
@@ -75,6 +85,9 @@ export function initCases(scene: Scene) {
   const root = document.querySelector<HTMLElement>(".cases");
   const strip = renderCases();
   if (!root || !strip) return;
+  /* после смены языка словарь перерисовывает шапку целиком, поэтому число ставим заново */
+  paintCount(root);
+  onLang(() => paintCount(root));
   /* v66: основной вид главы — «колесо» (casesWheel.ts): названия на дуге справа, предмет и текст слева. Никита выбрал
      его из вариантов v65. Прежние виды остались для сравнения: ?cases=ribbon (лента на дуге) и ?cases=deck (стопка) —
      это другая расстановка тех же карточек, она живёт в этом файле. ?cases=wheel2d — колесо без WebGL. */
@@ -82,8 +95,11 @@ export function initCases(scene: Scene) {
   const deck = variant === "deck";
   mountReviewBar(variant);
   if (deck) root.dataset.variant = "deck";
+  /* v70: слева от дуги стоит карточка кейса — светлый лист с экраном продукта и цифрой результата
+     (casesCardPreview.ts). Прежний вырезанный предмет остался по ?cases=wheel для сравнения. */
   if (variant !== "ribbon" && variant !== "deck" && !document.body.classList.contains("lite")) {
-    initCasesWheel(scene, root, { gl: variant === "wheel3d" ? true : variant === "wheel2d" ? false : "auto" });
+    const obj = variant === "wheel" || variant === "wheel2d" || variant === "wheel3d";
+    initCasesWheel(scene, root, { preview: obj ? "object" : "card", gl: variant === "wheel3d" ? true : variant === "wheel2d" ? false : "auto" });
     return;
   }
   const now = root.querySelector<HTMLElement>(".cases-now");

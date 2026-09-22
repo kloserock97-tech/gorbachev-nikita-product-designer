@@ -348,6 +348,14 @@ body {
   border-radius: 14px; overflow: hidden; background: linear-gradient(180deg, var(--s1, #f1f1ee), var(--s2, #dcdcd6));
 }
 .work-menu__thumb { container-type: size; }
+/* v68: у кейса с фирменной обложкой она и стоит фоном карточки — вместо условного градиента виден сам
+   продукт. Обложка притушена и сдвинута вниз: её собственная иконка не должна спорить с предметом кейса */
+.work-menu__thumb {
+  background-image: var(--backdrop, none), linear-gradient(180deg, var(--s1, #f1f1ee), var(--s2, #dcdcd6));
+  background-size: cover; background-position: 50% 78%;
+  /* тёмная обложка на тёмной панели меню теряет края — тонкий кант возвращает карточке границу */
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
 /* v68: экран продукта в рамке — по ней сразу видно, веб это или телефон. Та же композиция, что у героя
    страницы кейса (caseHero.css): устройство уходит за правый край, предмет стоит перед ним слева. */
 .work-menu__dev {

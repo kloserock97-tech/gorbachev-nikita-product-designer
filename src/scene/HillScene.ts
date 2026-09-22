@@ -923,6 +923,14 @@ export class HillScene {
     key.shadow.normalBias = 0.01;
     Object.assign(key.shadow.camera, { left: -1.4, right: 1.4, top: 1.4, bottom: -1.4, near: 1, far: 14 });
     this.scene.add(key, key.target);
+    /* v69: карта теней рисуется по флагу (autoUpdate = false), а флаг раньше вставал только после того,
+       как приехал и разместился компьютер. Реквизит и собака попадают в сцену раньше, и в этом окне
+       материал с receiveShadow рисовался, когда карты ещё нет: в слот sampler2DShadow привязывалась
+       обычная текстура, драйвер отклонял вызов отрисовки (GL_INVALID_OPERATION, mismatch between texture
+       format and sampler type). На быстрой машине это один кадр, при замедленном процессоре — десятки.
+       Просим карту сразу: пустая, но настоящая глубинная текстура закрывает окно навсегда.
+       Держит tools/gl-errors-test.mjs. */
+    this.renderer.shadowMap.needsUpdate = true;
     /* контровой от низкого солнца — золотой кант по раме и подушкам */
     const rim = new THREE.DirectionalLight(new THREE.Color(1.0, 0.72, 0.42), 2.6);
     rim.position.copy(SUN_DIR).multiplyScalar(10).add(new THREE.Vector3(0, top, 0));

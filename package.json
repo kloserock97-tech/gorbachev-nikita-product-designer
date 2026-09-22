@@ -13,7 +13,9 @@
     "deadcode": "npx --yes knip --no-progress",
     "bundle": "node tools/bundle-report.mjs",
     "smoke": "node tools/cdp-touch.mjs --desktop --w 1440 --h 900 --dpr 1 --script tools/touch/smoke.json --url \"http://127.0.0.1:5191/?intro=0&lite=0\" --out shots/smoke --wait 9000",
-    "audit:loader": "node tools/audit-nature-loader.mjs http://127.0.0.1:5191/"
+    "audit:loader": "node tools/audit-nature-loader.mjs http://127.0.0.1:5191/",
+    "test:case-entry": "node tools/case-entry-test.mjs",
+    "test:gl": "node tools/gl-errors-test.mjs"
   },
   "dependencies": {
     "three": "^0.186.0"

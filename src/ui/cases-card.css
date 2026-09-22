@@ -1,0 +1,153 @@
+/* v71: устройство кейса в левой половине главы «Кейсы» — стили к casesCardPreview.ts.
+   Живёт внутри .cw-stage (casesWheel.ts): справа остаётся дуга с названиями, снизу — метка, подзаголовок
+   и кнопка «Смотреть кейс». Сцена объявлена container-type: size, значит cqw и cqh — сотые её ширины и
+   высоты, и вся композиция масштабируется вместе с колонкой. Кегли — в clamp по ширине окна, а не в cqw:
+   в узкой колонке cqw даёт нечитаемо мелкий текст. */
+.cases[data-preview="card"] {
+  --dim: rgba(255, 255, 255, 0.55);
+}
+
+.cc { position: absolute; inset: 0; color: #fff; }
+.cc svg { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── барабан устройств ──────────────────────────────────────────────────── */
+/* Маски у зоны нет: она срезала ноутбуку клавиатурную панель. Уезжающее устройство гасит сама
+   прозрачность (opacity падает втрое быстрее сдвига), поэтому соседнего кейса всё равно не видно. */
+.cc-deck { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: min(58cqw, 88cqh); }
+.cc-drum { position: relative; width: 100%; aspect-ratio: 16 / 14; }
+.cc-dev {
+  position: absolute; inset: 0; display: block; text-decoration: none; pointer-events: auto;
+  /* перспектива нарочно слабая: при 62cqw клавиатурная панель подъезжала почти вплотную к камере
+     и раздувалась вдвое — раньше это прятала маска зоны, а она же срезала панель снизу */
+  perspective: 130cqw; perspective-origin: 50% 40%;
+  transform-origin: 46% 60%; will-change: transform, opacity; -webkit-tap-highlight-color: transparent;
+}
+.cc-dev.is-far { visibility: hidden; } /* дальше соседнего кейса — не видно и не нажать */
+.cc-dev:focus-visible { outline: 2px solid #fff; outline-offset: 6px; border-radius: 8px; }
+
+/* петля: нулевая линия, от которой вверх встаёт крышка, а вниз уходит панель */
+.cc-rig { position: absolute; left: 0; right: 0; bottom: 22%; transform-style: preserve-3d; }
+
+/* ── ноутбук ────────────────────────────────────────────────────────────── */
+/* Крышка вращается вокруг петли: −90° — закрыта и лежит на панели, +6° — раскрыта и чуть отклонена назад.
+   Раскрытие подхвачено из присланного референса с MacBook, но собрано на CSS-3D: ни кадров, ни моделей. */
+.cc-lid {
+  position: absolute; left: 0; right: 0; bottom: 0; aspect-ratio: 16 / 10;
+  transform-origin: 50% 100%; transform-style: preserve-3d;
+  transform: rotateX(calc(-90deg + var(--open, 0) * 96deg));
+  transition: transform 1.05s cubic-bezier(0.22, 1, 0.3, 1);
+  border-radius: 1.6cqw; padding: 0.7cqw 0.7cqw 1.5cqw;
+  background: linear-gradient(160deg, #3a3d42, #1b1d20 46%, #26282c);
+  box-shadow: inset 0 0 0 0.1cqw rgba(255, 255, 255, 0.14);
+}
+.cc-dev.is-open .cc-lid { --open: 1; }
+.cc-screen {
+  position: relative; display: block; width: 100%; height: 100%; overflow: hidden; border-radius: 0.9cqw;
+  background: #05070a; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+}
+.cc-shot {
+  display: block; width: 100%; height: 100%; object-fit: cover; object-position: 0 0;
+  user-select: none; -webkit-user-drag: none;
+  /* экран «загорается» вместе с раскрытием */
+  opacity: 0; transition: opacity 0.6s ease 0.35s;
+}
+.cc-dev.is-open .cc-shot { opacity: 1; }
+/* блик на стекле: косая полоса, она же выдаёт, что это экран, а не картинка */
+.cc-glare {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(118deg, rgba(255, 255, 255, 0.16) 0 22%, transparent 42%);
+}
+.cc-cam { position: absolute; left: 50%; top: 0.2cqw; width: 0.35cqw; height: 0.35cqw; translate: -50% 0; border-radius: 50%; background: #4a4f57; }
+
+/* панель с клавиатурой: уходит от петли к зрителю и сильно сокращается перспективой */
+.cc-base {
+  position: absolute; left: -1.6%; right: -1.6%; top: 0; aspect-ratio: 16 / 11.5;
+  transform-origin: 50% 0; transform: rotateX(79deg);
+  border-radius: 1.2cqw; background: linear-gradient(180deg, #30333a, #1e2024 62%, #2a2d32);
+  box-shadow: inset 0 0 0 0.1cqw rgba(255, 255, 255, 0.12), 0 2cqw 4cqw rgba(0, 0, 0, 0.5);
+}
+.cc-keys {
+  position: absolute; left: 6%; right: 6%; top: 9%; height: 46%; border-radius: 0.5cqw;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.075) 0 4.4%, transparent 4.4% 5.3%),
+    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.075) 0 12%, transparent 12% 14.5%),
+    #14161a;
+}
+.cc-pad { position: absolute; left: 33%; right: 33%; top: 62%; height: 28%; border-radius: 0.5cqw; background: #23262b; box-shadow: inset 0 0 0 0.08cqw rgba(255, 255, 255, 0.1); }
+
+/* ── смартфон ───────────────────────────────────────────────────────────── */
+/* тот же приём: корпус поднимается из лежачего положения, экран загорается */
+.cc-dev--phone .cc-rig { bottom: 2%; }
+.cc-body {
+  position: absolute; left: 50%; bottom: 0; width: 43%; aspect-ratio: 9 / 19.5; translate: -50% 0;
+  transform-origin: 50% 100%; transform: rotateX(calc(74deg - var(--open, 0) * 68deg));
+  transition: transform 1.05s cubic-bezier(0.22, 1, 0.3, 1);
+  border-radius: 3.4cqw / 1.6cqw; padding: 0.42cqw;
+  background: linear-gradient(160deg, #3a3d42, #1b1d20 46%, #26282c);
+  box-shadow: inset 0 0 0 0.09cqw rgba(255, 255, 255, 0.16);
+}
+.cc-dev--phone.is-open .cc-body { --open: 1; }
+.cc-dev--phone .cc-screen { border-radius: 3cqw / 1.3cqw; }
+.cc-dev--phone .cc-shot { object-position: 50% 0; }
+.cc-notch { position: absolute; left: 50%; top: 0.9cqw; width: 26%; height: 0.45cqw; translate: -50% 0; border-radius: 999px; background: #0b0d10; }
+
+/* тень под устройством: она держит его «на земле», когда барабан поворачивается */
+.cc-shadow {
+  position: absolute; left: 14%; right: 14%; bottom: 10%; height: 4.5cqw; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), transparent 78%);
+  filter: blur(0.9cqw); opacity: calc(0.35 + var(--open, 0) * 0.45);
+}
+.cc-shadow--phone { left: 34%; right: 34%; bottom: 4%; height: 3cqw; }
+.cc-dev.is-open .cc-shadow { --open: 1; }
+
+/* ── спутники ───────────────────────────────────────────────────────────── */
+/* знаки нарисованы тёмным по прозрачному и на поле не читались — ставим их на светлую плашку */
+.cc-brand {
+  position: absolute; right: 0; top: 0; display: grid; place-items: center;
+  height: clamp(30px, 2.9vw, 46px); min-width: clamp(30px, 2.9vw, 46px); padding: 0 clamp(8px, 0.8vw, 13px);
+  border-radius: 999px; background: #fbfbf9;
+}
+.cc-brand[hidden] { display: none; }
+.cc-brand-img { height: clamp(15px, 1.5vw, 24px); width: auto; max-width: clamp(58px, 7vw, 100px); object-fit: contain; }
+
+.cc-thermo {
+  position: absolute; right: 2%; top: 47%; display: grid; place-items: center;
+  width: clamp(34px, 3.2vw, 52px); aspect-ratio: 1; border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.32);
+}
+.cc-thermo svg { width: 52%; height: auto; stroke-width: 1.5; }
+
+.cc-stat { position: absolute; right: 0; bottom: 3%; width: 32%; text-align: right; }
+.cc-stat b { display: block; font-size: clamp(24px, 2.5vw, 42px); font-weight: 300; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: lining-nums; }
+.cc-stat span { display: block; margin-top: 7px; font-size: clamp(10.5px, 0.86vw, 14px); color: var(--dim); line-height: 1.3; text-wrap: pretty; }
+
+/* ── разлёт и парение ──────────────────────────────────────────────────────
+   Пока кейс не активен, спутники собраны у устройства и невидимы: --gx и --gy у каждого свои и смотрят
+   в его сторону. Кейс встал активным — они расходятся по местам (transform) и начинают медленно парить
+   (translate). Два разных свойства: если писать оба в transform, анимация затрёт переход. */
+.cc-brand, .cc-thermo, .cc-stat {
+  opacity: 0;
+  transform: translate(calc(var(--gx, 0) * 1.1cqw), calc(var(--gy, 0) * 1.1cqw)) scale(0.94);
+  transition: opacity 0.5s ease var(--fd, 0s), transform 0.9s cubic-bezier(0.18, 0.9, 0.24, 1) var(--fd, 0s);
+}
+.cc.is-live :is(.cc-brand, .cc-thermo, .cc-stat) {
+  opacity: 1; transform: none;
+  animation: cc-float 7s ease-in-out infinite alternate;
+  animation-delay: calc(var(--fd, 0s) + 0.9s);
+}
+@keyframes cc-float { from { translate: 0 5px; } to { translate: 0 -5px; } }
+
+/* ── телефон и планшет под палец ────────────────────────────────────────── */
+.cases.is-narrow .cc-deck { width: min(88cqw, 84cqh); }
+.cases.is-narrow .cc-brand { height: 28px; min-width: 28px; padding: 0 8px; }
+.cases.is-narrow .cc-brand-img { height: 15px; max-width: 62px; }
+.cases.is-narrow .cc-thermo { top: 40%; width: 30px; }
+.cases.is-narrow .cc-stat { width: 38%; }
+.cases.is-narrow .cc-stat b { font-size: 26px; }
+.cases.is-narrow .cc-stat span { font-size: 10.5px; margin-top: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-brand, .cc-thermo, .cc-stat { opacity: 1; transform: none; transition: none; }
+  .cc.is-live :is(.cc-brand, .cc-thermo, .cc-stat) { animation: none; }
+  .cc-lid, .cc-body, .cc-shot { transition: none; }
+}

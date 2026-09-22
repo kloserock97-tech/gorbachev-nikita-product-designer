@@ -21,6 +21,26 @@ Reference principles only; no reference artwork copied into this project.
 
 Generated with the built-in image generation tool, one call per cover. Original PNGs retained locally in assets-src/case-covers (not deployed). WebP delivery assets in public/cases/covers. Logos rendered as independent HTML image layers, not modified by the generator.
 
+## Brand material as chapter dividers (GRIF AI, v68)
+
+The product's own brand pieces — the cover, the key visual and the product mark — are not shown as a gallery of
+their own. They are used where they do work: the cover is the backdrop of the GRIF card in the Work menu
+(`look.backdrop` in `src/data/cases.ts`), the app icon is the mark beside the case title (`look`'s sibling field
+`brand`), and the key visual and the product mark are two of the three chapter dividers.
+
+**Do not ship the Figma SVG exports of these.** They lean on `mix-blend-mode` (color-dodge, hard-light,
+plus-lighter, luminosity) plus `feGaussianBlur` / `feColorMatrix` filter stacks, and a browser composites them
+differently from Figma: the dark blue glass icon came out flat salmon-orange, both inline in the DOM and through
+`<img>`. The colour is not recoverable by tweaking the markup. Ask for PNG exports and re-encode them:
+
+```
+node tools/make-webp.mjs --q 0.78 --batch "Cover.png>public/cases/grif-ai/brand-cover.webp>1080,Visual.png>public/cases/grif-ai/brand-visual.webp>1100"
+```
+
+Sizes after that: cover 3852 KB → 27 KB, key visual 6990 KB → 148 KB, product mark 7710 KB → 157 KB, app icon
+748 KB → 16 KB. Each divider crops to a band, and `interlude.focus` picks which part of the frame survives —
+for the key visual it is set below the chips, so nothing is sliced in half.
+
 ## Chapter divider photo (GRIF AI, v68)
 
 `public/cases/grif-ai/atmosphere.webp` — dark fabric with a narrow band of blue light and a pane of glass.

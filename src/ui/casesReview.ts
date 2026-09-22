@@ -6,8 +6,10 @@ import "./cases-review.css";
 
 const JUMP = "cases-review-jump";
 const VARIANTS: [string, string, string][] = [
-  ["wheel", "Колесо", "Wheel"],
-  ["wheel2d", "Колесо без WebGL", "Wheel, no WebGL"],
+  /* v70: основной вид — дуга с названиями справа и карточка кейса слева; «Предмет» — та же дуга, но слева вырезанный 3D-предмет */
+  ["card", "Карточка", "Card"],
+  ["wheel", "Предмет", "3D object"],
+  ["wheel2d", "Предмет без WebGL", "Object, no WebGL"],
   ["ribbon", "Лента", "Ribbon"],
   ["deck", "Стопка", "Deck"],
 ];
@@ -29,7 +31,7 @@ export function mountReviewBar(current: string | null) {
   const bar = document.createElement("nav");
   bar.className = "cases-review";
   bar.setAttribute("aria-label", ru ? "Варианты главы «Кейсы»" : "Variants of the Work chapter");
-  const known = current === "wheel3d" ? "wheel" : VARIANTS.some(([id]) => id === current) ? current : "wheel";
+  const known = current === "wheel3d" ? "wheel" : VARIANTS.some(([id]) => id === current) ? current : "card";
   bar.innerHTML = `<span class="cases-review__l">${ru ? "Вариант" : "Variant"}</span>` + VARIANTS.map(([id, r, e]) => {
     const url = new URL(location.href);
     url.searchParams.set("cases", id);

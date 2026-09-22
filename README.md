@@ -17,7 +17,7 @@ The first screen is a real-time scene, framed the way a photograph would be: the
 Scrolling drives a three-part story:
 
 1. The hill unloads and the computer lifts off the table, landing on a white page with the About text. The hand-off is the transition from igloo, ported whole: the camera pulls back, a wave runs through the grass, the frame smears in rays from the centre while the colour channels drift apart towards its edges, and a fill climbs from the bottom with a ragged, cloud-like border. A kinetic line of type slows down and becomes the "Hi there!" heading.
-2. The page tears away from the bottom. Behind it the same meadow is blurred and seen from the grass. Case titles stand on an arc on the right and turn with the scroll; on the left the object of the current case floats over the field with no card behind it, and under it the text about the case. The object has no background at all: it is cut out of its render, and on a screen with a mouse it is drawn in WebGL, where a depth map gives it volume and it turns after the cursor. Titles and objects are on two different drums: the titles ride with the scroll like a scale, the objects snap to whole cases, so the object is always whole. Each case opens as its own page inside the site (`#/work/<id>`): a hero stage with the real product screen in a device, then the facts, the problem, the solution, results and what I learned. The case colour, the ink and the accent are the same on the card in the Work menu, on the case page and in the "next case" block.
+2. The page tears away from the bottom. Behind it the same meadow is blurred and seen from the grass. The Work chapter is an editorial spread: a ribbon of large cards rides sideways with the scroll, each holding a real product screen, and the active one sits in the middle. Around it the satellites fly apart and then float — the case number, the platform pill with its switch, a label with the tag, the product mark, the cut-out object on a small tile, and the headline figure from the case’s own results («6 → 0 hand-to-hand transfers»). Under the card: the title, the year and a round button into the case. Scroll, swipe, the step buttons and the arrow keys all move between cases. The old wheel of titles on an arc is still there under `?cases=wheel`. Each case opens as its own page inside the site (`#/work/<id>`): a hero stage with the real product screen in a device, then the facts, the problem, the solution, results and what I learned. The case colour, the ink and the accent are the same on the card in the Work menu, on the case page and in the «next case» block.
 3. The camera returns to the hill at dusk. Fireflies come out, Kelly sleeps curled up in the armchair, and the footer holds the contacts: a mail button, Telegram, LinkedIn and the address itself, which copies when you click it.
 
 The note card on the first screen flips through four of my side projects: [Windcrest](https://github.com/kloserock97-tech/windcrest) (the grass of this hill as a demo of its own), [Driftfield](https://github.com/kloserock97-tech/driftfield) (a particle cloud in a curl-noise field), [Nightsail](https://github.com/kloserock97-tech/nightsail) (a giant marble head surfacing from a night sea under a column of light) and [Meadow Walk](https://github.com/kloserock97-tech/meadow-walk) (an endless flight over a windy meadow). Each has a live demo with every parameter on a panel.
@@ -44,6 +44,8 @@ npm run bundle    # what each built script is made of, by source file
 npm run deadcode  # unused files and exports (knip, fetched on demand)
 npm run smoke     # walk through home, menu, story, cases and a case page in headless Chrome (needs preview on 5191)
 npm run audit:loader  # 17 checks of the loading screen (needs preview on 5191)
+npm run test:case-entry  # a link straight to a case must show its title within 3s on a mid laptop (needs preview on 5191)
+npm run test:gl   # loading the scene on a slow CPU must not produce a single WebGL error (needs preview on 5191)
 ```
 
 Useful URL parameters while developing:
@@ -52,7 +54,7 @@ Useful URL parameters while developing:
 | --- | --- |
 | `?intro=0` / `?intro=1` | skip or force the loading screen |
 | `?garden=0.5` / `?gardentier=0..4` | freeze the loading screen at a growth value; pin its quality step |
-| `?cases=ribbon` / `deck` / `wheel2d` / `wheel3d` | other views of the Work chapter: the old ribbon of cards, a stack, the wheel without WebGL, the wheel with WebGL forced on phones too. Any value shows a small switcher at the bottom |
+| `?cases=wheel` / `wheel2d` / `wheel3d` / `ribbon` / `deck` | other views of the Work chapter: the wheel of titles on an arc (and the same without WebGL, or with it forced on phones), the old ribbon of cards, a stack. Any value shows a small switcher at the bottom |
 | `?story=0.62` | jump to a point of the scroll story (0 to 1) |
 | `?tblur=0.55` / `?taberr=0.03` | strength of the transition’s radial smear and chromatic aberration |
 | `?tier=0` | pin the quality step (the lowest ones drop the god rays) |
@@ -87,7 +89,9 @@ src/
     icons.ts         one icon set in the style of the dock icons
     caseLook.ts      the look of a case (stage colours, object) shared by the card, the menu and the case page
     case-cards.css   the case card; case-story.css — the case page
-    casesWheel.ts    the Work chapter: titles on an arc, the object and the text; casesWheelGl.ts draws the object in WebGL
+    casesWheel.ts    the Work chapter: titles on an arc, the case card and the text
+    casesCardPreview.ts  the card itself: a light sheet with the product screen and the result figure, satellites around it
+    casesWheelGl.ts  the old cut-out object preview, kept behind ?cases=wheel
     hero/            first screen: layout, dock, metal buttons, parallax
   audio/             nature ambience and UI sound cues
   data/              texts and case list; case stories are one file per language, loaded on demand
@@ -124,6 +128,8 @@ The `tools/` scripts drive a headless Chrome over the DevTools protocol:
 - `crop.ps1` crops and enlarges a screenshot region without smoothing, to inspect single pixels.
 - `site-study.mjs` studies somebody else's page for reference: screenshots while scrolling plus the numbers behind the look (the type scale actually used, tracking, line height, tile radii and backgrounds, button sizes). Nothing from the page is stored except numbers and frames for yourself.
 - `audit-nature-loader.mjs` checks the loading screen: growth phases, focus, clean-up, reduced motion, deep links, context loss, frame pace.
+- `case-entry-test.mjs` opens `#/work/<case>` on a cold profile and fails if the case title takes longer than the budget (3s on a mid laptop with CPU ×4, 1.5s on a fast desktop). A link to a case is the most common way in, and the case page must not wait for the hill.
+- `gl-errors-test.mjs` loads the scene with the CPU throttled and fails on any WebGL error, using `pre-gl-errors.js` to ask `getError()` after every draw call. A run where the scene barely rendered counts as void, not as a pass.
 - `unused.mjs` lists dictionary keys, CSS classes and `public/` files that nothing refers to. `bundle-report.mjs` splits every built script by source file through its source map.
 - `lib/chrome.mjs` is the shared Chrome launcher: it frees the debugging port from a browser left by an interrupted run and shuts the browser down on any exit.
 - `?tier=0..8` forces a quality tier and `?edgeaa=0|1` toggles edge anti-aliasing of the final pass.

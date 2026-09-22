@@ -119,7 +119,7 @@ const en = {
   /* экран About */
   "about.hi": "Hi there!",
   "about.marquee": "I’m Nikita, a product designer",
-  "about.intro": "I'm Nikita, a product designer. I make complex services feel simple, both the ones millions of people use and the internal tools tens of thousands of employees open every morning. I also lead a team of designers.",
+  "about.intro": "I'm Nikita, a product designer. I make complex services feel simple, both the ones millions of people use and the internal tools tens of thousands of employees open every morning. Most recently Head of Product Design at Grif AI, and design lead on Sber's internal risk products.",
   "about.p1": "My work mixes product design, systems thinking and AI",
   "about.p2": "Research and product structure come first. Then launch, numbers and growing what works.",
   "about.logos": "Companies I've worked for",
@@ -129,17 +129,18 @@ const en = {
   "about.logo.grif": "Grif AI, 2026",
 
   /* глава «Кейсы» */
-  "cases.kicker": 'Case studies<sup class="cases-sup">05</sup>',
+  /* the number comes from the case list itself (ui/cases.ts): in the dictionary it drifted from the data */
+  "cases.kicker": 'Case studies<sup class="cases-sup"></sup>',
   "cases.meta": "Web, mobile and AI · 2024–2026",
-  "cases.of": "/ 05",
   "cases.cta": "View case",
   "cases.prev": "Previous case",
   "cases.next": "Next case",
+  "cases.project": "Case",
   "cases.swipe": "Swipe sideways",
 
   /* v32: заставка главы «Кейсы» над лугом и заметки после ленты */
   "walk.kicker": "Case studies · 2024–2026",
-  "walk.title": "Five products, from research to launch",
+  "walk.title": "Five shipped products and two concepts",
   "walk.sub": "Internal tools, city services and AI products. Each case tells what was there, what I did and what came of it.",
   "shelf.kicker": "Side projects",
   "shelf.title": "WebGL experiments",
@@ -174,7 +175,6 @@ const en = {
   "cs.myrole": "My role",
   "cs.team": "Working with the team",
   "cs.approach": "Approach",
-  "cs.identity": "Identity",
   "cs.rejected": "Considered and dropped",
   "cs.levels": "How I sliced the problem",
   "cs.rules": "How a trait becomes a rule",
