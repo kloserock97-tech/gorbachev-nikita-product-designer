@@ -599,3 +599,50 @@ body.case-open .lite-bar { opacity: 0; pointer-events: none; }
   .cs-sec > .cs-block:not(.cs-card, .cs-rejected, .cs-nodata, .cs-honesty) > * { grid-column: 2; margin-top: 0; min-width: 0; }
   .cs-sec > .cs-block:not(.cs-card, .cs-rejected, .cs-nodata, .cs-honesty) > .cs-mini { grid-column: 1; grid-row: 1; padding-top: 3px; color: var(--ink); }
 }
+
+/* ── фотография-разделитель между главами (v68) ────────────────────────────
+   Кейс читают скроллом, и длинная страница без пауз утомляет. Полоса во всю ширину колонки — вдох между
+   главами: не иллюстрация к тексту, а смена дыхания, как пустая страница между частями книги.
+   Фото тёмное и не в фокусе, поэтому не спорит с экранами продукта и не тянет внимание на себя.
+   Высота фиксирована и картинка кадрируется по месту: важна полоса, а не композиция снимка. */
+.cs-interlude {
+  position: relative; margin: clamp(28px, 5vh, 56px) 0; border-radius: 24px; overflow: hidden;
+  background: #0b0d11; line-height: 0;
+}
+.cs-interlude img {
+  display: block; width: 100%; height: clamp(200px, 34svh, 340px); object-fit: cover; object-position: 50% 47%;
+  user-select: none;
+}
+/* мягкие края: полоса не выглядит вставленной встык */
+.cs-interlude::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(11, 13, 17, 0.5), transparent 18%, transparent 82%, rgba(11, 13, 17, 0.5));
+}
+@media (max-width: 760px) {
+  .cs-interlude { margin: 26px 0; border-radius: 18px; }
+  .cs-interlude img { height: clamp(150px, 26svh, 220px); }
+}
+
+/* ── знак продукта у заголовка (v68) ───────────────────────────────────────
+   Знаки лежали в public/cases/brands и нигде не показывались. А знак отвечает «что это за продукт» быстрее,
+   чем прочитан заголовок: рекрутёр узнаёт Сбер или Mos.ru с одного взгляда. Высоту задаём здесь, поэтому
+   широкое слово «Сбербанк» и квадратные иконки стоят в ряду одинаково. */
+.cs-brand { display: block; height: 30px; width: auto; max-width: 180px; margin: 0 0 16px; object-fit: contain; object-position: left center; }
+@media (max-width: 760px) { .cs-brand { height: 26px; margin-bottom: 12px; } }
+
+/* ── фирменный слой: знак, обложка, ключевой визуал (v68) ──────────────────
+   Третий вид работы рядом с экранами и процессом: как продукт выглядит там, где его встречают раньше
+   интерфейса — в сторе, на лендинге, в письме. Квадратные материалы ставим в ряд по два; на телефоне в один. */
+.cs-identity { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: clamp(14px, 1.8vw, 26px); }
+.cs-ident { margin: 0; min-width: 0; }
+.cs-ident-media {
+  display: block; overflow: hidden; border-radius: 22px; background: #0e0f12;
+  box-shadow: inset 0 0 0 1px rgba(29, 29, 31, 0.08);
+}
+.cs-ident-media img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; user-select: none; }
+.cs-ident figcaption { padding: 12px 4px 0; font-size: 14px; line-height: 1.45; color: var(--soft); text-wrap: pretty; }
+.cs-ident figcaption .cs-run { color: var(--ink); }
+/* знак (иконка приложения) не должен упираться в края плитки: у него уже есть своя скруглённая форма,
+   и две скруглённые формы встык читаются как ошибка вёрстки */
+.cs-ident-media--mark { background: #16181d; }
+.cs-ident-media--mark img { object-fit: contain; padding: 13%; box-sizing: border-box; }

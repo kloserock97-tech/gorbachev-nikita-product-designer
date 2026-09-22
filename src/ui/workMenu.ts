@@ -2,7 +2,7 @@ import { getCases, type CaseItem } from "../data/cases";
 import { pad2 as pad } from "../lib/format";
 import { cue } from "../audio/bus";
 import { onLang, t, type Key } from "../i18n";
-import { lookVars, objectPicture } from "./caseLook";
+import { lookVars, objectPicture, screenDevice, warmScreens } from "./caseLook";
 
 /* Меню «Кейсы» в доке (v29): большая выпадашка по шаблону «Templates» — слева категории, справа сетка
    кейсов с превью, внизу строка с подписью и кнопками. Категория фильтрует сетку; число рядом с ней —
@@ -48,7 +48,7 @@ export function initWorkMenu(opts: { onOpenComputer?: () => void; onAllCases?: (
         ${all.map((c, i) => `
           <li style="--i:${i}" data-kinds="${kindOf(c).join(" ")}">
             <a class="work-menu__card" href="#/work/${c.id}">
-              <span class="work-menu__thumb" style="${lookVars(c)}">${objectPicture(c, "work-menu__obj")}<span class="work-menu__go">${arrow}</span></span>
+              <span class="work-menu__thumb" style="${lookVars(c)}">${screenDevice(c, "work-menu__dev")}${objectPicture(c, "work-menu__obj")}<span class="work-menu__go">${arrow}</span></span>
               <span class="work-menu__name"></span>
               <span class="work-menu__sub"></span>
             </a>
@@ -151,13 +151,18 @@ export function initWorkMenu(opts: { onOpenComputer?: () => void; onAllCases?: (
   };
   float();
 
+  /* Экраны на карточках включаются, когда их вот-вот увидят: курсор дошёл до пункта или меню открыли.
+     Панель висит в разметке скрытой (visibility), и «ленивая» загрузка такие картинки не откладывает —
+     семьдесят килобайт уезжали бы вместе с первым экраном, который и так считается девять секунд. */
+  const warm = () => warmScreens(panel);
+
   const setOpen = (on: boolean) => {
     clearTimeout(closeTimer);
     clearTimeout(openTimer);
     if (on === open) return;
     open = on;
     cue(on ? "open" : "close", 0.7);
-    if (on) { place(); openedAt = performance.now(); }
+    if (on) { warm(); place(); openedAt = performance.now(); }
     panel.classList.toggle("is-open", on);
     document.body.classList.toggle("work-open", on);
     trigger.setAttribute("aria-expanded", String(on));
@@ -170,6 +175,7 @@ export function initWorkMenu(opts: { onOpenComputer?: () => void; onAllCases?: (
       const e = ev as PointerEvent;
       if (e.pointerType !== "mouse" || !hoverable.matches) return;
       clearTimeout(closeTimer);
+      warm();
       if (!open) openTimer = window.setTimeout(() => setOpen(true), el === trigger ? 60 : 0);
     });
     el.addEventListener("pointerleave", (ev) => { if ((ev as PointerEvent).pointerType === "mouse") closeSoon(); });

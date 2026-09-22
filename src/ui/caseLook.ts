@@ -24,4 +24,38 @@ export const objectPicture = (c: CaseItem, cls: string, eager = false) => {
   return `<picture class="${cls}" aria-hidden="true"><source type="image/avif" srcset="${BASE}${caseObject(c.id)}"><img src="${BASE}${caseObject(c.id, "webp")}" alt="" width="${w}" height="${h}" decoding="async" loading="${eager ? "eager" : "lazy"}" draggable="false"></picture>`;
 };
 
+/* v68: на обложке видно, что внутри и на чём это работает.
+   Раньше карточка показывала только вырезанный предмет — красиво, но по ней нельзя было сказать, веб это,
+   мобильное приложение или дашборд. Совет с разбора портфолио ровно об этом: обложка обязана показывать
+   интерфейс и платформу, а не абстракцию. Поэтому рядом с предметом теперь стоит настоящий экран продукта
+   в рамке: у веба — полоска браузера, у мобильного — силуэт телефона. Форма рамки и есть ответ «на чём».
+   Экран берётся уменьшенной копией (public/cases/thumbs, tools/make-webp.mjs): на карточке он занимает
+   пару сотен пикселей, и тащить ради этого полноразмерный снимок незачем. */
+export const caseThumb = (id: string) => `cases/thumbs/${id}.webp`;
+
+/** настоящий экран продукта в рамке устройства; null — у кейса открытых экранов нет */
+export const screenDevice = (c: CaseItem, cls: string) => {
+  const s = c.look.screen;
+  if (!s) return "";
+  const bar = s.device === "browser" ? `<i class="${cls}-bar" aria-hidden="true"></i>` : "";
+  /* адрес лежит в data-src, а не в src: панель меню висит в разметке скрытой, и «ленивая» загрузка её не
+     пропускает — картинки поехали бы вместе с первым экраном. Кто их показывает, тот и включает (warmScreens) */
+  return `<span class="${cls} ${cls}--${s.device}" aria-hidden="true">${bar}<img data-src="${BASE}${caseThumb(c.id)}" alt="" width="${s.w}" height="${s.h}" decoding="async" draggable="false"></span>`;
+};
+
+/* v68: знак продукта у заголовка кейса. Знаки лежали в public/cases/brands и нигде не показывались, хотя
+   именно они за долю секунды отвечают на вопрос «что это за продукт» — раньше, чем прочитан заголовок.
+   Высоту задаёт CSS, поэтому знаки разной формы (широкое слово «Сбербанк» и квадратные иконки) стоят в одном
+   ряду ровно. Знак декоративный: название продукта рядом написано словами, и читалке экрана он не нужен. */
+export const brandMark = (c: CaseItem, cls: string) =>
+  c.brand ? `<img class="${cls}" src="${BASE}cases/brands/${c.brand}" alt="" decoding="async" draggable="false" aria-hidden="true">` : "";
+
+/** включить экраны внутри блока: вызывать, когда их вот-вот увидят (курсор дошёл до пункта, меню открылось) */
+export const warmScreens = (root: ParentNode) => {
+  for (const img of root.querySelectorAll<HTMLImageElement>("img[data-src]")) {
+    img.src = img.dataset.src!;
+    delete img.dataset.src;
+  }
+};
+
 export const goArrow = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8.5 7H17v8.5"/></svg>`;

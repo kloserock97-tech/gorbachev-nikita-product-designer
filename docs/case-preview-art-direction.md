@@ -21,6 +21,15 @@ Reference principles only; no reference artwork copied into this project.
 
 Generated with the built-in image generation tool, one call per cover. Original PNGs retained locally in assets-src/case-covers (not deployed). WebP delivery assets in public/cases/covers. Logos rendered as independent HTML image layers, not modified by the generator.
 
+## Chapter divider photo (GRIF AI, v68)
+
+`public/cases/grif-ai/atmosphere.webp` — dark fabric with a narrow band of blue light and a pane of glass.
+Generated imagery supplied by the site's owner; no third-party stock licence applies. It is a breath between
+chapters, not an illustration of anything on the page, so it carries no visible caption and is hidden from
+screen readers.
+
+Delivery: the 1172×1580 PNG was re-encoded at native width with `node tools/make-webp.mjs <src> public/cases/grif-ai/atmosphere.webp --w 1172 --q 0.9` (1160 KB → 96 KB). The page crops it to a wide band with `object-fit: cover` and `object-position: 50% 47%`, which centres the light on the strip; the empty dark areas above and below fall outside.
+
 ## Brand provenance
 
 - GRIF: exact SVG exported from user-provided [UI Kit, node 10134:1895](https://www.figma.com/design/tb2sUfZau2yD8EZlsSAVBa/Grif-UI-KIT?node-id=10134-1895).

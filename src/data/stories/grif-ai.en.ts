@@ -60,6 +60,18 @@ export const en: CaseStory = {
       "The \"typing…\" label. It imitates a human where you can honestly show what the system is reading right now.",
     ],
   },
+  identity: {
+    lead: "People meet the product before they meet the interface: in the store, on the landing page, in an email.",
+    images: [
+      { src: "cases/brands/grif-app.svg", w: 499, h: 511, caption: "The app icon. The griffin's wing is the product mark; the warm orange is deliberate, so the assistant reads as one of yours and not as another cold panel.", kind: "mark" },
+      { src: "cases/grif-ai/brand-cover.svg", w: 1080, h: 1080, caption: "The cover states the promise in one line: turn complex data into analytics you can act on. That same promise was the one tested on investors.", kind: "brand" },
+      { src: "cases/grif-ai/brand-visual.webp", w: 1080, h: 1080, caption: "The key visual: the same wing, built out of nodes and links — the path the data takes. Next to it, pieces of the interface itself, so the ad and the product speak one language.", kind: "brand" },
+    ],
+  },
+  interlude: {
+    after: "approach",
+    image: { src: "cases/grif-ai/atmosphere.webp", w: 1172, h: 1580, caption: "Dark fabric and a narrow band of blue light", kind: "photo" },
+  },
   research: {
     lead: "We checked in two ways: with users and with investors.",
     methods: [

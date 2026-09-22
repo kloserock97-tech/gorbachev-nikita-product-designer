@@ -17,7 +17,7 @@ import type { CaseTrack, TrackPart } from "../data/caseTracks";
 import { getCases } from "../data/cases";
 import { t } from "../i18n";
 import { heroStage, mountHero } from "./caseHero";
-import { goArrow, lookVars, objectPicture } from "./caseLook";
+import { brandMark, goArrow, lookVars, objectPicture } from "./caseLook";
 import { demoBlock, mountDemos } from "./caseDemos";
 import { icon, type IconName } from "./icons";
 import { smoothWheel } from "./smoothScroll";
@@ -62,6 +62,10 @@ const stage = (g: CaseImage) =>
 /** экран внутри текста: решение, метод, подход, вариант */
 const fig = (g: CaseImage, cls = "") =>
   `<figure class="cs-fig cs-fig--inline ${cls}">${stage(g)}<figcaption>${runIn(g.caption)}</figcaption></figure>`;
+
+/** v68: фотография-разделитель между главами. Не интерфейс, а воздух: подпись уходит в alt, не на экран */
+const interlude = (g: CaseImage) =>
+  `<div class="cs-interlude" data-reveal aria-hidden="true"><img src="${BASE}${g.src}" alt="" width="${g.w}" height="${g.h}" loading="lazy" decoding="async" draggable="false"></div>`;
 
 /* ── куски ─────────────────────────────────────────────────────────────────── */
 const SEC_ICON: Record<string, IconName> = { brief: "brief", context: "context", approach: "approach", research: "research", flow: "flow", decisions: "decisions", split: "split", mistakes: "mistakes", results: "results", screens: "screens", roadmap: "roadmap", takeaways: "takeaways" };
@@ -198,7 +202,9 @@ const gallery = (g: Gallery, k: number) => {
 
 /* ── оглавление ───────────────────────────────────────────────────────────── */
 export function sectionsOf(s: CaseStory): Section[] {
-  const list: Section[] = [{ id: "brief", label: t("cs.brief") }, { id: "context", label: t("cs.context") }];
+  const list: Section[] = [{ id: "brief", label: t("cs.brief") }];
+  if (s.identity) list.push({ id: "identity", label: t("cs.identity") });
+  list.push({ id: "context", label: t("cs.context") });
   if (s.approach) list.push({ id: "approach", label: t("cs.approach") });
   list.push({ id: "research", label: t("cs.research") });
   if (s.flow) list.push({ id: "flow", label: t("cs.flow") });
@@ -227,6 +233,8 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
   const ctx = s.context;
   const ap = s.approach;
   const r = s.research;
+  /** фото-разделитель встаёт после названной главы, если он у кейса есть */
+  const brk = (after: string) => (s.interlude?.after === after ? interlude(s.interlude.image) : "");
   const html = `
   <article class="cs" data-case="${esc(s.id)}" style="${lookVars(card, "mono")}">
     <div class="cs-top">
@@ -244,6 +252,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
         <header class="cs-hero">
           <div class="cs-hero-stage">
             <div class="cs-hero-text">
+              ${brandMark(card, "cs-brand")}
               <p class="cs-kicker" data-reveal>${esc(s.hero.kicker)}</p>
               <h1 id="cv-title" tabindex="-1" data-reveal style="--rd:1">${keepHyphens(esc(s.hero.title))}</h1>
               <p class="cs-tagline" data-reveal style="--rd:2">${esc(s.hero.tagline)}</p>
@@ -261,6 +270,14 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           <p class="cs-summary" data-reveal>${runIn(s.hero.summary)}</p>
         </section>
 
+        ${s.identity ? `<section class="cs-sec">
+          ${head(++sec, "identity", t("cs.identity"), s.identity.lead)}
+          <div class="cs-identity">${s.identity.images.map((g, k) => `<figure class="cs-ident" data-reveal style="--rd:${k}">
+            <span class="cs-ident-media cs-ident-media--${esc(g.kind)}"><img src="${BASE}${esc(g.src)}" alt="${esc(g.caption)}" width="${g.w}" height="${g.h}" loading="lazy" decoding="async" draggable="false"></span>
+            <figcaption>${runIn(g.caption)}</figcaption>
+          </figure>`).join("")}</div>
+        </section>` : ""}
+
         <section class="cs-sec">
           ${head(++sec, "context", t("cs.context"), ctx.lead)}
           ${ctx.text ? paras(ctx.text) : ""}
@@ -270,6 +287,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           ${ctx.team?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.team"))}<ul class="cs-roles">${ctx.team.map((x) => `<li><b>${esc(x.who)}</b><span>${esc(x.how)}</span></li>`).join("")}</ul></div>` : ""}
           <div class="cs-block cs-card cs-card--dark" data-reveal>${mini(t("cs.myrole"))}<p>${esc(ctx.myRole)}</p></div>
         </section>
+        ${brk("context")}
 
         ${ap ? `<section class="cs-sec">
           ${head(++sec, "approach", t("cs.approach"), ap.lead)}
@@ -280,6 +298,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           ${ap.refusals?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.refusals"))}<ul class="cs-refusals">${ap.refusals.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
           ${ap.image ? `<div data-reveal>${fig(ap.image, "cs-fig--wide")}</div>` : ""}
         </section>` : ""}
+        ${brk("approach")}
 
         <section class="cs-sec">
           ${head(++sec, "research", t("cs.research"), r.lead)}
@@ -305,6 +324,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           ${r.noData ? `<div class="cs-block cs-nodata" data-reveal><p class="cs-mini">${esc(r.noData.title)}</p><p class="cs-text">${esc(r.noData.text)}</p>
             <ol class="cs-props">${r.noData.props.map((p, k) => `<li><span>${pad(k + 1)}</span><b>${esc(p.title)}</b><p>${esc(p.text)}</p></li>`).join("")}</ol></div>` : ""}
         </section>
+        ${brk("research")}
 
         ${s.flow ? `<section class="cs-sec">
           ${head(++sec, "flow", t("cs.flow"), s.flow.title)}
@@ -325,6 +345,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           <div class="cs-decisions">${s.decisions.items.map((d, k) => decision(d, k, s.deepDives)).join("")}</div>
           ${s.deepDives.length ? `<div class="cs-deeps">${mini(t("cs.deep"))}${s.deepDives.map(deepDive).join("")}</div>` : ""}
         </section>
+        ${brk("decisions")}
 
         ${s.split ? `<section class="cs-sec">
           ${head(++sec, "split", t("cs.split"), s.split.title)}

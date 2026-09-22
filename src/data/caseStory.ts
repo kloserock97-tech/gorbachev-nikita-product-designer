@@ -57,6 +57,18 @@ export type Decision = {
 
 export type Mistake = { title: string; decided: string; wrong: string; out: string; changed: string };
 
+/* v68: широкая фотография между главами — «вдох» посреди длинной страницы.
+   Кейс читают скроллом, и полторы тысячи слов подряд утомляют даже заинтересованного. Полоса во всю ширину,
+   без интерфейса и без плитки-подложки, разделяет главы так же, как пустая страница разделяет части книги.
+   Это не иллюстрация к тексту: подпись здесь нужна читалке экрана, а не глазу, поэтому она короткая. */
+export type Interlude = { image: CaseImage; after: "context" | "approach" | "research" | "decisions" };
+
+/* v68: фирменный слой — знак, обложка и ключевой визуал продукта.
+   Это не экраны и не процесс, а третий вид работы: как продукт выглядит там, где его встречают раньше
+   интерфейса — в сторе, на лендинге, в письме. У дизайнера, который ведёт продукт один, это часть работы, и
+   прятать её незачем. Подписи говорят прямо, что это фирменные материалы, а не снимки интерфейса. */
+export type Identity = { lead: string; images: CaseImage[] };
+
 export type Outcome = { x: string; y: string; z: string };
 
 export type CaseStory = {
@@ -107,6 +119,10 @@ export type CaseStory = {
   decisions: { lead: string; items: Decision[] };
   /** разделение человек/агент (GRIF) */
   split?: { title: string; left: { name: string; items: string[] }; right: { name: string; items: string[] }; why: string };
+  /** фирменный слой: знак, обложка, ключевой визуал */
+  identity?: Identity;
+  /** фотография-разделитель между главами */
+  interlude?: Interlude;
   mistakes?: { lead: string; intro?: string; items: Mistake[] };
   results: { lead?: string; intro?: string; outcomes?: Outcome[]; points: string[]; contribution?: string; honesty?: string };
   roadmap?: { kicker: string; title: string; text: string }[];

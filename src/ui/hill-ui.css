@@ -347,8 +347,30 @@ body {
   position: relative; display: block; aspect-ratio: 16 / 10; margin-bottom: 8px;
   border-radius: 14px; overflow: hidden; background: linear-gradient(180deg, var(--s1, #f1f1ee), var(--s2, #dcdcd6));
 }
-.work-menu__obj { position: absolute; inset: 7% 8% -8%; display: block; transition: scale 0.5s var(--ease-menu); transform-origin: 50% 90%; }
+.work-menu__thumb { container-type: size; }
+/* v68: экран продукта в рамке — по ней сразу видно, веб это или телефон. Та же композиция, что у героя
+   страницы кейса (caseHero.css): устройство уходит за правый край, предмет стоит перед ним слева. */
+.work-menu__dev {
+  position: absolute; left: 30%; top: 14%; width: 84%; display: block;
+  border-radius: 2.2cqw; overflow: hidden; background: #fff;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink, #1d1d1f) 12%, transparent), 0 4cqw 7cqw color-mix(in srgb, var(--ink, #1d1d1f) 26%, transparent);
+  transform-origin: 0% 60%; transform: perspective(900px) rotateY(-14deg) rotateX(4deg) rotateZ(1deg);
+  transition: transform 0.5s var(--ease-menu);
+}
+.work-menu__dev-bar { display: block; height: 4.4cqw; background: color-mix(in srgb, var(--ink, #1d1d1f) 7%, #fff); border-bottom: 1px solid color-mix(in srgb, var(--ink, #1d1d1f) 9%, transparent); }
+.work-menu__dev img { display: block; width: 100%; height: auto; }
+/* телефон: стоит почти прямо и срезан низом карточки — силуэт читается с первого взгляда */
+.work-menu__dev--phone {
+  left: auto; right: 6%; top: 10%; width: auto; height: 108%; aspect-ratio: 402 / 874;
+  border-radius: 7cqw; border: 1.2cqw solid #12161c; background: #12161c; transform-origin: 50% 70%;
+  transform: perspective(900px) rotateY(-14deg) rotateX(5deg) rotateZ(4deg);
+}
+.work-menu__dev--phone img { width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: 6cqw; }
+
+.work-menu__obj { position: absolute; left: -12%; bottom: -10%; width: 62%; aspect-ratio: var(--oar, 1.2); display: block; transition: scale 0.5s var(--ease-menu); transform-origin: 50% 90%; }
 .work-menu__obj img { width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; display: block; filter: drop-shadow(0 10px 12px color-mix(in srgb, var(--ink, #1d1d1f) 24%, transparent)); }
+/* у кейса без открытых экранов предмет остаётся один и занимает всю сцену */
+.work-menu__thumb:not(:has(.work-menu__dev)) .work-menu__obj { inset: 7% 8% -8%; left: 8%; bottom: -8%; width: auto; aspect-ratio: auto; }
 .work-menu__go {
   position: absolute; right: 10px; bottom: 10px; width: 34px; height: 34px; border-radius: 50%;
   display: grid; place-items: center; background: var(--ink, #141613); color: #fff;

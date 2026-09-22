@@ -29,6 +29,16 @@ LIGHTING
 HDRI "Qwantani Sunset (Pure Sky)", Poly Haven — CC0 1.0
   https://polyhaven.com/a/qwantani_sunset_puresky
 
+IMAGES
+------
+Case objects (public/cases/objects) and the photograph between the chapters of the
+GRIF AI case (public/cases/grif-ai/atmosphere.webp) are generated imagery, made for
+this site by Nikita Gorbachev. No third-party licence applies. Prompts and provenance:
+docs/case-preview-art-direction.md.
+
+Product screens come from the projects themselves; where the client has not published
+a screen, the case shows a Figma frame instead.
+
 SOUND
 -----
 UI sound cues — uisfx (uisfx.com), "zen" set — sounds CC0 1.0, package MIT.

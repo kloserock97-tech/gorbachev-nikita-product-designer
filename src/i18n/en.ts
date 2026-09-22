@@ -139,7 +139,7 @@ const en = {
 
   /* v32: заставка главы «Кейсы» над лугом и заметки после ленты */
   "walk.kicker": "Case studies · 2024–2026",
-  "walk.title": "Six products, from research to launch",
+  "walk.title": "Five products, from research to launch",
   "walk.sub": "Internal tools, city services and AI products. Each case tells what was there, what I did and what came of it.",
   "shelf.kicker": "Side projects",
   "shelf.title": "WebGL experiments",
@@ -151,7 +151,7 @@ const en = {
   "work.all": "All",
   "work.web": "Web",
   "work.mobile": "Mobile",
-  "work.note": "Six case studies, 2024 to 2026: web, mobile and AI products",
+  "work.note": "Five case studies, 2024 to 2026: web, mobile and AI products",
   "work.allCases": "All case studies",
 
   /* страница кейса */
@@ -174,6 +174,7 @@ const en = {
   "cs.myrole": "My role",
   "cs.team": "Working with the team",
   "cs.approach": "Approach",
+  "cs.identity": "Identity",
   "cs.rejected": "Considered and dropped",
   "cs.levels": "How I sliced the problem",
   "cs.rules": "How a trait becomes a rule",
