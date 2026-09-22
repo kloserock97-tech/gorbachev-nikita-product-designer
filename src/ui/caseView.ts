@@ -112,7 +112,10 @@ export function initCaseView(opts: Opts = {}) {
       requestAnimationFrame(() => root.classList.add("is-on"));
       opts.onToggle?.(true);
       cue("open", 0.7);
-      root.querySelector<HTMLElement>(".cs-back, .cv-back")?.focus({ preventScroll: true });
+      /* v68: фокус на заголовок, а не на кнопку «Все кейсы». Пробел — привычная клавиша «прокрутить вниз»,
+         и на кнопке он её же и нажимал: человек жал пробел, чтобы читать дальше, и вылетал из кейса.
+         Заголовок лежит внутри прокручиваемого блока, поэтому пробел, стрелки, PageDown и Home/End работают сами. */
+      (root.querySelector<HTMLElement>("#cv-title") ?? root.querySelector<HTMLElement>(".cs-back, .cv-back"))?.focus({ preventScroll: true });
     } else {
       cue("progress-step", 0.5);
       /* другой кейс: фокус на заголовок, чтобы экранный диктор прочитал новую страницу */

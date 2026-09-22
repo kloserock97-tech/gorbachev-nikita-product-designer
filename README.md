@@ -12,11 +12,11 @@ Portfolio of Nikita Gorbachev, product designer. It opens on a grassy hill at su
 
 ## What's on the page
 
-The first screen is a real-time scene. Every blade of grass is geometry (up to 220k instances in one draw call, bent by wind in the vertex shader), and the dog looks at your cursor. Clicking "Weather" cycles through clear sky, clouds, rain and dusk. In the rain Kelly gets a small umbrella hat.
+The first screen is a real-time scene, framed the way a photograph would be: the hill sits in the right third, its ridge runs down to the left and leads the eye to the "See the work" button, and the armchair stands on the golden-ratio line with open sky above it for the title. The sun is behind the hill’s shoulder, so the grass is lit from behind. Every blade of grass is geometry (up to 220k instances in one draw call, bent by wind in the vertex shader), and the dog looks at your cursor. Clicking "Weather" cycles through clear sky, clouds, rain and dusk. In the rain Kelly gets a small umbrella hat.
 
 Scrolling drives a three-part story:
 
-1. The computer lifts off the table and lands on a white page with the About text. A kinetic line of type slows down and becomes the "Hi there!" heading.
+1. The hill unloads and the computer lifts off the table, landing on a white page with the About text. The hand-off is the transition from igloo, ported whole: the camera pulls back, a wave runs through the grass, the frame smears in rays from the centre while the colour channels drift apart towards its edges, and a fill climbs from the bottom with a ragged, cloud-like border. A kinetic line of type slows down and becomes the "Hi there!" heading.
 2. The page tears away from the bottom. Behind it the same meadow is blurred and seen from the grass. Case titles stand on an arc on the right and turn with the scroll; on the left the object of the current case floats over the field with no card behind it, and under it the text about the case. The object has no background at all: it is cut out of its render, and on a screen with a mouse it is drawn in WebGL, where a depth map gives it volume and it turns after the cursor. Titles and objects are on two different drums: the titles ride with the scroll like a scale, the objects snap to whole cases, so the object is always whole. Each case opens as its own page inside the site (`#/work/<id>`): a hero stage with the real product screen in a device, then the facts, the problem, the solution, results and what I learned. The case colour, the ink and the accent are the same on the card in the Work menu, on the case page and in the "next case" block.
 3. The camera returns to the hill at dusk. Fireflies come out, Kelly sleeps curled up in the armchair, and the footer holds the contacts: a mail button, Telegram, LinkedIn and the address itself, which copies when you click it.
 
@@ -54,6 +54,9 @@ Useful URL parameters while developing:
 | `?garden=0.5` / `?gardentier=0..4` | freeze the loading screen at a growth value; pin its quality step |
 | `?cases=ribbon` / `deck` / `wheel2d` / `wheel3d` | other views of the Work chapter: the old ribbon of cards, a stack, the wheel without WebGL, the wheel with WebGL forced on phones too. Any value shows a small switcher at the bottom |
 | `?story=0.62` | jump to a point of the scroll story (0 to 1) |
+| `?tblur=0.55` / `?taberr=0.03` | strength of the transition’s radial smear and chromatic aberration |
+| `?tier=0` | pin the quality step (the lowest ones drop the god rays) |
+| `?rayshalo=5` / `?raysmask=0.85,2.2` | how wide the sun’s halo is in the god-ray mask and from what brightness the frame feeds it |
 | `?lite=1` / `?lite=0` | force the lite version or force 3D |
 | `?debug=1` | show the quality tier, DPR and FPS |
 | `?dpr=1.5&msaa=2` | fix the render resolution and MSAA (disables auto quality) |
@@ -114,8 +117,10 @@ The `tools/` scripts drive a headless Chrome over the DevTools protocol:
 - `load-test.mjs` runs nine device profiles (fast desktop, laptop with a slow CPU, software rendering, good and budget phones, reduced motion, no WebGL, lost context, rotation) and records load time, per-chapter frame intervals, long tasks and layout shifts. Results for the current version are in [docs/load-test-report.md](docs/load-test-report.md) (in Russian).
 - `cdp-profile.mjs` records a CPU profile of a page or of a moment in the story.
 - `cdp-eval.mjs`, `cdp-shot.mjs` and `cdp-frames.mjs` evaluate code, take screenshots and capture frame sequences.
+- `cdp-story-shots.mjs` shoots the scroll story at a list of progress values (`--ps 0.04,0.1,0.34`) from a single page load.
 - `pre-shader-stalls.js` with `cdp-eval.mjs --pre tools/pre-shader-stalls.js --fresh` lists shader programs that block the main thread on a cold cache. `cdp-profile.mjs --lines <function>` splits a function's self time by source line.
 - `cdp-touch.mjs` emulates a phone with a real finger in Chrome and runs gesture scripts from `tools/touch/*.json` (swipe, fling, screenshot, probe).
+- `cdp-cards.mjs` walks the Work chapter and the side projects on a phone: a finger swipe forward and back, the step buttons, the arrow keys, and whether the chapter stays put when the browser's address bar slides in and out (it changes `innerHeight` without moving the page).
 - `crop.ps1` crops and enlarges a screenshot region without smoothing, to inspect single pixels.
 - `site-study.mjs` studies somebody else's page for reference: screenshots while scrolling plus the numbers behind the look (the type scale actually used, tracking, line height, tile radii and backgrounds, button sizes). Nothing from the page is stored except numbers and frames for yourself.
 - `audit-nature-loader.mjs` checks the loading screen: growth phases, focus, clean-up, reduced motion, deep links, context loss, frame pace.

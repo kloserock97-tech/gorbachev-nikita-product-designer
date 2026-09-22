@@ -11,7 +11,7 @@
    Формулы те же, что были в src/scene/hdri.ts (equirectUv three, окно 7×7 у солнца,
    солнечные пиксели обрезаны до 8, вес по cos широты). SH считаются уже с поворотом yaw под
    SUN_DIR сцены — ⚠️ поменяли SUN_DIR в HillScene.ts → перезапустить скрипт. */
-const SUN_DIR = (() => { const v = [0.24, 0.012, -1]; const l = Math.hypot(...v); return v.map((x) => x / l); })();
+const SUN_DIR = (() => { const v = [-0.08, 0.04, -1]; const l = Math.hypot(...v); return v.map((x) => x / l); })();
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 

@@ -77,16 +77,38 @@ body {
   box-shadow: 0 calc(38 * var(--u)) calc(84 * var(--u)) rgba(60, 52, 28, 0.26);
 }
 
+
+/* v68: «позвать ветер» — тихий тумблер, а не второе действие кадра.
+   Стеклянная кнопка (.metal) со своим бегущим бликом и глубокой тенью тянула взгляд на себя не хуже
+   «Смотреть кейсы», хотя это маленькая забава про траву. Поведение (подсветка за курсором, кольцо от
+   нажатия, пыльца) остаётся — гасится только внешний вид: ни бегущей кромки, ни проблеска, ни тени. */
+.gust.metal {
+  animation: none;
+  background: rgba(26, 32, 22, 0.3) padding-box, linear-gradient(rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.1)) border-box;
+  box-shadow: none;
+  color: rgba(255, 255, 255, 0.78);
+  transition: background-color 0.3s var(--ease), color 0.3s var(--ease), scale 0.22s var(--ease-out);
+}
+.gust.metal::before { content: none; }
+.gust.metal:hover {
+  animation: none;
+  background: rgba(26, 32, 22, 0.42) padding-box, linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.16)) border-box;
+  box-shadow: none;
+  color: #fff;
+}
+.gust-ring { border-color: rgba(255, 255, 255, 0.12); }
+
 /* ── раскладка на широком экране (кадр 1600 × 880) ───────────────────── */
 @media (min-width: 901px) {
   .headline { top: calc(150 * var(--u)); }
   /* v19: имя длиннее прежнего заголовка — подзаголовок и кнопка встают под ним колонкой */
   .lede { left: calc(50 * var(--u)); top: calc(300 * var(--u)); width: calc(400 * var(--u)); }
-  /* v23: «See the work» — на прежнем месте, справа от подзаголовка; кнопка ветра меньше и в ряду со
-     статистикой травы и погоды внизу — она про ту же траву */
-  /* v50: центр кнопки — на средней строке подзаголовка (три строки, 66u от 300u), было на 11u выше */
-  .cta-wrap { left: calc(700 * var(--u)); top: calc(333 * var(--u)); }
-  /* кнопка ветра меньше и в ряду со статистикой травы и погоды — она про ту же траву */
+  /* v68: «Смотреть кейсы» переехала из середины кадра в левую колонку и встала по её левому краю —
+     под заголовок и подзаголовок. Туда же, к ней, ведут диагональ гребня и веер лучей (см. камеру
+     в HillScene). Раньше кнопка висела в середине, отдельно и от текста, и от сцены. */
+  .cta-wrap { left: calc(50 * var(--u)); top: calc(430 * var(--u)); }
+  /* v68: кнопка ветра стала тише и мельче — это не второе действие рядом с «Смотреть кейсы», а
+     маленький тумблер в ряду со статистикой травы и погоды, про ту же траву */
   /* v47: кадр первого экрана стал как в футере — гребень ниже, у левого края трава начинается на ~40u ниже.
      Статистика и кнопка ветра опущены на столько же, чтобы светлые подписи стояли на траве, а не на кромке неба */
   /* v49: кадр первого экрана — 880u в высоту, и на широком невысоком окне (ноутбук с масштабом 225 %: 1348×684)
@@ -94,16 +116,21 @@ body {
      «Дальше» поднимаются вместе с нижним краем и не обрезаются */
   .stage { --stat-top: min(calc(770 * var(--u)), calc(100svh - 40 * var(--u) - 26px)); }
   .scroll { top: min(calc(690 * var(--u)), calc(100svh - 150 * var(--u) - 14px)); }
-  .play-wrap { left: calc(470 * var(--u)); top: calc(var(--stat-top) - 66 * var(--u)); width: calc(106 * var(--u)); height: calc(106 * var(--u)); }
-  .gust { width: calc(56 * var(--u)); height: calc(56 * var(--u)); margin: calc(-28 * var(--u)) 0 0 calc(-28 * var(--u)); }
-  .gust svg { width: calc(19 * var(--u)); height: calc(19 * var(--u)); margin-left: calc(3 * var(--u)); }
+  .play-wrap { left: calc(470 * var(--u)); top: calc(var(--stat-top) - 46 * var(--u)); width: calc(64 * var(--u)); height: calc(64 * var(--u)); }
+  .gust { width: calc(38 * var(--u)); height: calc(38 * var(--u)); margin: calc(-19 * var(--u)) 0 0 calc(-19 * var(--u)); }
+  .gust svg { width: calc(13 * var(--u)); height: calc(13 * var(--u)); margin-left: calc(2 * var(--u)); }
 
   .stat--a { left: calc(64 * var(--u)); top: var(--stat-top); }
   .stat--b { left: calc(300 * var(--u)); top: var(--stat-top); }
 
   /* v19: одна карточка справа — «How the hill was grown»; «Who sits here?» ушла в скролл-историю */
-  .card--stove { left: calc(1213 * var(--u)); top: calc(300 * var(--u)); }
+  /* v68: карточка прижата к правому полю кадра тем же отступом, что и текстовая колонка слева (50u),
+     а её верх стоит на одной строке с подзаголовком. Закрытая она уже (312u), при раскрытии
+     возвращается к прежнему размеру (352u) — разворачивается влево, в свободное небо */
+  .card--stove { left: auto; right: calc(50 * var(--u)); top: calc(300 * var(--u)); width: calc(312 * var(--u)); }
+  .card--stove.is-open { width: calc(352 * var(--u)); }
 }
+
 
 /* ── узкий экран: статистика и «Дальше» стоят над небом, а не над травой ──── */
 @media (max-width: 900px) {

@@ -141,3 +141,43 @@
   .cw-objs, .cw-info, .cw-t, .cw-stage, .cw-open, .cw-open svg { transition: none; }
   .cw-preview, .cw-wheel, .cases.is-narrow .cw-wheel { translate: none; }
 }
+
+/* ── шаг на кейс назад и вперёд (v68) ──────────────────────────────────────
+   Прокрутка и свайп по дуге остаются, но они не единственные: колёсико у мыши может не работать, тачпад у
+   каждого настроен по-своему, а свайп по дуге на телефоне надо сначала угадать. Кнопка переставляет ровно на
+   один кейс и гаснет на краях списка — шаг назад получается такой же точный, как шаг вперёд.
+   На широком экране пара стоит у правого края, вне маски колеса; на телефоне — по краям нижней дуги, там, где
+   названия уже растворились и нажать не на что. */
+.cw-steps { position: absolute; z-index: 4; pointer-events: none; opacity: var(--e); }
+.cw-step {
+  position: absolute; display: grid; place-items: center; width: 46px; height: 46px; padding: 0;
+  border: 0; border-radius: 50%; background: rgba(12, 14, 10, 0.42); color: #fff; cursor: pointer;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24); pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.3s ease, opacity 0.3s ease, scale 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.cw-step svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.cw-step--next svg { rotate: 180deg; }
+.cw-step:hover { background: rgba(12, 14, 10, 0.68); scale: 1.06; }
+.cw-step:active { scale: 0.96; }
+.cw-step:disabled { opacity: 0.28; cursor: default; scale: 1; }
+.cw-step:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+
+/* Широкий экран: колесо крутится по вертикали, поэтому и стрелки смотрят вверх-вниз. Стоят в нижнем правом
+   углу, а не у середины: активное название лежит ровно на «трёх часах» и упиралось бы в них. */
+.cases[data-mode="wheel"]:not(.is-narrow) .cw-steps { right: 18px; bottom: clamp(24px, 5vh, 56px); width: 46px; height: 110px; }
+.cases[data-mode="wheel"]:not(.is-narrow) .cw-step { left: 0; }
+.cases[data-mode="wheel"]:not(.is-narrow) .cw-step[data-d="-1"] { top: 0; }
+.cases[data-mode="wheel"]:not(.is-narrow) .cw-step--next { bottom: 0; }
+.cases[data-mode="wheel"]:not(.is-narrow) .cw-step svg { rotate: 90deg; }
+.cases[data-mode="wheel"]:not(.is-narrow) .cw-step--next svg { rotate: -90deg; }
+
+/* телефон: по краям нижней дуги, на высоте названий */
+.cases.is-narrow[data-mode="wheel"] .cw-steps { left: 0; right: 0; bottom: calc(96px + env(safe-area-inset-bottom)); height: 46px; }
+.cases.is-narrow[data-mode="wheel"] .cw-step[data-d="-1"] { left: 10px; }
+.cases.is-narrow[data-mode="wheel"] .cw-step--next { right: 10px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cw-step { transition: none; }
+}

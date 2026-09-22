@@ -137,6 +137,8 @@ const ru: Record<keyof typeof en, string> = {
   "cases.of": "/ 05",
   "cases.swipe": "Листайте вбок",
   "cases.cta": "Смотреть кейс",
+  "cases.prev": "Предыдущий кейс",
+  "cases.next": "Следующий кейс",
 
   /* v32: заставка главы «Кейсы» над лугом и заметки после ленты */
   "walk.kicker": "Кейсы · 2024–2026",

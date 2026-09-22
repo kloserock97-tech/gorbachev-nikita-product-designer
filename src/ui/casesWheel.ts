@@ -24,7 +24,7 @@ import { getCases } from "../data/cases";
 import notes from "../data/notes";
 import { pad2 as pad } from "../lib/format";
 import { CASES, CHAPTER, CHAPTER2, chapters, dwell, ramp } from "../scene/story";
-import { applyTimeline, topFor } from "./storyScroll";
+import { applyTimeline, onViewport, topFor } from "./storyScroll";
 import { cue } from "../audio/bus";
 import { onLang, t } from "../i18n";
 import { goArrow, lookVars, objectPicture } from "./caseLook";
@@ -37,6 +37,7 @@ export type WheelGl = { set(active: number, pointerX: number, pointerY: number):
 
 const esc = (s: string) => tidy(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
+const chevron = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>`;
 
 export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boolean | "auto" } = {}) {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -61,7 +62,11 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
       <svg class="cw-arc" aria-hidden="true"><circle class="cw-ring"/><g class="cw-ticks"></g></svg>
       <i class="cw-needle" aria-hidden="true"></i>
       <ol class="cw-list">${list.map((c, i) => `<li><a class="cw-item" href="#/work/${c.id}" data-i="${i}"><span class="cw-n">${pad(i + 1)}</span><span class="cw-t"></span></a></li>`).join("")}</ol>
-    </nav>`;
+    </nav>
+    <div class="cw-steps">
+      <button type="button" class="cw-step" data-d="-1">${chevron}</button>
+      <button type="button" class="cw-step cw-step--next" data-d="1">${chevron}</button>
+    </div>`;
   root.insertBefore(wrap, root.querySelector(".cases-foot"));
 
   const stage = wrap.querySelector<HTMLElement>(".cw-stage")!;
@@ -73,11 +78,25 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
   const ring = wrap.querySelector<SVGCircleElement>(".cw-ring")!;
   const now = root.querySelector<HTMLElement>(".cases-now");
   const bar = root.querySelector<HTMLElement>(".cases-bar i");
+  const steps = [...wrap.querySelectorAll<HTMLButtonElement>(".cw-step")];
+  let current = -1; // номер показанного кейса; объявлен здесь, потому что его читает paintSteps ниже
+
+  /* v68: «предыдущий / следующий» кнопками. Раньше кейс можно было сменить только прокруткой или свайпом по
+     дуге — а колёсика у мыши может не быть, тачпад у людей настроен по-разному, и на телефоне свайп ещё надо
+     угадать. Кнопка переставляет ровно на один кейс и гаснет на краях, поэтому шаг назад такой же точный,
+     как шаг вперёд. */
+  const paintSteps = () => {
+    steps[0].disabled = current <= 0;
+    steps[1].disabled = current >= n - 1;
+    steps[0].setAttribute("aria-label", t("cases.prev"));
+    steps[1].setAttribute("aria-label", t("cases.next"));
+  };
 
   /* подписи на текущем языке */
   const paintTitles = () => {
     list = getCases();
     wheel.setAttribute("aria-label", t("work.title"));
+    paintSteps();
     items.forEach((a, i) => {
       a.querySelector(".cw-t")!.textContent = list[i].title;
       a.setAttribute("aria-label", `${list[i].title}. ${list[i].subtitle}`);
@@ -152,7 +171,6 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
   ticks.innerHTML = list.map(() => `<line class="cw-tick" x1="0" y1="0" x2="0" y2="0"/>`).join("");
   const tickEls = [...ticks.querySelectorAll<SVGLineElement>(".cw-tick")];
 
-  let current = -1;
   let shown = false;
   let lastKey = "";
 
@@ -220,6 +238,7 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
       current = idx;
       if (now) now.textContent = pad(idx + 1);
       paintInfo(idx, shown);
+      paintSteps();
       turnTo(idx);
     }
     if (bar) bar.style.transform = `scaleX(${(active / Math.max(1, n - 1)).toFixed(4)})`;
@@ -236,6 +255,19 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
     a.addEventListener("focus", () => { if (a.matches(":focus-visible") && i !== current) goTo(i); });
   });
   info.querySelector(".cw-open")!.addEventListener("click", () => cue("forward"));
+  steps.forEach((b) => b.addEventListener("click", () => { goTo(current + Number(b.dataset.d)); cue("progress-step", 0.6); }));
+  /* стрелки на клавиатуре — третий способ, для тех, кто вообще не берётся за мышь. Пока открыт кейс,
+     глава под ним не слушает: иначе страница за кейсом уезжала бы вслепую */
+  addEventListener("keydown", (e) => {
+    if (!shown || e.metaKey || e.ctrlKey || e.altKey || document.body.classList.contains("case-open")) return;
+    /* на стыке глав кейсы и заметки короткое время видны обе — стрелки отдаём заметкам */
+    if (document.querySelector(".shelf.is-on")) return;
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    const el = document.activeElement as HTMLElement | null;
+    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el?.isContentEditable) return;
+    e.preventDefault();
+    goTo(current + (e.key === "ArrowRight" ? 1 : -1));
+  });
   stage.addEventListener("click", () => { location.hash = `#/work/${list[Math.max(0, current)].id}`; cue("forward"); });
 
   /* курсор над сценой разводит слои превью */
@@ -272,6 +304,7 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
       shown = vis;
       root.classList.toggle("is-on", vis);
       root.setAttribute("aria-hidden", String(!vis));
+      steps.forEach((b) => (b.tabIndex = vis ? 0 : -1));
       lastKey = "";
     }
     if (!vis) return;
@@ -281,7 +314,7 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
     place(reduced ? Math.round(run) : dwell(run), e);
   };
 
-  addEventListener("resize", layout);
+  onViewport(layout);
   onLang(() => requestAnimationFrame(layout));
   layout();
   if (consumeReviewJump()) requestAnimationFrame(() => scrollTo({ top: topForCase(0), behavior: "instant" as ScrollBehavior }));

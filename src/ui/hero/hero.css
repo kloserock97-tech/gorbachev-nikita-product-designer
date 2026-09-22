@@ -185,14 +185,15 @@ body.lang-ru .headline {
 }
 .metal svg { display: block; flex: none; }
 
-/* «Смотреть кейсы»: центр кнопки — в точке (left, top) обёртки */
+/* «Смотреть кейсы»: (left, top) обёртки — левый край кнопки и её середина по вертикали.
+   v68: кнопка встала в левую текстовую колонку, поэтому равняется по левому краю, а не по центру. */
 .cta-wrap { position: absolute; z-index: 4; left: calc(644 * var(--u)); top: calc(360 * var(--u)); width: 0; height: 0; }
 .cta {
-  position: absolute; left: 0; top: 0; transform: translate(-50%, -50%);
+  position: absolute; left: 0; top: 0; transform: translateY(-50%);
   height: calc(60 * var(--u)); padding: 0 calc(28 * var(--u)) 0 calc(20 * var(--u)); gap: calc(12 * var(--u));
   font-size: calc(16.5 * var(--u)); white-space: nowrap;
 }
-.cta:active { scale: 1; transform: translate(-50%, -50%) scale(0.96); }
+.cta:active { scale: 1; transform: translateY(-50%) scale(0.96); }
 .cta svg { width: calc(18 * var(--u)); height: calc(18 * var(--u)); fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
 .cta .lbl { translate: 0 calc(1 * var(--u)); }
 

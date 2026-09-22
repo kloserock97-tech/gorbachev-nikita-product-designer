@@ -9,7 +9,7 @@ import { pad2 as pad } from "../lib/format";
 import { cue } from "../audio/bus";
 import { onLang, t, type Key } from "../i18n";
 import { CASES, CHAPTER, CHAPTER2, FOOTER, chapters, dwell, ramp, stickyIndex } from "../scene/story";
-import { topFor } from "./storyScroll";
+import { onViewport, topFor } from "./storyScroll";
 import { swipeStrip, type SwipeStrip } from "./swipeStrip";
 
 type StoryScene = { onStory?: (p: number) => void };
@@ -134,7 +134,9 @@ export function initWalkChapter(scene: StoryScene) {
     words = splitTitle(title);
     rebuild();
   });
-  addEventListener("resize", () => {
+  /* v68: только настоящая смена окна. Прятки адресной строки на телефоне тоже шлют resize — и каждая
+     переставляла ленту прямо под пальцем (refresh кладёт scrollLeft на текущую карточку) */
+  onViewport(() => {
     if (document.body.classList.contains("lite")) return;
     if (shelf.dataset.format !== shelfFormat()) rebuild();
     else swipe?.refresh();
@@ -184,10 +186,39 @@ export function initWalkChapter(scene: StoryScene) {
     step();
   };
 
+  /* v68: шаг на заметку кнопкой. Свайп по ленте и прокрутка страницы никуда не делись — но человек без
+     колёсика (или тот, кто про свайп не догадался) теперь тоже переходит от карточки к карточке, ровно на одну
+     и в обе стороны. Как и при свайпе, ставим «держим» — иначе прокрутка страницы тут же поведёт ленту сама. */
+  const stepBtns = [...shelf.querySelectorAll<HTMLButtonElement>(".shelf-step")];
+  const goToNote = (i: number) => {
+    const idx = Math.max(0, Math.min(cards.length - 1, i));
+    if (swipe) {
+      held = idx;
+      clearTimeout(holdTimer);
+      holdTimer = window.setTimeout(() => (held = -1), 2500);
+      followed = idx;
+      swipe.follow(idx);
+    }
+    scrollTo({ top: topForNote(idx), behavior: reduced ? ("instant" as ScrollBehavior) : "smooth" });
+  };
+  stepBtns.forEach((b) => b.addEventListener("click", () => goToNote(current + Number(b.dataset.d))));
+  /* стрелки на клавиатуре. Глава кейсов слушает те же клавиши, а на стыке они короткое время видны обе —
+     поэтому там стоит встречная проверка на видимые заметки */
+  addEventListener("keydown", (e) => {
+    if (!shelfOn || e.metaKey || e.ctrlKey || e.altKey || document.body.classList.contains("case-open")) return;
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    const el = document.activeElement as HTMLElement | null;
+    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el?.isContentEditable) return;
+    e.preventDefault();
+    goToNote(current + (e.key === "ArrowRight" ? 1 : -1));
+  });
+
   function setCurrent(idx: number) {
     if (idx === current) return;
     if (current >= 0) cue("progress-step", 0.5);
     current = idx;
+    stepBtns[0].disabled = idx <= 0;
+    stepBtns[1].disabled = idx >= cards.length - 1;
     if (now) now.textContent = pad(idx + 1);
     if (info) {
       info.classList.remove("is-in");
@@ -230,6 +261,7 @@ export function initWalkChapter(scene: StoryScene) {
       shelf.classList.toggle("is-on", sv);
       shelf.setAttribute("aria-hidden", String(!sv));
       shelf.querySelectorAll<HTMLElement>("a").forEach((a) => (a.tabIndex = sv ? 0 : -1));
+      stepBtns.forEach((b) => (b.tabIndex = sv ? 0 : -1));
       if (!sv) playOnly(-1);
     }
     if (!sv) return;

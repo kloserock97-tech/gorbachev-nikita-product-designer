@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { FullScreenQuad } from "three/examples/jsm/postprocessing/Pass.js";
 import { finalFragment, fullscreenVertex, godBlurFragment, godMaskFragment, quarterFragment } from "./shaders";
+import { TRANSITION } from "./story";
 
 /* Постобработка — своя короткая цепочка вместо EffectComposer.
    Замеры на Intel Arc (экран 2.25, readPixels-бенчмарк) показали, что дороги
@@ -27,7 +28,7 @@ export type PostFx = {
   /** v32: буфер луга (для прогрева его шейдеров) */
   altTarget: THREE.WebGLRenderTarget;
   dispose: () => void;
-  params: { rays: number; raysEnabled: boolean; bgCheap: boolean; exposure: number; vignette: number; vibrance: number; contrast: number; focus: number; whiteBalance: THREE.Vector3; glitch: number; glitchSeed: number; black: number; radial: number; fill: number; overlay: boolean;
+  params: { rays: number; raysEnabled: boolean; bgCheap: boolean; exposure: number; vignette: number; vibrance: number; contrast: number; focus: number; whiteBalance: THREE.Vector3; glitch: number; glitchSeed: number; black: number; radial: number; aberration: number; fill: number; overlay: boolean;
     /* v17, светлая страница с глубиной (как oryzo): studio 0…1 — сила студийного фона,
        pcRect — прямоугольник компьютера в UV кадра (x0, y0, x1, y1), spot — центр светового пятна */
     studio: number; pcRect: THREE.Vector4; spot: THREE.Vector2;
@@ -56,6 +57,13 @@ export function createPostFx(
   const forcedSamples = q.has("msaa") ? Number(q.get("msaa")) : null;
   const samples = forcedSamples ?? 4;
   const raysOn = q.get("rays") !== "0";
+  /* ширина ореола солнца в маске лучей: чем меньше, тем дальше веер достаёт от солнца за кромкой кадра */
+  const lum = (q.get("raysmask")?.split(",").map(Number).filter(Number.isFinite) ?? []).length === 2 ? (q.get("raysmask")!.split(",").map(Number) as [number, number]) : ([0.85, 2.2] as [number, number]);
+  const halo = q.has("rayshalo") && Number.isFinite(Number(q.get("rayshalo"))) ? Number(q.get("rayshalo")) : 5;
+  /* с какого выхода солнца за кромку кадра лучи начинают гаснуть и где гаснут совсем */
+  const raysFade = (q.get("raysoff")?.split(",").map(Number).filter(Number.isFinite) ?? []).length === 2
+    ? (q.get("raysoff")!.split(",").map(Number) as [number, number])
+    : ([1.6, 2.7] as [number, number]);
 
   /* HDR-буфер с MSAA: тонкая трава без него искрит.
      Пробовали R11F_G11F_B10F (вдвое меньше видеопамяти): three создаёт MSAA-рендербуфер
@@ -91,7 +99,7 @@ export function createPostFx(
   const mask = new THREE.ShaderMaterial({
     ...flat,
     fragmentShader: godMaskFragment,
-    uniforms: { tColor: { value: sceneRT.texture }, uSun: { value: sunUv }, uAspect: { value: 1 } },
+    uniforms: { tColor: { value: sceneRT.texture }, uSun: { value: sunUv }, uAspect: { value: 1 }, uHalo: { value: halo }, uLumLo: { value: lum[0] }, uLumHi: { value: lum[1] } },
   });
   const quarter = new THREE.ShaderMaterial({
     depthTest: false, depthWrite: false, vertexShader: fullscreenVertex,
@@ -123,6 +131,7 @@ export function createPostFx(
     glitchSeed: 0,
     black: 0,
     radial: 0,
+    aberration: 0,
     fill: 0,
     overlay: false,
     studio: 0,
@@ -165,6 +174,8 @@ export function createPostFx(
       uGlitchSeed: { value: 0 },
       uBlack: { value: 0 },
       uRadial: { value: 0 },
+      uAberr: { value: 0 },
+      uAberrRadial: { value: TRANSITION.aberrationRadial },
       uFill: { value: 0 },
       uFillColor: { value: new THREE.Color(0.949, 0.949, 0.949) }, // #F2F2F2 в sRGB, как фон About на Tilda
       tPC: { value: pcRT.texture },
@@ -301,11 +312,14 @@ export function createPostFx(
         draw(quarter, shadowRT);
       }
 
-      /* солнце в экранных координатах; за спиной камеры или далеко за краем — лучи гаснут */
+      /* Солнце в экранных координатах; за спиной камеры или далеко за краем — лучи гаснут.
+         v68: кадр первого экрана развёрнут влево, и солнце ушло за правую кромку — а лучи от солнца
+         чуть за краем кадра как раз и нужны (классический контровой кадр). Порог отодвинут: гаснут
+         они теперь только когда солнце ушло совсем далеко. ?raysoff=1.5,2.6 — подобрать. */
       sunNdc.copy(sunDir).multiplyScalar(250).add(camera.position).project(camera);
       sunUv.set(sunNdc.x * 0.5 + 0.5, sunNdc.y * 0.5 + 0.5);
       const off = Math.max(Math.abs(sunNdc.x), Math.abs(sunNdc.y));
-      const target = raysOn && params.raysEnabled && sunNdc.z <= 1 ? 1 - THREE.MathUtils.smoothstep(off, 1.1, 1.8) : 0;
+      const target = raysOn && params.raysEnabled && sunNdc.z <= 1 ? 1 - THREE.MathUtils.smoothstep(off, raysFade[0], raysFade[1]) : 0;
       raysVisible += (target - raysVisible) * 0.1;
 
       if (raysVisible > 0.01 && !covered && !altFull) {
@@ -327,6 +341,7 @@ export function createPostFx(
       final.uniforms.uGlitchSeed.value = params.glitchSeed;
       final.uniforms.uBlack.value = params.black;
       final.uniforms.uRadial.value = params.radial;
+      final.uniforms.uAberr.value = params.aberration;
       final.uniforms.uFill.value = params.fill;
       final.uniforms.uOverlay.value = params.overlay ? 1 : 0;
       final.uniforms.uStudio.value = params.studio;

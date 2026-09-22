@@ -54,8 +54,7 @@ void main() {
   #include <project_vertex>
 }`;
 
-/* include-ы <common> и <project_vertex> обязательны: hologram.ts дописывает через них
-   в материалы реквизита отсечение по высоте, без них программа не собирается */
+/* include-ы <common> и <project_vertex> обязательны: без них программа не собирается */
 const screenFragment = /* glsl */ `
 #include <common>
 uniform sampler2D uChrome, uPage;

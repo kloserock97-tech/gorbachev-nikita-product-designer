@@ -2,7 +2,7 @@ import { getCases } from "../data/cases";
 import { pad2 as pad } from "../lib/format";
 import notes from "../data/notes";
 import { CASES, CHAPTER, CHAPTER2, chapters, dwell, ramp, stickyIndex } from "../scene/story";
-import { applyTimeline, topFor } from "./storyScroll";
+import { applyTimeline, onViewport, topFor } from "./storyScroll";
 import { swipeStrip, type SwipeStrip } from "./swipeStrip";
 import { cue } from "../audio/bus";
 import { onLang, t } from "../i18n";
@@ -169,7 +169,7 @@ export function initCases(scene: Scene) {
     swipe?.refresh();
     scene.onStory?.(lastP);
   };
-  addEventListener("resize", layout);
+  onViewport(layout);
   /* подсветка под курсором, как у карточек заметок */
   root.addEventListener("pointermove", (e) => {
     if (e.pointerType !== "mouse") return;

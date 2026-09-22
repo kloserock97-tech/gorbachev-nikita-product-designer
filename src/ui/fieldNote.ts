@@ -167,8 +167,11 @@ export function initFieldNote() {
       }
     }
     if (demo) {
-      demo.hidden = !current.links;
-      if (current.links) demo.href = current.links.demo;
+      /* v68: ссылка живёт на названии, прятать её нельзя — у заметки без демо просто убираем адрес,
+         и картинка перестаёт быть кликабельной (см. обработчик ниже) */
+      const to = current.links?.demo;
+      card.classList.toggle("has-demo", !!to);
+      if (to) demo.href = to; else demo.removeAttribute("href");
       demo.setAttribute("aria-label", `${t("notes.go")}: ${t(key(id, "title"))}`);
     }
     if (links) {
@@ -255,13 +258,27 @@ export function initFieldNote() {
     /* за пальцем, но с сопротивлением: карточка не уезжает, а намекает направление */
     card.style.setProperty("--drag", (Math.sign(dx) * Math.min(56, Math.abs(dx) * 0.45)).toFixed(1));
   });
+  /* когда палец отпущен после листания — click всё равно придёт; по этой отметке его и отличаем от нажатия */
+  let swipedAt = 0;
   card.addEventListener("pointerup", (e) => {
     if (!tracking) return;
     const dx = e.clientX - startX, dy = e.clientY - startY;
+    if (dragging) swipedAt = performance.now();
     drop();
     if (Math.abs(dx) > 44 && Math.abs(dx) > Math.abs(dy) * 1.4) go(dx < 0 ? 1 : -1);
   });
   card.addEventListener("pointercancel", drop);
+
+  /* v68: кликабельна вся картинка карточки. Кнопку «Открыть демо» убрали — она забирала угол подписи и
+     повторяла то, на что человек и так жмёт. Свайп при этом не ломается: если палец проехал вбок, это
+     было листание, а не нажатие, и демо не открывается. Листалку, чеврон и саму ссылку пропускаем — у них
+     своё дело. */
+  const hero = card.querySelector<HTMLElement>(".note-hero");
+  hero?.addEventListener("click", (e) => {
+    if (dragging || performance.now() - swipedAt < 400 || !demo?.getAttribute("href")) return;
+    if ((e.target as Element).closest("a, button")) return;
+    demo.click();
+  });
 
   addEventListener("keydown", (e) => { if (e.key === "Escape") set(false); });
   addEventListener("click", (e) => { if (!card.contains(e.target as Node)) set(false); });

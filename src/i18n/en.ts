@@ -133,6 +133,8 @@ const en = {
   "cases.meta": "Web, mobile and AI · 2024–2026",
   "cases.of": "/ 05",
   "cases.cta": "View case",
+  "cases.prev": "Previous case",
+  "cases.next": "Next case",
   "cases.swipe": "Swipe sideways",
 
   /* v32: заставка главы «Кейсы» над лугом и заметки после ленты */

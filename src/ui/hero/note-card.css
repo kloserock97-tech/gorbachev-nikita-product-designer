@@ -29,6 +29,15 @@
     box-shadow 0.8s ease;
 }
 
+
+/* v68: закрытая карточка чуть меньше — на первом экране она соседка холма, а не второй герой.
+   При раскрытии картинка и ширина возвращаются к прежнему размеру: описание, цифры и значок
+   читаются ровно как раньше. Ширину задаёт hill-ui.css (312u → 352u), здесь — высота картинки. */
+@media (min-width: 901px) {
+  .card--stove { --nc-fig: calc(214 * var(--u)); transition: width 0.7s cubic-bezier(0.7, 0, 0.2, 1); }
+  .card--stove.is-open { --nc-fig: calc(246 * var(--u)); }
+}
+
 /* ── картинка с подписью и кнопкой ─────────────────────────────────────────── */
 .note-hero {
   position: relative; flex: none; margin: 0; height: calc(var(--nc-fig) - var(--note-shrink, 0px));
@@ -53,21 +62,24 @@
   margin: 0; font-size: max(10.5px, calc(11.5 * var(--u))); line-height: 1.2; font-weight: 300; color: rgba(255, 255, 255, 0.72);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-/* стеклянная кнопка: размытие только под самой кнопкой, площадь маленькая — поверх видео это дёшево */
-.note-go {
-  flex: none; display: inline-flex; align-items: center; gap: calc(7 * var(--u));
-  padding: 0 calc(18 * var(--u)); height: max(34px, calc(38 * var(--u))); border-radius: calc(13 * var(--u));
-  font-size: max(12px, calc(13.5 * var(--u))); font-weight: 500; letter-spacing: 0.01em; color: #fff; text-decoration: none;
-  background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.16);
+/* v68: кликабельна вся картинка карточки, поэтому стеклянной кнопки «Открыть демо» больше нет.
+   Настоящая ссылка осталась на названии — её видно по подчёркиванию при наведении и по фокусу с клавиатуры;
+   стрелка справа только подсказывает, что нажатие уводит наружу. */
+.note-cap__link { color: inherit; text-decoration: none; }
+.note-cap__link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.note-cap__link:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 4px; }
+.note-cap__go {
+  flex: none; display: grid; place-items: center; width: max(34px, calc(38 * var(--u))); height: max(34px, calc(38 * var(--u)));
+  border-radius: 50%; color: #fff; background: rgba(255, 255, 255, 0.18); border: 1px solid rgba(255, 255, 255, 0.16);
   -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
   transition: background 0.25s ease, scale 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.note-go svg { width: 0.85em; height: 0.85em; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; transition: translate 0.3s ease; }
-.note-go:hover { background: rgba(255, 255, 255, 0.32); }
-.note-go:hover svg { translate: 1.5px -1.5px; }
-.note-go:active { scale: 0.97; }
-.note-go:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.note-go[hidden] { display: none; }
+.note-cap__go svg { width: max(11px, calc(13 * var(--u))); height: max(11px, calc(13 * var(--u))); fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; transition: translate 0.3s ease; }
+.card--stove.has-demo .note-hero { cursor: pointer; }
+.card--stove.has-demo .note-hero:hover .note-cap__go { background: rgba(255, 255, 255, 0.32); }
+.card--stove.has-demo .note-hero:hover .note-cap__go svg { translate: 1.5px -1.5px; }
+.card--stove:not(.has-demo) .note-cap__go { display: none; }
+
 
 /* ── листалка на картинке ──────────────────────────────────────────────────── */
 .note-deck {
@@ -183,7 +195,7 @@
   .note-cap { left: max(16px, calc(26 * var(--u))); right: max(14px, calc(22 * var(--u))); bottom: max(16px, calc(24 * var(--u))); gap: 10px; }
   .note-cap__title { font-size: max(16px, calc(26 * var(--u))); }
   .note-cap__label { font-size: max(11.5px, calc(17 * var(--u))); }
-  .note-go { height: 44px; padding: 0 max(16px, calc(24 * var(--u))); border-radius: 14px; font-size: max(13px, calc(19 * var(--u))); gap: 7px; }
+  .note-cap__go { width: 44px; height: 44px; }
   .note-deck { top: max(10px, calc(16 * var(--u))); right: max(10px, calc(16 * var(--u))); padding: 0; }
   .note-deck__btn { width: 44px; height: 44px; }
   .note-deck__count { font-size: max(12px, calc(17 * var(--u))); min-width: 2.6em; }

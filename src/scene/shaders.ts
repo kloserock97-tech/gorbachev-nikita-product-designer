@@ -748,14 +748,18 @@ export const godMaskFragment = /* glsl */ `
 uniform sampler2D tColor;
 uniform vec2 uSun;        /* солнце в UV экрана */
 uniform float uAspect;
+uniform float uHalo;      /* ширина ореола вокруг солнца: чем меньше, тем дальше он достаёт */
+uniform float uLumLo, uLumHi; /* с какой яркости кадр попадает в маску лучей */
 varying vec2 vUv;
 void main(){
   vec3 c = texture2D(tColor, vUv).rgb;
   float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
   vec2 d = (vUv - uSun) * vec2(uAspect, 1.0);
-  float near = exp(-dot(d, d) * 30.0);
-  /* белое небо (~0.9) в маску не попадает — только ореол и диск солнца */
-  gl_FragColor = vec4(c * near * smoothstep(1.15, 2.6, lum), 1.0);
+  float near = exp(-dot(d, d) * uHalo);
+  /* белое небо (~0.9) в маску не попадает — только ореол и диск солнца.
+     v68: солнце ушло за правую кромку кадра, и тугой ореол (30.0) до кадра просто не доставал —
+     лучей не было вовсе. Ореол шире: солнце за краем, а веер от него ложится в кадр. */
+  gl_FragColor = vec4(c * near * smoothstep(uLumLo, uLumHi, lum), 1.0);
 }
 `;
 
@@ -809,6 +813,8 @@ uniform float uGlitch;     /* интро: полосы со сдвигом и RG
 uniform float uGlitchSeed; /* меняется рывками — полосы прыгают, а не плывут */
 uniform float uBlack;      /* интро: провал в темноту */
 uniform float uRadial;     /* скролл-история: zoom-blur от центра, как в переходе igloo */
+uniform float uAberr;      /* и разъезд каналов к краям кадра оттуда же (Effects.tsx igloo) — внутри смаза */
+uniform float uAberrRadial;/* с какой доли радиуса он начинается: центр кадра чистый */
 /* Скролл-история: заливка снизу рваным краем (igloo TransitionEffect) — «страница» About;
    компьютер рисуется своим проходом (tPC, premultiplied) поверх заливки */
 uniform float uFill;
@@ -933,6 +939,7 @@ void main(){
   /* глитч интро (конец кадра SYS_CAM у референса): горизонтальные полосы разной
      высоты сдвигаются рывком, в сдвинутых — расслоение каналов */
   vec2 uv = vUv;
+  vec2 chroma = vec2(0.0); /* сдвиг каналов от полос глитча */
   float split = 0.0;
   if (uGlitch > 0.001) {
     float rows = mix(14.0, 60.0, hash11(floor(uGlitchSeed) * 3.1));
@@ -943,16 +950,18 @@ void main(){
     float px = mix(1.0, 90.0, on * step(0.6, hash11(band * 5.3 + uGlitchSeed)));
     uv = px > 1.0 ? (floor(uv * vec2(px * 1.6, px)) + 0.5) / vec2(px * 1.6, px) : uv;
     split = (0.004 + 0.02 * on) * uGlitch;
+    chroma = vec2(split, 0.0);
   }
   /* Сцена рисуется в буфер ниже родного DPR, канвас — в родном. Растягиваем сами
      с адаптивной резкостью по мотивам AMD FidelityFX CAS: крест из 5 выборок,
      резкость сильнее там, где локальный контраст низкий, и слабее на краях. */
   vec3 e = texture2D(tScene, uv).rgb;
-  if (split > 0.0) {
-    e.r = texture2D(tScene, uv + vec2(split, 0.0)).r;
-    e.b = texture2D(tScene, uv - vec2(split, 0.0)).b;
+  float shift = dot(chroma, chroma);
+  if (shift > 0.0) {
+    e.r = texture2D(tScene, uv + chroma).r;
+    e.b = texture2D(tScene, uv - chroma).b;
   }
-  if (uEdgeAA > 0.001 && split <= 0.0) e = edgeAA(uv, e);
+  if (uEdgeAA > 0.001 && shift <= 0.0) e = edgeAA(uv, e);
   if (uSharp > 0.001) {
     vec3 b = texture2D(tScene, uv - vec2(0.0, uTexel.y)).rgb;
     vec3 h = texture2D(tScene, uv + vec2(0.0, uTexel.y)).rgb;
@@ -983,16 +992,26 @@ void main(){
     }
     e = mix(e, acc / 8.0, smoothstep(0.0, 1.0, fore));
   }
-  /* Zoom-blur от центра (переход igloo, TransitionEffect): 12 выборок вдоль луча к центру,
+  /* Zoom-blur от центра (переход igloo, TransitionEffect): 14 выборок вдоль луча к центру,
      сильнее к краям — центр кадра, где встаёт компьютер, остаётся читаемым */
   if (uRadial > 0.001) {
     vec2 toC = uv - 0.5;
+    float len = length(toC);
+    /* Хроматическая аберрация перехода (igloo, Effects.tsx: ChromaticAberration с radialModulation):
+       каналы разъезжаются вдоль луча от центра и только к краям, центр кадра остаётся чистым.
+       Живёт она внутри смаза, и это не экономия, а так и надо: на резком кадре сдвиг каналов даже
+       в один пиксель превращает траву в цветную крупу — каждая травинка получает красный и синий
+       контур. В смазе же он читается ровно тем, чем должен, — расслоением объектива.
+       Считается теми же выборками: у красного центр тяжести луча сдвинут наружу, у синего внутрь.
+       Тремя чтениями на выборку было бы сорок два чтения текстуры на пиксель; здесь — ноль лишних. */
+    float tilt = clamp(uAberr * 30.0 * max(len * 2.0 - uAberrRadial, 0.0), 0.0, 0.9);
     vec3 acc = vec3(0.0);
-    float wsum = 0.0;
-    for (int k = 0; k < 12; k++) {
-      float s = float(k) / 11.0;
-      float wk = 1.0 - s * 0.5;
-      acc += textureLod(tScene, 0.5 + toC * (1.0 - uRadial * s * length(toC) * 2.0), 0.0).rgb * wk;
+    vec3 wsum = vec3(0.0);
+    for (int k = 0; k < 14; k++) {
+      float s = float(k) / 13.0;
+      float w = 1.0 - s * 0.5;
+      vec3 wk = vec3(w * (1.0 + tilt * (s * 2.0 - 1.0)), w, w * (1.0 - tilt * (s * 2.0 - 1.0)));
+      acc += textureLod(tScene, 0.5 + toC * (1.0 - uRadial * s * len * 2.0), 0.0).rgb * wk;
       wsum += wk;
     }
     e = mix(e, acc / wsum, min(1.0, uRadial * 4.0));
@@ -1002,7 +1021,6 @@ void main(){
   vec3 c = grade((e + rays) * uExposure * uWhiteBalance);
   vec2 q = vUv - 0.5;
   c *= 1.0 - dot(q, q) * uVignette;
-
   /* заливка поднимается снизу: наклон и два слоя шума рвут край, как облако (igloo);
      «бумага» с мелким зерном — как фон экрана About на Tilda */
   float paperMask = 0.0;

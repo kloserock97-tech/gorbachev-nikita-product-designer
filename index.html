@@ -119,9 +119,9 @@
   <div class="stage" id="stage">
 
     <div class="guides rise-fade" style="--d:900ms" aria-hidden="true">
-      <i style="left:calc(405 * var(--u))"></i>
-      <i style="left:calc(748 * var(--u))"></i>
-      <i style="left:calc(1091 * var(--u))"></i>
+      <!-- v68: направляющие встали на вертикали золотого сечения кадра 1600u: 0.382 и 0.618 -->
+      <i style="left:calc(611 * var(--u))"></i>
+      <i style="left:calc(989 * var(--u))"></i>
     </div>
 
 
@@ -181,12 +181,15 @@
             <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5"/></svg>
           </button>
         </div>
+        <!-- v68: стеклянной кнопки «Открыть демо» больше нет — кликабельна сама картинка карточки.
+             Ссылка осталась на названии: с клавиатуры, из читалки экрана и «открыть в новой вкладке»
+             это по-прежнему настоящая ссылка, а не обработчик клика. -->
         <figcaption class="note-cap">
           <span class="note-cap__text">
-            <h2 class="note-cap__title" data-note-title>Windcrest</h2>
+            <h2 class="note-cap__title"><a class="note-cap__link" data-note-demo href="https://kloserock97-tech.github.io/windcrest/" target="_blank" rel="noopener"><span data-note-title>Windcrest</span></a></h2>
             <span class="note-cap__label" data-note-label>Side project 01</span>
           </span>
-          <a class="note-go" data-note-demo href="https://kloserock97-tech.github.io/windcrest/" target="_blank" rel="noopener"><span data-i18n="notes.go">Open demo</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9 9 3"/><path d="M4.2 3H9v4.8"/></svg></a>
+          <span class="note-cap__go" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M3 9 9 3"/><path d="M4.2 3H9v4.8"/></svg></span>
         </figcaption>
       </figure>
       <div class="card-note" id="field-note" aria-hidden="true">
@@ -421,7 +424,15 @@
     <p class="shelf-sub" data-i18n="shelf.sub">3D right in the browser: four demos with code on GitHub and a panel to play with. The grass from the first one grows on this site's hill.</p>
   </header>
   <div class="shelf-stage" role="list"></div>
-  <div class="shelf-count" aria-hidden="true"><span class="shelf-now">01</span><span class="shelf-of"></span></div>
+  <!-- v68: счётчик и шаг назад-вперёд одной строкой. Свайп и прокрутка остаются, но перестают быть
+       единственным способом; строка стоит слева — правый нижний угол занят переключателем звука. -->
+  <div class="shelf-pager">
+    <div class="shelf-count" aria-hidden="true"><span class="shelf-now">01</span><span class="shelf-of"></span></div>
+    <div class="shelf-steps">
+      <button type="button" class="shelf-step" data-d="-1" data-i18n-label="notes.prev" aria-label="Previous note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg></button>
+      <button type="button" class="shelf-step shelf-step--next" data-d="1" data-i18n-label="notes.next" aria-label="Next note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg></button>
+    </div>
+  </div>
 </section>
 
 <script type="module" src="/src/main.ts"></script>

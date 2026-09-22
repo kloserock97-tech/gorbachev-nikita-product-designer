@@ -4,11 +4,10 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { fbm, heightAt, makeRng, normalAt } from "./terrain";
 import { loadHdri } from "./hdri";
 import { createPostFx, type PostFx } from "./postfx";
-import { Hologram } from "./hologram";
 import { PortfolioScreen } from "./portfolioScreen";
 import { Dog } from "./dog";
 import { Weather, type WeatherKind } from "./weather";
-import { CASES, CHAPTER, FOOTER, MEADOW_OUT, STORY, STORY_FX, bell, casesCamera, chapters, flightPose, footerCamera, ramp, storyCamera, type Pose } from "./story";
+import { CASES, CHAPTER, FOOTER, MEADOW_OUT, STORY, STORY_FX, TRANSITION, aberrationAt, bell, casesCamera, chapters, flightPose, footerCamera, ramp, storyCamera, zoomBlur, type Pose } from "./story";
 import { Meadow } from "./meadow/Meadow";
 import { SCROLL_LAMBDA } from "../scrollFeel";
 import { KINETIC_BASE, KINETIC_FONT, createKinetic, type Kinetic } from "./kinetic";
@@ -45,21 +44,29 @@ const FOOTPRINTS: [number, number, number, number][] = [
 ];
 
 /* Солнце низко за холмом справа: оно даёт контровой свет на гребне и лучи.
+   v68: кадр развернулся влево, и солнце ушло за правую кромку — веера лучей не стало вовсе
+   (ореол в маске до кадра не доставал). Азимут довёрнут влево ровно настолько, чтобы солнце
+   снова село за плечо холма в кадре, правее кресла: оттуда лучи ложатся вниз-налево, к кнопке.
+   ⚠️ меняли SUN_DIR — перезапустить node tools/bake-hdri.mjs (SH неба запечены под него).
    Тени реквизита кладёт другой, «небесный» ключ повыше — от низкого солнца
    тень кресла тянулась бы на пять метров к камере. */
-const SUN_DIR = new THREE.Vector3(0.24, 0.012, -1).normalize();
+const SUN_DIR = new THREE.Vector3(-0.08, 0.04, -1).normalize();
 const SHADOW_DIR = new THREE.Vector3(0.25, 1.0, -0.55).normalize();
 
 /* v10: камера на 1.8 м дальше (было z 10.8) — ближняя трава мельче и спокойнее */
 const CAMERA_BASE = new THREE.Vector3(0, 1.92, 12.6);
-/* v47: первый экран снят тем же кадром, что и футер. Раньше так стояла только камера футера (покой + сдвиг
-   FOOT_OFF в story.ts): чуть дальше и ниже, взгляд выше — гребень холма на ~62 % высоты кадра, над ним небо под
-   заголовок, кресло не спорит с кнопкой. Никите эта композиция нравится больше, поэтому теперь это и есть поза покоя,
-   а футер просто возвращается в неё. CAMERA_PIVOT — прежняя точка взгляда: от неё по-прежнему считается отъезд
-   камеры на вертикальном экране (camDistance), чтобы телефон получил ровно тот же кадр, что был в футере. */
+/* v68: композиция по золотому сечению вместо центральной. Камера отведена вправо и развёрнута влево:
+   масса холма уходит в правую треть кадра, гребень идёт диагональю вниз-налево и выводит взгляд
+   к кнопке «Смотреть кейсы» в левой колонке, за ним открывается дальний левый склон. Кресло с
+   компьютером встаёт примерно на правую вертикаль золотого сечения (0.618 ширины), небо над
+   склоном — свободное поле под заголовок. Солнце остаётся за правой кромкой кадра: холм и кресло
+   получают контровой свет, а лучи ложатся веером вниз-налево, туда же, куда ведёт гребень.
+   CAMERA_PIVOT — прежняя точка взгляда: от неё считается отъезд камеры на вертикальном экране. */
 const CAMERA_PIVOT = new THREE.Vector3(0, 2.62, 0);
-const CAMERA_REST_OFF = new THREE.Vector3(0.6, -0.34, 1.6);
-const CAMERA_TARGET = new THREE.Vector3(0.2, 3.57, 0);
+/* x разворота на широком экране: смещение камеры вправо и точки взгляда влево (см. panK ниже) */
+const CAMERA_PAN = new THREE.Vector2(3.0, -2.0);
+const CAMERA_REST_OFF = new THREE.Vector3(3.0, -0.3, 0.8);
+const CAMERA_TARGET = new THREE.Vector3(-2.0, 3.2, 0);
 const SHADOW_LAYER = 3;
 /* слой компьютера в скролл-истории: рисуется отдельным проходом поверх заливки */
 const PC_LAYER = 5;
@@ -160,8 +167,8 @@ export class HillScene {
     this.renderer.toneMappingExposure = 1.0;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
-    /* реквизит неподвижен: карта теней перерисовывается только после загрузки и во время
-       голограммы интро, а не каждый кадр */
+    /* реквизит неподвижен: карта теней перерисовывается только после загрузки и пока летит
+       компьютер, а не каждый кадр */
     this.renderer.shadowMap.autoUpdate = false;
     this.timer.connect(document);
 
@@ -194,8 +201,6 @@ export class HillScene {
       reduced: this.reduced,
     });
     this.weather.setPixelRatio(this.dpr);
-    this.hologram = new Hologram(this.uniforms);
-    this.scene.add(this.hologram.group);
     this.loadProps();
     this.loadEnvironment();
     if (!/[?&]dog=0/.test(location.search)) {
@@ -287,10 +292,9 @@ export class HillScene {
 
   /* ---------------------------- интро --------------------------------- */
 
-  private hologram!: Hologram;
   private propBox: THREE.Box3 | null = null;
   private resolveProps!: () => void;
-  /* кресло, столик и компьютер загружены и получили каркас голограммы */
+  /* кресло, столик и компьютер загружены */
   readonly propsReady = new Promise<void>((r) => (this.resolveProps = r));
 
   /* параметры финального прохода (грейд, глитч) — интро их анимирует */
@@ -413,7 +417,7 @@ export class HillScene {
   /* Всё посаженное (трава, цветы, пампасы, колоски) — одной группой: посадка зависит от позы
      камеры, и при её заметной смене луг пересаживается целиком */
   private meadowGroup = new THREE.Group();
-  private plantedFor = { dist: 0, aspect: 0 };
+  private plantedFor = { dist: 0, aspect: 0, pan: -1 };
   private replantTimer = 0;
 
   private rebuildMeadow() {
@@ -432,7 +436,7 @@ export class HillScene {
 
   private buildGrass() {
     this.scene.add(this.meadowGroup);
-    this.plantedFor = { dist: this.camDistance, aspect: this.camera.aspect };
+    this.plantedFor = { dist: this.camDistance, aspect: this.camera.aspect, pan: Math.min(1, Math.max(0, (this.camera.aspect - 0.6) / 0.7)) };
     const rng = makeRng();
     const count = this.bladeCount();
     const cam = this.opts.fixedCamera ? new THREE.Vector3(...this.opts.fixedCamera.slice(0, 3)) : this.cameraRest().clone();
@@ -1229,29 +1233,22 @@ export class HillScene {
       this.applyDensity();
     }
 
-    /* 2) холм выгружается: волна от кресла, сетка голограммы съедает луг от краёв,
-       стены-экраны растут — интро наоборот */
-    const holo = ramp(s, ...STORY.holoIn) * (1 - ramp(s, STORY.fill[1], STORY.fill[1] + 0.02));
-    if (holo > 0 || this.storyHolo) {
-      this.storyHolo = holo > 0;
-      const k = (x: number) => x * x * (3 - 2 * x);
-      this.hologram.set({
-        holo,
-        reveal: 24 - 24.3 * k(ramp(s, ...STORY.reveal)),
-        net: k(ramp(s, ...STORY.net)),
-        walls: k(ramp(s, ...STORY.walls)),
-      });
-    }
+    /* 2) холм выгружается: волна от кресла бежит по траве (v67: голубая сетка-голограмма поверх
+       холма убрана — от неё кадр читался как чертёж, а не как переход) */
     const wu = ramp(s, ...STORY.wave);
     this.uniforms.uWave.value.set(0.2 + 18.8 * wu, this.reduced || wu <= 0 || wu >= 1 ? 0 : Math.sin(Math.PI * wu) ** 0.6, 0.55 + 1.05 * wu);
 
-    /* 3) глитч и заливка: полосы, RGB-расслоение, zoom-blur (пик посреди заливки и гаснет,
-       когда кадр закрыт — как blurCurve igloo), холодная вспышка */
+    /* 3) переход igloo целиком: полосы глитча, zoom-blur лучами от центра (пик посреди перехода и
+       гаснет, когда закрывать нечего — blurCurve), разъезд каналов к краям кадра (растёт кубически),
+       рваная заливка снизу и холодная вспышка. Доля перехода — та же заливка.
+       Только здесь: в главе «Кейсы» страница просто обрывается рваным краем и уходит — переход
+       оттуда пробовали и убрали (v67). */
     const g = this.reduced ? 0 : bell(s, ...STORY.glitch);
     const fu = ramp(s, ...STORY.fill);
-    fx.glitch = g * 0.32; // v17: мягче — полосы и расслоение намёком, а не на весь кадр
+    fx.glitch = g * TRANSITION.glitch;
     fx.glitchSeed = Math.floor(t * 18) + Math.floor(s * 60);
-    fx.radial = this.reduced ? 0 : Math.sin(Math.min(1, fu * 1.15) * Math.PI) * 0.34 * (fu > 0 ? 1 : 0);
+    fx.radial = this.reduced ? 0 : zoomBlur(fu);
+    fx.aberration = this.reduced ? 0 : aberrationAt(fu);
     fx.whiteBalance.set(1, 1, 1).lerp(this.coolWB, g);
     fx.fill = fu;
     const sk = ramp(s, ...STORY.studio);
@@ -1463,12 +1460,6 @@ export class HillScene {
     this.camera.layers.set(PC_LAYER);
     this.compileFor(this.pc, this.camera);
     this.camera.layers.mask = mask;
-    /* сетка и стены голограммы впервые показываются на старте истории (без интро они ещё не рисовались) —
-       их шейдеры собирались синхронно посреди скролла: кадр 145–164 мс */
-    const holoVisible = this.hologram.group.visible;
-    this.hologram.group.visible = true;
-    this.compileFor(this.hologram.group, this.camera);
-    this.hologram.group.visible = holoVisible;
     /* светлячки и дождь впервые показываются в футере (закат) или по кнопке погоды */
     for (const o of [...this.weather.warmObjects, ...(this.dog?.warmObjects ?? [])]) {
       const v = o.visible;
@@ -1505,7 +1496,6 @@ export class HillScene {
     /* пятно света — за компьютером, чуть выше центра, и немного следует за курсором */
     this.fx.params.spot.set((r.x + r.z) * 0.5 + this.pcTilt.x * 0.03, (r.y + r.w) * 0.5 + 0.06 + this.pcTilt.y * 0.02);
   }
-  private storyHolo = false;
   private pcOverlay = false;
   private storyCamPos = new THREE.Vector3();
   private storyCamLook = new THREE.Vector3().copy(CAMERA_TARGET);
@@ -1823,12 +1813,20 @@ export class HillScene {
        попадает весь склон, а не ближняя трава крупным планом */
     const aspect = w / h;
     this.camDistance = aspect < 1 ? Math.min(1.5, 1 + (1 - aspect) * 0.9) : 1;
+    /* v68: боковой разворот кадра — только там, где для него есть ширина. На вертикальном экране
+       угол обзора по горизонтали втрое уже, и тот же разворот вынес бы кресло с компьютером за
+       правую кромку. Поэтому на телефоне кадр остаётся прежним, центральным, а к широкому экрану
+       разворот набирается плавно: композиция по золотому сечению — про широкий кадр. */
+    const panK = Math.min(1, Math.max(0, (aspect - 0.6) / 0.7));
+    CAMERA_REST_OFF.x = 0.6 + (CAMERA_PAN.x - 0.6) * panK;
+    CAMERA_TARGET.x = 0.2 + (CAMERA_PAN.y - 0.2) * panK;
+    const panMoved = Math.abs(panK - this.plantedFor.pan) > 0.04;
     /* Поворот телефона или сужение окна отодвигает камеру — передний склон, посаженный под
        прежнюю позу, остался бы голым. Шире 16:9 × 1.2 — не хватит травы по бокам. */
     const planted = this.plantedFor;
     const moved = planted.dist > 0 && Math.abs(this.camDistance - planted.dist) > 0.04;
     const wider = planted.aspect > 0 && aspect > Math.max(planted.aspect, (16 / 9) * 1.2) * 1.05;
-    if ((moved || wider) && !this.opts.fixedCamera) {
+    if ((moved || wider || panMoved) && !this.opts.fixedCamera) {
       clearTimeout(this.replantTimer);
       this.replantTimer = window.setTimeout(() => !this.disposed && this.rebuildMeadow(), 450);
     }
