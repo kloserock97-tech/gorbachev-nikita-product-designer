@@ -6,7 +6,13 @@
    проверка живёт только первые LIMIT ошибок и первые FRAMES кадров. Инструмент отладочный, в сборку не идёт. */
 (() => {
   const LIMIT = 12;
-  const out = (window.__glerr = { errors: [], draws: 0, frames: 0 });
+  /* getError() синхронный: он ждёт видеокарту и стоит дорого. Пока ошибки были, проверка сама
+     останавливалась на двенадцатой; когда ошибок не стало, она осталась висеть на каждом вызове
+     отрисовки и задушила сцену — прогон давал три кадра вместо сотни. Поэтому смотрим только начало
+     загрузки: все известные ошибки этого рода случаются в первые пару десятков кадров. */
+  const WATCH_FRAMES = 180;
+  const WATCH_DRAWS = 6000;
+  const out = (window.__glerr = { errors: [], draws: 0, frames: 0, watched: 0 });
   const NAMES = { 1280: "INVALID_ENUM", 1281: "INVALID_VALUE", 1282: "INVALID_OPERATION", 1285: "OUT_OF_MEMORY", 1286: "INVALID_FRAMEBUFFER_OPERATION" };
 
   let frame = 0;
@@ -19,7 +25,8 @@
     proto[name] = function (...args) {
       const r = orig.apply(this, args);
       out.draws++;
-      if (out.errors.length < LIMIT) {
+      if (out.errors.length < LIMIT && frame <= WATCH_FRAMES && out.draws <= WATCH_DRAWS) {
+        out.watched++;
         const e = this.getError();
         if (e) {
           /* что сейчас привязано: программа, её сэмплеры и по какому шейдеру её узнать */

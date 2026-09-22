@@ -16,7 +16,9 @@ import { launch, sleep } from "./lib/chrome.mjs";
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i < 0 ? d : process.argv[i + 1]; };
 const URL_ = arg("url", "http://127.0.0.1:5191/");
 const CPU = +arg("cpu", 4);
-const WAIT = +arg("wait", 18000);
+/* На CPU x4 сцена стартует дольше пятнадцати секунд (см. регресс в docs/load-test-report.md),
+   поэтому ждём с запасом: иначе проверка постоянно отвечает «прогон не состоялся». */
+const WAIT = +arg("wait", 35000);
 const PORT = +arg("port", 9361);
 
 const { ws, send, close } = await launch(PORT, [
@@ -43,7 +45,7 @@ const { gl, rendered, lite } = JSON.parse(r.result?.result?.value ?? "{}");
 ws.close(); close();
 
 const errors = gl?.errors ?? [];
-console.log(`кадров ${gl?.frames ?? "—"}, вызовов отрисовки ${gl?.draws ?? "—"}, сцена нарисовала ${rendered ?? "—"}, ошибок WebGL ${errors.length}`);
+console.log(`кадров ${gl?.frames ?? "—"}, вызовов отрисовки ${gl?.draws ?? "—"} (проверено ${gl?.watched ?? "—"}), сцена нарисовала ${rendered ?? "—"}, ошибок WebGL ${errors.length}`);
 for (const e of errors.slice(0, 3)) console.log(`  ${e.code} на кадре ${e.frame}: ${e.samplers.join(" ")}`);
 if (errors.length) console.log("  Материал с receiveShadow рисуется раньше, чем впервые отрисована карта теней?");
 
