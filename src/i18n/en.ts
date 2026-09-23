@@ -142,9 +142,7 @@ const en = {
   "walk.kicker": "Case studies · 2024–2026",
   "walk.title": "Five shipped products and two concepts",
   "walk.sub": "Internal tools, city services and AI products. Each case tells what was there, what I did and what came of it.",
-  "shelf.kicker": "Side projects",
   "shelf.title": "WebGL experiments",
-  "shelf.sub": "3D right in the browser: four demos with code on GitHub and a panel to play with. The grass from the first one grows on this site's hill.",
 
   /* меню Work в доке */
   "work.title": "Work",

@@ -55,9 +55,7 @@
   opacity: calc((var(--enter) - 0.5) * 2); translate: 0 calc((1 - var(--enter)) * 30px);
   text-shadow: 0 1px 18px rgba(0, 0, 0, 0.45);
 }
-.shelf-kicker { margin: 0 0 10px; font-size: 13px; letter-spacing: 0.28em; text-transform: uppercase; opacity: 0.7; }
 .shelf-title { margin: 0; font-size: clamp(36px, 4.4vw, 76px); font-weight: 300; line-height: 1; letter-spacing: -0.02em; }
-.shelf-sub { margin: 14px 0 0; font-size: 14px; font-weight: 300; line-height: 1.55; opacity: 0.78; }
 /* v68: счётчик больше не стоит сам по себе — он первый в строке .shelf-pager, вместе со стрелками шага */
 .shelf-count { display: flex; align-items: baseline; gap: 10px; font-weight: 300; text-shadow: 0 1px 18px rgba(0, 0, 0, 0.45); }
 .shelf-now { font-size: clamp(44px, 5vw, 88px); line-height: 1; font-variant-numeric: tabular-nums; }
@@ -110,9 +108,7 @@
   padding: calc(64px + env(safe-area-inset-top)) 0 max(22px, env(safe-area-inset-bottom));
 }
 .shelf[data-format="strip"] .shelf-head { position: static; max-width: none; padding: 0 20px; }
-.shelf[data-format="strip"] .shelf-kicker { margin-bottom: 8px; font-size: 12px; }
 .shelf[data-format="strip"] .shelf-title { font-size: clamp(30px, 8.4vw, 50px); }
-.shelf[data-format="strip"] .shelf-sub { display: none; }
 .shelf[data-format="strip"] .shelf-stage {
   position: relative; inset: auto; flex: none;
   display: flex; align-items: flex-start; gap: var(--gap);

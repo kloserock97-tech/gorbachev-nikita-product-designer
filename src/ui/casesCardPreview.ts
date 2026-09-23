@@ -9,20 +9,19 @@
    выезжает снизу; соседних кейсов по бокам нет. Барабан общий с прежним видом главы — его крутит
    casesWheel.ts и доворачивает до целого кейса за ~0,4 с.
 
-   Вокруг устройства парят трое: знак продукта, круглый значок платформы и цифра результата. Больше
-   ничего: всё остальное — название, номер, метка, год — уже написано на дуге и под устройством, и
-   вторые экземпляры этих же слов спорили с первыми. Спутники не едут вместе с барабаном: на каждом
-   новом кейсе они разъезжаются по местам и медленно парят, каждый со своей задержкой. Разлёт и парение
-   разведены по разным свойствам (transform и translate): напиши оба в transform — анимация затрёт переход.
+У устройства двое спутников: знак продукта и круглый значок платформы. Оба про него, поэтому стоят
+   у его краёв, а не по углам сцены — рядом стоящее читается как одно целое. Цифра результата живёт в
+   текстовой колонке под устройством: это факт, а не украшение. Спутники не едут вместе с барабаном:
+   на каждом новом кейсе они разъезжаются по местам и медленно парят, каждый со своей задержкой. Разлёт
+   и парение разведены по разным свойствам (transform и translate): напиши оба в transform — анимация
+   затрёт переход.
 
    Дуга с названиями, текст под устройством и кнопки шага — в casesWheel.ts. */
 import type { CaseItem } from "../data/cases";
 import { brandMark, caseThumb, lookVars } from "./caseLook";
-import { tidy } from "../lib/typograph";
 import "./cases-card.css";
 
 const BASE = import.meta.env.BASE_URL;
-const esc = (s: string) => tidy(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 /* платформа кейса в круглом значке: монитор у веба, телефон у мобильного */
 const iconScreen = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M9 20h6"/></svg>`;
@@ -35,7 +34,7 @@ export type CardPreview = {
   drum(pos: number): void;
   /** подставить кейс в спутники */
   paint(i: number): void;
-  /** заново разогнать спутники */
+  /** заново разогнать спутники; первый раз заодно раскрывает крышку */
   live(): void;
   /** собрать спутники и закрыть устройство (глава ушла) */
   calm(): void;
@@ -77,16 +76,16 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
       <div class="cc-drum">${list
         .map((c, i) => {
           const isPhone = c.look.screen?.device === "phone";
-          return `<a class="cc-dev cc-dev--${isPhone ? "phone" : "laptop"}" data-i="${i}" href="#/work/${c.id}" tabindex="-1" aria-hidden="true" style="${lookVars(c)}">${isPhone ? phone(c) : laptop(c)}</a>`;
+          /* у каждого кейса свой разворот корпуса и свой угол крышки — числа от номера, поэтому
+             устройство всегда встаёт одинаково и не «дрожит» при перерисовке */
+          const yaw = (((i * 37) % 13) - 6).toFixed(0);
+          const lid = (((i * 53) % 9) - 4).toFixed(0);
+          return `<a class="cc-dev cc-dev--${isPhone ? "phone" : "laptop"}" data-i="${i}" href="#/work/${c.id}" tabindex="-1" aria-hidden="true" style="--yaw:${yaw}deg;--lid:${lid}deg;${lookVars(c)}">${isPhone ? phone(c) : laptop(c)}</a>`;
         })
         .join("")}</div>
-    </div>
-
-    <span class="cc-brand" style="--gx:-6;--gy:4;--fd:0s"></span>
-
-    <span class="cc-thermo" style="--gx:-7;--gy:-2;--fd:.12s"></span>
-
-    <div class="cc-stat" style="--gx:-7;--gy:-3;--fd:.24s"><b></b><span></span></div>`;
+      <span class="cc-brand" style="--gx:-5;--gy:3;--fd:0s"></span>
+      <span class="cc-thermo" style="--gx:-5;--gy:-2;--fd:.12s"></span>
+    </div>`;
   stage.appendChild(box);
 
   const devs = [...box.querySelectorAll<HTMLElement>(".cc-dev")];
@@ -103,14 +102,14 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
     brand.innerHTML = brandMark(c, "cc-brand-img");
     brand.hidden = !brand.firstElementChild;
     q(".cc-thermo").innerHTML = c.look.screen?.device === "phone" ? iconPhone : iconScreen;
-    q(".cc-stat b").textContent = c.stat.value;
-    q(".cc-stat span").innerHTML = esc(c.stat.label);
   };
 
   /* Разлёт. Класс снимается и ставится заново через кадр — иначе браузер не перезапустит переход,
      и на новом кейсе спутники просто стояли бы на местах. */
   let liveTimer = 0;
   const live = () => {
+    /* крышка раскрывается один раз за визит: дальше она просто стоит открытой */
+    for (const el of devs) el.classList.add("is-open");
     if (reduced) { box.classList.add("is-live"); return; }
     box.classList.remove("is-live");
     clearTimeout(liveTimer);
@@ -146,15 +145,12 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
       el.style.transform = reduced ? "none" : `translate3d(${(d * 5).toFixed(2)}%, ${(d * 88).toFixed(2)}%, 0) rotate(${(d * -6).toFixed(2)}deg) scale(${(1 - ad * 0.1).toFixed(3)})`;
       el.tabIndex = shown && ad < 0.5 ? 0 : -1;
       el.setAttribute("aria-hidden", String(ad >= 0.5));
-      /* раскрывается только то устройство, на котором барабан остановился */
-      el.classList.toggle("is-open", ad < 0.12);
     });
   };
 
   const reach = (on: boolean) => {
     shown = on;
     lastDrum = -999;
-    if (!on) devs.forEach((el) => el.classList.remove("is-open"));
   };
 
   paint(0);

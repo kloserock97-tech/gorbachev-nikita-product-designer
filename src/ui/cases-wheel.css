@@ -23,6 +23,10 @@
 }
 
 .cw { position: absolute; inset: 0; pointer-events: none; font-family: var(--font); color: #fff; }
+/* Барабан крутится и зажатой мышкой. Курсор-рука показывает, что главу можно тянуть; пока тянут,
+   выделение текста выключено — иначе жест превращается в подсветку подзаголовка. */
+.cases[data-mode="wheel"].is-on { cursor: grab; }
+body.is-wheel-drag, body.is-wheel-drag * { cursor: grabbing !important; user-select: none; }
 
 /* ── превью слева: зона предмета и текст под ней ───────────────────────── */
 .cw-preview {
@@ -49,16 +53,24 @@
 .cases.has-gl .cw-objs { visibility: hidden; }
 
 /* метка, подзаголовок и кнопка в двух строках: кнопка стоит рядом с текстом, а не под ним — высота уходит предмету */
+/* Лесенка по общему левому краю: метка → подзаголовок → цифра результата → кнопка. Выравнивание по
+   одной линии и делает из набора строк колонку, которую читают сверху вниз, не перескакивая. */
 .cw-info {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 28px; align-items: end;
+  display: grid; justify-items: start; gap: clamp(6px, 1vh, 12px);
   transition: opacity 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), translate 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .cw-info.is-out { opacity: 0; translate: 0 -10px; transition-duration: 0.16s; }
 .cw-info.is-in { opacity: 0; translate: 0 14px; transition: none; }
-.cw-tag { grid-column: 1 / -1; margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 0.01em; color: color-mix(in srgb, var(--s2, #fff) 78%, #fff); font-variant-numeric: tabular-nums; }
-.cw-sub { grid-column: 1; margin: 0; max-width: 24em; font-size: clamp(19px, 1.65vw, 26px); font-weight: 500; line-height: 1.3; letter-spacing: -0.008em; text-wrap: pretty; text-shadow: 0 1px 18px rgba(0, 0, 0, 0.35); }
+.cw-tag { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: 0.01em; color: color-mix(in srgb, var(--s2, #fff) 78%, #fff); font-variant-numeric: tabular-nums; }
+.cw-sub { margin: 0; max-width: 19em; font-size: clamp(18px, 1.5vw, 24px); font-weight: 500; line-height: 1.3; letter-spacing: -0.008em; text-wrap: pretty; text-shadow: 0 1px 18px rgba(0, 0, 0, 0.35); }
+/* Цифра результата стоит в колонке, а не парит отдельно: это факт, а не украшение, и место ему
+   среди слов. В колонке она второй по весу после подзаголовка — крупная, но тонкая. */
+.cw-fact { margin: clamp(2px, 0.8vh, 8px) 0 0; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.cw-fact b { font-size: clamp(26px, 2.3vw, 38px); font-weight: 300; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: lining-nums; }
+.cw-fact span { font-size: 13px; color: color-mix(in srgb, #fff 55%, transparent); line-height: 1.3; max-width: 18em; }
+
 .cw-open {
-  grid-column: 2; grid-row: 2; display: inline-flex; align-items: center; gap: 4px; height: 48px; padding: 0 8px 0 22px; border-radius: 999px;
+  display: inline-flex; align-items: center; gap: 4px; height: 48px; padding: 0 8px 0 22px; border-radius: 999px;
   background: #fff; color: #1d1d1f; font-size: 15px; font-weight: 600; text-decoration: none; white-space: nowrap;
   transition: scale 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -86,8 +98,9 @@
   position: absolute; left: var(--cx, 600px); top: var(--cy, 50%); transform-origin: 0 0; display: flex; align-items: center; height: 0;
   color: #fff; text-decoration: none; white-space: nowrap; pointer-events: auto; will-change: transform, opacity; -webkit-tap-highlight-color: transparent;
 }
+/* второй уровень после экрана: крупно, но не спорит с ним за первое место */
 .cw-t {
-  margin-left: 34px; padding: 10px 0; font-size: clamp(28px, 3vw, 48px); font-weight: 600; line-height: 1.05; letter-spacing: -0.022em;
+  margin-left: 34px; padding: 10px 0; font-size: clamp(23px, 2.35vw, 38px); font-weight: 600; line-height: 1.05; letter-spacing: -0.022em;
   transform-origin: 0 50%; scale: calc(0.58 + 0.42 * var(--k, 0)); text-shadow: 0 1px 22px rgba(0, 0, 0, 0.4);
   transition: translate 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
@@ -118,9 +131,16 @@
 .cases.is-narrow .cw-preview { left: 16px; right: 16px; width: auto; top: calc(var(--head-top) + var(--kick) + 14px); bottom: calc(176px + env(safe-area-inset-bottom)); gap: 10px; }
 .cases.is-narrow .cw-obj { inset: 2cqh 0 2cqh 0; }
 .cases.is-narrow .cw-obj img { object-position: 50% 60%; }
-.cases.is-narrow .cw-info { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; align-items: center; }
-.cases.is-narrow .cw-tag { font-size: 13px; }
-.cases.is-narrow .cw-sub { font-size: clamp(16px, 4.5vw, 20px); line-height: 1.28; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+/* цифра результата и кнопка стоят одной строкой: на телефоне каждая сэкономленная строка — это
+   высота, которую забирает себе экран продукта */
+.cases.is-narrow .cw-info { grid-template-columns: minmax(0, 1fr) auto; gap: 5px 14px; align-items: center; }
+.cases.is-narrow .cw-tag { grid-column: 1 / -1; font-size: 13px; }
+.cases.is-narrow .cw-sub { grid-column: 1 / -1; }
+.cases.is-narrow .cw-fact { grid-column: 1; grid-row: 3; margin: 0; gap: 9px; }
+.cases.is-narrow .cw-fact b { font-size: 26px; }
+.cases.is-narrow .cw-fact span { font-size: 11.5px; max-width: 14em; }
+.cases.is-narrow .cw-open { grid-column: 2; grid-row: 3; }
+.cases.is-narrow .cw-sub { font-size: clamp(15px, 4.2vw, 19px); line-height: 1.28; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 /* на телефоне кнопка — круглая стрелка: подзаголовку нужна ширина, а кейс открывают ещё и предмет, и активное название */
 .cases.is-narrow .cw-open { width: 46px; height: 46px; padding: 0; justify-content: center; }
 .cases.is-narrow .cw-open-l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }

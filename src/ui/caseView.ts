@@ -195,7 +195,9 @@ export function initCaseView(opts: Opts = {}) {
   /* клики по ссылкам #/work/<id>[/<разбор>] (карточки, меню Work, соседние кейсы, «Следующий кейс») — своя запись в истории */
   document.addEventListener("click", (e) => {
     const a = (e.target as Element).closest?.<HTMLAnchorElement>("a[href^='#/work/']");
-    if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    /* отменённый клик уже обработали на месте — например, названием на дуге, которое просто довозит
+       колесо до своего кейса, а не открывает его */
+    if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
     e.preventDefault();
     const to = a.getAttribute("href")!;
     if (location.hash === to) return;

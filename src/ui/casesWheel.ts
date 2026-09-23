@@ -20,7 +20,7 @@
    Разметку модуль строит сам, внутри секции .cases. На экране с мышью предмет рисует WebGL (casesWheelGl.ts): объём по
    карте глубины и барабан; картинки остаются под холстом как запасной вид. ?cases=wheel2d — только картинки,
    ?cases=wheel3d — WebGL и на телефоне. */
-import { getCases } from "../data/cases";
+import { getCases, type CaseItem } from "../data/cases";
 import notes from "../data/notes";
 import { pad2 as pad } from "../lib/format";
 import { CASES, CHAPTER, CHAPTER2, chapters, dwell, ramp } from "../scene/story";
@@ -60,6 +60,7 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
       <div class="cw-info" aria-live="polite">
         <p class="cw-tag"></p>
         <p class="cw-sub"></p>
+        <p class="cw-fact"><b></b><span></span></p>
         <a class="cw-open" href="#"><span class="cw-open-l"></span>${goArrow}</a>
       </div>
     </div>
@@ -108,14 +109,34 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
       a.setAttribute("aria-label", `${list[i].title}. ${list[i].subtitle}`);
     });
   };
-  let shownInfo = -1;
+  /** цифры подряд, без разделителей: «−38 %» и «−38%» должны считаться одним и тем же */
+const digitsOf = (s: string) => s.replace(/[^\d]/g, "");
+/** первые слова подписи к цифре — по ним видно, что хвост подзаголовка пересказывает её же */
+const headWords = (s: string, n: number) => s.toLowerCase().split(/[\s,;:]+/).filter(Boolean).slice(0, n).join(" ");
+
+/** Подзаголовок без хвоста, который дублирует цифру результата (см. комментарий выше). */
+function subtitleOf(c: CaseItem) {
+  const i = c.subtitle.indexOf(":");
+  if (i < 0) return c.subtitle;
+  const tail = c.subtitle.slice(i + 1).trim();
+  if (!tail) return c.subtitle;
+  const num = digitsOf(c.stat.value);
+  const sameNumber = num.length > 0 && digitsOf(tail).includes(num);
+  const words = headWords(c.stat.label, 3);
+  const sameWords = words.length > 4 && tail.toLowerCase().includes(words);
+  return sameNumber || sameWords ? c.subtitle.slice(0, i).trim() : c.subtitle;
+}
+
+let shownInfo = -1;
   const paintInfo = (i: number, animate: boolean) => {
     const c = list[i];
     shownInfo = i;
     const put = () => {
       info.style.cssText = lookVars(c);
       info.querySelector(".cw-tag")!.textContent = `${pad(i + 1)} · ${c.tag}`;
-      info.querySelector(".cw-sub")!.innerHTML = esc(c.subtitle);
+      info.querySelector(".cw-sub")!.innerHTML = esc(subtitleOf(c));
+      info.querySelector(".cw-fact b")!.textContent = c.stat.value;
+      info.querySelector(".cw-fact span")!.innerHTML = esc(c.stat.label);
       info.querySelector(".cw-open-l")!.textContent = t("cases.cta");
       info.querySelector<HTMLAnchorElement>(".cw-open")!.href = `#/work/${c.id}`;
     };
@@ -143,9 +164,13 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
       wheel.style.setProperty("--cx", `${(r.width / 2).toFixed(1)}px`);
       wheel.style.setProperty("--cy", `${(R + 30).toFixed(1)}px`);
     } else {
-      R = clamp(innerHeight * 0.56, 340, 620);
-      step = 16.5;
-      wheel.style.setProperty("--cx", `${(R + 56).toFixed(1)}px`);
+      /* Радиус больше, а значит дуга положе, и между соседними названиями по дуге больше расстояния
+         (длина дуги = R · угол). Вместе с увеличенным шагом это разводит названия, которые слипались
+         к верхнему и нижнему концам. Центр окружности отодвинут дальше вправо — дуга прижата к правому
+         краю и освобождает середину кадра. */
+      R = clamp(innerHeight * 0.68, 420, 760);
+      step = 18.5;
+      wheel.style.setProperty("--cx", `${(R + 64).toFixed(1)}px`);
       wheel.style.setProperty("--cy", `${(r.height / 2).toFixed(1)}px`);
     }
     wheel.style.setProperty("--R", `${R.toFixed(1)}px`);
@@ -163,6 +188,9 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
   let gl: WheelGl | null = null;
   let px = 0, py = 0;
   let lastP = 0;
+  /* Дробное положение колеса прямо из прокрутки, без гистерезиса. current отстаёт нарочно (dwell держит
+     кейс, пока прокрутка идёт мимо), и доводить по нему нельзя: после тяги колесо возвращалось назад. */
+  let lastRun = 0;
   const layout = () => {
     measure();
     card?.layout();
@@ -230,7 +258,9 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
         : `rotate(${(-ang).toFixed(2)}deg) translateX(${(-R).toFixed(1)}px)`;
       a.style.transform = tr;
       a.style.setProperty("--k", clamp(1 - ad, 0, 1).toFixed(3)); // 1 у активного, 0 у соседей: размер и яркость
-      a.style.opacity = clamp(1.15 - ad * 0.34, 0, 1).toFixed(3);
+      /* Дуга пологая, и дальние названия уезжают вправо за край кадра. Гасим их раньше, чем они туда
+         доедут: на дуге всё равно читают активное и двух соседей, остальное — шкала. */
+      a.style.opacity = clamp(1.12 - ad * 0.46, 0, 1).toFixed(3);
       a.classList.toggle("is-active", ad < 0.5);
       a.tabIndex = shown && ad < 3.2 ? 0 : -1;
       /* штрих на дуге в той же точке, что и название: единичный вектор от центра к точке */
@@ -295,6 +325,47 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
   });
   stage.addEventListener("pointerleave", () => { px = 0; py = 0; stage.style.setProperty("--px", "0"); stage.style.setProperty("--py", "0"); gl?.set(drum, 0, 0); });
 
+  /* Мышь с зажатой кнопкой. Колёсико есть не у всех, а тачпад у каждого настроен по-своему; тянуть
+     страницу за колесо — привычный жест по тем же барабанам на чужих сайтах. Двигаем саму прокрутку:
+     историю всё равно везёт она, поэтому перетаскивание получается точным, а не «вторым скроллом».
+     На отпускании доводим до ближайшего кейса, иначе барабан встанет между двумя. */
+  let mouseY = 0, dragging = false, dragged = 0, runAtDown = 0;
+  const DRAG_K = 2.2; // сколько прокрутки на пиксель тяги: один кейс примерно за 280 px жеста
+  /** рывок меньше этой доли кейса — случайное дрожание, больше — намерение перейти дальше */
+  const FLICK = 0.18;
+  addEventListener("pointerdown", (e) => {
+    if (!shown || e.pointerType !== "mouse" || e.button !== 0) return;
+    if (document.body.classList.contains("case-open")) return;
+    /* по ссылкам и кнопкам не тянем: там своё действие */
+    if ((e.target as Element).closest?.("a, button, input, textarea")) return;
+    mouseY = e.clientY; dragging = true; dragged = 0; runAtDown = lastRun;
+    document.body.classList.add("is-wheel-drag");
+  });
+  addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const dy = e.clientY - mouseY;
+    mouseY = e.clientY;
+    dragged += Math.abs(dy);
+    /* двигаем саму прокрутку: историю везёт она, поэтому тяга получается точной, а не «вторым скроллом» */
+    scrollBy({ top: -dy * DRAG_K, behavior: "instant" as ScrollBehavior });
+    e.preventDefault();
+  });
+  const endDrag = () => {
+    if (!dragging) return;
+    dragging = false;
+    document.body.classList.remove("is-wheel-drag");
+    if (dragged <= 6) return; // подрагивание, а не жест
+    /* Куда сесть. Обычно — ближайший кейс. Но если ближайшим оказался тот же, с которого начали, а
+       протянули заметно — засчитываем шаг в сторону тяги: человек тянул не для того, чтобы вернуться. */
+    const moved = lastRun - runAtDown;
+    let to = Math.round(lastRun);
+    if (to === Math.round(runAtDown) && Math.abs(moved) > FLICK) to += Math.sign(moved);
+    goTo(to);
+  };
+  addEventListener("pointerup", endDrag);
+  addEventListener("pointercancel", endDrag);
+  addEventListener("blur", endDrag);
+
   /* Свайп по всей главе, не только по дуге: карточка занимает пол-экрана, и жест по ней — первое, что
      пробуют пальцем. Слушаем именно касания: при жесте по карточке браузер отдаёт указатель ей во
      владение, и «отпустили» до обёртки не доходит — touchend приходит всегда. */
@@ -336,6 +407,7 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
     const inK = ramp(c, ...CASES.cardsIn);
     const e = 1 - (1 - inK) ** 3;
     const run = ramp(c, ...CASES.strip) * (n - 1);
+    lastRun = run;
     place(reduced ? Math.round(run) : dwell(run), e);
   };
 
