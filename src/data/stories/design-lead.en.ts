@@ -11,7 +11,7 @@ export const en: CaseStory = {
   id: "design-lead",
   hero: {
     kicker: "Acting design lead · Sber · 2025–2026",
-    title: "Nobody Appointed Me",
+    title: "Led Before the Title",
     tagline: "The design lead left and the team stayed. For about a year I ran it in practice — and what I changed was not the screens.",
     summary:
       "Not long after I joined Sber, the design lead resigned. No replacement was named — not me, not anyone. The team stayed: a senior, two mid-level designers and an intern. For roughly a year I owned design quality, handed out the work, hired people and helped them grow. The product was internal and bank-wide: risk assessment and review of AI agents, around 2,500 employees. What changed over that year was not the screens. It was the shape a task arrives in, and the moment design gets into the conversation.",
@@ -25,7 +25,7 @@ export const en: CaseStory = {
   },
   kpis: [
     { value: "4", label: "designers on the team: one senior, two mid, one intern" },
-    { value: "~1 year", label: "running the team while nobody was appointed" },
+    { value: "~1 year", label: "leading the team before the title existed" },
     { value: "~2,500", label: "bank employees work in the product" },
   ],
   context: {
