@@ -37,7 +37,8 @@
 }
 .ch-obj img { display: block; width: 100%; height: 100%; animation: ch-float 9s ease-in-out infinite; }
 .ch--phone .ch-obj { left: -2%; bottom: -4%; width: 62%; }
-.ch--solo .ch-obj { left: 4%; bottom: 2%; width: 96%; }
+/* без устройства предмет стоит один, и вертикальному нужно место по бокам, а не во всю ширину */
+.ch--solo .ch-obj { left: 27%; bottom: 0; width: 46%; }
 
 @keyframes ch-in { from { opacity: 0; transform: perspective(1800px) translate3d(6cqw, 5cqw, 0) rotateY(-26deg) rotateX(9deg) rotateZ(2deg); } }
 @keyframes ch-float { 50% { translate: 0 -1.4cqw; rotate: 1deg; } }

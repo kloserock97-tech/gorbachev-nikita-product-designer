@@ -23,7 +23,10 @@ export const lookVars = (c: CaseItem, tone: LookTone = "color") => {
 /** предмет кейса: avif, для старых браузеров webp. Размеры нужны, чтобы место под картинку было известно заранее */
 export const objectPicture = (c: CaseItem, cls: string, eager = false) => {
   const w = 900, h = Math.round(900 / c.look.object.ratio);
-  return `<picture class="${cls}" aria-hidden="true"><source type="image/avif" srcset="${BASE}${caseObject(c.id)}"><img src="${BASE}${caseObject(c.id, "webp")}" alt="" width="${w}" height="${h}" decoding="async" loading="${eager ? "eager" : "lazy"}" draggable="false"></picture>`;
+  /* avif вдвое легче, но он есть не у каждого предмета; источник ставим только там, где файл правда лежит,
+     иначе <picture> покажет пустоту: на <img> он в этом случае не откатывается */
+  const avif = c.look.object.avif === false ? "" : `<source type="image/avif" srcset="${BASE}${caseObject(c.id)}">`;
+  return `<picture class="${cls}" aria-hidden="true">${avif}<img src="${BASE}${caseObject(c.id, "webp")}" alt="" width="${w}" height="${h}" decoding="async" loading="${eager ? "eager" : "lazy"}" draggable="false"></picture>`;
 };
 
 /* v68: на обложке видно, что внутри и на чём это работает.

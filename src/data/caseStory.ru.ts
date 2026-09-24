@@ -10,6 +10,7 @@ import { ru as moderator } from "./stories/moderator-dashboard.ru";
 import { ru as spam } from "./stories/stop-spam.ru";
 import { ru as plati } from "./stories/plati-chastyami.ru";
 import { ru as guru } from "./stories/restaurant-guru.ru";
+import { ru as lead } from "./stories/design-lead.ru";
 
 const img = (src: string, w: number, h: number, caption: string, kind = "screen"): CaseImage => ({ src, w, h, caption, kind });
 
@@ -323,6 +324,7 @@ const stories: StorySet = {
   "stop-spam": spam,
   "plati-chastyami": plati,
   "restaurant-guru": guru,
+  "design-lead": lead,
 };
 
 export default stories;
