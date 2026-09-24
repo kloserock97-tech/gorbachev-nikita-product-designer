@@ -16,4 +16,5 @@ export const shots2x = new Map<string, number>([
   ["cases/grif-ai/07.webp", 1440],
   ["cases/grif-ai/t-chat-attach.webp", 1440],
   ["cases/grif-ai/t-chat-reasoning-steps.webp", 1380],
+  ["cases/plati-chastyami/08-variant-b-calendar.webp", 786],
 ]);
