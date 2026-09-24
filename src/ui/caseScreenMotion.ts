@@ -16,9 +16,9 @@ const scenes: Record<string, Scene[]> = {
     { file: 'spam-sms-setup.webp', ru: 'Переход в настройки одним действием', en: 'Open Settings in one action', focus: 'settings' },
   ],
   'community': [
-    { file: 'community-publication.png', ru: 'Публикация собирает историю в одном кадре', en: 'A publication frames the whole story', focus: 'publication' },
-    { file: 'community-publication.png', ru: 'Аудиоверсия и реакции — рядом с материалом', en: 'Audio and reactions stay close to the story', focus: 'engagement' },
-    { file: 'community-publication.png', ru: 'Темы помогают продолжить исследование города', en: 'Topics invite further city exploration', focus: 'topics' },
+    { file: 'community-publication.webp', ru: 'Публикация собирает историю в одном кадре', en: 'A publication frames the whole story', focus: 'publication' },
+    { file: 'community-publication.webp', ru: 'Аудиоверсия и реакции — рядом с материалом', en: 'Audio and reactions stay close to the story', focus: 'engagement' },
+    { file: 'community-publication.webp', ru: 'Темы помогают продолжить исследование города', en: 'Topics invite further city exploration', focus: 'topics' },
   ],
   'moderator-dashboard': [
     { file: 'moderator-queue.webp', ru: 'Очередь показывает статус каждой проверки', en: 'The queue exposes every review status', focus: 'moderator-queue' },
