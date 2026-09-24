@@ -162,9 +162,9 @@ export const en: CaseStory = {
       kind: "stack",
       title: "Welcome, filter setup and protection statistics",
       images: [
-        img(F + "spam-welcome.png", 402, 874, "First screen: what the app is good for comes first, requests for access come after", "hero"),
+        img(F + "spam-welcome.webp", 402, 874, "First screen: what the app is good for comes first, requests for access come after", "hero"),
         img("cases/stop-spam/01.webp", 1300, 2642, "Statistics: protection level and blocked-spam counters", "device"),
-        img(F + "spam-sms-setup.png", 402, 874, "SMS filter setup laid out in five clear steps"),
+        img(F + "spam-sms-setup.webp", 402, 874, "SMS filter setup laid out in five clear steps"),
       ],
     },
   ],

@@ -15,7 +15,9 @@ import { basename } from "node:path";
 
 const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i < 0 ? d : +process.argv[i + 1]; };
-const TH = arg("th", 40);          // сторона «иконки» для сравнения
+/* «Иконка» не квадратная, а под пропорции искомого куска: у полосы 1024×226 квадрат съедает всю
+   горизонтальную подробность, и совпадение не находится. Клеток держим около полутора тысяч. */
+const CELLS = arg("cells", 1600);
 const [target, ...frames] = args;
 
 /** яркость картинки как массив байтов плюс её размеры */
@@ -42,13 +44,13 @@ const boxSum = (s, w, x0, y0, x1, y1) =>
   s[y1 * (w + 1) + x1] - s[y0 * (w + 1) + x1] - s[y1 * (w + 1) + x0] + s[y0 * (w + 1) + x0];
 
 /** «иконка» прямоугольника: средние яркости по сетке TH×TH, приведённые к нулевому среднему и единичному разбросу */
-function thumb(s, w, x, y, cw, ch, out = new Float64Array(TH * TH)) {
+function thumb(s, w, x, y, cw, ch, out = new Float64Array(TW * TH)) {
   for (let j = 0; j < TH; j++) {
     const y0 = y + Math.floor((j * ch) / TH), y1 = y + Math.floor(((j + 1) * ch) / TH);
-    for (let i = 0; i < TH; i++) {
-      const x0 = x + Math.floor((i * cw) / TH), x1 = x + Math.floor(((i + 1) * cw) / TH);
+    for (let i = 0; i < TW; i++) {
+      const x0 = x + Math.floor((i * cw) / TW), x1 = x + Math.floor(((i + 1) * cw) / TW);
       const n = Math.max(1, (x1 - x0) * (y1 - y0));
-      out[j * TH + i] = boxSum(s, w, x0, y0, x1, y1) / n;
+      out[j * TW + i] = boxSum(s, w, x0, y0, x1, y1) / n;
     }
   }
   let m = 0; for (const v of out) m += v; m /= out.length;
@@ -60,21 +62,23 @@ function thumb(s, w, x, y, cw, ch, out = new Float64Array(TH * TH)) {
 const dist = (a, b) => { let d = 0; for (let i = 0; i < a.length; i++) { const t = a[i] - b[i]; d += t * t; } return d / a.length; };
 
 const T = luma(target);
-const want = thumb(sat(T), T.w, 0, 0, T.w, T.h);
 const ar = T.w / T.h;
+const TW = Math.max(8, Math.round(Math.sqrt(CELLS * ar)));
+const TH = Math.max(8, Math.round(CELLS / TW));
+const want = thumb(sat(T), T.w, 0, 0, T.w, T.h);
 
 let best = null;
 for (const f of frames) {
   const F = luma(f), S = sat(F);
-  const buf = new Float64Array(TH * TH);
+  const buf = new Float64Array(TW * TH);
   const try1 = (x, y, cw) => {
     const ch = Math.round(cw / ar);
-    if (cw < 60 || ch < 60 || x < 0 || y < 0 || x + cw > F.w || y + ch > F.h) return;
+    if (cw < 60 || ch < 24 || x < 0 || y < 0 || x + cw > F.w || y + ch > F.h) return;
     const d = dist(want, thumb(S, F.w, x, y, cw, ch, buf));
     if (!best || d < best.d) best = { d, f, x, y, cw, ch, fw: F.w, fh: F.h };
   };
   /* грубо: ширина куска от трети фрейма до всего фрейма */
-  for (let cw = Math.round(F.w * 0.3); cw <= F.w; cw += Math.max(8, Math.round(F.w / 60))) {
+  for (let cw = Math.round(F.w * 0.2); cw <= F.w; cw += Math.max(6, Math.round(F.w / 80))) {
     const ch = Math.round(cw / ar);
     if (ch > F.h) continue;
     const step = Math.max(6, Math.round(cw / 28));
@@ -84,7 +88,7 @@ for (const f of frames) {
 if (!best) { console.log("ничего не подошло"); process.exit(1); }
 /* точно: вокруг найденного */
 {
-  const F = luma(best.f), S = sat(F), buf = new Float64Array(TH * TH);
+  const F = luma(best.f), S = sat(F), buf = new Float64Array(TW * TH);
   const near = { ...best };
   for (let cw = near.cw - 30; cw <= near.cw + 30; cw += 2) {
     const ch = Math.round(cw / ar);

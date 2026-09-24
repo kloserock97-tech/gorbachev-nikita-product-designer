@@ -11,9 +11,9 @@ const scenes: Record<string, Scene[]> = {
     { file: 'agents-review.webp', ru: 'Паспорт версии сохраняет контекст', en: 'The version passport retains context', focus: 'passport' },
   ],
   'stop-spam': [
-    { file: 'spam-welcome.png', ru: 'Спокойное знакомство с продуктом', en: 'A calm product introduction', focus: 'welcome' },
-    { file: 'spam-sms-setup.png', ru: 'Настройка фильтра — по шагам', en: 'Filter setup, step by step', focus: 'setup' },
-    { file: 'spam-sms-setup.png', ru: 'Переход в настройки одним действием', en: 'Open Settings in one action', focus: 'settings' },
+    { file: 'spam-welcome.webp', ru: 'Спокойное знакомство с продуктом', en: 'A calm product introduction', focus: 'welcome' },
+    { file: 'spam-sms-setup.webp', ru: 'Настройка фильтра — по шагам', en: 'Filter setup, step by step', focus: 'setup' },
+    { file: 'spam-sms-setup.webp', ru: 'Переход в настройки одним действием', en: 'Open Settings in one action', focus: 'settings' },
   ],
   'community': [
     { file: 'community-publication.png', ru: 'Публикация собирает историю в одном кадре', en: 'A publication frames the whole story', focus: 'publication' },
