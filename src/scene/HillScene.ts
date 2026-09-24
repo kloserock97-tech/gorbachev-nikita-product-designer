@@ -2117,7 +2117,7 @@ export class HillScene {
     const ext = gl.getExtension("WEBGL_debug_renderer_info");
     const gpu = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : "gpu";
     /* v3 — версия рендер-пайплайна: при его изменении старые ступени недействительны */
-    return `hill-tier:v15:${gpu}:${screen.width}x${screen.height}@${window.devicePixelRatio}:${this.bladeTotal}`;
+    return `hill-tier:v16:${gpu}:${screen.width}x${screen.height}@${window.devicePixelRatio}:${this.bladeTotal}`;
   }
 
   private static readonly TIER_TTL = 14 * 24 * 3600 * 1000;
