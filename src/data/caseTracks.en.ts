@@ -268,6 +268,30 @@ const tracks: TrackSet = {
             ],
           },
           {
+            id: "first-180",
+            label: "First six months",
+            title: "What I do when I join a new team",
+            found:
+              "This is not a report on work done, it is a plan. This is how I intend to work in a new place: look first, change next, and only then make it stick.",
+            steps: [
+              {
+                title: "Month one: listen and map",
+                text: "I gather facts: what the product is, who uses it, which numbers it is judged by, where it hurts. I meet product and engineering to learn the goals and how the work runs: when a task is ready to be picked up and when it counts as done (DoR/DoD), how designs reach engineering. I take a quick look at what already exists: repositories, analytics, the bug tracker, the design system.",
+              },
+              {
+                title: "Months two and three: a base, and first moves",
+                text: "I sit down one to one with every designer: who owns what, and what we expect of each other. I walk the key flows and look for places where help lands quickly. I start a minimum routine: design review, stand-up, syncs with product and engineering. I prepare a plan for the design system and a couple of working pieces that show the bar for quality.",
+              },
+              {
+                title: "Months three to six: steady, and larger",
+                text: "I make routine what I have tested: review, an agreed definition of done, working through design tasks before the sprint (grooming). I work on the team: mentoring, training, a hiring plan. I run the design system as a product, with a roadmap and a join to engineering. Systemic arguments I settle with facts and options, and when we are stuck I escalate.",
+              },
+            ],
+            effect:
+              "The first four weeks are nothing but watching. By the second month, the first changes. By the sixth, processes that hold on their own.",
+            why: "The order shifts if something catches fire, or if the team is plainly short of a skill.",
+          },
+          {
             id: "influence",
             label: "Influence",
             title: "Designers got invited before the decisions, and no longer after",
