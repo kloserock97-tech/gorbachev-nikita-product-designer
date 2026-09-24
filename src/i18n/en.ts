@@ -121,6 +121,7 @@ const en = {
   "about.marquee": "I’m Nikita, a product designer",
   "about.intro": "I'm Nikita, a product designer. I make complex services feel simple, both the ones millions of people use and the internal tools tens of thousands of employees open every morning. Most recently Head of Product Design at Grif AI, and design lead on Sber's internal risk products.",
   "about.p1": "My work mixes product design, systems thinking and AI",
+  "about.lead": "How I lead a team, and what I do in my first six months somewhere new",
   "about.p2": "Research and product structure come first. Then launch, numbers and growing what works.",
   "about.logos": "Companies I've worked for",
   "about.logo.ozon": "Ozon, 2022",

@@ -509,6 +509,11 @@ body {
 html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 .story-intro { margin: 0; font-size: clamp(18px, 1.6vw, 32px); font-weight: 600; line-height: 1.35; max-width: 14em; }
 .story-p { margin: 0; font-size: clamp(15px, 1.15vw, 23px); line-height: 1.5; color: #3A3A34; max-width: 22em; }
+/* Ссылка на лидерский разбор стоит в ряду абзацев, поэтому выглядит как они, а на ссылку намекает стрелка
+   и подчёркивание, которое дорисовывается при наведении — так строка не спорит с текстом рядом. */
+.story-lead { display: inline-block; color: #2b2b26; text-decoration: none; border-bottom: 1px solid color-mix(in srgb, #3A3A34 28%, transparent); transition: border-color 0.25s ease, color 0.25s ease; }
+.story-lead::after { content: " →"; white-space: nowrap; }
+.story-lead:hover, .story-lead:focus-visible { color: #14140f; border-bottom-color: currentColor; }
 
 /* вход: как .sf-reveal на Tilda, в обе стороны */
 /* v17: и из размытия, как тексты oryzo.ai — строка «наводится на резкость» */
