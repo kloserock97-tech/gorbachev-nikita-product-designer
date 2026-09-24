@@ -14,15 +14,17 @@ const BASE = import.meta.env.BASE_URL;
 
 /* Экран героя виден крупнее всего на странице, поэтому если рядом лежит файл в двойном размере, он идёт
    сюда первым. Набор собирает tools/shot-tiers.mjs --manifest. */
-const hiScreen = (src: string, w: number) =>
-  shots2x.has(src) ? ` srcset="${BASE}${src} ${w}w, ${BASE}${src.replace(/.webp$/, "@2x.webp")} ${w * 2}w" sizes="(max-width: 900px) 86vw, 800px"` : "";
+const hiScreen = (src: string) => {
+  const w = shots2x.get(src);
+  return w ? ` srcset="${BASE}${src} ${w}w, ${BASE}${src.replace(/.webp$/, "@2x.webp")} ${w * 2}w" sizes="(max-width: 900px) 86vw, 800px"` : "";
+};
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 export function heroStage(card: CaseItem, label: string) {
   const s = card.look.screen;
   const kind = s ? s.device : "solo";
   const device = s
-    ? `<div class="ch-device">${s.device === "browser" ? `<div class="ch-bar" aria-hidden="true"><i></i><i></i><i></i></div>` : ""}<img class="ch-screen" src="${BASE}${s.src}"${hiScreen(s.src, s.w)} width="${s.w}" height="${s.h}" alt="${esc(label)}" decoding="async" fetchpriority="high" draggable="false"></div>`
+    ? `<div class="ch-device">${s.device === "browser" ? `<div class="ch-bar" aria-hidden="true"><i></i><i></i><i></i></div>` : ""}<img class="ch-screen" src="${BASE}${s.src}"${hiScreen(s.src)} width="${s.w}" height="${s.h}" alt="${esc(label)}" decoding="async" fetchpriority="high" draggable="false"></div>`
     : "";
   return `<figure class="ch ch--${kind}">${device}${objectPicture(card, "ch-obj", true)}</figure>`;
 }

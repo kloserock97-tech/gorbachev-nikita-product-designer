@@ -53,8 +53,10 @@ type Section = { id: string; label: string; children?: { id: string; label: stri
    настоящие, поэтому выбор идёт и по плотности точек, и по месту, которое кадру досталось на странице.
    Список экранов, у которых есть двойной файл, собирает tools/shot-tiers.mjs --manifest. */
 const SIZES = "(max-width: 900px) 92vw, 1000px";
-const hi = (g: CaseImage, sizes = SIZES) =>
-  shots2x.has(g.src) ? ` srcset="${BASE}${g.src} ${g.w}w, ${BASE}${g.src.replace(/.webp$/, "@2x.webp")} ${g.w * 2}w" sizes="${sizes}"` : "";
+const hi = (g: CaseImage, sizes = SIZES) => {
+  const w = shots2x.get(g.src);
+  return w ? ` srcset="${BASE}${g.src} ${w}w, ${BASE}${g.src.replace(/.webp$/, "@2x.webp")} ${w * 2}w" sizes="${sizes}"` : "";
+};
 
 const pic = (g: CaseImage, extra = "") =>
   `<img src="${BASE}${g.src}" alt="${esc(g.caption)}" width="${g.w}" height="${g.h}" loading="lazy" decoding="async"${hi(g)}${extra}>`;

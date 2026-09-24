@@ -6,9 +6,9 @@ type Run = { stopped: boolean };
 type Scene = { file: string; ru: string; en: string; focus: string };
 const scenes: Record<string, Scene[]> = {
   'ai-agents': [
-    { file: 'agents-review.png', ru: 'Черновик рисков готов к проверке', en: 'Risk draft ready for review', focus: 'overview' },
-    { file: 'agents-review.png', ru: 'Риски и обоснования — в одном реестре', en: 'Risks and rationale in one registry', focus: 'risks' },
-    { file: 'agents-review.png', ru: 'Паспорт версии сохраняет контекст', en: 'The version passport retains context', focus: 'passport' },
+    { file: 'agents-review.webp', ru: 'Черновик рисков готов к проверке', en: 'Risk draft ready for review', focus: 'overview' },
+    { file: 'agents-review.webp', ru: 'Риски и обоснования — в одном реестре', en: 'Risks and rationale in one registry', focus: 'risks' },
+    { file: 'agents-review.webp', ru: 'Паспорт версии сохраняет контекст', en: 'The version passport retains context', focus: 'passport' },
   ],
   'stop-spam': [
     { file: 'spam-welcome.png', ru: 'Спокойное знакомство с продуктом', en: 'A calm product introduction', focus: 'welcome' },
@@ -31,9 +31,10 @@ const label = (s: Scene) => getLang() === 'ru' ? s.ru : s.en;
 /* Камера наезжает на экран до 1,95×, поэтому в sizes стоит не ширина рамки, а ширина после наезда: браузер
    должен выбрать файл под то, что человек увидит крупно, а не под рамку. Рамка не шире 1000 точек. */
 const ZOOM = 1.95;
-const hi = (file: string, w: number) => {
+const hi = (file: string) => {
   const src = `cases/figma/${file}`;
-  if (!shots2x.has(src)) return '';
+  const w = shots2x.get(src);
+  if (!w) return '';
   const base = import.meta.env.BASE_URL;
   return ` srcset="${base}${src} ${w}w, ${base}${src.replace(/.webp$/, '@2x.webp')} ${w * 2}w" sizes="(max-width: 1040px) ${Math.round(ZOOM * 100)}vw, ${Math.round(1000 * ZOOM)}px"`;
 };
@@ -42,7 +43,7 @@ export function screenMarkup(id: string) {
   const list = scenes[id];
   const alt = id === 'ai-agents' ? 'Реестр рисков ИИ-агентов' : id === 'community' ? 'Сообщество — карточка публикации' : id === 'moderator-dashboard' ? 'Кабинет модератора' : 'Стоп Спам — настройка защиты';
   return `<div class="dm sm sm--${id}" data-focus="${list[0].focus}">
-    <div class="sm-viewport"><div class="sm-camera">${[...new Set(list.map(s => s.file))].map((file, i) => `<img class="sm-screen${i === 0 ? ' is-current' : ''}" data-file="${file}" src="${import.meta.env.BASE_URL}cases/figma/${file}" alt="${alt}" decoding="async"${hi(file, 1440)}>`).join('')}</div></div>
+    <div class="sm-viewport"><div class="sm-camera">${[...new Set(list.map(s => s.file))].map((file, i) => `<img class="sm-screen${i === 0 ? ' is-current' : ''}" data-file="${file}" src="${import.meta.env.BASE_URL}cases/figma/${file}" alt="${alt}" decoding="async"${hi(file)}>`).join('')}</div></div>
     <div class="sm-director"><p class="sm-caption">${label(list[0])}</p><div class="sm-controls" role="group" aria-label="${getLang() === 'ru' ? 'Состояния интерфейса' : 'Interface states'}">${list.map((s, i) => `<button type="button" data-shot="${i}" aria-label="${label(s)}" aria-pressed="${i === 0}"><span>0${i + 1}</span><i></i></button>`).join('')}</div></div>
   </div>`;
 }

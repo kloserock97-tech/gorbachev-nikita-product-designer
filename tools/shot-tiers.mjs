@@ -4,13 +4,13 @@
    шириной 1440, то есть 1×. На нынешних экранах точек вдвое больше, а окно просмотра растягивает кадр на
    весь экран, и браузеру приходится додумывать пиксели. Отсюда «мыло».
 
-   Что делает. Из выгрузки в 2× кладёт рядом два файла: обычный (<имя>.webp) и двойной (<имя>@2x.webp).
+   Что делает. Из выгрузки кладёт рядом два файла: обычный (<имя>.webp) и двойной (<имя>@2x.webp).
    Браузер по srcset берёт нужный сам, поэтому на простом экране вес не растёт.
 
    Почему webp, а не png: на снимках интерфейса при качестве 82 он весит вдвое меньше и на глаз не отличается
    (сверено по PSNR с исходником). Двойной webp выходит легче, чем лежавший раньше одинарный png.
 
-   node tools/shot-tiers.mjs <вход 2x.png> <выход без расширения> [--base 1440] [--q 82]
+   node tools/shot-tiers.mjs <вход.png> <выход без расширения> [--base 1440] [--q 82]
    Пачкой:   node tools/shot-tiers.mjs --batch "вход>выход>базовая ширина,..."
    Манифест: node tools/shot-tiers.mjs --manifest   (пересобирает src/data/shots2x.ts) */
 import { execFileSync } from "node:child_process";
@@ -19,6 +19,8 @@ import { dirname, join, relative } from "node:path";
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i < 0 ? d : process.argv[i + 1] ?? true; };
 const has = (k) => process.argv.includes(`--${k}`);
+/* ширину читаем у самого файла, а не считаем: в манифест должно попасть то, что браузер и получит */
+const width = (p) => +execFileSync("ffprobe", ["-v", "error", "-select_streams", "v", "-show_entries", "stream=width", "-of", "csv=p=0", p]).toString().trim();
 
 /* Манифест: разметка в браузере не видит папку, поэтому список файлов с парой @2x собирается здесь. */
 if (has("manifest")) {
@@ -32,10 +34,12 @@ if (has("manifest")) {
   };
   walk("public/cases");
   found.sort();
+  const rows = found.map((f) => `  ["${f}", ${width("public/" + f)}],`);
   writeFileSync("src/data/shots2x.ts",
     "/* Собирается tools/shot-tiers.mjs --manifest. Руками не править.\n" +
-    "   Здесь перечислены экраны, у которых рядом лежит файл @2x: по нему строится srcset. */\n" +
-    "export const shots2x = new Set<string>([\n" + found.map((f) => `  "${f}",`).join("\n") + "\n]);\n");
+    "   Экраны, у которых рядом лежит файл @2x, и настоящая ширина обычного файла: по ней строится srcset.\n" +
+    "   Она не всегда совпадает с шириной, записанной у картинки в данных кейса, — там ширина задаёт пропорцию. */\n" +
+    "export const shots2x = new Map<string, number>([\n" + rows.join("\n") + "\n]);\n");
   console.log(`в манифесте ${found.length} экранов`);
   process.exit(0);
 }
