@@ -115,7 +115,11 @@ export function createTree(uniforms: Record<string, THREE.IUniform>, o: TreeOpti
       side.addScaledVector(d, -side.dot(d)).normalize();
       const cd = d.clone().multiplyScalar(Math.cos(angle)).addScaledVector(side, Math.sin(angle)).normalize();
       const cl = len * (leader ? 0.62 : 0.58 + rng() * 0.16);
-      grow(p, cd, cl, Math.max(0.012, rAt * (leader ? 0.78 : 0.62)), depth + 1);
+      /* Ведущий побег продолжает ствол той же толщины, что у его конца: раньше он начинался на пятую часть
+         тоньше, и на стыке была ступенька с открытым торцом — ствол выглядел сломанным. Основание любой ветви
+         утоплено в родительскую на её радиус, чтобы при изгибе в стыке не просвечивала щель */
+      const r0 = Math.max(0.012, rAt * (leader ? 1 : 0.62));
+      grow(p.clone().addScaledVector(cd, -rAt * 0.8), cd, cl + rAt * 0.8, r0, depth + 1);
     }
   };
   grow(new THREE.Vector3(0, -0.4, 0), o.lean.clone().multiplyScalar(0.35).add(UP).normalize(), trunkLen + 0.4, o.height * 0.036, 0);
@@ -151,6 +155,15 @@ export function createTree(uniforms: Record<string, THREE.IUniform>, o: TreeOpti
         bi.push(a, b, c2, b, d2, c2);
       }
     }
+    /* скруглённый торец: у тонкой ветви конец спрятан в листве, но открытая труба на просвет читалась дырой */
+    const n = pts.length;
+    const tip = new THREE.Vector3().subVectors(pts[n - 1], pts[n - 2]).normalize();
+    const cap = pts[n - 1].clone().addScaledVector(tip, rad[n - 1] * 0.7);
+    const ci = bp.length / 3;
+    bp.push(cap.x, cap.y, cap.z);
+    bn.push(tip.x, tip.y, tip.z);
+    const last = base + (n - 1) * k;
+    for (let j = 0; j < k; j++) bi.push(last + j, last + ((j + 1) % k), ci);
   }
   const barkGeo = new THREE.BufferGeometry();
   barkGeo.setAttribute("position", new THREE.Float32BufferAttribute(bp, 3));

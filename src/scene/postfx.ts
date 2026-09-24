@@ -28,7 +28,9 @@ export type PostFx = {
   /** v32: буфер луга (для прогрева его шейдеров) */
   altTarget: THREE.WebGLRenderTarget;
   dispose: () => void;
-  params: { rays: number; raysEnabled: boolean; bgCheap: boolean; exposure: number; vignette: number; vibrance: number; contrast: number; focus: number; whiteBalance: THREE.Vector3; glitch: number; glitchSeed: number; black: number; radial: number; aberration: number; fill: number; overlay: boolean;
+  params: { rays: number; raysEnabled: boolean;
+    /* v72: ближний план в расфокусе (цветы у камеры, слой nearLayer): 0 — нет, 1 — во всю силу */
+    near: number; bgCheap: boolean; exposure: number; vignette: number; vibrance: number; contrast: number; focus: number; whiteBalance: THREE.Vector3; glitch: number; glitchSeed: number; black: number; radial: number; aberration: number; fill: number; overlay: boolean;
     /* v17, светлая страница с глубиной (как oryzo): studio 0…1 — сила студийного фона,
        pcRect — прямоугольник компьютера в UV кадра (x0, y0, x1, y1), spot — центр светового пятна */
     studio: number; pcRect: THREE.Vector4; spot: THREE.Vector2;
@@ -54,6 +56,8 @@ export function createPostFx(
   overlayLayer = 5,
   /* v72: слой ближних предметов (кресло, столик, компьютер, собака), над которыми лучи приглушаются */
   shieldLayer = 6,
+  /* v72: ближний план — рисуется отдельно, размывается и ложится поверх кадра */
+  nearLayer = 7,
 ): PostFx {
   const q = new URLSearchParams(location.search);
   const forcedSamples = q.has("msaa") ? Number(q.get("msaa")) : null;
@@ -91,6 +95,28 @@ export function createPostFx(
   const shieldRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.UnsignedByteType, depthBuffer: false });
   const shieldMat = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false });
   const shieldOn = q.get("shield") !== "0";
+  /* v72: ближний план в расфокусе. Цветы у самой камеры рисуются в свой буфер в половину разрешения сцены
+     (прозрачный фон, цвет с предумноженной альфой), размываются гауссом в два прохода и ложатся поверх кадра
+     до тонмаппинга — как настоящая малая глубина резкости: размыто то, что близко, а не картинка целиком.
+     Раньше здесь были плоские размытые картинки, приклеенные к экрану: на телефоне их нижний край висел
+     посреди травы, при движении курсора они не жили с глубиной. */
+  const nearRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType });
+  const nearA = new THREE.WebGLRenderTarget(1, 1, small);
+  const nearB = new THREE.WebGLRenderTarget(1, 1, small);
+  const nearBlur = new THREE.ShaderMaterial({
+    depthTest: false, depthWrite: false, vertexShader: fullscreenVertex,
+    fragmentShader: /* glsl */ `
+      uniform sampler2D tInput; uniform vec2 uDir; varying vec2 vUv;
+      /* 9 выборок гаусса через билинейную выборку между текселями (линейная выборка — вдвое меньше чтений) */
+      void main(){
+        vec4 s = texture2D(tInput, vUv) * 0.2270270;
+        s += (texture2D(tInput, vUv + uDir * 1.3846154) + texture2D(tInput, vUv - uDir * 1.3846154)) * 0.3162162;
+        s += (texture2D(tInput, vUv + uDir * 3.2307692) + texture2D(tInput, vUv - uDir * 3.2307692)) * 0.0702703;
+        gl_FragColor = s;
+      }`,
+    uniforms: { tInput: { value: null }, uDir: { value: new THREE.Vector2() } },
+  });
+  const nearStep = new THREE.Vector2();
   /* компьютер поверх заливки: свой MSAA-буфер с прозрачным фоном */
   const pcRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples });
   /* v25: финал поверх полностью размытого фона кейсов — в половине разрешения экрана и растяжкой на экран.
@@ -125,6 +151,7 @@ export function createPostFx(
   const params = {
     rays: 0.32,
     raysEnabled: true,
+    near: 0,
     bgCheap: false,
     exposure: renderer.toneMappingExposure,
     vignette: 0.55,
@@ -167,6 +194,8 @@ export function createPostFx(
       tScene: { value: sceneRT.texture },
       tRays: { value: blurB.texture },
       tShield: { value: shieldRT.texture },
+      tNear: { value: nearB.texture },
+      uNear: { value: 0 },
       uShield: { value: 0 },
       uRays: { value: 0 },
       uRayTint: { value: new THREE.Color(1.0, 0.86, 0.66) },
@@ -259,6 +288,14 @@ export function createPostFx(
       blurA.setSize(qw, qh);
       blurB.setSize(qw, qh);
       shieldRT.setSize(qw, qh);
+      /* ближний план — четверть разрешения сцены. Размытие — мелкими шагами (1 и 1.8 текселя), без пропусков
+         между выборками: шаг, растянутый под DPR, на телефоне рассыпал гаусс на полупрозрачные копии — цветы
+         висели вуалью с полосами. Четверть разрешения даёт тот же расфокус (≈ 8–10 CSS-пикселей) вчетверо дешевле */
+      const nw = Math.max(1, Math.round(W / 4)), nh = Math.max(1, Math.round(H / 4));
+      nearRT.setSize(nw, nh);
+      nearA.setSize(nw, nh);
+      nearB.setSize(nw, nh);
+      nearStep.set(1 / nw, 1 / nh);
       mask.uniforms.uAspect.value = w / h;
     },
     render() {
@@ -365,6 +402,33 @@ export function createPostFx(
         renderer.setClearColor(clear, alpha);
       }
       final.uniforms.uShield.value = shield ? 0.72 : 0;
+      const near = params.near > 0.003 && !covered && !altFull && !low;
+      if (near) {
+        const layers = camera.layers.mask;
+        const alpha = renderer.getClearAlpha();
+        renderer.getClearColor(clear);
+        camera.layers.set(nearLayer);
+        renderer.setClearColor(0x000000, 0);
+        renderer.setRenderTarget(nearRT);
+        renderer.clear();
+        renderer.render(scene, camera);
+        camera.layers.mask = layers;
+        renderer.setClearColor(clear, alpha);
+        /* два прохода по горизонтали и вертикали, второй — шире: мягкий расфокус без квадратных краёв */
+        nearBlur.uniforms.tInput.value = nearRT.texture;
+        nearBlur.uniforms.uDir.value.set(nearStep.x, 0);
+        draw(nearBlur, nearA);
+        nearBlur.uniforms.tInput.value = nearA.texture;
+        nearBlur.uniforms.uDir.value.set(0, nearStep.y);
+        draw(nearBlur, nearB);
+        nearBlur.uniforms.tInput.value = nearB.texture;
+        nearBlur.uniforms.uDir.value.set(nearStep.x * 1.9, 0);
+        draw(nearBlur, nearA);
+        nearBlur.uniforms.tInput.value = nearA.texture;
+        nearBlur.uniforms.uDir.value.set(0, nearStep.y * 1.9);
+        draw(nearBlur, nearB);
+      }
+      final.uniforms.uNear.value = near ? params.near : 0;
       final.uniforms.uRays.value = params.rays * raysVisible;
       final.uniforms.uExposure.value = params.exposure;
       final.uniforms.uVignette.value = params.vignette;
@@ -406,7 +470,7 @@ export function createPostFx(
       };
       const prev = renderer.getRenderTarget();
       renderer.setRenderTarget(maskRT);
-      const a = renderer.compileAsync(scene([mask, blur, quarter]), cam);
+      const a = renderer.compileAsync(scene([mask, blur, quarter, nearBlur]), cam);
       renderer.setRenderTarget(halfRT);
       const c = renderer.compileAsync(scene([final]), cam);
       renderer.setRenderTarget(shieldRT);
@@ -429,8 +493,8 @@ export function createPostFx(
       renderer.setRenderTarget(prev);
     },
     dispose() {
-      [sceneRT, bgRT, bgBlurRT, shadowRT, pcRT, maskRT, blurA, blurB, shieldRT, halfRT, altRT, altBgRT, altBlurRT].forEach((t) => t.dispose());
-      [mask, blur, quarter, final, blit, shieldMat].forEach((m) => m.dispose());
+      [sceneRT, bgRT, bgBlurRT, shadowRT, pcRT, maskRT, blurA, blurB, shieldRT, nearRT, nearA, nearB, halfRT, altRT, altBgRT, altBlurRT].forEach((t) => t.dispose());
+      [mask, blur, quarter, final, blit, shieldMat, nearBlur].forEach((m) => m.dispose());
       quad.dispose();
     },
   };

@@ -127,7 +127,10 @@ body {
   /* v68: карточка прижата к правому полю кадра тем же отступом, что и текстовая колонка слева (50u),
      а её верх стоит на одной строке с подзаголовком. Закрытая она уже (312u), при раскрытии
      возвращается к прежнему размеру (352u) — разворачивается влево, в свободное небо */
-  .card--stove { left: auto; right: calc(50 * var(--u)); top: calc(300 * var(--u)); width: calc(312 * var(--u)); }
+  /* v72: низ закрытой карточки стоит на одной линии с нижним рядом — подписями «Травинок» и «Погода»
+     (их верх — --stat-top, высота двух строк ~44u). Закрытая карточка — 272u: поля 12, картинка 214, шеврон 46.
+     Правая часть неба над ней освободилась под дерево. Раскрытая растёт вниз и, не помещаясь, поднимается (fieldNote.ts) */
+  .card--stove { left: auto; right: calc(50 * var(--u)); top: calc(var(--stat-top) - 232 * var(--u)); width: calc(312 * var(--u)); }
   .card--stove.is-open { width: calc(352 * var(--u)); }
 }
 
@@ -286,7 +289,9 @@ body {
   --wm-line: rgba(255, 255, 255, 0.08);
   position: absolute; top: calc(100% + 10px); left: 0; z-index: 40;
   width: min(1040px, calc(100vw - 32px));
-  max-height: calc(100vh - 110px); overflow: auto; overscroll-behavior: contain;
+  /* v72: рамка не прокручивается — прокручивается только сетка внутри (см. .work-menu__pane) */
+  max-height: calc(100vh - 110px); overflow: hidden;
+  display: flex; flex-direction: column;
   padding: 14px;
   border-radius: 26px;
   background: radial-gradient(120% 90% at 0% 100%, rgba(60, 70, 58, 0.35), transparent 60%), #141613;
@@ -312,7 +317,37 @@ body {
 /* мостик между пунктом дока и панелью — курсор не «проваливается» в щель */
 .work-menu::before { content: ""; position: absolute; left: 0; right: 0; top: -12px; height: 12px; }
 
-.work-menu__body { display: grid; grid-template-columns: 220px 1fr; gap: 22px; }
+.work-menu__body { display: grid; grid-template-columns: 220px 1fr; grid-template-rows: minmax(0, 1fr); gap: 22px; flex: 1 1 auto; min-height: 0; }
+
+/* v72: прокрутка внутри рамки — своя полоса вместо системной (workMenu.ts, syncRail) */
+.work-menu__pane { position: relative; min-height: 0; display: flex; }
+.work-menu__grid {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  scrollbar-width: none;
+  /* край, за которым есть ещё карточки, растворяется; ширину растворения ставит скрипт по остатку прокрутки */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top, 0px), #000 calc(100% - var(--fade-bot, 0px)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top, 0px), #000 calc(100% - var(--fade-bot, 0px)), transparent 100%);
+}
+.work-menu__grid::-webkit-scrollbar { display: none; }
+.work-menu__rail {
+  position: absolute; top: 8px; bottom: 8px; right: 0; width: 12px;
+  border-radius: 999px; background: rgba(255, 255, 255, 0);
+  opacity: 0; transition: opacity 0.3s ease-out, background 0.2s ease-out;
+  pointer-events: none;
+}
+.work-menu__pane.is-scrollable .work-menu__rail { pointer-events: auto; }
+.work-menu__pane.is-scrollable:hover .work-menu__rail,
+.work-menu__pane.is-scrolling .work-menu__rail,
+.work-menu__pane.is-dragging .work-menu__rail { opacity: 1; transition-duration: 0.12s; }
+.work-menu__rail:hover, .work-menu__pane.is-dragging .work-menu__rail { background: rgba(255, 255, 255, 0.05); }
+.work-menu__bar {
+  position: absolute; left: 4px; right: 4px; top: 0; height: 40px;
+  border-radius: 999px; background: rgba(243, 242, 236, 0.26);
+  transition: left 0.18s ease-out, right 0.18s ease-out, background 0.18s ease-out;
+  cursor: grab; touch-action: none;
+}
+.work-menu__rail:hover .work-menu__bar, .work-menu__pane.is-dragging .work-menu__bar { left: 2px; right: 2px; background: rgba(243, 242, 236, 0.5); }
+.work-menu__pane.is-dragging .work-menu__bar { cursor: grabbing; }
 
 /* категории: крупные строки, текущая — на светлой подложке */
 .work-menu__filters { display: grid; align-content: start; gap: 4px; }
@@ -330,9 +365,10 @@ body {
 .work-menu__filter:active { scale: 0.98; }
 
 /* сетка карточек: превью 16:10 — та же светлая сцена и предмет, что у карточки в ленте (v64), под ним название и метка */
+/* поля внутри прокрутки — место под рамку фокуса и под полосу справа; отрицательные отступы держат сетку на прежнем месте */
 .work-menu__grid {
-  list-style: none; margin: 0; padding: 4px 4px 0 0;
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 18px;
+  list-style: none; margin: -6px 0 -6px -6px; padding: 6px 18px 8px 6px;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 18px; align-content: start;
   transition: opacity 0.12s ease-out;
 }
 .work-menu.is-filtering .work-menu__grid { opacity: 0; }
@@ -343,6 +379,12 @@ body {
   transition: opacity 0.26s var(--ease-menu) calc(var(--i) * 32ms + 40ms), translate 0.34s var(--ease-menu) calc(var(--i) * 32ms + 40ms);
 }
 .work-menu__card { display: grid; gap: 4px; color: inherit; text-decoration: none; border-radius: 16px; }
+/* v72: на широком окне — четыре в ряд: восемь кейсов встают в два ряда, и прокрутка обычно не нужна вовсе */
+@media (min-width: 1180px) {
+  .work-menu__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px 14px; }
+  /* в четыре колонки длинные названия («Дизайн получил голос») обрезались многоточием — переносятся на вторую строку */
+  .work-menu__name { font-size: 16px; line-height: 1.2; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+}
 .work-menu__thumb {
   position: relative; display: block; aspect-ratio: 16 / 10; margin-bottom: 8px;
   border-radius: 14px; overflow: hidden; background: linear-gradient(180deg, var(--s1, #f1f1ee), var(--s2, #dcdcd6));
@@ -424,10 +466,10 @@ body {
     max-height: calc(100svh - 30 * var(--u) - max(56px, calc(58 * var(--u))) - 22px);
     padding: 10px; border-radius: 22px;
   }
-  .work-menu__body { grid-template-columns: 1fr; gap: 12px; }
+  .work-menu__body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); gap: 12px; }
   .work-menu__filters { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
   .work-menu__filter { flex: none; padding: 10px 14px; border-radius: 999px; font-size: 15px; gap: 8px; border: 1px solid var(--wm-line); }
-  .work-menu__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 10px; padding: 0; }
+  .work-menu__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 10px; padding: 4px 14px 6px 4px; margin: -4px 0 -6px -4px; }
   .work-menu__name { font-size: 14px; }
   .work-menu__sub { font-size: 11px; }
   .work-menu__go { display: none; }

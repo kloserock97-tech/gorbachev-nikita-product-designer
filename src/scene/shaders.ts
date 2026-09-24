@@ -22,6 +22,7 @@ uniform float uShadowTexel;
 uniform float uShadowOn;
 
 uniform float uHaze;
+uniform float uFogShift; /* v72: камера отъехала (телефон) — дымка отодвигается на столько же */
 /* облака: xy — сдвиг узора по ветру, z — покрытие (0 — теней нет); uWet — мокрая трава после дождя */
 uniform vec3 uCloud;
 uniform float uWet;
@@ -47,6 +48,7 @@ uniform vec2 uDogDir;
 /* Воздух: дальняя дымка плюс высотный туман у подножия холма (как height fog
    в Ghost of Tsushima) — низины и дальние склоны тонут в тёплом свете заката */
 float airFog(vec3 w, float dist){
+  dist = max(dist - uFogShift, 0.0);
   float distant = smoothstep(9.0, 30.0, dist) * 0.55;
   float low = (1.0 - exp(-dist * 0.035)) * exp(-max(w.y - 0.2, 0.0) * 1.15) * 0.55;
   return clamp(distant + low * uHaze, 0.0, 0.8);
@@ -129,6 +131,7 @@ uniform vec2 uDogDir;
 uniform float uPixelWorld;
 uniform float uCoverageMax;
 uniform float uMinPixels;
+uniform float uWiden; /* v72: травинок меньше ступенью качества — каждая шире (applyDensity) */
 
 /* "Hash without Sine" — Copyright (c) 2014 David Hoskins, MIT (shadertoy.com/view/4djSRW). Точность не
    падает на больших координатах экземпляров травы, поэтому он, а не синусный хэш. */
@@ -255,7 +258,7 @@ void main(){
   float width = len * 0.075 * (aRnd.z > 0.0 ? aRnd.z : 1.0) * (1.0 + edgeOn * 1.1) * coverage;
   /* Не тоньше ~1.1 пикселя: субпиксельная травинка то попадает в пиксель, то нет —
      это и есть «пиксельный шум» травы при любом сглаживании */
-  width = max(width, baseDist * uPixelWorld * uMinPixels);
+  width = max(width * max(uWiden, 1.0), baseDist * uPixelWorld * uMinPixels);
 
   vec3 world = aOffset
              + widthDir * position.x * width * (1.0 - press * 0.3)
@@ -487,7 +490,16 @@ void main(){
   vec3 c = col * vLight * ao * mix(1.0, 0.45, shadow);
   c += col * uSunCol * vBackP * translucency * (1.0 - shadow);
   c = mix(c, uFogCol, vFog);
+#ifdef NEAR
+  /* v72: ближний план рисуется в свой прозрачный буфер без MSAA — край венчика через альфу, цвет предумножен.
+     Лицом он к камере, солнце за ним — лицевая сторона в тени: без поправки просвет и небо давали белые
+     пастельные пятна, ярче всего кадра */
+  if (vPart > 5.5) c *= 0.7;
+  if (alpha < 0.02) discard;
+  gl_FragColor = vec4(c * alpha, alpha);
+#else
   gl_FragColor = vec4(c, alpha);
+#endif
 }
 `;
 export const groundVertex = /* glsl */ `
@@ -1079,6 +1091,8 @@ uniform sampler2D tScene;
 uniform sampler2D tRays;
 uniform float uRays;
 uniform sampler2D tShield; /* v72: маска ближних предметов (четверть разрешения) */
+uniform sampler2D tNear;   /* v72: ближний план в расфокусе, цвет с предумноженной альфой */
+uniform float uNear;
 uniform float uShield;     /* насколько приглушать над ними лучи */
 uniform vec3 uRayTint;
 uniform float uVignette;
@@ -1307,6 +1321,12 @@ void main(){
       wsum += wk;
     }
     e = mix(e, acc / wsum, min(1.0, uRadial * 4.0));
+  }
+  /* v72: ближний план в расфокусе ложится поверх кадра (предумноженная альфа), до тонмаппинга —
+     цвет тот же, что у травы и цветов на склоне */
+  if (uNear > 0.0) {
+    vec4 nr = texture2D(tNear, vUv) * uNear;
+    e = e * (1.0 - nr.a) + nr.rgb;
   }
   /* глава «Кейсы»: tScene уже размытый задник из четвертного прохода (quarterFragment) */
   /* контраст до тонмаппинга — в лог-пространстве вокруг средне-серого (см. grade) */

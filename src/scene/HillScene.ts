@@ -17,7 +17,7 @@ import { createPolaroid } from "./polaroid";
 import { createVista } from "./vista";
 import { createTree } from "./tree";
 import { createRocks, rockFootprints } from "./rocks";
-import { createForeground } from "./foreground";
+import { createNearFlowers } from "./nearFlowers";
 import {
   TRAIL_SLOTS,
   ghostFragment,
@@ -74,6 +74,8 @@ const CAMERA_TARGET = new THREE.Vector3(-2.0, 3.2, 0);
 const SHADOW_LAYER = 3;
 /* v72: ближние предметы — над ними лучи приглушаются (маска в postfx.ts) */
 const SHIELD_LAYER = 6;
+/* v72: ближний план в расфокусе — цветы у камеры (nearFlowers.ts), постобработка размывает этот слой */
+const NEAR_LAYER = 7;
 /* слой компьютера в скролл-истории: рисуется отдельным проходом поверх заливки */
 const PC_LAYER = 5;
 
@@ -127,6 +129,10 @@ export class HillScene {
     uShadowOn: { value: 0 },
     uBackLight: { value: /[?&]back=0/.test(location.search) ? 0 : 1 },
     uHaze: { value: /[?&]haze=0/.test(location.search) ? 0 : 1 },
+    /* v72: насколько дальше обычного стоит камера (телефон) — на столько же отодвигается дымка */
+    uFogShift: { value: 0 },
+    /* v72: во сколько раз шире травинки, когда их меньше (ступени качества) — покрытие дёрна то же */
+    uWiden: { value: 1 },
     /* волна интро: радиус от кресла, сила, полуширина кольца */
     uWave: { value: new THREE.Vector3(0, 0, 1) },
     /* собака: точка на земле и видимость; направление корпуса — для тени-эллипса */
@@ -178,7 +184,7 @@ export class HillScene {
     this.renderer.shadowMap.autoUpdate = false;
     this.timer.connect(document);
 
-    this.fx = createPostFx(this.renderer, this.scene, this.camera, SUN_DIR, PC_LAYER, SHIELD_LAYER);
+    this.fx = createPostFx(this.renderer, this.scene, this.camera, SUN_DIR, PC_LAYER, SHIELD_LAYER, NEAR_LAYER);
     this.fx.params.onOverlay = this.onPcOverlay;
     this.focusBase = this.fx.params.focus;
 
@@ -188,10 +194,11 @@ export class HillScene {
     this.buildVista();
     this.buildTree();
     if (!/[?&]rocks=0/.test(location.search)) this.scene.add(createRocks(this.uniforms));
-    /* v72: размытые цветы у нижних углов кадра (foreground.ts); ?fg=0 — без них */
-    if (!/[?&]fg=0/.test(location.search)) {
-      this.fg = createForeground(this.renderer);
-      this.scene.add(this.fg.mesh);
+    /* v72: цветы у камеры слева, в расфокусе (nearFlowers.ts); ?near=0 — без них */
+    if (!/[?&]near=0/.test(location.search)) {
+      this.near = createNearFlowers(this.uniforms, NEAR_LAYER);
+      this.scene.add(this.near.mesh);
+      this.placeNear();
     }
     this.buildGhost();
     this.buildGround();
@@ -377,7 +384,10 @@ export class HillScene {
      посадила бы крону под текст, поэтому дерево отходит правее и ниже по склону и уходит за правую кромку —
      обрамляет кадр. Между ними — плавно, по той же доле, что и разворот камеры (placeTree). ?tree=0 — без него */
   private tree?: ReturnType<typeof createTree>;
-  private fg?: ReturnType<typeof createForeground>;
+  private near?: ReturnType<typeof createNearFlowers>;
+  private placeNear() {
+    this.near?.place(this.cameraRest(), CAMERA_TARGET, this.camera.aspect, this.camera.fov);
+  }
   private buildTree() {
     if (/[?&]tree=0/.test(location.search)) return;
     this.tree = createTree(this.uniforms, { base: new THREE.Vector3(), height: 5.6, lean: new THREE.Vector3(-0.2, 0, 0.1), msaa: true });
@@ -1891,6 +1901,10 @@ export class HillScene {
        попадает весь склон, а не ближняя трава крупным планом */
     const aspect = w / h;
     this.camDistance = aspect < 1 ? Math.min(1.5, 1 + (1 - aspect) * 0.9) : 1;
+    /* v72: на вертикальном экране камера отъезжает на ~6 м, и дымка по расстоянию (airFog) густела на весь
+       склон — цвет на телефоне был блёклым, серо-оливковым. Дымку сдвигаем на величину отъезда: склон в том же
+       воздухе, что на широком экране, дальний план — по-прежнему в дымке */
+    this.uniforms.uFogShift.value = (this.camDistance - 1) * CAMERA_BASE.distanceTo(CAMERA_PIVOT);
     /* v68: боковой разворот кадра — только там, где для него есть ширина. На вертикальном экране
        угол обзора по горизонтали втрое уже, и тот же разворот вынес бы кресло с компьютером за
        правую кромку. Поэтому на телефоне кадр остаётся прежним, центральным, а к широкому экрану
@@ -1898,6 +1912,7 @@ export class HillScene {
     const panK = Math.min(1, Math.max(0, (aspect - 0.6) / 0.7));
     CAMERA_REST_OFF.x = 0.6 + (CAMERA_PAN.x - 0.6) * panK;
     CAMERA_TARGET.x = 0.2 + (CAMERA_PAN.y - 0.2) * panK;
+    this.placeNear();
     const panMoved = Math.abs(panK - this.plantedFor.pan) > 0.04;
     /* Поворот телефона или сужение окна отодвигает камеру — передний склон, посаженный под
        прежнюю позу, остался бы голым. Шире 16:9 × 1.2 — не хватит травы по бокам. */
@@ -1968,8 +1983,11 @@ export class HillScene {
     /* пока играет интро, экспозицией и цветом постобработки управляет оно */
     this.weather.update(dt, true);
     this.updateStory(dt);
-    /* передний план — только на первом экране: гаснет с первыми процентами скролла */
-    this.fg?.update(this.camera.aspect, this.uniforms.uTime.value, this.uniforms.uWind.value, this.uniforms.uSunCol.value, this.uniforms.uAmbient.value, this.pointerSmooth, 1 - THREE.MathUtils.smoothstep(this.storyS, 0.0, 0.03));
+    /* ближний план — только на первом экране: камера и так уводит его из кадра, но в расфокусе он
+       тянулся бы полупрозрачным пятном; гаснет с первыми процентами скролла, и слой не рисуется вовсе */
+    const nearFade = this.near ? 1 - THREE.MathUtils.smoothstep(this.storyS, 0.0, 0.04) : 0;
+    this.fx.params.near = nearFade;
+    if (this.near) this.near.mesh.visible = nearFade > 0.003;
 
     const fixed = this.opts.fixedCamera;
     if (fixed) {
@@ -2065,9 +2083,10 @@ export class HillScene {
      разрешение не опускается ниже 0.6 от потолка (1.35 на DPR 2.25). Травинки на телефоне и так мельче:
      камера отъезжает дальше, чтобы в вертикальный кадр вошёл весь склон. Длина та же — девять ступеней,
      чтобы ?tier=, запомненная ступень и пороги «тяжёлой» травы читались одинаково. */
+  /* v72.1: густота травы держится дольше — поредевшая трава на iPhone читалась сильнее, чем чуть меньшее разрешение */
   private static readonly PHONE_LADDER: [number, number, number, boolean][] = [
-    [1, 4, 1, true], [0.89, 4, 0.85, true], [0.8, 4, 0.7, true], [0.8, 4, 0.6, true],
-    [0.72, 4, 0.55, true], [0.72, 4, 0.45, true], [0.72, 2, 0.45, false], [0.66, 2, 0.4, false], [0.6, 2, 0.35, false],
+    [1, 4, 1, true], [0.9, 4, 0.9, true], [0.82, 4, 0.8, true], [0.76, 4, 0.75, true],
+    [0.76, 4, 0.62, true], [0.7, 4, 0.62, false], [0.7, 2, 0.55, false], [0.64, 2, 0.5, false], [0.6, 2, 0.45, false],
   ];
   /* телефон или планшет: основной указатель — палец, мыши нет */
   private readonly phone = matchMedia("(pointer: coarse)").matches && !matchMedia("(any-pointer: fine)").matches;
@@ -2081,7 +2100,8 @@ export class HillScene {
   private tierLocked = false;
   private retried = false;
   private predicted = false;
-  private probedUp = false;
+  private climbs = 0;
+  private climbFailed = false;
   private fallbackTier = -1;
   private assetsReady = 0; // кресло и HDRI
   private calibrateDelay = 0.3;
@@ -2160,6 +2180,11 @@ export class HillScene {
     const [, , frac, rays] = this.ladder[this.tier];
     const k = frac * (this.bgCheap ? 0.35 : 1);
     for (const g of this.grassGeos) g.instanceCount = Math.round(g.userData.total * k);
+    /* v72: травинок меньше — каждая шире (как у дальней травы, «сохранение покрытия» AMD GPUOpen): площадь дёрна
+       ∝ число × ширина, поэтому ширина ∝ 1/√доли даёт то же покрытие без проплешин. Корень, а не прямая
+       пропорция: вдвое реже и вдвое шире — это уже лента, а не трава. На телефоне на нижних ступенях между
+       травинками была видна земля — «мало травы» */
+    this.uniforms.uWiden.value = Math.min(1.6, 1 / Math.sqrt(Math.max(0.25, k)));
     if (this.stalkGeo) this.stalkGeo.instanceCount = Math.round(this.stalkCount * k);
     this.fx.params.raysEnabled = rays && !this.bgCheap;
     this.fx.params.bgCheap = this.bgCheap;
@@ -2229,21 +2254,32 @@ export class HillScene {
       this.setTier(t);
       return;
     }
+    /* проба ступенью выше не удалась — возвращаемся и больше не поднимаемся */
+    if (this.fallbackTier >= 0 && ms > HillScene.BUDGET_MS) {
+      this.climbFailed = true;
+      this.setTier(this.fallbackTier);
+      this.fallbackTier = -1;
+      return;
+    }
     if (ms > HillScene.BUDGET_MS && this.tier < this.ladder.length - 1) {
       this.setTier(this.tier + 1);
       return; // следующий кадр перемеряет на новой ступени
     }
-    /* после прогноза и большого запаса — одна проба ступенью выше */
-    if (this.predicted && !this.probedUp && this.tier > 0 && ms < HillScene.BUDGET_MS * 0.78) {
-      this.probedUp = true;
+    /* v72: подъём, пока есть запас. Раньше была одна проба вверх и только после прогноза, с условием «медиана
+       меньше 14 мс». На экране 60 Гц интервал кадра не бывает короче 16.7 мс, так что условие не выполнялось
+       никогда: телефон, опущенный на осторожную ступень (интерфейс показан до калибровки — медленная сеть),
+       так на ней и оставался. iPhone 11 получал треть травы и сцену в DPR 1.2. Теперь запас — это либо
+       короткий кадр, либо кадры без пропусков: 85 % интервалов в пределах развёртки. Тогда пробуем ступень
+       выше, до пяти раз; первая же проба с пропусками возвращает на прежнюю и калибровка заканчивается */
+    const onTime = vsync > 12 && vsync < 19 && sorted[Math.floor(sorted.length * 0.85)] < vsync * 1.25;
+    const headroom = ms < HillScene.BUDGET_MS * 0.78 || onTime;
+    if (!this.climbFailed && this.climbs < 5 && this.tier > 0 && headroom) {
+      this.climbs++;
       this.fallbackTier = this.tier;
       this.setTier(this.tier - 1);
       return;
     }
-    if (this.probedUp && this.fallbackTier >= 0 && ms > HillScene.BUDGET_MS) {
-      this.setTier(this.fallbackTier);
-      this.fallbackTier = -1;
-    }
+    this.fallbackTier = -1;
     /* v24: даже нижняя ступень дольше 45 мс (меньше 22 кадров) — на скролле будет ~13 (бюджетный Android
        в нагрузочном прогоне); такому устройству лучше лёгкая версия */
     if (this.tier === this.ladder.length - 1 && ms > HillScene.TOO_SLOW_MS && !/[?&]lite=0/.test(location.search)) {

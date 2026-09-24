@@ -151,7 +151,7 @@ const en = {
   "work.all": "All",
   "work.web": "Web",
   "work.mobile": "Mobile",
-  "work.note": "Five case studies, 2024 to 2026: web, mobile and AI products",
+  "work.note": "Eight case studies, 2024 to 2026: web, mobile, AI products and leading a team",
   "work.allCases": "All case studies",
 
   /* страница кейса */
