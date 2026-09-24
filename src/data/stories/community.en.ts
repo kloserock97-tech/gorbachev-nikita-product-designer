@@ -50,7 +50,7 @@ export const en: CaseStory = {
         sample: "A handful of key competitors, eleven features",
         finding:
           "Everyone lets you write a post and discuss it in the comments. It is like a till in a shop: without one the shop does not work. But competitors keep follow and unfollow on different screens, and people get lost. That gave two decisions: what sits at the centre of the screen, and that one action always looks the same.",
-        image: img(C + "07.webp", 1600, 770, "Competitors compared on eleven features: green for what everyone has, red for what the market lacks", "detail"),
+        image: img(C + "07.webp", 1820, 1010, "Competitors compared on eleven features: green for what everyone has, red for what the market lacks", "detail"),
       },
       {
         kind: "User portrait",

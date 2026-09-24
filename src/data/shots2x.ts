@@ -21,6 +21,7 @@ export const shots2x = new Map<string, number>([
   ["cases/community/03.webp", 876],
   ["cases/community/04.webp", 1440],
   ["cases/community/05.webp", 1440],
+  ["cases/community/07.webp", 1820],
   ["cases/figma/agents-review.webp", 1520],
   ["cases/figma/community-publication.webp", 1224],
   ["cases/figma/moderator-confirm.webp", 1440],
