@@ -447,8 +447,11 @@ html[lang="en"] .cs-hyp q { quotes: "\201C" "\201D"; }
   inset: 0; width: 100%; max-width: none; height: 100%; max-height: none; margin: 0;
   padding: 0; border: 0; border-radius: 0; overflow: hidden;
   background: rgba(9, 11, 14, 0.95); color: #fff;
-  display: grid; grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto;
 }
+/* display только у открытого окна. Авторский стиль сильнее браузерного dialog:not([open]) { display: none },
+   поэтому безусловный display: grid оставлял закрытый диалог на экране — почти чёрный слой поверх кейса. */
+.cs-lightbox[open] { display: grid; }
 .cs-lightbox::backdrop { background: rgba(9, 11, 14, 0.9); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 /* Поле, в котором живёт кадр. touch-action снят: иначе щипок уедет в масштаб страницы, а не картинки. */
 .cs-lb-view { position: relative; display: flex; align-items: center; justify-content: center; min-height: 0; overflow: hidden; padding: clamp(12px, 2.4vw, 40px); touch-action: none; cursor: zoom-in; }
