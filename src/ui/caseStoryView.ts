@@ -15,6 +15,7 @@ import type { CaseStory, Gallery, Decision, CaseImage, Method } from "../data/ca
 import { pad2 as pad } from "../lib/format";
 import type { CaseTrack, TrackPart } from "../data/caseTracks";
 import { getCases } from "../data/cases";
+import { shots2x } from "../data/shots2x";
 import { t } from "../i18n";
 import { heroStage, mountHero } from "./caseHero";
 import { brandMark, goArrow, lookVars, objectPicture } from "./caseLook";
@@ -47,8 +48,16 @@ const keepHyphens = (html: string) => html.split(" ").map((w) => (w.includes("-"
 
 type Section = { id: string; label: string; children?: { id: string; label: string }[] };
 
+/* Экран в двух размерах. Раньше файл был один и в том размере, в каком его когда-то отдали, — на плотном
+   экране и в окне просмотра браузеру приходилось додумывать пиксели, отсюда «мыло». Ширины в srcset
+   настоящие, поэтому выбор идёт и по плотности точек, и по месту, которое кадру досталось на странице.
+   Список экранов, у которых есть двойной файл, собирает tools/shot-tiers.mjs --manifest. */
+const SIZES = "(max-width: 900px) 92vw, 1000px";
+const hi = (g: CaseImage, sizes = SIZES) =>
+  shots2x.has(g.src) ? ` srcset="${BASE}${g.src} ${g.w}w, ${BASE}${g.src.replace(/.webp$/, "@2x.webp")} ${g.w * 2}w" sizes="${sizes}"` : "";
+
 const pic = (g: CaseImage, extra = "") =>
-  `<img src="${BASE}${g.src}" alt="${esc(g.caption)}" width="${g.w}" height="${g.h}" loading="lazy" decoding="async"${extra}>`;
+  `<img src="${BASE}${g.src}" alt="${esc(g.caption)}" width="${g.w}" height="${g.h}" loading="lazy" decoding="async"${hi(g)}${extra}>`;
 
 /* ── сцена: один способ показывать экран ─────────────────────────────────────
    Любой экран стоит на одной и той же тёмной сцене, и сцена всегда помещается в окно: высота ограничена
@@ -66,7 +75,7 @@ const fig = (g: CaseImage, cls = "") =>
 /* v68: картинка-разделитель между главами. Не интерфейс, а воздух: подпись уходит в alt, не на экран.
    Фирменные материалы — это продуманные композиции, им полоса нужна выше, иначе от кадра остаётся обрезок. */
 const interlude = (g: CaseImage, focus = "50% 47%") =>
-  `<div class="cs-interlude cs-interlude--${esc(g.kind)}" data-reveal aria-hidden="true" style="--focus:${esc(focus)}"><img src="${BASE}${g.src}" alt="" width="${g.w}" height="${g.h}" loading="lazy" decoding="async" draggable="false"></div>`;
+  `<div class="cs-interlude cs-interlude--${esc(g.kind)}" data-reveal aria-hidden="true" style="--focus:${esc(focus)}"><img src="${BASE}${g.src}" alt="" width="${g.w}" height="${g.h}" loading="lazy" decoding="async"${hi(g, "100vw")} draggable="false"></div>`;
 
 /* ── куски ─────────────────────────────────────────────────────────────────── */
 const SEC_ICON: Record<string, IconName> = { brief: "brief", context: "context", approach: "approach", research: "research", flow: "flow", decisions: "decisions", split: "split", mistakes: "mistakes", results: "results", screens: "screens", roadmap: "roadmap", takeaways: "takeaways" };
@@ -594,7 +603,9 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
 
   root.querySelectorAll<HTMLButtonElement>("[data-zoom]").forEach((b) => b.addEventListener("click", () => {
     const im = b.querySelector("img") ?? b.closest(".cs-stage")!.querySelector("img")!;
-    boxImg.src = im.src; boxImg.alt = im.alt; boxCap.textContent = im.alt;
+    /* кадр разворачивается во весь экран, поэтому здесь нужен самый крупный файл из набора */
+    boxImg.src = im.src; boxImg.srcset = im.srcset; boxImg.sizes = im.srcset ? "100vw" : "";
+    boxImg.alt = im.alt; boxCap.textContent = im.alt;
     reset();
     box.showModal();
   }));

@@ -1,4 +1,5 @@
 import { getLang } from '../i18n';
+import { shots2x } from '../data/shots2x';
 import './caseScreenMotion.css';
 
 type Run = { stopped: boolean };
@@ -20,18 +21,28 @@ const scenes: Record<string, Scene[]> = {
     { file: 'community-publication.png', ru: 'Темы помогают продолжить исследование города', en: 'Topics invite further city exploration', focus: 'topics' },
   ],
   'moderator-dashboard': [
-    { file: 'moderator-queue.png', ru: 'Очередь показывает статус каждой проверки', en: 'The queue exposes every review status', focus: 'moderator-queue' },
-    { file: 'moderator-profile.png', ru: 'Профиль собирает контекст пользователя', en: 'The profile gathers user context', focus: 'moderator-profile' },
-    { file: 'moderator-confirm.png', ru: 'Ответственное действие требует подтверждения', en: 'A consequential action requires confirmation', focus: 'moderator-confirm' },
+    { file: 'moderator-queue.webp', ru: 'Очередь показывает статус каждой проверки', en: 'The queue exposes every review status', focus: 'moderator-queue' },
+    { file: 'moderator-profile.webp', ru: 'Профиль собирает контекст пользователя', en: 'The profile gathers user context', focus: 'moderator-profile' },
+    { file: 'moderator-confirm.webp', ru: 'Ответственное действие требует подтверждения', en: 'A consequential action requires confirmation', focus: 'moderator-confirm' },
   ],
 };
 const label = (s: Scene) => getLang() === 'ru' ? s.ru : s.en;
+
+/* Камера наезжает на экран до 1,95×, поэтому в sizes стоит не ширина рамки, а ширина после наезда: браузер
+   должен выбрать файл под то, что человек увидит крупно, а не под рамку. Рамка не шире 1000 точек. */
+const ZOOM = 1.95;
+const hi = (file: string, w: number) => {
+  const src = `cases/figma/${file}`;
+  if (!shots2x.has(src)) return '';
+  const base = import.meta.env.BASE_URL;
+  return ` srcset="${base}${src} ${w}w, ${base}${src.replace(/.webp$/, '@2x.webp')} ${w * 2}w" sizes="(max-width: 1040px) ${Math.round(ZOOM * 100)}vw, ${Math.round(1000 * ZOOM)}px"`;
+};
 
 export function screenMarkup(id: string) {
   const list = scenes[id];
   const alt = id === 'ai-agents' ? 'Реестр рисков ИИ-агентов' : id === 'community' ? 'Сообщество — карточка публикации' : id === 'moderator-dashboard' ? 'Кабинет модератора' : 'Стоп Спам — настройка защиты';
   return `<div class="dm sm sm--${id}" data-focus="${list[0].focus}">
-    <div class="sm-viewport"><div class="sm-camera">${[...new Set(list.map(s => s.file))].map((file, i) => `<img class="sm-screen${i === 0 ? ' is-current' : ''}" data-file="${file}" src="${import.meta.env.BASE_URL}cases/figma/${file}" alt="${alt}" decoding="async">`).join('')}</div></div>
+    <div class="sm-viewport"><div class="sm-camera">${[...new Set(list.map(s => s.file))].map((file, i) => `<img class="sm-screen${i === 0 ? ' is-current' : ''}" data-file="${file}" src="${import.meta.env.BASE_URL}cases/figma/${file}" alt="${alt}" decoding="async"${hi(file, 1440)}>`).join('')}</div></div>
     <div class="sm-director"><p class="sm-caption">${label(list[0])}</p><div class="sm-controls" role="group" aria-label="${getLang() === 'ru' ? 'Состояния интерфейса' : 'Interface states'}">${list.map((s, i) => `<button type="button" data-shot="${i}" aria-label="${label(s)}" aria-pressed="${i === 0}"><span>0${i + 1}</span><i></i></button>`).join('')}</div></div>
   </div>`;
 }

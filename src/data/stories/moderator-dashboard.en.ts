@@ -144,7 +144,7 @@ export const en: CaseStory = {
     {
       kind: "spot",
       title: "The same list for another section: users",
-      image: img(F + "moderator-queue.png", 1440, 1156, "User queue with filters, assignees, statuses and complaints", "hero"),
+      image: img(F + "moderator-queue.webp", 1440, 1156, "User queue with filters, assignees, statuses and complaints", "hero"),
       spots: [
         { x: 27, y: 11.6, text: "Statuses are tabs: the queue is sorted into folders", decision: "registry" },
         { x: 40, y: 18.3, text: "Filters by ID, name, assignee, status and period", decision: "registry" },
@@ -155,8 +155,8 @@ export const en: CaseStory = {
     {
       kind: "compare",
       title: "Profile and confirmation of an important action",
-      before: img(F + "moderator-profile.png", 1440, 861, "User profile: what they wrote and what is linked to them"),
-      after: img(F + "moderator-confirm.png", 1440, 861, "Confirmation before a moderator takes a request into work"),
+      before: img(F + "moderator-profile.webp", 1440, 861, "User profile: what they wrote and what is linked to them"),
+      after: img(F + "moderator-confirm.webp", 1440, 861, "Confirmation before a moderator takes a request into work"),
       labels: ["Context", "Confirmation"],
     },
   ],
