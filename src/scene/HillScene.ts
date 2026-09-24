@@ -14,6 +14,10 @@ import { KINETIC_BASE, KINETIC_FONT, createKinetic, type Kinetic } from "./kinet
 import { Studio, projectBox, type HillLights } from "./studio";
 import { QualityGovernor } from "./quality";
 import { createPolaroid } from "./polaroid";
+import { createVista } from "./vista";
+import { createTree } from "./tree";
+import { createRocks, rockFootprints } from "./rocks";
+import { createForeground } from "./foreground";
 import {
   TRAIL_SLOTS,
   ghostFragment,
@@ -68,6 +72,8 @@ const CAMERA_PAN = new THREE.Vector2(3.0, -2.0);
 const CAMERA_REST_OFF = new THREE.Vector3(3.0, -0.3, 0.8);
 const CAMERA_TARGET = new THREE.Vector3(-2.0, 3.2, 0);
 const SHADOW_LAYER = 3;
+/* v72: ближние предметы — над ними лучи приглушаются (маска в postfx.ts) */
+const SHIELD_LAYER = 6;
 /* слой компьютера в скролл-истории: рисуется отдельным проходом поверх заливки */
 const PC_LAYER = 5;
 
@@ -172,13 +178,21 @@ export class HillScene {
     this.renderer.shadowMap.autoUpdate = false;
     this.timer.connect(document);
 
-    this.fx = createPostFx(this.renderer, this.scene, this.camera, SUN_DIR, PC_LAYER);
+    this.fx = createPostFx(this.renderer, this.scene, this.camera, SUN_DIR, PC_LAYER, SHIELD_LAYER);
     this.fx.params.onOverlay = this.onPcOverlay;
     this.focusBase = this.fx.params.focus;
 
     /* кадрирование до посадки травы: зона и плотность зависят от того, где стоит камера */
     this.resize();
     this.buildSky();
+    this.buildVista();
+    this.buildTree();
+    if (!/[?&]rocks=0/.test(location.search)) this.scene.add(createRocks(this.uniforms));
+    /* v72: размытые цветы у нижних углов кадра (foreground.ts); ?fg=0 — без них */
+    if (!/[?&]fg=0/.test(location.search)) {
+      this.fg = createForeground(this.renderer);
+      this.scene.add(this.fg.mesh);
+    }
     this.buildGhost();
     this.buildGround();
     this.buildGrass();
@@ -347,6 +361,36 @@ export class HillScene {
     this.scene.add(sky);
   }
 
+  /* v72: дальний план — гряды холмов с лесом за холмом (vista.ts); цвет неба и погода — общие с небом */
+  private buildVista() {
+    const u = this.sky.uniforms;
+    this.scene.add(createVista({
+      sky: { uZenith: u.uZenith, uHigh: u.uHigh, uMid: u.uMid, uHorizon: u.uHorizon, uGlow: u.uGlow, uSunDir: u.uSunDir, uSunCol: u.uSunCol },
+      sh: this.uniforms.uSH,
+      ambient: this.uniforms.uAmbient,
+    }));
+  }
+
+  /* v72: дерево на правом плече холма (tree.ts). На широком экране — за креслом, чуть правее: крона над
+     компьютером, ствол за столиком, солнце светит сквозь листву — кадр «кресло под деревом на холме». Правее
+     стоит карточка проектов, и дальше по склону дерево ушло бы под неё. На вертикальном экране та же точка
+     посадила бы крону под текст, поэтому дерево отходит правее и ниже по склону и уходит за правую кромку —
+     обрамляет кадр. Между ними — плавно, по той же доле, что и разворот камеры (placeTree). ?tree=0 — без него */
+  private tree?: ReturnType<typeof createTree>;
+  private fg?: ReturnType<typeof createForeground>;
+  private buildTree() {
+    if (/[?&]tree=0/.test(location.search)) return;
+    this.tree = createTree(this.uniforms, { base: new THREE.Vector3(), height: 5.6, lean: new THREE.Vector3(-0.2, 0, 0.1), msaa: true });
+    this.scene.add(this.tree.group);
+    this.placeTree();
+  }
+  private placeTree() {
+    if (!this.tree) return;
+    const k = Math.min(1, Math.max(0, (this.camera.aspect - 0.6) / 0.7));
+    const x = 2.8 + (0.95 - 2.8) * k, z = -5.2 + (-2.7 + 5.2) * k;
+    this.tree.place(x, heightAt(x, z) - 0.05, z, 0.85 - 0.07 * k);
+  }
+
   /* «SYLVA» у оригинала — огромное полупрозрачное слово за сценой; у нас оно
      стоит в воздухе за холмом, и гребень его частично закрывает */
   private buildGhost() {
@@ -443,6 +487,7 @@ export class HillScene {
     /* отсечение при посадке: травинка вне кадра или за гребнем не создаётся вовсе */
     const visible = this.opts.fixedCamera ? () => true : this.makeVisibilityTest();
     const feet = this.footprintWorld();
+    const rocks = rockFootprints();
     this.meadow = this.planMeadow(feet);
 
     /* два LOD, как в Ghost of Tsushima: рядом с камерами — травинка в 7 вершин,
@@ -505,6 +550,11 @@ export class HillScene {
       for (const f of feet) {
         const e = Math.hypot((x - f.x) / f.rx, (z - f.z) / f.rz);
         if (e < 1) len *= 0.45 + 0.55 * smooth(0.55, 1.0, e);
+      }
+      /* v72: под валуном травы нет, по его краю она растёт вплотную — камень утоплен в траву, а не лежит на ней */
+      for (const f of rocks) {
+        const e = Math.hypot((x - f.x) / f.rx, (z - f.z) / f.rz);
+        if (e < 1.1) len *= 0.05 + 0.95 * smooth(0.8, 1.1, e);
       }
 
       L.rnd.push(rng() * Math.PI * 2, len, 0, rng());
@@ -990,7 +1040,9 @@ export class HillScene {
         if (!mesh.isMesh) return;
         mesh.castShadow = mesh.receiveShadow = true;
         mesh.layers.enable(SHADOW_LAYER);
+        mesh.layers.enable(SHIELD_LAYER);
         const m = mesh.material as THREE.MeshStandardMaterial;
+        this.sharpenMaps(m);
         if (m.isMeshStandardMaterial) {
           m.envMapIntensity = 1;
           /* белые подушки на солнце слепили — ткань не бывает альбедо 1 */
@@ -1012,6 +1064,16 @@ export class HillScene {
         this.resolveProps();
       });
     });
+  }
+
+  /* v72: анизотропная фильтрация текстур реквизита. Камера смотрит на кресло снизу по склону, сиденье и
+     столешница видны под острым углом, и без неё мип-уровень выбирается по худшему направлению: ткань
+     подушек либо рябила, либо расплывалась в пятно. Восемь выборок — потолок, после которого разницы не видно */
+  private sharpenMaps(m: THREE.Material) {
+    const std = m as THREE.MeshStandardMaterial;
+    if (!std.isMeshStandardMaterial) return;
+    const n = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
+    for (const t of [std.map, std.normalMap, std.roughnessMap, std.metalnessMap, std.aoMap]) if (t) t.anisotropy = n;
   }
 
   /* v24: сиденье кресла — постель для спящей Келли в футере. Лучи сверху по сетке над креслом
@@ -1070,6 +1132,7 @@ export class HillScene {
          осталась бы лежать на траве под столиком */
       /* бежевый пластик в тени против солнца и под голубым небом уходил в серый — греем */
       const mat = mesh.material as THREE.MeshStandardMaterial;
+      this.sharpenMaps(mat);
       /* корпус с несколькими материалами GLTFLoader делит на меши case_1, case_2… с общими
          материалами — греем каждый материал один раз */
       if (mesh.name !== "screen" && mat.color && !warmed.has(mat)) {
@@ -1077,6 +1140,7 @@ export class HillScene {
         mat.color.multiply(new THREE.Color(1.06, 1.0, 0.9));
         mat.envMapIntensity = 0.7;
       }
+      mesh.layers.enable(SHIELD_LAYER);
       if (mesh.name === "screen") {
         this.screen ??= new PortfolioScreen();
         mesh.material = this.screen.material;
@@ -1276,7 +1340,7 @@ export class HillScene {
     const overlay = s >= STORY.overlay && this.storyTear < 1.18 && f <= 0;
     if (overlay !== this.pcOverlay) {
       this.pcOverlay = overlay;
-      this.pc.traverse((o) => o.layers.set(overlay ? PC_LAYER : 0));
+      this.pc.traverse((o) => { o.layers.set(overlay ? PC_LAYER : 0); if (!overlay) o.layers.enable(SHIELD_LAYER); });
       /* ушёл за верх кадра вместе со страницей — в главе «Кейсы» не рисуется и в сцене; в футере снова на столике */
       this.pc.visible = this.storyTear < 1.18 || f > 0;
       fx.overlay = overlay;
@@ -1799,23 +1863,29 @@ export class HillScene {
     this.readCanvasRect();
     const w = this.canvas.clientWidth || window.innerWidth;
     const h = this.canvas.clientHeight || window.innerHeight;
-    /* максимум — родной DPR экрана (до 2.25); ступень качества берёт от него долю */
-    this.dprMax = Math.min(window.devicePixelRatio || 1, 2.25);
+    /* максимум — родной DPR экрана (до 2.25); ступень качества берёт от него долю.
+       v72: на компьютере с экраном DPR ниже 1.5 верх лестницы — суперсэмплинг до 1.5. Кресло с компьютером
+       на экране DPR 1 занимают около ста пикселей: MSAA сглаживает только края геометрии, а рябь внутри
+       текстур (ткань подушек, пластик корпуса) оставалась, и всё реквизитное выглядело «пиксельным».
+       Кадр сжимается финальным проходом с фильтром (см. uDown в shaders.ts). Слабый ноутбук лестница
+       и регулятор уводят обратно к родному разрешению — ниже него пол не пускает. */
+    const native = Math.min(window.devicePixelRatio || 1, 2.25);
+    this.dprMax = this.phone ? native : Math.max(native, Math.min(1.5, native * 1.5));
     const forced = Number(new URLSearchParams(location.search).get("dpr"));
     if (forced > 0) { this.dprMax = forced; this.qualityScale = 1; if (!this.tierLocked) this.lockTier(false); }
     /* ступень качества задаёт долю от максимума; раньше здесь было min(текущий, максимум)
        со стартом 1 — DPR никогда не поднимался выше 1 и картинка на экране 2.25 была пиксельной */
     /* пол резкости: на экране с DPR ≥ 1.25 сцена не рисуется грубее 1.25 (на DPR 1 — не ниже 1) */
-    this.dpr = Math.max(this.dprMax * this.qualityScale, Math.min(this.dprMax, 1.25));
-    /* канвас — в родном DPR (финальный проход растягивает сцену с резкостью),
-       сцена — в DPR ступени качества */
-    const canvasDpr = /[?&]canvas=scene/.test(location.search) ? this.dpr : this.dprMax;
+    this.dpr = Math.max(this.dprMax * this.qualityScale, Math.min(native, 1.25));
+    /* канвас — в родном DPR (финальный проход растягивает или сжимает сцену), сцена — в DPR ступени качества */
+    const canvasDpr = /[?&]canvas=scene/.test(location.search) ? this.dpr : forced > 0 ? Math.min(forced, native) : native;
     this.renderer.setPixelRatio(canvasDpr);
     this.renderer.setSize(w, h, false);
     this.fx.setSize(w, h, this.dpr, canvasDpr);
     this.walk?.setSize(w, h, this.dpr);
     this.pollenScale(this.dpr);
     this.camera.aspect = w / h;
+    this.placeTree();
     this.focusDirty = true;
     /* на узком экране отъезжаем назад, а не расширяем угол: так в кадр
        попадает весь склон, а не ближняя трава крупным планом */
@@ -1898,6 +1968,8 @@ export class HillScene {
     /* пока играет интро, экспозицией и цветом постобработки управляет оно */
     this.weather.update(dt, true);
     this.updateStory(dt);
+    /* передний план — только на первом экране: гаснет с первыми процентами скролла */
+    this.fg?.update(this.camera.aspect, this.uniforms.uTime.value, this.uniforms.uWind.value, this.uniforms.uSunCol.value, this.uniforms.uAmbient.value, this.pointerSmooth, 1 - THREE.MathUtils.smoothstep(this.storyS, 0.0, 0.03));
 
     const fixed = this.opts.fixedCamera;
     if (fixed) {
@@ -1985,6 +2057,21 @@ export class HillScene {
     [1, 4, 1, true], [0.89, 4, 1, true], [0.78, 4, 1, true], [0.67, 4, 1, true],
     [0.67, 2, 1, true], [0.6, 2, 1, true], [0.6, 2, 0.8, false], [0.56, 2, 0.62, false], [0.56, 0, 0.5, false],
   ];
+  /* v72: лестница телефона. Та, что выше, подобрана на Intel Arc, где MSAA дорогой, и он уходил одним из
+     первых, а следом разрешение: телефон с экраном DPR 3 доходил до сцены в DPR 1.26 без MSAA, и финальный
+     проход растягивал её в 2.4 раза — цветы квадратиками, у кресла лесенка. У телефонных видеокарт (тайловых)
+     наоборот: MSAA разрешается в памяти тайла и почти бесплатен, а дорог каждый лишний пиксель и каждая
+     вершина. Поэтому здесь первыми уходят густота травы и лучи, MSAA 4× держится почти до низа, а
+     разрешение не опускается ниже 0.6 от потолка (1.35 на DPR 2.25). Травинки на телефоне и так мельче:
+     камера отъезжает дальше, чтобы в вертикальный кадр вошёл весь склон. Длина та же — девять ступеней,
+     чтобы ?tier=, запомненная ступень и пороги «тяжёлой» травы читались одинаково. */
+  private static readonly PHONE_LADDER: [number, number, number, boolean][] = [
+    [1, 4, 1, true], [0.89, 4, 0.85, true], [0.8, 4, 0.7, true], [0.8, 4, 0.6, true],
+    [0.72, 4, 0.55, true], [0.72, 4, 0.45, true], [0.72, 2, 0.45, false], [0.66, 2, 0.4, false], [0.6, 2, 0.35, false],
+  ];
+  /* телефон или планшет: основной указатель — палец, мыши нет */
+  private readonly phone = matchMedia("(pointer: coarse)").matches && !matchMedia("(any-pointer: fine)").matches;
+  private readonly ladder = this.phone ? HillScene.PHONE_LADDER : HillScene.LADDER;
   /* полный кадр 60 Гц: бенчмарк ждёт всю очередь видеокарты, включая кнопки UI */
   /* медиана интервала кадров; 18 мс — с запасом над 16.7 мс экрана 60 Гц,
      где быстрее vsync интервал всё равно не станет */
@@ -2010,7 +2097,7 @@ export class HillScene {
     const ext = gl.getExtension("WEBGL_debug_renderer_info");
     const gpu = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : "gpu";
     /* v3 — версия рендер-пайплайна: при его изменении старые ступени недействительны */
-    return `hill-tier:v14:${gpu}:${screen.width}x${screen.height}@${window.devicePixelRatio}:${this.bladeTotal}`;
+    return `hill-tier:v15:${gpu}:${screen.width}x${screen.height}@${window.devicePixelRatio}:${this.bladeTotal}`;
   }
 
   private static readonly TIER_TTL = 14 * 24 * 3600 * 1000;
@@ -2018,7 +2105,7 @@ export class HillScene {
     if (this.tierLocked) return; // ?dpr= — ручной режим для замеров
     /* v44: ?tier=0…8 — поставить ступень руками (посмотреть, что видит слабый компьютер); регулятор выключен */
     const forcedTier = new URLSearchParams(location.search).get("tier");
-    if (forcedTier !== null && Number.isInteger(+forcedTier) && +forcedTier >= 0 && +forcedTier < HillScene.LADDER.length) {
+    if (forcedTier !== null && Number.isInteger(+forcedTier) && +forcedTier >= 0 && +forcedTier < this.ladder.length) {
       this.setTier(+forcedTier, "param");
       this.lockTier(false);
       return;
@@ -2030,7 +2117,7 @@ export class HillScene {
          через две недели меряем заново */
       const raw = JSON.parse(localStorage.getItem(this.tierKey()) ?? "null") as { tier: number; at: number } | null;
       const fresh = raw && Date.now() - raw.at < HillScene.TIER_TTL;
-      if (fresh && Number.isInteger(raw.tier) && raw.tier >= 0 && raw.tier < HillScene.LADDER.length) {
+      if (fresh && Number.isInteger(raw.tier) && raw.tier >= 0 && raw.tier < this.ladder.length) {
         this.setTier(raw.tier, "restore");
         this.lockTier(false);
       }
@@ -2061,7 +2148,7 @@ export class HillScene {
         heightRes: small ? 256 : 384,
         shadows: heavy && !small,
       });
-      this.walk.setDensity(HillScene.LADDER[this.tier][2]);
+      this.walk.setDensity(this.ladder[this.tier][2]);
       const w = this.canvas.clientWidth || window.innerWidth, h = this.canvas.clientHeight || window.innerHeight;
       this.walk.setSize(w, h, this.dpr);
       this.walk.update(0);
@@ -2070,7 +2157,7 @@ export class HillScene {
     }, { timeout: 1500 });
   }
   private applyDensity() {
-    const [, , frac, rays] = HillScene.LADDER[this.tier];
+    const [, , frac, rays] = this.ladder[this.tier];
     const k = frac * (this.bgCheap ? 0.35 : 1);
     for (const g of this.grassGeos) g.instanceCount = Math.round(g.userData.total * k);
     if (this.stalkGeo) this.stalkGeo.instanceCount = Math.round(this.stalkCount * k);
@@ -2083,12 +2170,13 @@ export class HillScene {
   private setTier(t: number, why = "calibrate") {
     this.tierLog.push(`${(performance.now() / 1000).toFixed(1)}s ${why} ${this.tier}→${t}`);
     this.tier = t;
-    this.qualityScale = HillScene.LADDER[t][0];
-    this.fx.setSamples(HillScene.LADDER[t][1]);
+    this.qualityScale = this.ladder[t][0];
+    this.fx.setSamples(this.ladder[t][1]);
+    this.tree?.setMsaa(this.ladder[t][1] > 0);
     /* травинки уже в случайном порядке (посадка отбором), так что любая начальная
        доля — равномерная выборка с той же зависимостью плотности от расстояния */
     this.applyDensity();
-    this.walk?.setDensity(HillScene.LADDER[t][2]);
+    this.walk?.setDensity(this.ladder[t][2]);
     this.resize();
   }
 
@@ -2132,16 +2220,16 @@ export class HillScene {
        чуть дешевле с MSAA 2×. Прыгаем на подходящую ступень и перемеряем. */
     if (!this.predicted && ms > HillScene.BUDGET_MS) {
       this.predicted = true;
-      const [s0, m0] = HillScene.LADDER[this.tier];
+      const [s0, m0] = this.ladder[this.tier];
       /* вершинная часть ∝ доле травинок, пиксельная ∝ DPR² и числу сэмплов */
       const msaaFactor = (m: number) => (m === m0 ? 1 : m === 0 ? 0.6 : m < m0 ? 0.82 : 1.2);
       const cost = (s: number, m: number, b: number) => 0.35 * b + 0.65 * ((s * s) / (s0 * s0)) * msaaFactor(m);
       let t = this.tier;
-      while (t < HillScene.LADDER.length - 1 && ms * cost(HillScene.LADDER[t][0], HillScene.LADDER[t][1], HillScene.LADDER[t][2]) > HillScene.BUDGET_MS) t++;
+      while (t < this.ladder.length - 1 && ms * cost(this.ladder[t][0], this.ladder[t][1], this.ladder[t][2]) > HillScene.BUDGET_MS) t++;
       this.setTier(t);
       return;
     }
-    if (ms > HillScene.BUDGET_MS && this.tier < HillScene.LADDER.length - 1) {
+    if (ms > HillScene.BUDGET_MS && this.tier < this.ladder.length - 1) {
       this.setTier(this.tier + 1);
       return; // следующий кадр перемеряет на новой ступени
     }
@@ -2158,7 +2246,7 @@ export class HillScene {
     }
     /* v24: даже нижняя ступень дольше 45 мс (меньше 22 кадров) — на скролле будет ~13 (бюджетный Android
        в нагрузочном прогоне); такому устройству лучше лёгкая версия */
-    if (this.tier === HillScene.LADDER.length - 1 && ms > HillScene.TOO_SLOW_MS && !/[?&]lite=0/.test(location.search)) {
+    if (this.tier === this.ladder.length - 1 && ms > HillScene.TOO_SLOW_MS && !/[?&]lite=0/.test(location.search)) {
       this.lockTier(false);
       this.onDegrade?.("slow");
       return;
@@ -2170,7 +2258,7 @@ export class HillScene {
   private lockTier(save: boolean) {
     this.tierLocked = true;
     const manual = this.opts.fixedCamera || Number(new URLSearchParams(location.search).get("dpr")) > 0 || /[?&](governor=0|tier=d)/.test(location.search);
-    if (!manual && !this.governor) this.governor = new QualityGovernor(this.renderer.getContext() as WebGL2RenderingContext, HillScene.LADDER);
+    if (!manual && !this.governor) this.governor = new QualityGovernor(this.renderer.getContext() as WebGL2RenderingContext, this.ladder);
     if (save) try { localStorage.setItem(this.tierKey(), JSON.stringify({ tier: this.tier, at: Date.now() })); } catch { /* ничего */ }
     this.resolveCalibrated();
   }

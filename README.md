@@ -12,7 +12,7 @@ Portfolio of Nikita Gorbachev, product designer. It opens on a grassy hill at su
 
 ## What's on the page
 
-The first screen is a real-time scene, framed the way a photograph would be: the hill sits in the right third, its ridge runs down to the left and leads the eye to the "See the work" button, and the armchair stands on the golden-ratio line with open sky above it for the title. The sun is behind the hill’s shoulder, so the grass is lit from behind. Every blade of grass is geometry (up to 220k instances in one draw call, bent by wind in the vertex shader), and the dog looks at your cursor. Clicking "Weather" cycles through clear sky, clouds, rain and dusk. In the rain Kelly gets a small umbrella hat.
+The first screen is a real-time scene, framed the way a photograph would be: the hill sits in the right third, its ridge runs down to the left and leads the eye to the "See the work" button, and the armchair stands on the golden-ratio line with open sky above it for the title. The sun is behind the hill’s shoulder, so the grass is lit from behind. Behind the hill four ridges fade into the sky by aerial perspective, a lone tree stands over the armchair with the sun shining through its crown, mossy boulders sit in the grass, and defocused daisies frame the lower corners. Every blade of grass is geometry (up to 220k instances in one draw call, bent by wind in the vertex shader), and the dog looks at your cursor. Clicking "Weather" cycles through clear sky, clouds, rain and dusk. In the rain Kelly gets a small umbrella hat.
 
 Scrolling drives a three-part story:
 
@@ -62,6 +62,9 @@ Useful URL parameters while developing:
 | `?lite=1` / `?lite=0` | force the lite version or force 3D |
 | `?debug=1` | show the quality tier, DPR and FPS |
 | `?dpr=1.5&msaa=2` | fix the render resolution and MSAA (disables auto quality) |
+| `?tree=0` / `?rocks=0` / `?fg=0` | hide the tree, the boulders or the defocused flowers in the lower corners |
+| `?shield=0` | let the god rays wash over the armchair and computer as they did before |
+| `?governor=0` | switch off the GPU-timer governor (use it with `?tier=`, or the tier drifts) |
 | `?dog=rain` / `?dog=sleep` | put the umbrella hat on Kelly or send her to sleep |
 | `?ui=0` | hide the interface, scene only |
 | `?lang=ru` / `?lang=en` | open the page in that language |
@@ -110,7 +113,7 @@ Behind the case cards the meadow is fully blurred, so it renders cheaply there. 
 
 ### Quality
 
-On load the page measures frame time and picks one of nine tiers. The tiers trade MSAA first, then resolution, then grass density and god rays. The choice is cached per GPU and screen for two weeks. While you look at the hill, a governor reads GPU time through `EXT_disjoint_timer_query_webgl2` and moves the tier up or down by one step.
+On load the page measures frame time and picks one of nine tiers. On desktops the tiers trade MSAA first, then resolution, then grass density and god rays; on screens with a DPR below 1.5 the top tier supersamples the scene at DPR 1.5 and the final pass filters it down. Phones get their own ladder: their tile-based GPUs resolve MSAA almost for free, so grass density and rays go first, MSAA 4× stays until the seventh step, and the resolution never drops below 0.6 of the ceiling. The choice is cached per GPU and screen for two weeks. While you look at the hill, a governor reads GPU time through `EXT_disjoint_timer_query_webgl2` and moves the tier up or down by one step.
 
 Shaders compile in parallel before the first frame (`KHR_parallel_shader_compile`). Models that arrive later compile after the HDRI is in, because the environment map changes the program key. Without that, the first frame blocked the main thread for about 2.4 seconds on a fast desktop.
 
@@ -157,6 +160,8 @@ The objects are cut out of generated still lifes (prompts and provenance in [doc
 | Side table | ["Side Table Tall 01"](https://polyhaven.com/a/side_table_tall_01) by James Ray Cock, Poly Haven; legs shortened | CC0 |
 | "Old computer 02" | Freepoly.org via BlenderKit | CC0 |
 | Mug and saucer | made in code, `tools/blender-build-props.py` | this project |
+| Tree, boulders, distant ridges | generated in code, `src/scene/tree.ts`, `rocks.ts`, `vista.ts` | this project |
+| Defocused flowers | built from primitives in `tools/blender-foreground-flowers.py` | this project |
 | HDRI `qwantani_sunset_puresky` | Poly Haven | CC0 |
 | UI sound cues | uisfx (uisfx.com), "zen" set | CC0 |
 | Onest, Playfair Display (italic), Caveat fonts | Google Fonts, self-hosted in `public/fonts` | OFL, text in `public/fonts/OFL.txt` |

@@ -52,6 +52,8 @@ export function createPostFx(
   sunDir: THREE.Vector3,
   /* слой, который скролл-история рисует отдельным проходом поверх заливки (компьютер) */
   overlayLayer = 5,
+  /* v72: слой ближних предметов (кресло, столик, компьютер, собака), над которыми лучи приглушаются */
+  shieldLayer = 6,
 ): PostFx {
   const q = new URLSearchParams(location.search);
   const forcedSamples = q.has("msaa") ? Number(q.get("msaa")) : null;
@@ -82,6 +84,13 @@ export function createPostFx(
   const maskRT = new THREE.WebGLRenderTarget(1, 1, small);
   const blurA = new THREE.WebGLRenderTarget(1, 1, small);
   const blurB = new THREE.WebGLRenderTarget(1, 1, small);
+  /* v72: маска ближних предметов в четверти разрешения. Лучи прибавлялись поверх всего кадра, и компьютер с
+     креслом, стоящие у самого солнца, тонули в светлой дымке: контраст падал, края расплывались, а на глаз это
+     читалось как «пиксельный» реквизит. Настоящий воздух между камерой и креслом в двенадцать метров столько
+     не светит — над предметами лучи остаются слабым отсветом. Четверть разрешения даёт мягкий край маски */
+  const shieldRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.UnsignedByteType, depthBuffer: false });
+  const shieldMat = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false });
+  const shieldOn = q.get("shield") !== "0";
   /* компьютер поверх заливки: свой MSAA-буфер с прозрачным фоном */
   const pcRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples });
   /* v25: финал поверх полностью размытого фона кейсов — в половине разрешения экрана и растяжкой на экран.
@@ -157,6 +166,8 @@ export function createPostFx(
     uniforms: {
       tScene: { value: sceneRT.texture },
       tRays: { value: blurB.texture },
+      tShield: { value: shieldRT.texture },
+      uShield: { value: 0 },
       uRays: { value: 0 },
       uRayTint: { value: new THREE.Color(1.0, 0.86, 0.66) },
       uVignette: { value: params.vignette },
@@ -164,6 +175,7 @@ export function createPostFx(
       uExposure: { value: params.exposure },
       uTexel: { value: new THREE.Vector2(1, 1) },
       uSharp: { value: 0 },
+      uDown: { value: new THREE.Vector2(0, 0) },
       uEdgeAA: { value: 0 },
       uTone: { value: toneMode },
       uVibrance: { value: params.vibrance },
@@ -234,6 +246,10 @@ export function createPostFx(
       pcRT.setSize(W, H);
       halfRT.setSize(Math.max(1, Math.ceil((w * canvasDpr) / 2)), Math.max(1, Math.ceil((h * canvasDpr) / 2)));
       final.uniforms.uTexel.value.set(1 / W, 1 / H);
+      /* v72: сцена крупнее экрана (суперсэмплинг на DPR 1) — финал сжимает её четырьмя билинейными выборками
+         на пиксель экрана, то есть усредняет весь его след, а не берёт одну точку из середины */
+      const down = dpr / canvasDpr;
+      final.uniforms.uDown.value.set(down > 1.05 ? 0.25 / Math.max(1, w * canvasDpr) : 0, down > 1.05 ? 0.25 / Math.max(1, h * canvasDpr) : 0);
       /* резкость нужна только при растяжении; ?sharp=0 выключает */
       const upscale = canvasDpr / dpr;
       sharp = q.get("sharp") === "0" ? 0 : THREE.MathUtils.clamp((upscale - 1) * 0.8, 0, 0.6) /* сильнее — светлый ореол на краях подушек против неба */;
@@ -242,6 +258,7 @@ export function createPostFx(
       maskRT.setSize(qw, qh);
       blurA.setSize(qw, qh);
       blurB.setSize(qw, qh);
+      shieldRT.setSize(qw, qh);
       mask.uniforms.uAspect.value = w / h;
     },
     render() {
@@ -331,6 +348,23 @@ export function createPostFx(
         blur.uniforms.uStep.value = 0.35;
         draw(blur, blurB);
       }
+      const shield = shieldOn && raysVisible > 0.01 && !covered && !altFull && !low;
+      if (shield) {
+        const layers = camera.layers.mask;
+        const alpha = renderer.getClearAlpha();
+        renderer.getClearColor(clear);
+        const override = scene.overrideMaterial;
+        camera.layers.set(shieldLayer);
+        scene.overrideMaterial = shieldMat;
+        renderer.setClearColor(0x000000, 1);
+        renderer.setRenderTarget(shieldRT);
+        renderer.clear(true, false, false);
+        renderer.render(scene, camera);
+        scene.overrideMaterial = override;
+        camera.layers.mask = layers;
+        renderer.setClearColor(clear, alpha);
+      }
+      final.uniforms.uShield.value = shield ? 0.72 : 0;
       final.uniforms.uRays.value = params.rays * raysVisible;
       final.uniforms.uExposure.value = params.exposure;
       final.uniforms.uVignette.value = params.vignette;
@@ -375,10 +409,12 @@ export function createPostFx(
       const a = renderer.compileAsync(scene([mask, blur, quarter]), cam);
       renderer.setRenderTarget(halfRT);
       const c = renderer.compileAsync(scene([final]), cam);
+      renderer.setRenderTarget(shieldRT);
+      const d = renderer.compileAsync(scene([shieldMat]), cam);
       renderer.setRenderTarget(null);
       const b = renderer.compileAsync(scene([final, blit]), cam);
       renderer.setRenderTarget(prev);
-      return Promise.all([a, b, c]).finally(() => geo.dispose());
+      return Promise.all([a, b, c, d]).finally(() => geo.dispose());
     },
     warm() {
       /* буферы и шейдер четвертного прохода — заранее: первый показ компьютера отдельным слоем
@@ -393,8 +429,8 @@ export function createPostFx(
       renderer.setRenderTarget(prev);
     },
     dispose() {
-      [sceneRT, bgRT, bgBlurRT, shadowRT, pcRT, maskRT, blurA, blurB, halfRT, altRT, altBgRT, altBlurRT].forEach((t) => t.dispose());
-      [mask, blur, quarter, final, blit].forEach((m) => m.dispose());
+      [sceneRT, bgRT, bgBlurRT, shadowRT, pcRT, maskRT, blurA, blurB, shieldRT, halfRT, altRT, altBgRT, altBlurRT].forEach((t) => t.dispose());
+      [mask, blur, quarter, final, blit, shieldMat].forEach((m) => m.dispose());
       quad.dispose();
     },
   };

@@ -98,6 +98,7 @@ export class Dog {
       if (!mesh.isMesh) return;
       mesh.frustumCulled = false; // скин двигает вершины за пределы исходной рамки
       mesh.receiveShadow = true; // тень кресла ложится и на собаку
+      mesh.layers.enable(6); // v72: лучи над Келли приглушаются, как над креслом (SHIELD_LAYER в HillScene)
       const m = mesh.material as THREE.MeshStandardMaterial;
       if (m) { m.roughness = 0.9; m.metalness = 0; m.envMapIntensity = 0.8; }
     });
