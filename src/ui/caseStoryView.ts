@@ -404,7 +404,11 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
     <div class="cs-sheet" hidden role="dialog" aria-label="${t("cs.contents")}">
       <div class="cs-sheet-panel"><div class="cs-sheet-head"><b>${t("cs.contents")}</b><button type="button" class="cs-sheet-close" aria-label="${t("cs.close")}">×</button></div>${toc(sections, "cs-toc cs-toc--sheet")}</div>
     </div>
-    <dialog class="cs-lightbox" aria-label="${t("cs.screens")}"><button type="button" class="cs-lightbox-close" aria-label="${t("cs.close")}">×</button><img alt=""><p></p></dialog>
+    <dialog class="cs-lightbox" aria-label="${t("cs.screens")}">
+      <div class="cs-lb-view"><img alt="" draggable="false"></div>
+      <p class="cs-lb-cap"></p>
+      <button type="button" class="cs-lightbox-close" aria-label="${t("cs.close")}">×</button>
+    </dialog>
   </article>`;
   return html.replace(/__ID__/g, esc(s.id));
 }
@@ -550,18 +554,99 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
     if (el) { scrollTo(el); el.classList.add("is-flash"); setTimeout(() => el.classList.remove("is-flash"), 1600); }
   }));
 
-  /* лайтбокс */
+  /* Окно просмотра экрана: кадр целиком, увеличение жестом.
+     Масштаб и сдвиг живут в transform самой картинки — это не трогает раскладку и не заставляет браузер
+     пересчитывать страницу на каждое движение пальца. */
   const box = root.querySelector<HTMLDialogElement>(".cs-lightbox")!;
+  const view = box.querySelector<HTMLElement>(".cs-lb-view")!;
   const boxImg = box.querySelector("img")!;
-  const boxCap = box.querySelector("p")!;
+  const boxCap = box.querySelector<HTMLElement>(".cs-lb-cap")!;
+  const MAX = 6; // дальше растягивать нечего: у самого файла кончаются точки
+  let scale = 1, tx = 0, ty = 0;
+
+  const apply = (ease = false) => {
+    boxImg.classList.toggle("is-eased", ease);
+    boxImg.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${scale.toFixed(3)})`;
+    view.classList.toggle("is-zoom", scale > 1.01);
+  };
+  /** не даём утащить кадр за край: сдвиг ограничен тем, что вылезло за рамку */
+  const hold = () => {
+    const r = view.getBoundingClientRect();
+    const mx = Math.max(0, (boxImg.clientWidth * scale - r.width) / 2);
+    const my = Math.max(0, (boxImg.clientHeight * scale - r.height) / 2);
+    tx = Math.min(mx, Math.max(-mx, tx));
+    ty = Math.min(my, Math.max(-my, ty));
+  };
+  /** увеличить в k раз вокруг точки (cx, cy): под курсором и пальцами остаётся то же место кадра */
+  const zoomAt = (k: number, cx: number, cy: number, ease = false) => {
+    const r = view.getBoundingClientRect();
+    const px = cx - r.left - r.width / 2, py = cy - r.top - r.height / 2;
+    const next = Math.min(MAX, Math.max(1, scale * k));
+    const f = next / scale;
+    tx = px - (px - tx) * f;
+    ty = py - (py - ty) * f;
+    scale = next;
+    if (scale <= 1.001) { scale = 1; tx = 0; ty = 0; }
+    hold();
+    apply(ease);
+  };
+  const reset = () => { scale = 1; tx = 0; ty = 0; apply(false); };
+
   root.querySelectorAll<HTMLButtonElement>("[data-zoom]").forEach((b) => b.addEventListener("click", () => {
     const im = b.querySelector("img") ?? b.closest(".cs-stage")!.querySelector("img")!;
     boxImg.src = im.src; boxImg.alt = im.alt; boxCap.textContent = im.alt;
+    reset();
     box.showModal();
   }));
   const closeBox = () => box.close();
   box.querySelector(".cs-lightbox-close")!.addEventListener("click", closeBox);
-  box.addEventListener("click", (e) => { if (e.target === box) closeBox(); });
+  box.addEventListener("close", reset);
+  /* щелчок по полю вокруг кадра закрывает; по самому кадру — нет, иначе до двойного щелчка не добраться */
+  box.addEventListener("click", (e) => { if (e.target === box || (e.target === view && scale <= 1.01)) closeBox(); });
+
+  view.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    zoomAt(Math.exp(-e.deltaY * 0.0018), e.clientX, e.clientY);
+  }, { passive: false });
+  view.addEventListener("dblclick", (e) => {
+    e.preventDefault();
+    zoomAt(scale > 1.01 ? 1 / scale : 2.6, e.clientX, e.clientY, true);
+  });
+
+  /* Пальцы и мышь одной дорогой: щипок двумя точками увеличивает, одна точка на увеличенном кадре тащит. */
+  const pts = new Map<number, { x: number; y: number }>();
+  let span = 0, dragging = false;
+  const pair = () => [...pts.values()];
+  const gap = () => { const [a, b] = pair(); return Math.hypot(a.x - b.x, a.y - b.y); };
+  const mid = () => { const [a, b] = pair(); return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
+  view.addEventListener("pointerdown", (e) => {
+    view.setPointerCapture(e.pointerId);
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 2) { span = gap(); dragging = false; }
+    else if (scale > 1.01) { dragging = true; view.classList.add("is-drag"); }
+  });
+  view.addEventListener("pointermove", (e) => {
+    const p = pts.get(e.pointerId);
+    if (!p) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y;
+    p.x = e.clientX; p.y = e.clientY;
+    if (pts.size === 2) {
+      const d = gap();
+      if (span > 0) { const c = mid(); zoomAt(d / span, c.x, c.y); }
+      span = d;
+    } else if (dragging) {
+      tx += dx; ty += dy;
+      hold();
+      apply();
+    }
+  });
+  const liftOff = (e: PointerEvent) => {
+    pts.delete(e.pointerId);
+    if (pts.size < 2) span = 0;
+    if (pts.size === 0) { dragging = false; view.classList.remove("is-drag"); }
+  };
+  view.addEventListener("pointerup", liftOff);
+  view.addEventListener("pointercancel", liftOff);
 
   /* лист с оглавлением: его открывает капсула внизу; на широком экране он встаёт панелью над капсулой */
   const btn = root.querySelector<HTMLButtonElement>(".cs-toc-btn")!;
