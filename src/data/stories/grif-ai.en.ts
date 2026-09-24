@@ -196,7 +196,6 @@ export const en: CaseStory = {
         did: "A card holds one observation, one deadline and one question: \"Remind you?\", \"Shall I book it?\". There is always a \"Later\" button. The card shows its state: awaiting a decision, in progress, done, error.",
         effect: "You can go through the feed one card at a time and stop at any moment. If something failed, the card stays in the feed with the reason and a \"retry\" button.",
         why: "This is the trait \"speaks once\" applied to a list. A card with two questions gets put off as a whole.",
-        image: img(G + "02.webp", 1024, 268, "The feed: each card holds one suggestion and one question, in four states"),
         deepDive: "pipeline",
       },
     ],

@@ -111,7 +111,7 @@ export const en: CaseStory = {
         effect: "The first residents' stories arrived in week one. In three months 250+ stories passed the review, with about 3K comments under the pieces.",
         why: "An action people have to hunt for is an action they skip. Writing a story and replying to one are both in plain sight.",
         basis: "Competitor analysis: every service in the eleven-feature comparison has posts and comments.",
-        image: img(C + "03.webp", 733, 722, "The \"Tell your story\" form: title, text, up to ten images, and off it goes to review"),
+        image: img(C + "03.webp", 876, 862, "The \"Tell your story\" form: title, text, up to ten images, and off it goes to review"),
       },
       {
         id: "older",
@@ -159,20 +159,20 @@ export const en: CaseStory = {
     {
       kind: "spot",
       title: "First-version feed: editorial and residents in one stream",
-      image: img(C + "01.webp", 1473, 806, "First-version feed: editorial pieces and residents' stories in one stream", "hero"),
+      image: img(C + "01.webp", 1440, 788, "First-version feed: editorial pieces and residents' stories in one stream", "hero"),
       spots: [
-        { x: 50, y: 12.4, text: "Topics sit in one row. Nobody has to figure out a filter panel", decision: "older" },
-        { x: 20.5, y: 44, text: "Comments and share on every card", decision: "posts" },
-        { x: 51.8, y: 58.3, text: "The same action looks the same everywhere", decision: "pattern" },
+        { x: 46.3, y: 15.5, text: "Topics sit in one row. Nobody has to figure out a filter panel", decision: "older" },
+        { x: 10.4, y: 54.4, text: "Comments and share on every card", decision: "posts" },
+        { x: 46.3, y: 76.4, text: "The same action looks the same everywhere", decision: "pattern" },
       ],
     },
     {
       kind: "bento",
       title: "First-version screens",
       images: [
-        img(C + "02.webp", 1600, 794, "Story page: tags, authors and related pieces close at hand"),
-        img(C + "04.webp", 1338, 806, "\"About\" page: why the site exists, and the product's signature ticker"),
-        img(C + "05.webp", 1105, 788, "Feedback: a support question and an idea go out from one window, socials right next to them"),
+        img(C + "02.webp", 1440, 860, "Story page: tags, authors and related pieces close at hand"),
+        img(C + "04.webp", 1440, 880, "\"About\" page: why the site exists, and the product's signature ticker"),
+        img(C + "05.webp", 1440, 1230, "Feedback: a support question and an idea go out from one window, socials right next to them"),
       ],
     },
   ],

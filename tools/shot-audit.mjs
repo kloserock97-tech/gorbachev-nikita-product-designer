@@ -22,7 +22,16 @@ const ev = async (e) => (await send("Runtime.evaluate", { expression: e, awaitPr
 await send("Page.enable"); await send("Runtime.enable");
 await send("Emulation.setDeviceMetricsOverride", { width: W, height: H, deviceScaleFactor: DPR, mobile: false });
 
-const fileW = (p) => { try { return +execFileSync("ffprobe", ["-v", "error", "-select_streams", "v", "-show_entries", "stream=width", "-of", "csv=p=0", p]).toString().trim(); } catch { return 0; } };
+/* Вектор растягивается без потерь, мерить его нечего. У avif ffprobe иногда отдаёт несколько потоков,
+   поэтому берём первое число. */
+const fileW = (p) => {
+  if (p.endsWith(".svg")) return Infinity;
+  try {
+    const out = execFileSync("ffprobe", ["-v", "error", "-select_streams", "v", "-show_entries", "stream=width", "-of", "csv=p=0", p]).toString();
+    const n = out.split(/[^0-9]+/).filter(Boolean).map(Number);
+    return n.length ? Math.max(...n) : 0;
+  } catch { return 0; }
+};
 const best = new Map();
 for (const c of CASES) {
   await send("Page.navigate", { url: `http://127.0.0.1:5200/?intro=0&lite=0&lang=ru#/work/${c}` });
@@ -53,6 +62,7 @@ for (const { u, need } of best.values()) {
   const path = "public/cases/" + name;
   if (!existsSync(path) || need < 120) continue;
   const have = fileW(path);
+  if (!Number.isFinite(have)) continue; /* вектор */
   out.push({ name, have, need, pct: Math.round((have / need) * 100) });
 }
 out.sort((a, b) => a.pct - b.pct);
