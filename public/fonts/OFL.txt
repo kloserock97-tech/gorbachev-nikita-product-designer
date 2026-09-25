@@ -3,6 +3,7 @@ Fonts in this folder, each under the SIL Open Font License 1.1 (full text below)
 Onest — Copyright 2021 The Onest Project Authors (https://github.com/googlefonts/onest)
 Playfair Display — Copyright 2005–2023 The Playfair Project Authors (https://github.com/clauseggers/Playfair)
 Caveat — Copyright 2014 The Caveat Project Authors (https://github.com/googlefonts/caveat)
+Oswald — Copyright 2016 The Oswald Project Authors (https://github.com/googlefonts/OswaldFont)
 
 The files are the unmodified subsets served by Google Fonts (woff2, split by unicode-range).
 

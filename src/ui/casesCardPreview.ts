@@ -1,242 +1,200 @@
-/* v74: кейс в главе «Кейсы» — окно браузера macOS в стеклянной рамке.
+/* v75: глава «Кейсы» по референсу Никиты (сайт о планетах): фон во весь экран, слева столбик названий с точкой
+   у текущего, по центру карточка-«сквиркл» с экраном продукта и строкой «Далее: [03] …» над ней, внизу слева —
+   огромное сжатое название кейса, внизу справа — таблица фактов с тонкими разделителями.
 
-   Раньше здесь были ноутбук и смартфон на CSS-3D (v71). По референсу Никиты (карточка продукта над размытым
-   полем: крупная стеклянная рамка, внутри вещь и мелкие стеклянные подписи вокруг) глава собрана заново:
-   - вся глава обнята большой стеклянной рамкой — кейсы появляются внутри неё;
-   - интерфейс продукта стоит в окне браузера macOS: три кнопки, заголовок вкладки, настоящий снимок экрана.
-     У мобильных кейсов в окне — экран приложения по центру, на поле цвета кейса, как превью адаптива;
-   - дополнительные тексты — в маленьких стеклянных плашках у краёв окна: знак продукта, платформа и цифра
-     результата.
+   Рамка из стекла и мокапы по правилам Яндекса (v74) из главы ушли: референс — открытая сцена, и крупная
+   типографика читается только на ней. Мокапы по-прежнему живут в шапке страницы кейса (caseArt.ts).
 
-   Стекло без backdrop-filter у большой рамки: размытие поверх живого WebGL-холста пересчитывается каждый кадр
-   и на всю главу стоило бы кадра. Плашки маленькие — у них размытие есть, но только там, где есть мышь.
-
-   Смена кейса — барабан, как и был: уходящее окно поднимается и гаснет, приходящее выезжает снизу. Барабан
-   крутит casesWheel.ts. Дуга с названиями, текст под окном и кнопки шага — тоже там. */
+   Механика прежняя: кейс ведёт прокрутка (casesWheel.ts считает положение и вызывает drum/paint). Карточки лежат
+   стопкой и сменяются по дробному положению: уходящая уезжает влево и гаснет, приходящая выходит справа.
+   Название собирается по буквам снизу вверх, строки фактов — лесенкой (принципы Emil Kowalski: ease-out, короткие
+   длительности, задержка не больше пары десятков миллисекунд на элемент).
+   Открывает кейс только карточка (над ней курсор становится кругом «Открыть»). Пункт списка и «Далее» только
+   переключают кейс. Дуга, текстовая колонка и кнопки шага casesWheel.ts остаются в разметке, но не видны. */
 import type { CaseItem } from "../data/cases";
 import { onLang, t } from "../i18n";
 import { pad2 } from "../lib/format";
 import { CASES, CHAPTER, CHAPTER2 } from "../scene/story";
 import { topFor } from "./storyScroll";
 import { cue } from "../audio/bus";
-import { brandMark } from "./caseLook";
-import { caseArt } from "./caseArt";
+import { brandMark, lookVars, objectPicture } from "./caseLook";
 import "./cases-card.css";
 
+const BASE = import.meta.env.BASE_URL;
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-/* платформа в плашке: монитор у веба, телефон у мобильного */
-const iconScreen = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M9 20h6"/></svg>`;
-const iconPhone = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.4"/><path d="M10.6 5.4h2.8"/></svg>`;
 
 export type CardPreview = {
-  /** пересчитать размеры: вызывать после изменения окна */
   layout(): void;
-  /** положение барабана (дробное, приходит из casesWheel) */
   drum(pos: number): void;
-  /** подставить кейс в плашки */
   paint(i: number): void;
-  /** заново разогнать плашки */
   live(): void;
-  /** собрать плашки (глава ушла) */
   calm(): void;
-  /** включить снимки экранов: до этого они только утяжеляют старт */
   warm(): void;
-  /** окно берёт фокус только когда глава видна */
   reach(on: boolean): void;
 };
+
+/** содержимое карточки: веб — снимок во всю карточку, мобильный — экран приложения на поле цвета кейса,
+    без экранов — предмет кейса */
+const media = (c: CaseItem) => {
+  const s = c.look.screen;
+  if (!s) return `<span class="cx-media cx-media--obj">${objectPicture(c, "cx-obj")}</span>`;
+  const img = `<img class="cx-shot" data-src="${BASE}${s.src}" alt="" decoding="async" draggable="false">`;
+  return s.device === "phone" ? `<span class="cx-media cx-media--phone"><span class="cx-app">${img}</span></span>` : `<span class="cx-media">${img}</span>`;
+};
+
+/** подзаголовок без хвоста после двоеточия — хвост пересказывает цифру результата, а она стоит в своей строке */
+const headOf = (s: string) => { const i = s.indexOf(":"); return i > 12 ? s.slice(0, i) : s; };
 
 export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[]): CardPreview {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let list = getList();
+  const n = list.length;
+  const root = stage.closest<HTMLElement>(".cases") ?? stage;
 
   const box = document.createElement("div");
-  box.className = "cc";
+  box.className = "cx";
   box.innerHTML = `
-    <div class="cc-deck">
-      <div class="cc-drum">${list
-        .map((c, i) => `<a class="cc-win" data-i="${i}" href="#/work/${c.id}" tabindex="-1" aria-hidden="true" aria-label="${esc(c.title)}">${caseArt(c, { mode: "fit" })}</a>`)
-        .join("")}</div>
-      <span class="cc-chip cc-brand" style="--gx:3;--gy:-3;--fd:0s"></span>
-      <span class="cc-chip cc-kind" style="--gx:-4;--gy:2;--fd:.1s"></span>
-      <span class="cc-chip cc-stat" style="--gx:4;--gy:3;--fd:.2s"><b></b><span></span></span>
-    </div>`;
-  stage.appendChild(box);
+    <i class="cx-shade" aria-hidden="true"></i>
+    <nav class="cx-list">
+      <p class="cx-cap"><span class="cx-cap-l"></span> <sup>${pad2(n)}</sup></p>
+      <ol>${list.map((c, i) => `<li><a class="cx-li" href="#/work/${c.id}" data-i="${i}"><i class="cx-dot" aria-hidden="true"></i><span></span></a></li>`).join("")}</ol>
+    </nav>
+    <div class="cx-center">
+      <button class="cx-next" type="button"><span class="cx-next-l"></span><span class="cx-next-n"></span><b class="cx-next-t"></b></button>
+      <div class="cx-stack">
+        ${list.map((c, i) => `<a class="cx-card" href="#/work/${c.id}" data-i="${i}" tabindex="-1" aria-hidden="true" style="${lookVars(c)}">${media(c)}</a>`).join("")}
+        <span class="cx-cursor" aria-hidden="true"><i></i><span class="cx-cursor-l"></span></span>
+        <span class="cx-brand" aria-hidden="true"></span>
+      </div>
+    </div>
+    <h3 class="cx-title" aria-live="polite"></h3>
+    <dl class="cx-facts"></dl>
+    <p class="cx-seg" aria-hidden="true">${list.map(() => "<i></i>").join("")}</p>`;
+  root.appendChild(box);
 
-  /* v74.1: рамка главы — матовое стекло вокруг прозрачного окна. Всё, что снаружи окна, размыто и
-     высветлено (.cc-mat, вырез — clip-path с правилом evenodd), само окно, где живут кейс, дуга и текст, —
-     чистое. Кромка окна — .cc-frame. При входе в главу окно сужается от краёв экрана до своего места:
-     прогресс появления главы (--e) пишет casesWheel.ts в style корня, здесь за ним следит MutationObserver.
-     Верх окна считается от нижнего края дока — рамка не наезжает на навигацию */
-  const root = stage.closest<HTMLElement>(".cases");
-  if (root && !root.querySelector(".cc-frame")) {
-    const mat = document.createElement("div");
-    mat.className = "cc-mat";
-    const frame = document.createElement("div");
-    frame.className = "cc-frame";
-    for (const el of [mat, frame]) { el.setAttribute("aria-hidden", "true"); }
-    root.prepend(mat, frame);
-    const ease = (x: number) => 1 - Math.pow(1 - clamp(x, 0, 1), 3);
-    let lastKey = "";
-    const fit = () => {
-      const e = parseFloat(root.style.getPropertyValue("--e")) || 0;
-      const W = root.clientWidth, H = root.clientHeight;
-      const narrowNow = root.classList.contains("is-narrow");
-      /* v74.3: стекло — во всём поле вокруг окна, и в полосе над ним тоже. Чтобы навбар лёг поверх стекла, а не
-         под него, на широком экране слой стекла живёт в первом экране (.hero), между холстом и доком: док
-         остаётся чётким без вырезов и рамок вокруг него. На телефоне первый экран уезжает вместе с доком,
-         и стекло остаётся в главе */
-      const hero = document.querySelector<HTMLElement>(".hero");
-      const home = !narrowNow && hero ? hero : root;
-      if (mat.parentElement !== home) { home.prepend(mat); mat.classList.toggle("cc-mat--hero", home === hero); lastKey = ""; }
-      const dock = document.querySelector<HTMLElement>(".dock")?.getBoundingClientRect();
-      const gap = narrowNow ? 10 : clamp(W * 0.012, 12, 20);
-      const top0 = Math.max(dock && dock.bottom > 0 && dock.bottom < H * 0.3 ? dock.bottom + gap : 0, narrowNow ? 64 : 92);
-      /* v74.2: одна сетка с первым экраном: поля страницы — 50 единиц (--u в hero.css: ширина / 1600), окно
-         рамки на 22 px шире, поэтому текст и кнопки внутри стоят ровно по полям, как заголовок и карточка холма */
-      const u = Math.min(innerWidth / 1600, 1900 / 1600);
-      const side0 = narrowNow ? 8 : 50 * u - 22;
-      const sbw = innerWidth - W; // сетка — от 100vw, окно главы — без полосы прокрутки
-      const bottom0 = narrowNow ? 10 : clamp(H * 0.024, 14, 28);
-      const r0 = narrowNow ? 22 : clamp(W * 0.02, 22, 36);
-      /* окно сужается к месту вместе с появлением главы: в начале оно во весь экран и рамки не видно */
-      const k = reduced ? (e > 0 ? 1 : 0) : ease(e * 1.25);
-      const top = top0 * k, side = side0 * k, bottom = bottom0 * k, r = r0 * k;
-      const key = [W, H, top, side, bottom, root.classList.contains("is-on") ? 1 : 0, root.style.getPropertyValue("--leave")].map((v) => (typeof v === "number" ? v.toFixed(1) : v)).join("|");
-      if (key === lastKey) return;
-      lastKey = key;
-      root.style.setProperty("--frame-top", `${top0.toFixed(1)}px`);
-      const x0 = side, y0 = top, x1 = W - Math.max(0, side - sbw * k), y1 = H - bottom;
-      frame.style.cssText = `left:${x0}px;top:${y0}px;width:${x1 - x0}px;height:${y1 - y0}px;border-radius:${r}px;opacity:${k.toFixed(3)}`;
-      /* весь экран минус скруглённое окно: evenodd оставляет только поле вокруг */
-      const hole = `M${x0 + r} ${y0}H${x1 - r}A${r} ${r} 0 0 1 ${x1} ${y0 + r}V${y1 - r}A${r} ${r} 0 0 1 ${x1 - r} ${y1}H${x0 + r}A${r} ${r} 0 0 1 ${x0} ${y1 - r}V${y0 + r}A${r} ${r} 0 0 1 ${x0 + r} ${y0}Z`;
-      /* стекло на телефоне тянется до низа большого окна (под спрятанной панелью браузера), глава — только до
-         низа малого: иначе при спрятанной панели снизу оставалась полоса без стекла */
-      const MH = Math.max(H, mat.clientHeight);
-      mat.style.clipPath = `path(evenodd, "M0 0H${W}V${MH}H0Z ${hole}")`;
-      /* стекло в первом экране не наследует видимость главы — гасим его сами: глава скрыта или уходит в футер */
-      const leave = parseFloat(root.style.getPropertyValue("--leave")) || 0;
-      const shown = root.classList.contains("is-on") ? Math.max(0, 1 - leave) : 0;
-      mat.style.opacity = (k * shown).toFixed(3);
-      mat.style.visibility = k * shown > 0.001 ? "" : "hidden";
-    };
-    new MutationObserver(fit).observe(root, { attributes: true, attributeFilter: ["style", "class"] });
-    addEventListener("resize", () => { lastKey = ""; fit(); });
-    fit();
-  }
+  const q = <T extends HTMLElement = HTMLElement>(sel: string) => box.querySelector<T>(sel)!;
+  const cards = [...box.querySelectorAll<HTMLAnchorElement>(".cx-card")];
+  const items = [...box.querySelectorAll<HTMLAnchorElement>(".cx-li")];
+  const segs = [...box.querySelectorAll<HTMLElement>(".cx-seg i")];
+  const title = q(".cx-title"), facts = q(".cx-facts"), next = q<HTMLButtonElement>(".cx-next"), stack = q(".cx-stack"), cursor = q(".cx-cursor");
+  for (const img of box.querySelectorAll<HTMLImageElement>(".cx-shot")) img.addEventListener("error", () => img.remove());
 
-  /* v74.1: оглавление кейсов вместо дуги-барабана. Справа в окне рамки — список «01 GRIF AI … 08» со стеклянной
-     подсветкой, которая едет к текущему кейсу вместе с прокруткой. Щелчок по кейсу передаётся спрятанному пункту
-     дуги: у него уже есть вся логика (не текущий — прокрутить к нему, текущий — открыть). Дуга осталась в
-     разметке casesWheel.ts, но не видна (cases-card.css) */
-  const index = document.createElement("nav");
-  index.className = "cc-index";
-  index.innerHTML = `<i class="cc-ix-glow" aria-hidden="true"></i>${list
-    .map((c, i) => `<a class="cc-ix" href="#/work/${c.id}" data-i="${i}"><span class="cc-ix-n">${pad2(i + 1)}</span><span class="cc-ix-t"></span></a>`)
-    .join("")}<a class="cc-ix-go" href="#"><span class="cc-ix-go-l"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8.5 7H17v8.5"/></svg></a><p class="cc-ix-now" aria-hidden="true"></p>`;
-  root?.appendChild(index);
-  const ixs = [...index.querySelectorAll<HTMLAnchorElement>(".cc-ix")];
-
-  const ixNow = index.querySelector<HTMLElement>(".cc-ix-now")!;
-  const go = index.querySelector<HTMLAnchorElement>(".cc-ix-go")!;
-  const paintIndex = () => {
-    list = getList();
-    index.setAttribute("aria-label", t("work.title"));
-    go.querySelector(".cc-ix-go-l")!.textContent = t("cases.cta");
-    go.setAttribute("aria-label", t("cases.cta"));
-    ixs.forEach((a, i) => { a.querySelector(".cc-ix-t")!.textContent = list[i].title; });
-  };
-  paintIndex();
-  onLang(paintIndex);
-  /* v74.4: пункт оглавления только переключает кейс — прокручивает к нему, даже если он уже активный, внутрь не
-     проваливается. Открывают кейс кнопка «Смотреть кейс» у активного пункта и сама карточка. Раньше щелчок по
-     активному пункту открывал кейс — и человек, который просто листал оглавление, неожиданно уходил со страницы */
+  /* переход к кейсу прокруткой — та же формула, что у casesWheel (положение кейса на ленте главы) */
   const toCase = (i: number) => {
-    const n = ixs.length;
-    const c = CASES.strip[0] + (CASES.strip[1] - CASES.strip[0]) * (i / Math.max(1, n - 1));
-    scrollTo({ top: topFor(CHAPTER + (CHAPTER2 - CHAPTER) * c), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? ("instant" as ScrollBehavior) : "smooth" });
+    const k = clamp(i, 0, n - 1);
+    const c = CASES.strip[0] + (CASES.strip[1] - CASES.strip[0]) * (k / Math.max(1, n - 1));
+    scrollTo({ top: topFor(CHAPTER + (CHAPTER2 - CHAPTER) * c), behavior: reduced ? ("instant" as ScrollBehavior) : "smooth" });
+    cue("progress-step", 0.6);
   };
-  ixs.forEach((a, i) => a.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (!a.classList.contains("is-on")) { toCase(i); cue("progress-step", 0.6); }
-  }));
-  go.addEventListener("click", () => cue("forward"));
+  let cur = 0;
+  items.forEach((a, i) => a.addEventListener("click", (e) => { e.preventDefault(); if (i !== cur) toCase(i); }));
+  next.addEventListener("click", () => toCase(cur + 1 >= n ? 0 : cur + 1));
+  cards.forEach((a) => a.addEventListener("click", () => cue("forward")));
 
-  const wins = [...box.querySelectorAll<HTMLElement>(".cc-win")];
-  /* снимка может не быть (кейс только заводят) — тогда в окне остаётся поле цвета кейса, а не битая картинка */
-  for (const img of box.querySelectorAll<HTMLImageElement>(".ya-shot")) img.addEventListener("error", () => img.remove());
-  const q = (sel: string) => box.querySelector<HTMLElement>(sel)!;
+  /* курсор над карточкой — круг «Открыть», только там, где есть мышь */
+  const fine = matchMedia("(hover: hover) and (pointer: fine)");
+  stack.addEventListener("pointermove", (e) => {
+    if (!fine.matches || e.pointerType !== "mouse") return;
+    const r = stack.getBoundingClientRect();
+    cursor.style.translate = `${(e.clientX - r.left).toFixed(1)}px ${(e.clientY - r.top).toFixed(1)}px`;
+    stack.classList.add("is-hover");
+  });
+  stack.addEventListener("pointerleave", () => stack.classList.remove("is-hover"));
 
+  /* подписи на текущем языке */
+  const paintStatic = () => {
+    list = getList();
+    q(".cx-cap-l").textContent = t("work.title");
+    q(".cx-list").setAttribute("aria-label", t("work.title"));
+    q(".cx-next-l").textContent = t("cases.upnext");
+    q(".cx-cursor-l").textContent = t("cases.open");
+    items.forEach((a, i) => { a.querySelector("span")!.textContent = list[i].title; });
+    cards.forEach((a, i) => a.setAttribute("aria-label", `${t("cases.cta")}: ${list[i].title}`));
+  };
+  paintStatic();
+
+  /* название — по буквам: каждое слово в своей маске, буквы выходят снизу со сдвигом в 18 мс */
+  const letters = (s: string) =>
+    s.toUpperCase().split(" ").map((w) => `<span class="cx-w">${[...w].map((ch, k) => `<span class="cx-c" style="--k:${k}">${esc(ch)}</span>`).join("")}</span>`).join(" ");
+  /* кегль названия подгоняется так, чтобы самое длинное слово целиком влезало в отведённую ширину: слова не рвутся,
+     а «ИИ-АГЕНТАМИ» и «RESTAURANT» не вылезают на карточку. Кегль из CSS — потолок */
+  const fitTitle = () => {
+    title.style.fontSize = "";
+    const max = title.clientWidth || 1;
+    const widest = Math.max(1, ...[...title.querySelectorAll<HTMLElement>(".cx-w")].map((w) => w.scrollWidth));
+    if (widest > max) title.style.fontSize = `${(parseFloat(getComputedStyle(title).fontSize) * (max / widest) * 0.98).toFixed(1)}px`;
+  };
+  addEventListener("resize", () => requestAnimationFrame(fitTitle));
+  void document.fonts?.ready.then(fitTitle);
+  let shown = -1;
+  let swapTimer = 0;
+  const put = (i: number) => {
+    const c = list[i];
+    title.innerHTML = letters(c.title);
+    fitTitle();
+    const phone = c.look.screen?.device === "phone";
+    const rows: [string, string][] = [
+      [t("cases.f.about"), headOf(c.subtitle)],
+      [t("cases.f.where"), c.tag],
+      [t("cases.f.platform"), t(phone ? "work.mobile" : "work.web")],
+      [t("cases.f.result"), `${c.stat.value} — ${c.stat.label}`],
+    ];
+    facts.innerHTML = rows.map(([a, b], k) => `<div style="--k:${k}"><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join("");
+    const ni = i + 1 >= n ? 0 : i + 1;
+    q(".cx-next-n").textContent = `[${pad2(ni + 1)}]`;
+    q(".cx-next-t").textContent = list[ni].title;
+    const brand = q(".cx-brand");
+    brand.innerHTML = brandMark(c, "cx-brand-img");
+    brand.hidden = !brand.firstElementChild;
+    box.classList.remove("is-in");
+    if (reduced) { box.classList.add("is-in"); return; }
+    requestAnimationFrame(() => requestAnimationFrame(() => box.classList.add("is-in")));
+  };
   const paint = (i: number) => {
     list = getList();
-    const c = list[i];
-    /* знака у кейса может не быть — пустая плашка выглядит как ошибка */
-    const brand = q(".cc-brand");
-    brand.innerHTML = brandMark(c, "cc-brand-img");
-    brand.hidden = !brand.firstElementChild;
-    const phone = c.look.screen?.device === "phone";
-    q(".cc-kind").innerHTML = `${phone ? iconPhone : iconScreen}<span>${esc(t(phone ? "work.mobile" : "work.web"))}</span>`;
-    q(".cc-stat b").textContent = c.stat.value;
-    q(".cc-stat span").textContent = c.stat.label;
+    if (i === shown) return;
+    const first = shown < 0;
+    shown = i;
+    clearTimeout(swapTimer);
+    if (first || reduced) { put(i); return; }
+    /* старое уходит вверх быстро (0,16 с), новое собирается снизу */
+    box.classList.add("is-out");
+    swapTimer = window.setTimeout(() => { box.classList.remove("is-out"); put(i); }, 160);
   };
+  onLang(() => { paintStatic(); const i = shown; shown = -1; if (i >= 0) paint(i); });
 
-  /* Разлёт. Класс снимается и ставится заново через кадр — иначе браузер не перезапустит переход,
-     и на новом кейсе плашки просто стояли бы на местах. */
-  let liveTimer = 0;
-  const live = () => {
-    if (reduced) { box.classList.add("is-live"); return; }
-    box.classList.remove("is-live");
-    clearTimeout(liveTimer);
-    liveTimer = window.setTimeout(() => requestAnimationFrame(() => box.classList.add("is-live")), 20);
-  };
-  const calm = () => { clearTimeout(liveTimer); box.classList.remove("is-live"); };
+  const live = () => { box.classList.add("is-live"); };
+  const calm = () => { box.classList.remove("is-live"); };
 
   let warmed = false;
   const warm = () => {
     if (warmed) return;
     warmed = true;
-    for (const img of box.querySelectorAll<HTMLImageElement>("img[data-src]")) {
-      img.src = img.dataset.src!;
-      delete img.dataset.src;
-    }
+    for (const img of box.querySelectorAll<HTMLImageElement>("img[data-src]")) { img.src = img.dataset.src!; delete img.dataset.src; }
   };
 
-  const layout = () => { /* размеры окна заданы в единицах сцены — пересчитывать нечего */ };
-
-  let shown = false;
+  let reachOn = false;
   let lastDrum = -999;
-  /* Барабан: видно одно окно. Уходящее поднимается и гаснет, приходящее выезжает снизу */
-  /* v74.1: смена кейса — слоистый сдвиг вместо барабана. --d у каждого мокапа — насколько он от текущего
-     (−1…1); слои мокапа читают её в caseArt.css и едут с разной скоростью: фигура медленнее, экран быстрее,
-     стрелка быстрее всех — как слои с глубиной. Уходящий уезжает влево и гаснет, следующий приходит справа */
   const drum = (pos: number) => {
     if (Math.abs(pos - lastDrum) < 0.001) return;
     lastDrum = pos;
-    wins.forEach((el, i) => {
-      const d = i - pos;
-      const ad = Math.abs(d);
+    cards.forEach((el, i) => {
+      const d = i - pos, ad = Math.abs(d);
       el.classList.toggle("is-far", ad > 1);
       el.classList.toggle("is-cur", ad < 0.5);
       if (ad > 1) return;
-      el.style.opacity = clamp(1 - ad * 2.2, 0, 1).toFixed(3);
-      el.style.setProperty("--d", reduced ? "0" : d.toFixed(3));
-      el.tabIndex = shown && ad < 0.5 ? 0 : -1;
+      el.style.opacity = clamp(1 - ad * 1.8, 0, 1).toFixed(3);
+      el.style.transform = reduced ? "none" : `translate3d(${(d * 14).toFixed(2)}%, 0, 0) scale(${(1 - ad * 0.08).toFixed(3)}) rotate(${(d * 3).toFixed(2)}deg)`;
+      el.tabIndex = reachOn && ad < 0.5 ? 0 : -1;
       el.setAttribute("aria-hidden", String(ad >= 0.5));
     });
-    /* подсветка в оглавлении едет за дробным положением: смена кейса видна и справа */
-    const cur = clamp(Math.round(pos), 0, ixs.length - 1);
-    ixs.forEach((a, i) => { a.classList.toggle("is-on", i === cur); a.setAttribute("aria-current", i === cur ? "true" : "false"); });
-    /* кнопка открытия едет за подсветкой и ведёт в текущий кейс */
-    if (list[cur]) go.href = `#/work/${list[cur].id}`;
-    index.style.setProperty("--pos", pos.toFixed(3));
-    index.style.setProperty("--n", String(ixs.length));
-    ixNow.textContent = `${pad2(cur + 1)} / ${pad2(ixs.length)} · ${list[cur]?.title ?? ""}`;
+    cur = clamp(Math.round(pos), 0, n - 1);
+    items.forEach((a, i) => { a.classList.toggle("is-on", i === cur); a.setAttribute("aria-current", i === cur ? "true" : "false"); });
+    segs.forEach((s, i) => s.classList.toggle("is-on", i === cur));
   };
-
-  const reach = (on: boolean) => {
-    shown = on;
-    lastDrum = -999;
-  };
+  const reach = (on: boolean) => { reachOn = on; lastDrum = -999; };
+  const layout = () => { /* раскладка — CSS; пересчитывать нечего */ };
 
   paint(0);
   return { layout, drum, paint, live, calm, warm, reach };

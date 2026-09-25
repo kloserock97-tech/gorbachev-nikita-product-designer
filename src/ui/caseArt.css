@@ -129,8 +129,8 @@
 .ya-tag svg { width: 40%; height: auto; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: translate 0.25s var(--ease); }
 /* наведение на карточку: стрелка тянется вперёд */
 @media (hover: hover) {
-  :is(.cc-win, .cs-hero-stage):hover .ya-tag { scale: 1.06; }
-  :is(.cc-win, .cs-hero-stage):hover .ya-tag svg { translate: calc(var(--m) * 0.7) 0; }
+  .cs-hero-stage:hover .ya-tag { scale: 1.06; }
+  .cs-hero-stage:hover .ya-tag svg { translate: calc(var(--m) * 0.7) 0; }
 }
 
 /* ── шапка кейса: фигура крупная и уходит за правый и нижний край сцены ── */
@@ -138,13 +138,6 @@
   --W: calc(var(--m) * 96); --tx: calc(var(--m) * -28); --ty: calc(var(--m) * -20);
   --Wp: calc(var(--m) * 25); --txp: calc(var(--m) * -8); --typ: calc(var(--m) * -21); }
 
-/* ── глава «Кейсы»: вся композиция внутри рамки главы ── */
-.ya--fit { --S: calc(var(--m) * 46); --cx: calc(50cqw + var(--m) * 6); --cy: calc(var(--m) * 30);
-  --W: calc(var(--m) * 74); --tx: calc(var(--m) * -23); --ty: calc(var(--m) * -17);
-  --Wp: calc(var(--m) * 19); --txp: calc(var(--m) * -6); --typ: calc(var(--m) * -15); }
-/* в главе слои едут прямо за прокруткой — без запаздывания, иначе смена кейса «плывёт» */
-.ya--fit :is(.ya-shape, .ya-accent, .ya-screen, .ya-solo) { transition: none; }
-.ya--fit .ya-tag { transition: scale 0.25s var(--ease); }
 
 /* на узкой шапке фигура срезана низом сцены, и плашка со стрелкой оказывалась наполовину под краем */
 @media (max-width: 1100px) { .ya--hero .ya-tag { display: none; } }
@@ -158,9 +151,3 @@
 @keyframes ya-in { from { opacity: 0; scale: 0.94; } }
 @keyframes ya-fade { from { opacity: 0; } }
 @keyframes ya-pop { from { opacity: 0; scale: 0.6; } }
-
-/* телефон: колонка главы уже, чем высота, и фигура в 46 модулей выходила за край экрана.
-   Здесь она меньше и стоит по центру колонки */
-.cases.is-narrow .ya--fit { --S: calc(var(--m) * 36); --cx: 50cqw; --cy: calc(var(--m) * 29);
-  --W: calc(var(--m) * 58); --tx: calc(var(--m) * -18); --ty: calc(var(--m) * -13);
-  --Wp: calc(var(--m) * 15); --txp: calc(var(--m) * -5); --typ: calc(var(--m) * -12); }

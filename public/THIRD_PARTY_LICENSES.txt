@@ -46,9 +46,8 @@ Nature ambience — synthesised in code for this project.
 
 FONTS
 -----
-Lexend — Copyright 2018 The Lexend Project Authors — SIL Open Font License 1.1
+Onest, Playfair Display (italic), Caveat, Oswald — Google Fonts, self-hosted — SIL Open Font License 1.1
   (fonts/OFL.txt)
-Manrope, Caveat — Google Fonts — SIL Open Font License 1.1
 
 CODE
 ----
