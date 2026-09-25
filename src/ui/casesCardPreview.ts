@@ -143,6 +143,7 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
     list = getList();
     index.setAttribute("aria-label", t("work.title"));
     go.querySelector(".cc-ix-go-l")!.textContent = t("cases.cta");
+    go.setAttribute("aria-label", t("cases.cta"));
     ixs.forEach((a, i) => { a.querySelector(".cc-ix-t")!.textContent = list[i].title; });
   };
   paintIndex();

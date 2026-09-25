@@ -199,7 +199,7 @@
 .cc-ix-go {
   position: absolute; right: 8px; top: calc(var(--row) / 2); z-index: 1;
   translate: 0 calc(var(--pos, 0) * var(--row) - 50%);
-  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 14px; border-radius: 999px;
+  display: inline-grid; place-items: center; width: 34px; height: 34px; padding: 0; border-radius: 50%;
   background: #fff; color: #141613; text-decoration: none; font-size: 13px; font-weight: 500; white-space: nowrap;
   box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.45);
   transition: scale 0.16s cubic-bezier(0.23, 1, 0.32, 1), background 0.18s ease;
@@ -209,7 +209,10 @@
 .cc-ix-go:active { scale: 0.96; }
 .cc-ix-go:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 /* название активного пункта не заезжает под кнопку */
-.cc-ix.is-on { padding-right: 148px; }
+/* v74.5: на кнопке только стрелка — с подписью она наезжала на длинные названия («Дизайн получил голос»).
+   Подпись остаётся для чтения с экрана */
+.cc-ix-go-l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.cc-ix.is-on { padding-right: 56px; }
 .cases.is-narrow .cc-ix-go { display: none; }
 .cases.is-narrow .cc-ix.is-on { padding-right: 0; }
 .cases.is-narrow[data-preview="card"] .cw-info { grid-template-columns: 1fr; }
