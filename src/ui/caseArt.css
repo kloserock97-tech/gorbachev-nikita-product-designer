@@ -121,12 +121,12 @@
   color: var(--accent, #2f5fd0);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.9), 0 calc(var(--m) * 0.4) calc(var(--m) * 0.8) rgba(0, 0, 0, 0.08), 0 calc(var(--m) * 2) calc(var(--m) * 5) rgba(0, 0, 0, 0.14);
   translate: calc(var(--d, 0) * var(--m) * 44 + var(--px, 0) * var(--m) * 2.4) calc(var(--py, 0) * var(--m) * 1.8);
-  transition: translate 0.9s var(--ease), scale 0.4s var(--ease);
+  transition: translate 0.9s var(--ease), scale 0.25s var(--ease);
 }
 @media (hover: hover) and (pointer: fine) {
   .ya-tag { -webkit-backdrop-filter: blur(calc(var(--m) * 1)); backdrop-filter: blur(calc(var(--m) * 1)); background: linear-gradient(160deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.55)); }
 }
-.ya-tag svg { width: 40%; height: auto; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: translate 0.4s var(--ease); }
+.ya-tag svg { width: 40%; height: auto; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: translate 0.25s var(--ease); }
 /* наведение на карточку: стрелка тянется вперёд */
 @media (hover: hover) {
   :is(.cc-win, .cs-hero-stage):hover .ya-tag { scale: 1.06; }
@@ -144,7 +144,7 @@
   --Wp: calc(var(--m) * 19); --txp: calc(var(--m) * -6); --typ: calc(var(--m) * -15); }
 /* в главе слои едут прямо за прокруткой — без запаздывания, иначе смена кейса «плывёт» */
 .ya--fit :is(.ya-shape, .ya-accent, .ya-screen, .ya-solo) { transition: none; }
-.ya--fit .ya-tag { transition: scale 0.4s var(--ease); }
+.ya--fit .ya-tag { transition: scale 0.25s var(--ease); }
 
 /* на узкой шапке фигура срезана низом сцены, и плашка со стрелкой оказывалась наполовину под краем */
 @media (max-width: 1100px) { .ya--hero .ya-tag { display: none; } }

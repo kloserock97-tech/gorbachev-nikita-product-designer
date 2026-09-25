@@ -172,3 +172,12 @@
 .cases.is-narrow[data-preview="card"] .cc-index { left: calc(var(--side) + 58px); right: calc(var(--side) + 58px); }
 .cases.is-narrow .cc-kind { left: 0; }
 .cases.is-narrow .cc-brand { right: 0; }
+
+/* v74.2, по принципам Emil Kowalski: отклик на наведение — быстрый (до 0.2 с, ease-out), на нажатие —
+   лёгкое сжатие; подсветка оглавления едет за прокруткой без задержки, поэтому своего перехода у неё нет */
+.cc-ix { transition: color 0.18s cubic-bezier(0.23, 1, 0.32, 1), scale 0.16s cubic-bezier(0.23, 1, 0.32, 1); }
+.cc-ix:active { scale: 0.98; }
+.cc-win:active .ya { scale: 0.99; transition: scale 0.16s cubic-bezier(0.23, 1, 0.32, 1); }
+@media (prefers-reduced-motion: reduce) {
+  .cc-chip, .cc.is-live .cc-chip { animation: none; transition: opacity 0.2s ease; transform: none; }
+}
