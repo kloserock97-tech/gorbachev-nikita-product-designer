@@ -32,7 +32,8 @@ const C = {
   meadow: new THREE.Vector3(0.07, 0.13, 0.025),
   dry: new THREE.Vector3(0.16, 0.18, 0.05),
   rock: new THREE.Vector3(0.3, 0.29, 0.25),
-  path: new THREE.Vector3(0.36, 0.32, 0.22),
+  /* v73.3: дорожки светлее и теплее — на тёмной поляне они читаются тропинками, а не шумом */
+  path: new THREE.Vector3(0.62, 0.5, 0.3),
   root: new THREE.Vector3(0.01, 0.016, 0.004),
   tip: new THREE.Vector3(0.12, 0.24, 0.035),
   tipDry: new THREE.Vector3(0.24, 0.3, 0.06),
@@ -100,6 +101,7 @@ const vec3u = (v: THREE.Vector3) => `vec3(${v.x.toFixed(3)}, ${v.y.toFixed(3)}, 
 
 export class Meadow {
   private static readonly ZERO = new THREE.Vector2();
+  private static readonly UP = new THREE.Vector3(0, 1, 0);
   readonly scene = new THREE.Scene();
   readonly camera = new THREE.PerspectiveCamera(40, 1, 0.3, 400);
   private readonly worldSize = 220;
@@ -128,8 +130,9 @@ export class Meadow {
     uWaves: { value: Array.from({ length: 16 }, () => new THREE.Vector4(1e5, 0, 1e5, -1)) },
     uFieldBounds: { value: new THREE.Vector4(1e5, 1e5, -1e5, -1e5) },
     uDpr: { value: 1 },
-    /* v73.2: столб света — xyz точка, где он падает на луг, w — радиус светлого пятна на траве */
-    uBeam: { value: new THREE.Vector4(0, -100, 0, 4) },
+    /* v73.3: два пучка света — xyz точка, где пучок касается луга, w — радиус светлого пятна; ось общая, к солнцу */
+    uBeams: { value: [new THREE.Vector4(0, -100, 0, 3), new THREE.Vector4(0, -100, 0, 3)] },
+    uBeamAxis: { value: new THREE.Vector3(0, 1, 0) },
   };
 
   /* прогулка */
@@ -261,14 +264,20 @@ export class Meadow {
           col = mix(col, ${vec3u(C.rock)} * (0.85 + 0.3 * n3), smoothstep(0.5, 0.95, vSlope + n2 * 0.25));
           col = mix(col, ${vec3u(C.dry)} * vec3(0.14, 0.12, 0.1), (1.0 - smoothstep(sea, sea + 0.18, h)) * 0.85);
           float paths = 0.0;
+          float verge = 0.0;
           float fwH = max(fwidth(h), 1e-4);
           for (int k = 0; k < 2; k++) {
             float fk = float(k);
             float level = sea + 0.95 + fk * 1.15 + 0.1 * sin(uTime * 0.21 + fk * 1.7);
-            float line = 1.0 - smoothstep(1.6, 4.2, abs(h - level) / fwH);
-            paths += line * smoothstep(-0.2, 0.2, tdNoise(vWorldXZ * 0.05 + vec2(fk * 7.3, fk * 2.1))) * (1.0 - fk * 0.3);
+            float dpx = abs(h - level) / fwH;
+            float line = 1.0 - smoothstep(2.2, 5.0, dpx);
+            float on = smoothstep(-0.2, 0.2, tdNoise(vWorldXZ * 0.05 + vec2(fk * 7.3, fk * 2.1))) * (1.0 - fk * 0.3);
+            paths += line * on;
+            /* тёмная кромка вдоль тропы — утоптанная земля в тени травы: светлая тропа между тёмных краёв */
+            verge += (smoothstep(3.5, 5.5, dpx) - smoothstep(6.5, 10.0, dpx)) * on;
           }
-          diffuseColor.rgb = mix(col, ${vec3u(C.path)} * (0.85 + 0.3 * n3), clamp(paths, 0.0, 1.0) * 0.9);`)
+          col *= 1.0 - 0.45 * clamp(verge, 0.0, 1.0);
+          diffuseColor.rgb = mix(col, ${vec3u(C.path)} * (0.85 + 0.3 * n3), clamp(paths, 0.0, 1.0));`)
         .replace("#include <normal_fragment_maps>", /* glsl */ `
           #include <normal_fragment_maps>
           {
@@ -353,14 +362,14 @@ export class Meadow {
           uGrassCenter: { value: center }, uGrassTile: { value: L.tile },
           uBladeH: { value: new THREE.Vector2(L.height[0], L.height[1]) }, uBladeW: { value: new THREE.Vector2(L.width[0], L.width[1]) },
           uTime: U.uTime, uWindTime: U.uWindTime, uSea: U.uSea,
-          uHead: U.uHead, uWaves: U.uWaves, uFieldBounds: U.uFieldBounds, uBeam: U.uBeam,
+          uHead: U.uHead, uWaves: U.uWaves, uFieldBounds: U.uFieldBounds, uBeams: U.uBeams,
         });
         sh.vertexShader = sh.vertexShader
           .replace("#include <common>", /* glsl */ `#include <common>
             ${sampleHeightGLSL}
             ${noiseGLSL}
             ${cursorFieldGLSL}
-            uniform vec4 uBeam;
+            uniform vec4 uBeams[2];
             attribute vec4 aSeed;
             uniform vec2 uGrassCenter; uniform float uGrassTile; uniform vec2 uBladeH; uniform vec2 uBladeW;
             uniform float uTime; uniform float uWindTime; uniform float uSea;
@@ -371,7 +380,10 @@ export class Meadow {
             vec2 origin = uGrassCenter - 0.5 * T;
             vec2 wxz = origin + mod(aSeed.xy * T - origin, T);
             vec2 fromC = abs(wxz - uGrassCenter) / (0.5 * T);
-            float edge = 1.0 - smoothstep(0.45, 1.0, max(fromC.x, fromC.y));
+            /* переход к гладкому лугу — широкий и мягкий: участок едет с камерой, и узкий край читался волной,
+               по которой трава то вырастала, то уходила в землю */
+            float edge = 1.0 - smoothstep(0.2, 1.0, max(fromC.x, fromC.y));
+            edge = edge * edge * (3.0 - 2.0 * edge);
             float h = hfHeight(wxz);
             float sea = uSea;
             float r1 = aSeed.z; float r2 = aSeed.w; float r3 = fract(r2 * 13.17 + r1 * 3.1);
@@ -383,19 +395,24 @@ export class Meadow {
             }
             float clump = tdNoise(wxz * 0.13 + 7.0);
             dens *= 0.62 + 0.38 * smoothstep(-0.35, 0.3, clump);
-            float s = step(r1, dens) * edge;
+            /* край участка: травинки не редеют, а становятся ниже и уходят в луг — иначе по границе рассыпались
+               отдельные треугольники */
+            float s = step(r1, dens) * step(0.02, edge);
             float bladeH = mix(uBladeH.x, uBladeH.y, r2 * r2) * (0.7 + 0.5 * smoothstep(-0.4, 0.5, clump));
             float bladeW = mix(uBladeW.x, uBladeW.y, r3);
             float gust = tdNoise(wxz * 0.045 + vec2(uWindTime * 0.22, uWindTime * 0.09));
             float wave = sin(uWindTime * 1.25 + dot(wxz, vec2(0.23, 0.14)) + r1 * 2.0);
-            vec2 bend = vec2(0.86, 0.5) * (0.16 * wave + 0.4 * gust + 0.18);
+            /* v73.3: ветер слабее и у каждой травинки свой наклон. Раньше весь луг клонился в одну сторону с
+               постоянным креном — сверху это читалось течением, «своей гравитацией» */
+            vec2 bend = vec2(0.86, 0.5) * (0.1 * wave + 0.2 * gust + 0.05)
+                      + vec2(cos(r1 * 6.2832 + 1.3), sin(r1 * 6.2832 + 1.3)) * (0.08 + 0.14 * r3);
             vec3 field = cursorField(wxz);
             bend += field.xy * 1.6;
             float bl = length(bend);
             if (bl > 1.2) bend *= 1.2 / bl;
             float yy = position.y;
             float ang = r1 * 6.2832;
-            float hh = bladeH * s * (1.0 - 0.25 * field.z);
+            float hh = bladeH * s * edge * (1.0 - 0.25 * field.z);
             vec3 transformed = vec3(wxz.x, h - 0.03, wxz.y)
               + vec3(cos(ang), 0.0, sin(ang)) * position.x * bladeW * s
               + vec3(bend.x * yy * yy * hh, yy * hh * (1.0 - 0.4 * min(bl, 1.0)), bend.y * yy * yy * hh);
@@ -409,8 +426,8 @@ export class Meadow {
             /* пятна света: солнце пробивается сквозь полог — по склону медленно плывут освещённые поляны */
             vGlow = smoothstep(-0.1, 0.45, tdNoise(wxz * 0.05 + vec2(uWindTime * 0.015, -uWindTime * 0.01) + 13.0));
             /* пятно под столбом света: трава в нём освещена целиком, не только кончики */
-            vec2 toBeam = wxz - uBeam.xz;
-            vPool = exp(-dot(toBeam, toBeam) / (uBeam.w * uBeam.w));`);
+            vec2 b0 = wxz - uBeams[0].xz, b1 = wxz - uBeams[1].xz;
+            vPool = exp(-dot(b0, b0) / (uBeams[0].w * uBeams[0].w)) + exp(-dot(b1, b1) / (uBeams[1].w * uBeams[1].w));`);
         sh.fragmentShader = sh.fragmentShader
           .replace("#include <common>", "#include <common>\nvarying float vGrassY;\nvarying float vGrassTint;\nvarying float vFlower;\nvarying float vGlow;\nvarying float vPool;")
           /* контровой свет: кончики травинок светятся лаймом на просвет — в освещённых пятнах сильнее */
@@ -528,14 +545,23 @@ export class Meadow {
     geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(count * 3), 3));
     geo.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 3));
     const mat = new THREE.ShaderMaterial({
-      uniforms: { uCam: U.uCam, uTime: U.uTime, uDpr: U.uDpr, uHead: U.uHead, uWaves: U.uWaves, uFieldBounds: U.uFieldBounds },
+      uniforms: { uCam: U.uCam, uTime: U.uTime, uDpr: U.uDpr, uHead: U.uHead, uWaves: U.uWaves, uFieldBounds: U.uFieldBounds, uBeams: U.uBeams, uBeamAxis: U.uBeamAxis },
       vertexShader: /* glsl */ `
         attribute vec3 aSeed;
         uniform vec3 uCam; uniform float uTime; uniform float uDpr;
+        uniform vec4 uBeams[2]; uniform vec3 uBeamAxis;
         ${cursorFieldGLSL}
         varying float vAlpha;
         varying float vSpin;
         varying float vTone;
+        varying float vLit;
+        /* насколько точка внутри пучка: расстояние до его оси на этой высоте против радиуса конуса */
+        float inBeam(vec3 w, vec4 b) {
+          float up = max(w.y - b.y, 0.0);
+          vec3 c = b.xyz + uBeamAxis * (up / uBeamAxis.y);
+          float r = mix(2.1, 0.55, clamp(up / 24.0, 0.0, 1.0));
+          return smoothstep(r, r * 0.25, length(w.xz - c.xz)) * step(b.y - 0.5, w.y);
+        }
         void main() {
           vSpin = uTime * (0.8 + aSeed.z * 1.6) + aSeed.x * 20.0;
           vTone = fract(aSeed.y * 7.1);
@@ -553,12 +579,15 @@ export class Meadow {
           /* не меньше 2 px: субпиксельные точки мерцают между кадрами */
           gl_PointSize = clamp(size, 2.0 * uDpr, 7.0 * uDpr);
           float tw = 0.75 + 0.25 * sin(uTime * (0.6 + aSeed.x * 1.2) + aSeed.y * 50.0);
-          vAlpha = tw * min(size / (2.0 * uDpr), 1.0) * smoothstep(60.0, 20.0, -mv.z) * smoothstep(0.5, 2.0, -mv.z);
+          vLit = max(inBeam(w, uBeams[0]), inBeam(w, uBeams[1]));
+          /* в пучке лепесток вспыхивает, вне его — едва виден в полумраке */
+          vAlpha = tw * min(size / (2.0 * uDpr), 1.0) * smoothstep(60.0, 20.0, -mv.z) * smoothstep(0.5, 2.0, -mv.z) * mix(0.4, 2.6, vLit);
         }`,
       fragmentShader: /* glsl */ `
         varying float vAlpha;
         varying float vSpin;
         varying float vTone;
+        varying float vLit;
         void main() {
           /* лепесток: вытянутый эллипс, поворачивается и «переворачивается» (сплющивается) в полёте */
           vec2 q = gl_PointCoord - 0.5;
@@ -566,7 +595,7 @@ export class Meadow {
           q = mat2(c, -s, s, c) * q;
           q.y /= max(0.25, abs(sin(vSpin * 0.7))) * 0.55;
           float a = smoothstep(0.5, 0.3, length(q)) * vAlpha;
-          vec3 col = mix(vec3(0.95, 0.42, 0.26), vec3(0.98, 0.72, 0.52), vTone);
+          vec3 col = mix(mix(vec3(0.95, 0.42, 0.26), vec3(0.98, 0.72, 0.52), vTone), vec3(1.0, 0.93, 0.78), vLit * 0.6);
           gl_FragColor = vec4(col * a, a);
         }`,
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
@@ -582,50 +611,48 @@ export class Meadow {
      вертикали (цилиндрический билборд), расширяется книзу; внутри медленно плывут пылевые струи. Смешивание
      сложением, без тумана — луч светится и на тёмном фоне. Стоит впереди камеры и летит вместе с ней
      (update): прогулка бесконечная, и неподвижный луч проехал бы мимо за полминуты */
+  /* v73.3: пучок света — объёмный конус, а не плоская полоса. Узкий сверху (просвет в кроне), широкий у земли;
+     светится сильнее там, где на него смотрят в лоб, и мягко гаснет к краям силуэта — так выглядит освещённый
+     воздух. Внутри текут пылевые струи, яркость медленно дышит. Стоит в мире на пути прогулки: камера пролетает
+     мимо, и пучок проплывает через кадр; ушедший за спину сменяется новым впереди (update). Раньше плоская
+     полоса ехала вместе с камерой и стояла в кадре неподвижной картинкой */
+  private readonly beams: THREE.Mesh[] = [];
+  private static readonly BEAM_H = 24;
+  private static readonly BEAM_SPACING = 34;
   private buildBeam() {
     const U = this.U;
-    /* три луча разной толщины и силы, как свет сквозь просветы в кроне: [сдвиг вдоль «вправо», сдвиг вглубь,
-       ширина, сила]. Лучи наклонены к солнцу — в кадре, снятом сверху, они тянутся длинными диагоналями,
-       а вертикальная полоса ложилась бы размытым пятном */
-    const rays: [number, number, number, number][] = [[0, 0, 1.2, 0.34], [-2.6, -4.5, 0.55, 0.22], [1.8, -2.0, 0.7, 0.18]];
-    const geo = new THREE.PlaneGeometry(1, 1).translate(0.5, 0.5, 0);
+    const H = Meadow.BEAM_H;
+    const geo = new THREE.CylinderGeometry(0.55, 2.1, H, 48, 1, true);
     this.geometries.push(geo);
-    for (const [ox, oz, w, k] of rays) {
+    for (let i = 0; i < 2; i++) {
       const mat = new THREE.ShaderMaterial({
-        uniforms: {
-          uBeam: U.uBeam, uTime: U.uTime, uH: { value: 30 }, uW: { value: w }, uK: { value: k },
-          uOff: { value: new THREE.Vector2(ox, oz) }, uTilt: { value: new THREE.Vector3() },
-        },
+        uniforms: { uTime: U.uTime, uK: { value: 0.42 }, uSeed: { value: i * 3.7 + 1.3 }, uH: { value: H }, uBase: { value: 0 } },
         vertexShader: /* glsl */ `
-          uniform vec4 uBeam; uniform float uH; uniform float uW; uniform vec2 uOff; uniform vec3 uTilt;
-          varying vec2 vUv;
-          varying float vY;
+          uniform float uH;
+          varying vec3 vW; varying vec3 vN; varying float vH; varying float vAng;
           void main() {
-            vUv = uv;
-            vec3 base = uBeam.xyz + vec3(uOff.x, 0.0, uOff.y);
-            vec3 axis = normalize(vec3(0.0, 1.0, 0.0) + uTilt);
-            vec3 toCam = cameraPosition - base;
-            vec3 right = normalize(cross(axis, toCam));
-            /* книзу шире: луч расходится, пока идёт сквозь воздух */
-            float w = uW * mix(1.6, 0.8, uv.y);
-            vec3 p = base + right * (uv.x - 0.5) * w * 2.0 + axis * (uv.y * uH - 0.6);
-            vY = p.y;
-            gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
+            vec4 wp = modelMatrix * vec4(position, 1.0);
+            vW = wp.xyz;
+            vN = normalize(mat3(modelMatrix) * normal);
+            vH = position.y / uH + 0.5;
+            vAng = atan(position.z, position.x);
+            gl_Position = projectionMatrix * viewMatrix * wp;
           }`,
         fragmentShader: /* glsl */ `
-          uniform float uTime; uniform float uK;
-          varying vec2 vUv;
-          varying float vY;
+          uniform float uTime; uniform float uK; uniform float uSeed; uniform float uBase;
+          varying vec3 vW; varying vec3 vN; varying float vH; varying float vAng;
           float h(float n) { return fract(sin(n * 91.7) * 43758.55); }
           float n1(float x) { float i = floor(x), f = fract(x); return mix(h(i), h(i + 1.0), f * f * (3.0 - 2.0 * f)); }
           void main() {
-            float x = (vUv.x - 0.5) * 2.0;
-            float core = exp(-x * x * 7.0);
-            /* пылевые струи: полосы вдоль луча, медленно текут вниз */
-            float streaks = 0.6 + 0.4 * n1(x * 7.0 + uK * 13.0 + uTime * 0.12) * n1(vUv.y * 4.0 - uTime * 0.3 + x * 2.0);
-            float along = smoothstep(0.0, 0.06, vUv.y) * smoothstep(1.0, 0.35, vUv.y);
-            /* к высоте камеры луч гаснет: свет приходит сверху из темноты, а не проходит в метре от объектива */
-            float a = core * streaks * along * uK * smoothstep(cameraPosition.y - 1.0, cameraPosition.y - 6.0, vY);
+            vec3 V = normalize(cameraPosition - vW);
+            /* толщина светящегося воздуха: в лоб пучок толще, к краям силуэта — тоньше */
+            float soft = pow(abs(dot(normalize(vN), V)), 2.2);
+            float streak = 0.5 + 0.5 * n1(vAng * 4.0 + uSeed * 9.0 + uTime * 0.04) * n1(vH * 7.0 - uTime * 0.4 + vAng * 1.5 + uSeed);
+            /* у земли пучок растворяется в светлом пятне на траве, а не срезается рельефом по кривой */
+            float along = smoothstep(uBase - 0.3, uBase + 3.0, vW.y) * smoothstep(1.0, 0.5, vH)
+                        * smoothstep(cameraPosition.y - 1.0, cameraPosition.y - 6.0, vW.y);
+            float breathe = 0.82 + 0.18 * sin(uTime * 0.55 + uSeed * 5.0);
+            float a = soft * streak * along * breathe * uK;
             gl_FragColor = vec4(vec3(1.0, 0.88, 0.62) * a, 1.0);
           }`,
         transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false,
@@ -635,10 +662,9 @@ export class Meadow {
       mesh.renderOrder = 10;
       this.scene.add(mesh);
       this.materials.push(mat);
-      this.beamTilts.push(mat.uniforms.uTilt.value as THREE.Vector3);
+      this.beams.push(mesh);
     }
   }
-  private readonly beamTilts: THREE.Vector3[] = [];
 
   /* ── кадр ───────────────────────────────────────────────────────────────── */
 
@@ -717,12 +743,23 @@ export class Meadow {
     this.sun.position.set(fx + Math.sin(az) * Math.cos(el) * 80, Math.sin(el) * 80, fz - Math.cos(az) * Math.cos(el) * 80);
     this.sun.target.updateMatrixWorld();
 
-    /* столб света: впереди по ходу, чуть правее середины кадра — за устройством с кейсом */
-    const bx = this.look.x + Math.cos(yaw) * 3.2, bz = this.look.z - Math.sin(yaw) * 3.2;
-    U.uBeam.value.set(bx, terrainHeight(bx, bz, t), bz, 3.2);
-    /* наклон лучей — к солнцу (тот же азимут, что у направленного света) */
+    /* пучки света стоят в мире по пути прогулки через каждые BEAM_SPACING метров, по очереди слева и справа от
+       тропы; ось наклонена к солнцу (тот же азимут, что у направленного света) */
     const saz = THREE.MathUtils.degToRad(12);
-    for (const v of this.beamTilts) v.set(Math.sin(saz) * 0.55, 0, -Math.cos(saz) * 0.55);
+    const axis = U.uBeamAxis.value.set(Math.sin(saz) * 0.45, 1, -Math.cos(saz) * 0.45).normalize();
+    const SP = Meadow.BEAM_SPACING, H = Meadow.BEAM_H;
+    const n = Math.floor(this.walked / SP);
+    this.beams.forEach((mesh, i) => {
+      const k = n + 1 + i;
+      const bz = -k * SP;
+      const side = k % 2 === 0 ? 1 : -1;
+      const bx = pathX((k * SP) / 2.1) + side * (3.5 + 2.5 * Math.abs(Math.sin(k * 12.9898)));
+      const by = terrainHeight(bx, bz, t);
+      U.uBeams.value[i].set(bx, by, bz, 2.6);
+      ((mesh.material as THREE.ShaderMaterial).uniforms.uBase.value as number) = by;
+      mesh.quaternion.setFromUnitVectors(Meadow.UP, axis);
+      mesh.position.set(bx, by, bz).addScaledVector(axis, H / 2 - 0.4);
+    });
 
     this.updateCursor(dt);
   }
