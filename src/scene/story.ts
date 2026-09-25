@@ -86,11 +86,11 @@ export let CHAPTER = 0.3208;
 export let CHAPTER2 = 0.8485;
 export const FOOTER = {
   leave: [0.0, 0.14] as const, // лента кейсов уходит
-  camera: [0.04, 0.5] as const, // камера возвращается к холму
+  camera: [0.04, 0.62] as const, // камера возвращается к холму
   unblur: [0.3, 0.58] as const, // размытие уходит
-  portal: [0.07, 0.47] as const, // v76: посреди луга встаёт портал, камера проходит сквозь него к холму
+  portal: [0.04, 0.62] as const, // v76: посреди луга встаёт портал, камера проходит сквозь него к холму
   dusk: 0.08, // погода — закат, светлячки
-  content: 0.52, // тексты и контакты футера
+  content: 0.66, // тексты и контакты футера
 };
 export const CASES: Record<"tear" | "intro" | "blur" | "cardsIn" | "strip" | "stripOut" | "notes" | "notesIn" | "notesRun", Span> = {
   tear: [0.0, 0.083], // страница About отрывается снизу и уходит вверх — под ней луг (v32)
@@ -120,7 +120,8 @@ export function layoutTimeline(input: TimelineInput) {
   const old = { a: CHAPTER, b: CHAPTER2 };
   const k = input.narrow ? 0.88 : 1;
   const about = input.narrow ? 4.66 : 5.29;
-  const footer = input.narrow ? 2.2 : 2.5;
+  /* v76.1: футер длиннее (было 2.2 / 2.5 экрана) — проходу через портал нужна дистанция, иначе он резкий */
+  const footer = input.narrow ? 3.1 : 3.4;
   const step = Math.min(0.9, Math.max(0.4, input.step));
   /* сцены главы «Кейсы» в экранах от её начала */
   /* v74.2: переход About → «Кейсы» длиннее (было 0.72 экрана): бумага не рвётся, а растворяется облаком,

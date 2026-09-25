@@ -1006,7 +1006,8 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 .sf-nav a { color: #fff; text-decoration: none; opacity: 0.88; transition: opacity 0.2s ease; }
 .sf-nav a:hover { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
 @media (max-width: 900px) {
-  .site-footer { padding-top: 96px; }
+  /* v76.1: внизу справа на телефоне стоит кнопка звука — строка с копирайтом и ссылками кончается над ней */
+  .site-footer { padding-top: 96px; padding-bottom: calc(max(16px, env(safe-area-inset-bottom)) + 62px); }
   .sf-pill, .sf-copy { height: 46px; padding: 0 16px; font-size: 14px; }
   .sf-bar { font-size: 13px; }
 }
@@ -1169,6 +1170,8 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
    меняется. dvh, который едет вслед за панелью, как раз и даёт рывки. Прогресс истории уже считается от
    устойчивой высоты (viewH в storyScroll.ts) */
 @media (hover: none) and (pointer: coarse) {
-  #scene { top: 0; bottom: auto; height: 100vh; height: 100lvh; }
+  /* v76.1: с запасом в 140 px снизу. Во встроенных браузерах (Telegram, Instagram) lvh равен текущему окну, а
+     окно растёт, когда прячется панель, — под холстом открывалась тёмная полоса страницы */
+  #scene { top: 0; bottom: auto; height: calc(100vh + 140px); height: calc(100lvh + 140px); }
   .story-hero, .cases, .site-footer { bottom: auto; height: 100vh; height: 100svh; }
 }

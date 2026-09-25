@@ -209,7 +209,7 @@ export function createPostFx(
       tAlt: { value: altBlurRT.texture },
       tPortal: { value: altRT.texture },
       uPortal: { value: new THREE.Vector4(0.5, 0.52, 0, 0) },
-      uPortal2: { value: new THREE.Vector2(0, 0.14) },
+      uPortal2: { value: new THREE.Vector3(0, 0.14, 0) },
       uAlt: { value: 0 },
     },
   });
@@ -321,11 +321,15 @@ export function createPostFx(
       if (portalOn) {
         const k = params.portal;
         const sm = (a: number, b: number, x: number) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-        const appear = 1 - Math.pow(1 - Math.min(1, k / 0.3), 3);
-        const dive = Math.pow(sm(0.55, 0.92, k), 2.2);
-        const h = 0.3 * appear + 0.04 * sm(0.3, 0.55, k) + dive * 2.6;
-        final.uniforms.uPortal.value.set(0.5, 0.52 - 0.02 * dive, h, sm(0.12, 0.34, k));
-        final.uniforms.uPortal2.value.set(sm(0.0, 0.14, k) * (1 - sm(0.75, 0.95, k)), 0.14);
+        /* v76.1: плавно. Дверь не вырастает из точки, а проявляется из прозрачности, уже почти своего размера
+           (0,7 → 1), и медленно подрастает, пока в неё смотрят. Проход — экспоненциальный наезд: дверь растёт
+           в одно и то же число раз за равный отрезок прокрутки, это читается как ровное движение камеры
+           вперёд, без рывка в конце */
+        const appear = sm(0.0, 0.34, k);
+        const dive = sm(0.46, 0.97, k);
+        const h = (0.22 + 0.08 * appear + 0.04 * sm(0.2, 0.5, k)) * Math.exp(2.2 * dive);
+        final.uniforms.uPortal.value.set(0.5, 0.52 - 0.02 * dive, h, sm(0.16, 0.46, k));
+        final.uniforms.uPortal2.value.set(appear * (1 - sm(0.78, 0.97, k)), 0.14, sm(0.0, 0.26, k));
       } else final.uniforms.uPortal.value.z = 0;
       /* резкость CAS считает соседей полноразмерным текселем — на половинном буфере она ни к чему */
       final.uniforms.uSharp.value = low || altFull ? 0 : sharp;

@@ -15,7 +15,9 @@
 .cx { position: absolute; inset: 0; z-index: 1; pointer-events: none; color: #fff; font-family: var(--font); opacity: var(--e, 1); }
 /* затемнение снизу и слева: крупная белая типографика должна читаться на любом кадре луга */
 .cx-shade {
-  position: absolute; inset: 0;
+  /* v76.1: затемнение уходит ниже главы на 140 px — при спрятанной панели браузера глава короче окна, и под
+     затемнением оставалась светлая полоса с резким краем */
+  position: absolute; inset: 0 0 -140px;
   background:
     linear-gradient(to top, rgba(8, 10, 6, 0.74) 0%, rgba(8, 10, 6, 0.38) 30%, rgba(8, 10, 6, 0) 56%),
     linear-gradient(to right, rgba(8, 10, 6, 0.34), rgba(8, 10, 6, 0) 32%);
@@ -50,7 +52,8 @@
 }
 .cx-next-l { margin-right: auto; opacity: 0.72; }
 .cx-next-n { opacity: 0.7; font-variant-numeric: tabular-nums; }
-.cx-next-t { font-weight: 600; transition: translate 0.2s var(--ease-x); }
+.cx-next-t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; transition: translate 0.2s var(--ease-x); }
+.cx-next-l, .cx-next-n { white-space: nowrap; flex: none; }
 @media (hover: hover) { .cx-next:hover .cx-next-t { translate: 3px 0; } }
 .cx-next:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 6px; }
 
@@ -130,7 +133,7 @@
 /* ── телефон: колонка — карточка, название, два факта; снизу полоса сегментов между кнопками шага ── */
 .cases.is-narrow[data-preview="card"] { --side: calc(34 * var(--u, 0.54px)); }
 .cases.is-narrow .cx-list { display: none; }
-.cases.is-narrow .cx-center { top: calc(72px + env(safe-area-inset-top)); translate: -50% 0; width: min(64vw, 44svh); }
+.cases.is-narrow .cx-center { top: calc(72px + env(safe-area-inset-top)); translate: -50% 0; width: min(64vw, calc((100svh - 470px) * 0.9)); }
 .cases.is-narrow .cx-next { font-size: 13px; margin-bottom: 8px; }
 .cases.is-narrow .cx-title { left: var(--side); right: var(--side); width: auto; bottom: calc(242px + env(safe-area-inset-bottom)); font-size: clamp(40px, 12.5vw, 72px); }
 .cases.is-narrow .cx-facts { left: var(--side); right: var(--side); width: auto; bottom: calc(150px + env(safe-area-inset-bottom)); }

@@ -1125,7 +1125,7 @@ uniform sampler2D tAlt;    /* v32: второй фон (луг) — для см�
 uniform float uAlt;        /* 0 — только tScene, 0…1 — доля tAlt */
 uniform sampler2D tPortal; /* v76: луг снаружи портала (резкий, altRT) */
 uniform vec4 uPortal;      /* центр портала (UV), полувысота (доли высоты кадра), проявление содержимого 0…1 */
-uniform vec2 uPortal2;     /* яркость кромки 0…1, доля скругления от полуширины */
+uniform vec3 uPortal2;     /* яркость кромки 0…1, доля скругления от полуширины, проявление всей двери 0…1 */
 varying vec2 vUv;
 
 const vec3 LUMA = vec3(0.2126, 0.7152, 0.0722);
@@ -1304,11 +1304,13 @@ void main(){
     /* блик по стеклу: косая мягкая засветка сверху слева */
     vec2 lp = (pp + hs) / (2.0 * hs);
     inner += vec3(1.0, 0.95, 0.85) * 0.07 * smoothstep(0.55, 0.0, lp.x + (1.0 - lp.y) * 0.6) * uPortal2.x;
-    e = mix(outside, inner, inside);
+    vec3 door = mix(outside, inner, inside);
     /* кромка и свет */
     float rim = exp(-abs(dd) / (uTexel.y * 2.2)) * 1.6 + exp(-max(dd, 0.0) * 14.0) * 0.22 * step(0.0, dd);
     float spill = exp(-max(dd, 0.0) * 3.5) * 0.12 * uPortal.w * step(0.0, dd);
-    e += vec3(1.0, 0.9, 0.72) * (rim * uPortal2.x + spill);
+    door += vec3(1.0, 0.9, 0.72) * (rim * uPortal2.x + spill);
+    /* дверь проявляется из прозрачности, а не выскакивает */
+    e = mix(outside, door, uPortal2.z);
   }
 
   /* Фокус на кресле: нижние ~20% кадра мягко расфокусированы, как у длинного
