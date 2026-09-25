@@ -29,6 +29,8 @@ export type PostFx = {
   altTarget: THREE.WebGLRenderTarget;
   dispose: () => void;
   params: { rays: number; raysEnabled: boolean;
+    /* v76: портал из «Кейсов» в футер, 0…1 (0 — нет): растёт посреди луга, за ним холм */
+    portal: number;
     bgCheap: boolean; exposure: number; vignette: number; vibrance: number; contrast: number; focus: number; whiteBalance: THREE.Vector3; glitch: number; glitchSeed: number; black: number; radial: number; aberration: number; fill: number; overlay: boolean;
     /* v17, светлая страница с глубиной (как oryzo): studio 0…1 — сила студийного фона,
        pcRect — прямоугольник компьютера в UV кадра (x0, y0, x1, y1), spot — центр светового пятна */
@@ -127,6 +129,7 @@ export function createPostFx(
     rays: 0.32,
     raysEnabled: true,
     bgCheap: false,
+    portal: 0,
     exposure: renderer.toneMappingExposure,
     vignette: 0.55,
     /* выбрано сравнением кадров: Neutral + vibrance 0.35 + контраст 1.12 держит тёплое
@@ -204,6 +207,9 @@ export function createPostFx(
       uBgBlur: { value: 0 },
       tShadow: { value: shadowRT.texture },
       tAlt: { value: altBlurRT.texture },
+      tPortal: { value: altRT.texture },
+      uPortal: { value: new THREE.Vector4(0.5, 0.52, 0, 0) },
+      uPortal2: { value: new THREE.Vector2(0, 0.14) },
       uAlt: { value: 0 },
     },
   });
@@ -267,7 +273,9 @@ export function createPostFx(
       const covered = params.fill >= 0.999 && params.tear <= -0.2;
       /* размытый задник кейсов: сцена в половинном буфере, размытие — в четвертном, финал берёт готовое.
          Переход прячется под бумагой: размытие включается, пока рваный край у самого низа кадра */
-      const low = params.bgBlur > 0.001;
+      /* v76: портал — холм в полном буфере сцены, луг в своём, финал вырезает дверь. Размытия в это время нет */
+      const portalOn = params.portal > 0.001 && params.portal < 0.999 && !!params.altRender && !covered;
+      const low = params.bgBlur > 0.001 && !portalOn;
       const src = low ? bgRT : sceneRT;
       /* v25: полностью размытый фон кейсов обновляется через кадр — карточки живут в DOM, их плавность от
          этого не зависит, а медленное движение травы под размытием на 30 Гц не отличить */
@@ -283,13 +291,14 @@ export function createPostFx(
       /* v32: луг вместо холма. Целиком (alt = 1) — холм не рисуем вовсе; на выходе из кейсов (0 < alt < 1)
          оба фона рисуются в половинные буферы, размываются и смешиваются в финале */
       const altOn = !!params.altRender && params.alt > 0.001;
-      const altFull = altOn && params.alt >= 0.999;
+      const altFull = altOn && params.alt >= 0.999 && !portalOn;
       const altMix = altOn && !altFull && low;
       if (!covered && !reuse && !altFull) {
         renderer.setRenderTarget(src);
         renderer.render(scene, camera);
       }
-      if (altOn && !covered) {
+      if (portalOn) params.altRender!(altRT);
+      if (altOn && !covered && !portalOn) {
         const target = altFull ? (low ? bgRT : altRT) : altBgRT;
         params.altRender!(target);
       }
@@ -307,6 +316,17 @@ export function createPostFx(
       }
       final.uniforms.tScene.value = low ? bgBlurRT.texture : altFull ? altRT.texture : sceneRT.texture;
       final.uniforms.uAlt.value = altMix ? params.alt : 0;
+      /* геометрия портала по прогрессу k: появляется (0–0,3), чуть подрастает, пока в него смотрят (0,3–0,55),
+         и камера проходит сквозь него (0,55–0,92): дверь растёт быстрее и быстрее, пока не закроет весь экран */
+      if (portalOn) {
+        const k = params.portal;
+        const sm = (a: number, b: number, x: number) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+        const appear = 1 - Math.pow(1 - Math.min(1, k / 0.3), 3);
+        const dive = Math.pow(sm(0.55, 0.92, k), 2.2);
+        const h = 0.3 * appear + 0.04 * sm(0.3, 0.55, k) + dive * 2.6;
+        final.uniforms.uPortal.value.set(0.5, 0.52 - 0.02 * dive, h, sm(0.12, 0.34, k));
+        final.uniforms.uPortal2.value.set(sm(0.0, 0.14, k) * (1 - sm(0.75, 0.95, k)), 0.14);
+      } else final.uniforms.uPortal.value.z = 0;
       /* резкость CAS считает соседей полноразмерным текселем — на половинном буфере она ни к чему */
       final.uniforms.uSharp.value = low || altFull ? 0 : sharp;
       /* v44: без MSAA края сглаживает финальный проход целиком, с MSAA 2× — наполовину (две ступени покрытия

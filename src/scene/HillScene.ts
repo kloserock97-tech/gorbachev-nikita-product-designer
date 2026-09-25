@@ -1293,8 +1293,17 @@ export class HillScene {
        в футере под размытием смешивается обратно с холмом */
     this.ensureWalk();
     const wo = ramp(f, ...MEADOW_OUT);
-    const alt = c > 0 && this.walkReady ? 1 - wo * wo * (3 - 2 * wo) : 0;
+    /* v76: из «Кейсов» в футер — через портал (postfx.ts, shaders.ts): луг остаётся снаружи двери, пока камера
+       не пройдёт сквозь неё. Цвет луга сменяется цветом холма по мере того, как дверь закрывает экран.
+       Без луга (?walk=0) — прежнее смешивание под размытием */
+    const pk = ramp(f, ...FOOTER.portal);
+    const viaPortal = this.walkReady && !this.walkOff && f > 0;
+    const alt = c > 0 && this.walkReady
+      ? viaPortal ? (pk < 0.999 ? Math.max(0.002, 1 - THREE.MathUtils.smoothstep(pk, 0.6, 0.95)) : 0) : 1 - wo * wo * (3 - 2 * wo)
+      : 0;
     fx.alt = alt;
+    fx.portal = viaPortal ? pk : 0;
+    if (viaPortal) fx.bgBlur = 0;
     /* v74.1: в «Кейсах» луг за стеклянной рамкой — в окне рамки он резкий (размыто только стекло вокруг,
        ui/cases-card.css). На телефоне остаётся размытым: резкий луг рисуется в полном разрешении каждый кадр,
        а размытый — в четверти и через кадр, и iPhone на этом теряет кадры */
