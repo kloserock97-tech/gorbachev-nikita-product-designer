@@ -3,7 +3,7 @@
    Длина истории больше не записана в CSS числом. Её считает story.ts (layoutTimeline) от числа кейсов и заметок
    и от шага ленты, а сюда приходит результат: высота .story в экранах. Так один кейс занимает одинаковую
    дистанцию прокрутки на любом экране, а добавленный кейс сам удлиняет историю. */
-import { TIMELINE, layoutTimeline, type TimelineInput } from "../scene/story";
+import { CHAPTER, TIMELINE, layoutTimeline, type TimelineInput } from "../scene/story";
 
 const story = () => document.querySelector<HTMLElement>(".story");
 
@@ -97,5 +97,47 @@ export function applyTimeline(input: TimelineInput) {
      (широкий экран: hero закреплена, история начинается с нуля), недостающую часть добавляем к высоте */
   el.style.height = `${((TIMELINE.total + 1 - lead) * 100).toFixed(1)}vh`;
   if (moved) scrollTo({ top: topFor(remap(before)), behavior: "instant" as ScrollBehavior });
+  placeStops();
   listeners.forEach((cb) => cb());
+}
+
+/* v74.3: остановка на странице About. Резкий взмах колесом или пальцем проносил страницу через About за один
+   жест — компьютер и тексты мелькали и сразу уходили в «Кейсы». Теперь у прокрутки есть точка, где About стоит
+   целиком (95 % главы: компьютер на месте, все тексты вышли). Если жест человека (колесо, палец, клавиши)
+   пересекает её в любую сторону, страница встаёт ровно в неё и 0,6 с не пускает дальше — хватает, чтобы взмах
+   погас. Прокрутку кнопками меню и программные переходы это не трогает: ловится только то, что пришло от
+   ввода за последние мгновения. Браузерная привязка (scroll-snap с scroll-snap-stop) не подошла: быстрый взмах
+   колесом в Chrome её проскакивал */
+let stopY = -1;
+let holdUntil = 0;
+let lastInput = -1e9;
+let lastY = typeof window === "undefined" ? 0 : scrollY;
+function placeStops() {
+  if (document.body.classList.contains("lite") || !story()) { stopY = -1; return; }
+  stopY = topFor(CHAPTER * 0.95);
+}
+if (typeof window !== "undefined") {
+  onViewport(() => requestAnimationFrame(placeStops));
+  const input = () => { lastInput = performance.now(); };
+  /* инерция пальца продолжается после отпускания — окно «жеста» после touchend длиннее */
+  addEventListener("touchend", () => { lastInput = performance.now() + 900; }, { passive: true });
+  addEventListener("keydown", input);
+  const hold = (e: Event) => { if (performance.now() < holdUntil && e.cancelable) e.preventDefault(); };
+  addEventListener("wheel", (e) => { input(); hold(e); }, { passive: false });
+  addEventListener("touchmove", (e) => { input(); hold(e); }, { passive: false });
+  addEventListener("scroll", () => {
+    const y = scrollY;
+    const now = performance.now();
+    if (stopY > 0 && now < holdUntil && Math.abs(y - stopY) > 1) {
+      scrollTo({ top: stopY, behavior: "instant" as ScrollBehavior });
+      return;
+    }
+    const crossed = stopY > 0 && ((lastY < stopY - 2 && y > stopY + 2) || (lastY > stopY + 2 && y < stopY - 2));
+    lastY = y;
+    if (crossed && now - lastInput < 250) {
+      holdUntil = now + 600;
+      lastY = stopY;
+      scrollTo({ top: stopY, behavior: "instant" as ScrollBehavior });
+    }
+  }, { passive: true });
 }
