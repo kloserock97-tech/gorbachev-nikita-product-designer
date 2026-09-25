@@ -128,6 +128,8 @@ export class Meadow {
     uWaves: { value: Array.from({ length: 16 }, () => new THREE.Vector4(1e5, 0, 1e5, -1)) },
     uFieldBounds: { value: new THREE.Vector4(1e5, 1e5, -1e5, -1e5) },
     uDpr: { value: 1 },
+    /* v73.2: столб света — xyz точка, где он падает на луг, w — радиус светлого пятна на траве */
+    uBeam: { value: new THREE.Vector4(0, -100, 0, 4) },
   };
 
   /* прогулка */
@@ -168,6 +170,7 @@ export class Meadow {
     this.buildGrass();
     this.buildPebbles();
     this.buildDust();
+    this.buildBeam();
   }
 
   /* ── построение ─────────────────────────────────────────────────────────── */
@@ -193,7 +196,7 @@ export class Meadow {
 
   private buildLights() {
     /* под пологом леса рассеянного света мало и он зелёный; главный — солнце за травой */
-    this.scene.add(new THREE.HemisphereLight("#8a9a62", "#0b0d07", 0.9));
+    this.scene.add(new THREE.HemisphereLight("#8a9a62", "#0b0d07", 0.55));
     this.sun.castShadow = this.q.shadows;
     const s = this.sun.shadow;
     s.mapSize.set(2048, 2048);
@@ -350,17 +353,18 @@ export class Meadow {
           uGrassCenter: { value: center }, uGrassTile: { value: L.tile },
           uBladeH: { value: new THREE.Vector2(L.height[0], L.height[1]) }, uBladeW: { value: new THREE.Vector2(L.width[0], L.width[1]) },
           uTime: U.uTime, uWindTime: U.uWindTime, uSea: U.uSea,
-          uHead: U.uHead, uWaves: U.uWaves, uFieldBounds: U.uFieldBounds,
+          uHead: U.uHead, uWaves: U.uWaves, uFieldBounds: U.uFieldBounds, uBeam: U.uBeam,
         });
         sh.vertexShader = sh.vertexShader
           .replace("#include <common>", /* glsl */ `#include <common>
             ${sampleHeightGLSL}
             ${noiseGLSL}
             ${cursorFieldGLSL}
+            uniform vec4 uBeam;
             attribute vec4 aSeed;
             uniform vec2 uGrassCenter; uniform float uGrassTile; uniform vec2 uBladeH; uniform vec2 uBladeW;
             uniform float uTime; uniform float uWindTime; uniform float uSea;
-            varying float vGrassY; varying float vGrassTint; varying float vFlower; varying float vGlow;`)
+            varying float vGrassY; varying float vGrassTint; varying float vFlower; varying float vGlow; varying float vPool;`)
           .replace("#include <beginnormal_vertex>", "vec3 objectNormal = vec3(0.0, 1.0, 0.0);")
           .replace("#include <begin_vertex>", /* glsl */ `
             float T = uGrassTile;
@@ -403,13 +407,17 @@ export class Meadow {
             float pick = fract(r1 * 7.31 + r2 * 3.17);
             vFlower = pick < 0.22 * flowerPatch ? (fract(r2 * 11.3) < 0.4 ? 2.0 : 1.0) : 0.0;
             /* пятна света: солнце пробивается сквозь полог — по склону медленно плывут освещённые поляны */
-            vGlow = smoothstep(-0.1, 0.45, tdNoise(wxz * 0.05 + vec2(uWindTime * 0.015, -uWindTime * 0.01) + 13.0));`);
+            vGlow = smoothstep(-0.1, 0.45, tdNoise(wxz * 0.05 + vec2(uWindTime * 0.015, -uWindTime * 0.01) + 13.0));
+            /* пятно под столбом света: трава в нём освещена целиком, не только кончики */
+            vec2 toBeam = wxz - uBeam.xz;
+            vPool = exp(-dot(toBeam, toBeam) / (uBeam.w * uBeam.w));`);
         sh.fragmentShader = sh.fragmentShader
-          .replace("#include <common>", "#include <common>\nvarying float vGrassY;\nvarying float vGrassTint;\nvarying float vFlower;\nvarying float vGlow;")
+          .replace("#include <common>", "#include <common>\nvarying float vGrassY;\nvarying float vGrassTint;\nvarying float vFlower;\nvarying float vGlow;\nvarying float vPool;")
           /* контровой свет: кончики травинок светятся лаймом на просвет — в освещённых пятнах сильнее */
           .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
             float lit = pow(clamp(vGrassY, 0.0, 1.0), 3.5) * mix(0.1, 1.0, vGlow * vGlow);
-            totalEmissiveRadiance += (vFlower > 0.5 ? diffuseColor.rgb * 0.8 : vec3(0.16, 0.3, 0.035)) * lit;`)
+            totalEmissiveRadiance += (vFlower > 0.5 ? diffuseColor.rgb * 0.8 : vec3(0.16, 0.3, 0.035)) * lit;
+            totalEmissiveRadiance += diffuseColor.rgb * vec3(1.2, 1.1, 0.8) * vPool * (0.2 + 0.6 * clamp(vGrassY, 0.0, 1.0));`)
           /* обратная грань не переворачивает нормаль — иначе стебли чёрные */
           .replace("#include <normal_fragment_begin>", "#include <normal_fragment_begin>\n normal = normalize(vNormal);")
           /* clamp: у основания интерполяция даёт −1e-7, pow от отрицательного = NaN → чёрные вспышки через bloom */
@@ -570,6 +578,68 @@ export class Meadow {
     this.geometries.push(geo);
   }
 
+  /* v73.2: столб света сквозь полог леса, как на референсе владельца. Высокая полоса, повёрнутая к камере вокруг
+     вертикали (цилиндрический билборд), расширяется книзу; внутри медленно плывут пылевые струи. Смешивание
+     сложением, без тумана — луч светится и на тёмном фоне. Стоит впереди камеры и летит вместе с ней
+     (update): прогулка бесконечная, и неподвижный луч проехал бы мимо за полминуты */
+  private buildBeam() {
+    const U = this.U;
+    /* три луча разной толщины и силы, как свет сквозь просветы в кроне: [сдвиг вдоль «вправо», сдвиг вглубь,
+       ширина, сила]. Лучи наклонены к солнцу — в кадре, снятом сверху, они тянутся длинными диагоналями,
+       а вертикальная полоса ложилась бы размытым пятном */
+    const rays: [number, number, number, number][] = [[0, 0, 1.2, 0.34], [-2.6, -4.5, 0.55, 0.22], [1.8, -2.0, 0.7, 0.18]];
+    const geo = new THREE.PlaneGeometry(1, 1).translate(0.5, 0.5, 0);
+    this.geometries.push(geo);
+    for (const [ox, oz, w, k] of rays) {
+      const mat = new THREE.ShaderMaterial({
+        uniforms: {
+          uBeam: U.uBeam, uTime: U.uTime, uH: { value: 30 }, uW: { value: w }, uK: { value: k },
+          uOff: { value: new THREE.Vector2(ox, oz) }, uTilt: { value: new THREE.Vector3() },
+        },
+        vertexShader: /* glsl */ `
+          uniform vec4 uBeam; uniform float uH; uniform float uW; uniform vec2 uOff; uniform vec3 uTilt;
+          varying vec2 vUv;
+          varying float vY;
+          void main() {
+            vUv = uv;
+            vec3 base = uBeam.xyz + vec3(uOff.x, 0.0, uOff.y);
+            vec3 axis = normalize(vec3(0.0, 1.0, 0.0) + uTilt);
+            vec3 toCam = cameraPosition - base;
+            vec3 right = normalize(cross(axis, toCam));
+            /* книзу шире: луч расходится, пока идёт сквозь воздух */
+            float w = uW * mix(1.6, 0.8, uv.y);
+            vec3 p = base + right * (uv.x - 0.5) * w * 2.0 + axis * (uv.y * uH - 0.6);
+            vY = p.y;
+            gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
+          }`,
+        fragmentShader: /* glsl */ `
+          uniform float uTime; uniform float uK;
+          varying vec2 vUv;
+          varying float vY;
+          float h(float n) { return fract(sin(n * 91.7) * 43758.55); }
+          float n1(float x) { float i = floor(x), f = fract(x); return mix(h(i), h(i + 1.0), f * f * (3.0 - 2.0 * f)); }
+          void main() {
+            float x = (vUv.x - 0.5) * 2.0;
+            float core = exp(-x * x * 7.0);
+            /* пылевые струи: полосы вдоль луча, медленно текут вниз */
+            float streaks = 0.6 + 0.4 * n1(x * 7.0 + uK * 13.0 + uTime * 0.12) * n1(vUv.y * 4.0 - uTime * 0.3 + x * 2.0);
+            float along = smoothstep(0.0, 0.06, vUv.y) * smoothstep(1.0, 0.35, vUv.y);
+            /* к высоте камеры луч гаснет: свет приходит сверху из темноты, а не проходит в метре от объектива */
+            float a = core * streaks * along * uK * smoothstep(cameraPosition.y - 1.0, cameraPosition.y - 6.0, vY);
+            gl_FragColor = vec4(vec3(1.0, 0.88, 0.62) * a, 1.0);
+          }`,
+        transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.frustumCulled = false;
+      mesh.renderOrder = 10;
+      this.scene.add(mesh);
+      this.materials.push(mat);
+      this.beamTilts.push(mat.uniforms.uTilt.value as THREE.Vector3);
+    }
+  }
+  private readonly beamTilts: THREE.Vector3[] = [];
+
   /* ── кадр ───────────────────────────────────────────────────────────────── */
 
   setSize(w: number, h: number, dpr: number) {
@@ -604,8 +674,9 @@ export class Meadow {
     const smooth = (x: number) => x * x * (3 - 2 * x);
     const pathX = (tt: number) => 16 * Math.sin(tt * 0.029) + 6 * Math.sin(tt * 0.071 + 1.3);
     const breath = 0.5 + 0.5 * Math.sin(t * 0.05 + 1.9);
-    /* v73.1: ниже к траве (было 5–10.5 м): с высоты травинки меньше пикселя, и луг читался гладким бархатом */
-    let height = THREE.MathUtils.lerp(2.2, 4.4, smooth(breath)) + Math.sin(t * 0.105) * 0.5;
+    /* v73.2: сверху и подальше (владелец): 7–11 м над лугом, взгляд вниз под 30–42°. Трава при этом читается —
+       с тех пор как её шейдер снова собирается, и размытие главы вдвое слабее */
+    let height = THREE.MathUtils.lerp(7, 11, smooth(breath)) + Math.sin(t * 0.105) * 0.8;
     this.walked += dt * 2.1;
     this.mouse.lerp(this.hover ? this.pointer : Meadow.ZERO, 1 - Math.exp(-dt * 2.4));
     const x = pathX(t) + this.mouse.x * 0.6;
@@ -615,11 +686,11 @@ export class Meadow {
     for (const ahead of [0, 4, 9]) ground = Math.max(ground, terrainHeight(x + Math.sin(heading) * ahead, z - Math.cos(heading) * ahead, t));
     if (this.groundSmooth === null) this.groundSmooth = ground;
     this.groundSmooth += (ground - this.groundSmooth) * Math.min(1, dt * (ground > this.groundSmooth ? 3 : 0.8));
-    height = Math.max(height, this.groundSmooth + 1.7);
+    height = Math.max(height, this.groundSmooth + 5.5);
     const lift = THREE.MathUtils.clamp((height - 4) / 15, 0, 1);
     /* v73: взгляд чуть сверху вниз, под углом: склон с цветами занимает кадр, серое небо — полосой сверху.
        Было −14…−40° (одна трава и чёрная полоска неба), почти горизонт (−4…−13°) владельцу показался плоским */
-    const pitch = THREE.MathUtils.degToRad(THREE.MathUtils.lerp(-10, -17, smooth(lift)) + Math.sin(t * 0.13) * 2 + this.mouse.y * 2.5);
+    const pitch = THREE.MathUtils.degToRad(THREE.MathUtils.lerp(-30, -42, smooth(lift)) + Math.sin(t * 0.13) * 2 + this.mouse.y * 2.5);
     const yaw = THREE.MathUtils.degToRad(THREE.MathUtils.radToDeg(heading) * 0.8 + Math.sin(t * 0.057) * 9 - this.mouse.x * 4);
     this.camera.position.set(x, height, z);
     this.dir.set(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
@@ -645,6 +716,13 @@ export class Meadow {
     this.sun.target.position.set(fx, 0, fz);
     this.sun.position.set(fx + Math.sin(az) * Math.cos(el) * 80, Math.sin(el) * 80, fz - Math.cos(az) * Math.cos(el) * 80);
     this.sun.target.updateMatrixWorld();
+
+    /* столб света: впереди по ходу, чуть правее середины кадра — за устройством с кейсом */
+    const bx = this.look.x + Math.cos(yaw) * 3.2, bz = this.look.z - Math.sin(yaw) * 3.2;
+    U.uBeam.value.set(bx, terrainHeight(bx, bz, t), bz, 3.2);
+    /* наклон лучей — к солнцу (тот же азимут, что у направленного света) */
+    const saz = THREE.MathUtils.degToRad(12);
+    for (const v of this.beamTilts) v.set(Math.sin(saz) * 0.55, 0, -Math.cos(saz) * 0.55);
 
     this.updateCursor(dt);
   }
