@@ -79,6 +79,12 @@
 .card--stove.has-demo .note-hero:hover .note-cap__go { background: rgba(255, 255, 255, 0.32); }
 .card--stove.has-demo .note-hero:hover .note-cap__go svg { translate: 1.5px -1.5px; }
 .card--stove:not(.has-demo) .note-cap__go { display: none; }
+/* v72: на телефоне без размытия фона — те же причины, что у кнопок героя (hero.css) */
+@media (hover: none) and (pointer: coarse) {
+  .note-cap__go, .note-deck { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .note-deck { background: rgba(18, 22, 15, 0.5); }
+  .note-cap__go { background: rgba(20, 24, 18, 0.34); }
+}
 
 
 /* ── листалка на картинке ──────────────────────────────────────────────────── */

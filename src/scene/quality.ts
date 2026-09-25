@@ -30,7 +30,32 @@ export class QualityGovernor {
   constructor(private gl: WebGL2RenderingContext, private ladder: Ladder, private budgetMs = 15) {
     this.ext = gl.getExtension("EXT_disjoint_timer_query_webgl2") as typeof this.ext;
     this.ceiling = 0;
-    if (!this.ext) this.asleep = true;
+  }
+
+  /* v72: без таймера видеокарты (Safari и все браузеры на iPhone) регулятор раньше засыпал сразу, и оставалась
+     только стартовая калибровка. Она меряет холм до появления интерфейса, а стекло, видео в карточке и
+     анимации поверх холста на iPhone 11 добавляли ещё ~12 мс: калибровка видела 18 мс, человек — 33 кадра
+     в секунду. Здесь запасной путь: интервалы кадров, пока человек спокойно смотрит на холм. Медиана окна
+     дольше 22 мс (меньше 45 кадров) — ступень ниже. Только вниз: по интервалам запас не виден, их держит
+     развёртка экрана */
+  private intervals: number[] = [];
+  private intervalSkip = 90;
+  private pollIntervals(tier: number, idle: boolean, dt: number): number | null {
+    if (!idle) { this.intervals = []; return null; }
+    if (this.intervalSkip > 0) { this.intervalSkip--; return null; }
+    this.intervals.push(dt * 1000);
+    if (this.intervals.length < 90) return null;
+    const sorted = this.intervals.slice().sort((a, b) => a - b);
+    const med = sorted[sorted.length >> 1];
+    this.intervals = [];
+    if (med > 22 && tier < this.ladder.length - 1 && this.changes < 4) {
+      this.changes++;
+      this.calm = 0;
+      this.intervalSkip = 60;
+      return tier + 1;
+    }
+    if (++this.calm >= 4) this.asleep = true;
+    return null;
   }
 
   begin() {
@@ -60,8 +85,9 @@ export class QualityGovernor {
    * Забрать готовые замеры; вернуть новую ступень или null.
    * tier — текущая; idle — человек на холме, ничего не анимируется поверх.
    */
-  poll(tier: number, idle: boolean): number | null {
-    if (this.asleep || !this.ext) return null;
+  poll(tier: number, idle: boolean, dt = 0): number | null {
+    if (this.asleep) return null;
+    if (!this.ext) return this.pollIntervals(tier, idle, dt);
     const gl = this.gl;
     const disjoint = gl.getParameter(this.ext.GPU_DISJOINT_EXT);
     while (this.pending.length) {

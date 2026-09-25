@@ -51,9 +51,12 @@ export function initFieldNote() {
 
   /* превью играет, только когда его действительно видно: карточка в кадре, вкладка активна, интерфейс
      холма не уехал в скролл-историю. Раскрытое описание картинку не закрывает — ролик идёт дальше */
+  /* v72: на телефоне ролик сам не играет — стоит кадр-превью. Цикл видео поверх WebGL-холста на iPhone 11
+     был частью тех ~12 мс, что интерфейс добавлял к кадру холма. Демо по-прежнему открывается нажатием */
+  const phone = matchMedia("(hover: none) and (pointer: coarse)").matches;
   const syncVideo = () => {
     if (!video?.dataset.note) return;
-    const want = inView && !document.hidden && !document.body.classList.contains("story-away");
+    const want = !phone && inView && !document.hidden && !document.body.classList.contains("story-away");
     if (want && video.paused) void video.play().catch(() => {});
     else if (!want && !video.paused) video.pause();
   };

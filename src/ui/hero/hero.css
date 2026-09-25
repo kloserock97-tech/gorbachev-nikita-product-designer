@@ -154,6 +154,12 @@ body.lang-ru .headline {
   transition: scale 0.22s var(--ease-out), box-shadow 0.3s var(--ease), background-color 0.3s var(--ease);
 }
 @keyframes glass-beam { to { --beam: 360deg; } }
+/* v72: на телефоне стекло без размытия фона. Под кнопкой — живой WebGL-холст, и backdrop-filter заново
+   размывал его кусок в каждом кадре; на iPhone 11 интерфейс поверх холста стоил около 12 мс кадра. Над небом
+   размытие на глаз почти не видно — остаётся полупрозрачная тёмная подложка */
+@media (hover: none) and (pointer: coarse) {
+  .metal { -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
 /* проблеск: светлая косая полоса проходит слева направо */
 .metal::before {
   content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; pointer-events: none;

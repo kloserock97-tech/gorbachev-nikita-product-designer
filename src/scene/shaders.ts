@@ -438,6 +438,7 @@ void main(){
 
 export const plantFragment = /* glsl */ `
 ${LIGHT_PARS}
+uniform float uNoMsaa; /* v72: на ступени без MSAA альфа-покрытие не работает — форму режет альфа-тест */
 varying float vPart;
 varying vec2 vLeafUV;
 varying float vTone;
@@ -490,16 +491,9 @@ void main(){
   vec3 c = col * vLight * ao * mix(1.0, 0.45, shadow);
   c += col * uSunCol * vBackP * translucency * (1.0 - shadow);
   c = mix(c, uFogCol, vFog);
-#ifdef NEAR
-  /* v72: ближний план рисуется в свой прозрачный буфер без MSAA — край венчика через альфу, цвет предумножен.
-     Лицом он к камере, солнце за ним — лицевая сторона в тени: без поправки просвет и небо давали белые
-     пастельные пятна, ярче всего кадра */
-  if (vPart > 5.5) c *= 0.7;
-  if (alpha < 0.02) discard;
-  gl_FragColor = vec4(c * alpha, alpha);
-#else
+  /* без MSAA alphaToCoverage ничего не делает, и венчик рисовался целым квадратом — «цветы квадратиками» */
+  if (uNoMsaa > 0.5 && alpha < 0.5) discard;
   gl_FragColor = vec4(c, alpha);
-#endif
 }
 `;
 export const groundVertex = /* glsl */ `
@@ -1091,8 +1085,6 @@ uniform sampler2D tScene;
 uniform sampler2D tRays;
 uniform float uRays;
 uniform sampler2D tShield; /* v72: маска ближних предметов (четверть разрешения) */
-uniform sampler2D tNear;   /* v72: ближний план в расфокусе, цвет с предумноженной альфой */
-uniform float uNear;
 uniform float uShield;     /* насколько приглушать над ними лучи */
 uniform vec3 uRayTint;
 uniform float uVignette;
@@ -1321,12 +1313,6 @@ void main(){
       wsum += wk;
     }
     e = mix(e, acc / wsum, min(1.0, uRadial * 4.0));
-  }
-  /* v72: ближний план в расфокусе ложится поверх кадра (предумноженная альфа), до тонмаппинга —
-     цвет тот же, что у травы и цветов на склоне */
-  if (uNear > 0.0) {
-    vec4 nr = texture2D(tNear, vUv) * uNear;
-    e = e * (1.0 - nr.a) + nr.rgb;
   }
   /* глава «Кейсы»: tScene уже размытый задник из четвертного прохода (quarterFragment) */
   /* контраст до тонмаппинга — в лог-пространстве вокруг средне-серого (см. grade) */

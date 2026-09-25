@@ -17,7 +17,6 @@ import { createPolaroid } from "./polaroid";
 import { createVista } from "./vista";
 import { createTree } from "./tree";
 import { createRocks, rockFootprints } from "./rocks";
-import { createNearFlowers } from "./nearFlowers";
 import {
   TRAIL_SLOTS,
   ghostFragment,
@@ -74,8 +73,6 @@ const CAMERA_TARGET = new THREE.Vector3(-2.0, 3.2, 0);
 const SHADOW_LAYER = 3;
 /* v72: ближние предметы — над ними лучи приглушаются (маска в postfx.ts) */
 const SHIELD_LAYER = 6;
-/* v72: ближний план в расфокусе — цветы у камеры (nearFlowers.ts), постобработка размывает этот слой */
-const NEAR_LAYER = 7;
 /* слой компьютера в скролл-истории: рисуется отдельным проходом поверх заливки */
 const PC_LAYER = 5;
 
@@ -133,6 +130,8 @@ export class HillScene {
     uFogShift: { value: 0 },
     /* v72: во сколько раз шире травинки, когда их меньше (ступени качества) — покрытие дёрна то же */
     uWiden: { value: 1 },
+    /* v72: ступень без MSAA — цветы и метёлки режут форму альфа-тестом (plantFragment) */
+    uNoMsaa: { value: 0 },
     /* волна интро: радиус от кресла, сила, полуширина кольца */
     uWave: { value: new THREE.Vector3(0, 0, 1) },
     /* собака: точка на земле и видимость; направление корпуса — для тени-эллипса */
@@ -184,7 +183,7 @@ export class HillScene {
     this.renderer.shadowMap.autoUpdate = false;
     this.timer.connect(document);
 
-    this.fx = createPostFx(this.renderer, this.scene, this.camera, SUN_DIR, PC_LAYER, SHIELD_LAYER, NEAR_LAYER);
+    this.fx = createPostFx(this.renderer, this.scene, this.camera, SUN_DIR, PC_LAYER, SHIELD_LAYER);
     this.fx.params.onOverlay = this.onPcOverlay;
     this.focusBase = this.fx.params.focus;
 
@@ -194,12 +193,6 @@ export class HillScene {
     this.buildVista();
     this.buildTree();
     if (!/[?&]rocks=0/.test(location.search)) this.scene.add(createRocks(this.uniforms));
-    /* v72: цветы у камеры слева, в расфокусе (nearFlowers.ts); ?near=0 — без них */
-    if (!/[?&]near=0/.test(location.search)) {
-      this.near = createNearFlowers(this.uniforms, NEAR_LAYER);
-      this.scene.add(this.near.mesh);
-      this.placeNear();
-    }
     this.buildGhost();
     this.buildGround();
     this.buildGrass();
@@ -384,10 +377,6 @@ export class HillScene {
      посадила бы крону под текст, поэтому дерево отходит правее и ниже по склону и уходит за правую кромку —
      обрамляет кадр. Между ними — плавно, по той же доле, что и разворот камеры (placeTree). ?tree=0 — без него */
   private tree?: ReturnType<typeof createTree>;
-  private near?: ReturnType<typeof createNearFlowers>;
-  private placeNear() {
-    this.near?.place(this.cameraRest(), CAMERA_TARGET, this.camera.aspect, this.camera.fov);
-  }
   private buildTree() {
     if (/[?&]tree=0/.test(location.search)) return;
     this.tree = createTree(this.uniforms, { base: new THREE.Vector3(), height: 5.6, lean: new THREE.Vector3(-0.2, 0, 0.1), msaa: true });
@@ -1912,7 +1901,6 @@ export class HillScene {
     const panK = Math.min(1, Math.max(0, (aspect - 0.6) / 0.7));
     CAMERA_REST_OFF.x = 0.6 + (CAMERA_PAN.x - 0.6) * panK;
     CAMERA_TARGET.x = 0.2 + (CAMERA_PAN.y - 0.2) * panK;
-    this.placeNear();
     const panMoved = Math.abs(panK - this.plantedFor.pan) > 0.04;
     /* Поворот телефона или сужение окна отодвигает камеру — передний склон, посаженный под
        прежнюю позу, остался бы голым. Шире 16:9 × 1.2 — не хватит травы по бокам. */
@@ -1983,11 +1971,6 @@ export class HillScene {
     /* пока играет интро, экспозицией и цветом постобработки управляет оно */
     this.weather.update(dt, true);
     this.updateStory(dt);
-    /* ближний план — только на первом экране: камера и так уводит его из кадра, но в расфокусе он
-       тянулся бы полупрозрачным пятном; гаснет с первыми процентами скролла, и слой не рисуется вовсе */
-    const nearFade = this.near ? 1 - THREE.MathUtils.smoothstep(this.storyS, 0.0, 0.04) : 0;
-    this.fx.params.near = nearFade;
-    if (this.near) this.near.mesh.visible = nearFade > 0.003;
 
     const fixed = this.opts.fixedCamera;
     if (fixed) {
@@ -2032,7 +2015,7 @@ export class HillScene {
     gov?.end();
     if (gov && !gov.asleep) {
       const idle = this.storyS === 0 && this.focus === 0 && !document.hidden;
-      const next = gov.poll(this.tier, idle);
+      const next = gov.poll(this.tier, idle, dt);
       if (next !== null) {
         this.setTier(next, "governor");
         try { localStorage.setItem(this.tierKey(), JSON.stringify({ tier: this.tier, at: Date.now() })); } catch { /* ничего */ }
@@ -2083,10 +2066,14 @@ export class HillScene {
      разрешение не опускается ниже 0.6 от потолка (1.35 на DPR 2.25). Травинки на телефоне и так мельче:
      камера отъезжает дальше, чтобы в вертикальный кадр вошёл весь склон. Длина та же — девять ступеней,
      чтобы ?tier=, запомненная ступень и пороги «тяжёлой» травы читались одинаково. */
-  /* v72.1: густота травы держится дольше — поредевшая трава на iPhone читалась сильнее, чем чуть меньшее разрешение */
+  /* v72.1: густота травы держится дольше — поредевшая трава на iPhone читалась сильнее, чем чуть меньшее разрешение.
+     v72.2: замер на iPhone 11 владельца — нижняя ступень (DPR 1.25, MSAA 2×) шла 30 мс. Замер той же ступени
+     таймером на ПК: MSAA-буфер — половина всего кадра (2.0 мс против 1.1 без него). Поэтому нижние три ступени
+     без MSAA, но в разрешении выше: сцена DPR 1.3–1.5 и сглаживание краёв в финальном проходе (edgeAA) вдвое
+     дешевле, чем 1.25 с MSAA 2×, и резче — меньше растяжка на экран DPR 2 */
   private static readonly PHONE_LADDER: [number, number, number, boolean][] = [
     [1, 4, 1, true], [0.9, 4, 0.9, true], [0.82, 4, 0.8, true], [0.76, 4, 0.75, true],
-    [0.76, 4, 0.62, true], [0.7, 4, 0.62, false], [0.7, 2, 0.55, false], [0.64, 2, 0.5, false], [0.6, 2, 0.45, false],
+    [0.76, 2, 0.65, true], [0.7, 2, 0.62, false], [0.76, 0, 0.6, false], [0.7, 0, 0.55, false], [0.65, 0, 0.5, false],
   ];
   /* телефон или планшет: основной указатель — палец, мыши нет */
   private readonly phone = matchMedia("(pointer: coarse)").matches && !matchMedia("(any-pointer: fine)").matches;
@@ -2117,7 +2104,7 @@ export class HillScene {
     const ext = gl.getExtension("WEBGL_debug_renderer_info");
     const gpu = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : "gpu";
     /* v3 — версия рендер-пайплайна: при его изменении старые ступени недействительны */
-    return `hill-tier:v16:${gpu}:${screen.width}x${screen.height}@${window.devicePixelRatio}:${this.bladeTotal}`;
+    return `hill-tier:v17:${gpu}:${screen.width}x${screen.height}@${window.devicePixelRatio}:${this.bladeTotal}`;
   }
 
   private static readonly TIER_TTL = 14 * 24 * 3600 * 1000;
@@ -2198,6 +2185,7 @@ export class HillScene {
     this.qualityScale = this.ladder[t][0];
     this.fx.setSamples(this.ladder[t][1]);
     this.tree?.setMsaa(this.ladder[t][1] > 0);
+    this.uniforms.uNoMsaa.value = this.ladder[t][1] > 0 ? 0 : 1;
     /* травинки уже в случайном порядке (посадка отбором), так что любая начальная
        доля — равномерная выборка с той же зависимостью плотности от расстояния */
     this.applyDensity();
