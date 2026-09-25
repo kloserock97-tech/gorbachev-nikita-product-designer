@@ -1,0 +1,102 @@
+/* v74: мокап по правилам бренда Яндекса — стили к caseArt.ts.
+   --m — микромодуль: 1/60 узкой стороны контейнера. Все размеры и отступы — целые или половинные модули.
+   --cx, --cy — центр крупной фигуры, --S — её сторона (фигура — скруглённый квадрат, повёрнутый на 45°,
+   как в образце GRIF AI). Экран — внутри фигуры и срезается её краем. */
+.ya {
+  position: relative; margin: 0; container-type: size; overflow: visible;
+  --m: calc(min(100cqw, 100cqh) / 60);
+  --r: calc(var(--m) * 5);                 /* скругление крупной фигуры — 5 модулей */
+  --deep: color-mix(in srgb, var(--accent, #2f5fd0) 38%, #0b0d14);
+}
+.ya-shape, .ya-accent { position: absolute; left: calc(var(--cx) - var(--S) / 2); top: calc(var(--cy) - var(--S) / 2); width: var(--S); height: var(--S); rotate: 45deg; }
+
+/* крупная фигура: от глубокого тона к цвету кейса, со светом сверху — как фигура в образце */
+.ya-shape {
+  z-index: 1; overflow: hidden; border-radius: var(--r);
+  background: linear-gradient(135deg, var(--deep) 18%, color-mix(in srgb, var(--accent, #2f5fd0) 82%, #fff) 88%);
+  box-shadow: 0 calc(var(--m) * 3) calc(var(--m) * 8) calc(var(--m) * -2) color-mix(in srgb, var(--deep) 55%, transparent);
+}
+.ya-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(45% 45% at 22% 22%, color-mix(in srgb, var(--accent, #2f5fd0) 55%, #fff) 0%, transparent 70%);
+  opacity: 0.55;
+}
+/* фигура-акцент: сдвинута на 2 модуля от крупной и выглядывает из-за её верхнего края; скругление — четверть */
+.ya-accent {
+  z-index: 0; --S2: calc(var(--S) * 0.34);
+  width: var(--S2); height: var(--S2);
+  left: calc(var(--cx) - var(--S) * 0.47 - var(--S2) / 2 - var(--m) * 2);
+  top: calc(var(--cy) - var(--S) * 0.47 - var(--S2) / 2 + var(--m) * 2);
+  border-radius: calc(var(--r) / 4 * 3);
+  background: color-mix(in srgb, var(--accent, #2f5fd0) 38%, #fff);
+  opacity: 0.8;
+}
+
+/* Экран: внутри повёрнутой фигуры. rotate(-45deg) возвращает его вертикально, дальше — сдвиг в модулях от
+   центра фигуры и разворот в перспективе. Срезает его край фигуры (overflow: hidden у .ya-shape) */
+.ya-screen, .ya-solo {
+  position: absolute; left: 50%; top: 50%; transform-origin: 0 0;
+}
+.ya-screen {
+  width: var(--W); display: flex; flex-direction: column; overflow: hidden;
+  border-radius: calc(var(--m) * 1.5); background: #15171c;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), calc(var(--m) * -2) calc(var(--m) * 3) calc(var(--m) * 6) rgba(0, 0, 0, 0.4);
+  transform: rotate(-45deg) translate(var(--tx), var(--ty)) perspective(calc(var(--m) * 160)) rotateY(-14deg) rotateX(9deg) rotateZ(-8deg);
+}
+.ya-chrome {
+  position: relative; flex: none; display: flex; align-items: center; gap: calc(var(--m) * 0.7);
+  height: calc(var(--m) * 3.4); padding: 0 calc(var(--m) * 1.4);
+  background: linear-gradient(180deg, #fbfbfc, #ececef); border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+.ya-chrome i { width: calc(var(--m) * 1.1); aspect-ratio: 1; border-radius: 50%; background: #ff5f57; }
+.ya-chrome i:nth-child(2) { background: #febc2e; }
+.ya-chrome i:nth-child(3) { background: #28c840; }
+.ya-chrome span {
+  position: absolute; left: 50%; top: 50%; translate: -50% -50%; max-width: 50%;
+  padding: 0.25em 1em; border-radius: calc(var(--m) * 0.8); background: rgba(0, 0, 0, 0.055);
+  font-size: calc(var(--m) * 1.35); font-weight: 500; color: #3a3a3f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ya-shot { display: block; width: 100%; height: auto; user-select: none; -webkit-user-drag: none; }
+/* мобильный: экран приложения в тонкой тёмной рамке, почти прямо */
+.ya-screen--phone {
+  width: var(--Wp); aspect-ratio: 402 / 874; border-radius: calc(var(--m) * 4);
+  border: calc(var(--m) * 0.8) solid #111318;
+  transform: rotate(-45deg) translate(var(--txp), var(--typ)) perspective(calc(var(--m) * 160)) rotateY(-12deg) rotateX(6deg) rotateZ(6deg);
+}
+.ya-screen--phone .ya-shot { width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: calc(var(--m) * 3.2); }
+/* без экранов — предмет кейса по центру фигуры */
+.ya-solo { width: calc(var(--S) * 0.62); aspect-ratio: var(--oar, 1); transform: rotate(-45deg) translate(-50%, -50%); }
+.ya-solo .ya-obj { display: block; width: 100%; height: 100%; }
+.ya-solo .ya-obj img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 calc(var(--m) * 2) calc(var(--m) * 3) rgba(0, 0, 0, 0.35)); }
+
+/* акцентная плашка: овал 6 модулей в высоту... здесь круг 9 модулей со стрелкой, заходит на фигуру на 1 модуль */
+.ya-tag {
+  position: absolute; z-index: 2; display: grid; place-items: center;
+  width: calc(var(--m) * 11); aspect-ratio: 1; border-radius: 38%;
+  left: calc(var(--cx) - var(--S) * 0.354 - var(--m) * 11 + var(--m) * 1);
+  top: calc(var(--cy) + var(--S) * 0.354 - var(--m) * 4);
+  background: rgba(255, 255, 255, 0.82); color: var(--accent, #2f5fd0);
+  box-shadow: 0 calc(var(--m) * 1) calc(var(--m) * 3) rgba(0, 0, 0, 0.12);
+}
+.ya-tag svg { width: 42%; height: auto; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── шапка кейса: фигура крупная и уходит за правый и нижний край сцены ── */
+.ya--hero { --S: calc(var(--m) * 58); --cx: calc(100cqw - var(--m) * 26); --cy: calc(var(--m) * 41);
+  --W: calc(var(--m) * 96); --tx: calc(var(--m) * -28); --ty: calc(var(--m) * -20);
+  --Wp: calc(var(--m) * 25); --txp: calc(var(--m) * -8); --typ: calc(var(--m) * -21); }
+
+/* ── глава «Кейсы»: вся композиция внутри рамки главы ── */
+.ya--fit { --S: calc(var(--m) * 46); --cx: calc(50cqw + var(--m) * 6); --cy: calc(var(--m) * 30);
+  --W: calc(var(--m) * 74); --tx: calc(var(--m) * -23); --ty: calc(var(--m) * -17);
+  --Wp: calc(var(--m) * 19); --txp: calc(var(--m) * -6); --typ: calc(var(--m) * -15); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .ya--hero .ya-shape { animation: ya-in 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .ya--hero .ya-accent { animation: ya-in 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s both; }
+  .ya--hero .ya-tag { animation: ya-pop 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s both; }
+}
+@keyframes ya-in { from { opacity: 0; translate: calc(var(--m) * 6) calc(var(--m) * 4); } }
+@keyframes ya-pop { from { opacity: 0; scale: 0.6; } }
+
+/* на узкой шапке фигура срезана низом сцены, и плашка со стрелкой оказывалась наполовину под краем */
+@media (max-width: 1100px) { .ya--hero .ya-tag { display: none; } }

@@ -79,12 +79,17 @@
 }
 /* мягкий свет сверху слева: сцена не плоская */
 .cs-hero-stage::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(60% 70% at 18% 8%, rgba(255, 255, 255, 0.75), transparent 70%); }
-.cs-hero-text { position: relative; z-index: 2; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
-.cs-kicker { color: var(--accent); }
-.cs-hero h1 { margin-top: 16px; font-size: clamp(40px, 5.4vw, 84px); line-height: 1.02; letter-spacing: -0.028em; text-wrap: balance; }
+.cs-hero-text { position: relative; z-index: 2; display: flex; flex-direction: column; justify-content: center; min-width: 0; padding-top: clamp(64px, 6vw, 92px); }
+/* v74: карточка по правилам бренда Яндекса (образец — GRIF AI): знак с названием продукта — вверху слева,
+   ниже строка о продукте серым, крупный жирный заголовок и подзаголовок. Контраст заголовка к тексту — высокий
+   (5× к 2× по сетке правил). Знак — 4 модуля в высоту */
+.cs-hero-brand { position: absolute; top: 0; left: 0; display: flex; align-items: center; gap: 14px; margin: 0; font-size: clamp(20px, 1.8vw, 28px); font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
+.cs-hero-brand .cs-brand { height: clamp(40px, 3.6vw, 56px); width: auto; margin: 0; border-radius: 22%; }
+.cs-kicker { color: var(--faint); font-weight: 500; font-size: clamp(14px, 1.15vw, 17px); }
+.cs-hero h1 { margin-top: 16px; font-size: clamp(44px, 6vw, 96px); font-weight: 700; line-height: 1; letter-spacing: -0.035em; text-wrap: balance; }
 body.lang-ru .cs-hero h1 { line-height: 1.05; letter-spacing: -0.024em; }
 .cs-tagline { margin-top: clamp(16px, 2.4vh, 26px) !important; max-width: 22em; font-size: clamp(18px, 1.6vw, 24px); font-weight: 500; line-height: 1.36; letter-spacing: -0.005em; color: var(--soft); text-wrap: pretty; }
-.cs-hero .ch { align-self: stretch; }
+.cs-hero .ya { align-self: stretch; }
 
 /* факты строкой: иконка, подпись, значение */
 .cs-facts--hero { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
@@ -541,7 +546,7 @@ body.case-open .lite-bar { opacity: 0; pointer-events: none; }
 
 @media (max-width: 1100px) {
   .cs-hero-stage { grid-template-columns: 1fr; padding-right: clamp(28px, 4vw, 64px); padding-bottom: 0; min-height: 0; }
-  .cs-hero .ch { height: clamp(260px, 52vw, 460px); margin-right: calc(clamp(28px, 4vw, 64px) * -1); }
+  .cs-hero .ya { height: clamp(260px, 52vw, 460px); margin-right: calc(clamp(28px, 4vw, 64px) * -1); }
   .cs-facts--hero { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cs-mistake-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cs-mistake-grid > div:nth-child(3) { padding-left: 0; border-left: 0; }
@@ -559,7 +564,7 @@ body.case-open .lite-bar { opacity: 0; pointer-events: none; }
   .cs-top-count { display: none; }
   .cs-back { padding: 0 14px; }
   .cs-hero-stage { border-radius: 26px; padding: 26px 22px 0; }
-  .cs-hero .ch { margin-right: -22px; }
+  .cs-hero .ya { margin-right: -22px; }
   .cs-facts--hero { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .cs-facts--hero div { grid-template-columns: 1fr; gap: 4px; padding: 14px 16px; border-radius: 18px; }
   .cs-facts--hero .ic { grid-row: auto; margin-bottom: 4px; }

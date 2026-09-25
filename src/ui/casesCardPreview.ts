@@ -1,29 +1,27 @@
-/* v71: устройство кейса в левой половине главы «Кейсы».
+/* v74: кейс в главе «Кейсы» — окно браузера macOS в стеклянной рамке.
 
-   В середине — одно устройство: у веб-кейсов ноутбук, у мобильных смартфон. Когда кейс встаёт активным,
-   крышка ноутбука раскрывается (у телефона корпус поднимается из лежачего положения), и на экране виден
-   настоящий снимок продукта. Идея раскрытия — из присланного Никитой героя с MacBook (21st.dev,
-   frame-sequence на 941 кадр); кадры чужие и тяжёлые, поэтому корпус и петля здесь свои, на CSS-3D.
+   Раньше здесь были ноутбук и смартфон на CSS-3D (v71). По референсу Никиты (карточка продукта над размытым
+   полем: крупная стеклянная рамка, внутри вещь и мелкие стеклянные подписи вокруг) глава собрана заново:
+   - вся глава обнята большой стеклянной рамкой — кейсы появляются внутри неё;
+   - интерфейс продукта стоит в окне браузера macOS: три кнопки, заголовок вкладки, настоящий снимок экрана.
+     У мобильных кейсов в окне — экран приложения по центру, на поле цвета кейса, как превью адаптива;
+   - дополнительные тексты — в маленьких стеклянных плашках у краёв окна: знак продукта, платформа и цифра
+     результата.
 
-   Видно всегда одно устройство. Смена кейса — барабан: уходящее поднимается и поворачивается, приходящее
-   выезжает снизу; соседних кейсов по бокам нет. Барабан общий с прежним видом главы — его крутит
-   casesWheel.ts и доворачивает до целого кейса за ~0,4 с.
+   Стекло без backdrop-filter у большой рамки: размытие поверх живого WebGL-холста пересчитывается каждый кадр
+   и на всю главу стоило бы кадра. Плашки маленькие — у них размытие есть, но только там, где есть мышь.
 
-У устройства двое спутников: знак продукта и круглый значок платформы. Оба про него, поэтому стоят
-   у его краёв, а не по углам сцены — рядом стоящее читается как одно целое. Цифра результата живёт в
-   текстовой колонке под устройством: это факт, а не украшение. Спутники не едут вместе с барабаном:
-   на каждом новом кейсе они разъезжаются по местам и медленно парят, каждый со своей задержкой. Разлёт
-   и парение разведены по разным свойствам (transform и translate): напиши оба в transform — анимация
-   затрёт переход.
-
-   Дуга с названиями, текст под устройством и кнопки шага — в casesWheel.ts. */
+   Смена кейса — барабан, как и был: уходящее окно поднимается и гаснет, приходящее выезжает снизу. Барабан
+   крутит casesWheel.ts. Дуга с названиями, текст под окном и кнопки шага — тоже там. */
 import type { CaseItem } from "../data/cases";
-import { brandMark, caseThumb, lookVars } from "./caseLook";
+import { t } from "../i18n";
+import { brandMark } from "./caseLook";
+import { caseArt } from "./caseArt";
 import "./cases-card.css";
 
-const BASE = import.meta.env.BASE_URL;
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
-/* платформа кейса в круглом значке: монитор у веба, телефон у мобильного */
+const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+/* платформа в плашке: монитор у веба, телефон у мобильного */
 const iconScreen = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M9 20h6"/></svg>`;
 const iconPhone = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.4"/><path d="M10.6 5.4h2.8"/></svg>`;
 
@@ -32,15 +30,15 @@ export type CardPreview = {
   layout(): void;
   /** положение барабана (дробное, приходит из casesWheel) */
   drum(pos: number): void;
-  /** подставить кейс в спутники */
+  /** подставить кейс в плашки */
   paint(i: number): void;
-  /** заново разогнать спутники; первый раз заодно раскрывает крышку */
+  /** заново разогнать плашки */
   live(): void;
-  /** собрать спутники и закрыть устройство (глава ушла) */
+  /** собрать плашки (глава ушла) */
   calm(): void;
   /** включить снимки экранов: до этого они только утяжеляют старт */
   warm(): void;
-  /** устройство берёт фокус только когда глава видна */
+  /** окно берёт фокус только когда глава видна */
   reach(on: boolean): void;
 };
 
@@ -48,68 +46,50 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let list = getList();
 
-  /** ноутбук: крышка на петле, под ней клавиатурная панель в перспективе */
-  const laptop = (c: CaseItem) => `
-    <span class="cc-rig">
-      <span class="cc-base"><i class="cc-keys"></i><i class="cc-pad"></i></span>
-      <span class="cc-lid">
-        <span class="cc-screen"><img class="cc-shot" data-src="${BASE}${caseThumb(c.id)}" alt="" decoding="async" draggable="false"><i class="cc-glare"></i></span>
-        <i class="cc-cam"></i>
-      </span>
-    </span>
-    <span class="cc-shadow"></span>`;
-
-  /** смартфон: корпус поднимается из лежачего положения */
-  const phone = (c: CaseItem) => `
-    <span class="cc-rig">
-      <span class="cc-body">
-        <span class="cc-screen"><img class="cc-shot" data-src="${BASE}${caseThumb(c.id)}" alt="" decoding="async" draggable="false"><i class="cc-glare"></i></span>
-        <i class="cc-notch"></i>
-      </span>
-    </span>
-    <span class="cc-shadow cc-shadow--phone"></span>`;
-
   const box = document.createElement("div");
   box.className = "cc";
   box.innerHTML = `
     <div class="cc-deck">
       <div class="cc-drum">${list
-        .map((c, i) => {
-          const isPhone = c.look.screen?.device === "phone";
-          /* у каждого кейса свой разворот корпуса и свой угол крышки — числа от номера, поэтому
-             устройство всегда встаёт одинаково и не «дрожит» при перерисовке */
-          const yaw = (((i * 37) % 13) - 6).toFixed(0);
-          const lid = (((i * 53) % 9) - 4).toFixed(0);
-          return `<a class="cc-dev cc-dev--${isPhone ? "phone" : "laptop"}" data-i="${i}" href="#/work/${c.id}" tabindex="-1" aria-hidden="true" style="--yaw:${yaw}deg;--lid:${lid}deg;${lookVars(c)}">${isPhone ? phone(c) : laptop(c)}</a>`;
-        })
+        .map((c, i) => `<a class="cc-win" data-i="${i}" href="#/work/${c.id}" tabindex="-1" aria-hidden="true" aria-label="${esc(c.title)}">${caseArt(c, { mode: "fit" })}</a>`)
         .join("")}</div>
-      <span class="cc-brand" style="--gx:-5;--gy:3;--fd:0s"></span>
-      <span class="cc-thermo" style="--gx:-5;--gy:-2;--fd:.12s"></span>
+      <span class="cc-chip cc-brand" style="--gx:3;--gy:-3;--fd:0s"></span>
+      <span class="cc-chip cc-kind" style="--gx:-4;--gy:2;--fd:.1s"></span>
+      <span class="cc-chip cc-stat" style="--gx:4;--gy:3;--fd:.2s"><b></b><span></span></span>
     </div>`;
   stage.appendChild(box);
 
-  const devs = [...box.querySelectorAll<HTMLElement>(".cc-dev")];
-  /* снимка может не быть (кейс только заводят) — тогда экран остаётся тёмным стеклом,
-     а не битой картинкой */
-  for (const img of box.querySelectorAll<HTMLImageElement>(".cc-shot")) img.addEventListener("error", () => img.remove());
+  /* большая стеклянная рамка — у всей главы, а не у зоны окна: кейс, дуга и текст живут внутри неё */
+  const root = stage.closest<HTMLElement>(".cases");
+  if (root && !root.querySelector(".cc-frame")) {
+    const frame = document.createElement("div");
+    frame.className = "cc-frame";
+    frame.setAttribute("aria-hidden", "true");
+    root.prepend(frame);
+  }
+
+  const wins = [...box.querySelectorAll<HTMLElement>(".cc-win")];
+  /* снимка может не быть (кейс только заводят) — тогда в окне остаётся поле цвета кейса, а не битая картинка */
+  for (const img of box.querySelectorAll<HTMLImageElement>(".ya-shot")) img.addEventListener("error", () => img.remove());
   const q = (sel: string) => box.querySelector<HTMLElement>(sel)!;
 
   const paint = (i: number) => {
     list = getList();
     const c = list[i];
-    /* знака у кейса может не быть — пустая белая плашка на поле выглядит как ошибка */
+    /* знака у кейса может не быть — пустая плашка выглядит как ошибка */
     const brand = q(".cc-brand");
     brand.innerHTML = brandMark(c, "cc-brand-img");
     brand.hidden = !brand.firstElementChild;
-    q(".cc-thermo").innerHTML = c.look.screen?.device === "phone" ? iconPhone : iconScreen;
+    const phone = c.look.screen?.device === "phone";
+    q(".cc-kind").innerHTML = `${phone ? iconPhone : iconScreen}<span>${esc(t(phone ? "work.mobile" : "work.web"))}</span>`;
+    q(".cc-stat b").textContent = c.stat.value;
+    q(".cc-stat span").textContent = c.stat.label;
   };
 
   /* Разлёт. Класс снимается и ставится заново через кадр — иначе браузер не перезапустит переход,
-     и на новом кейсе спутники просто стояли бы на местах. */
+     и на новом кейсе плашки просто стояли бы на местах. */
   let liveTimer = 0;
   const live = () => {
-    /* крышка раскрывается один раз за визит: дальше она просто стоит открытой */
-    for (const el of devs) el.classList.add("is-open");
     if (reduced) { box.classList.add("is-live"); return; }
     box.classList.remove("is-live");
     clearTimeout(liveTimer);
@@ -127,22 +107,21 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
     }
   };
 
-  const layout = () => { /* размеры устройства заданы в единицах сцены — пересчитывать нечего */ };
+  const layout = () => { /* размеры окна заданы в единицах сцены — пересчитывать нечего */ };
 
   let shown = false;
   let lastDrum = -999;
-  /* Барабан: видно одно устройство. Уходящее поднимается и поворачивается, приходящее выезжает снизу —
-     соседние кейсы по бокам не стоят и не просвечивают. */
+  /* Барабан: видно одно окно. Уходящее поднимается и гаснет, приходящее выезжает снизу */
   const drum = (pos: number) => {
     if (Math.abs(pos - lastDrum) < 0.001) return;
     lastDrum = pos;
-    devs.forEach((el, i) => {
+    wins.forEach((el, i) => {
       const d = i - pos;
       const ad = Math.abs(d);
       el.classList.toggle("is-far", ad > 1);
       if (ad > 1) return;
       el.style.opacity = clamp(1 - ad * 1.9, 0, 1).toFixed(3);
-      el.style.transform = reduced ? "none" : `translate3d(${(d * 5).toFixed(2)}%, ${(d * 88).toFixed(2)}%, 0) rotate(${(d * -6).toFixed(2)}deg) scale(${(1 - ad * 0.1).toFixed(3)})`;
+      el.style.transform = reduced ? "none" : `translate3d(0, ${(d * 70).toFixed(2)}%, 0) rotateX(${(d * -14).toFixed(2)}deg) scale(${(1 - ad * 0.08).toFixed(3)})`;
       el.tabIndex = shown && ad < 0.5 ? 0 : -1;
       el.setAttribute("aria-hidden", String(ad >= 0.5));
     });

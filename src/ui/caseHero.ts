@@ -5,33 +5,18 @@
    Раньше здесь были шесть нарисованных в CSS сценок со своими словами и палитрами (v40): они спорили друг с другом
    и с экранами ниже. Теперь вид один на все кейсы, меняются только экран, предмет и цвет. */
 import type { CaseItem } from "../data/cases";
-import { objectPicture } from "./caseLook";
-import "./caseHero.css";
+import { caseArt } from "./caseArt";
 
-import { shots2x } from "../data/shots2x";
-
-const BASE = import.meta.env.BASE_URL;
-
-/* Экран героя виден крупнее всего на странице, поэтому если рядом лежит файл в двойном размере, он идёт
-   сюда первым. Набор собирает tools/shot-tiers.mjs --manifest. */
-const hiScreen = (src: string) => {
-  const w = shots2x.get(src);
-  return w ? ` srcset="${BASE}${src} ${w}w, ${BASE}${src.replace(/.webp$/, "@2x.webp")} ${w * 2}w" sizes="(max-width: 900px) 86vw, 800px"` : "";
-};
-const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-
+/* v74: герой — мокап по правилам бренда Яндекса (caseArt.ts), как карточка GRIF AI из образца Никиты: слева
+   знак, строка о продукте, крупный заголовок и подзаголовок, справа крупная фигура в цвет кейса, в ней экран
+   продукта в перспективе. Прежний вид (устройство и предмет, v64) заменён целиком. */
 export function heroStage(card: CaseItem, label: string) {
-  const s = card.look.screen;
-  const kind = s ? s.device : "solo";
-  const device = s
-    ? `<div class="ch-device">${s.device === "browser" ? `<div class="ch-bar" aria-hidden="true"><i></i><i></i><i></i></div>` : ""}<img class="ch-screen" src="${BASE}${s.src}"${hiScreen(s.src)} width="${s.w}" height="${s.h}" alt="${esc(label)}" decoding="async" fetchpriority="high" draggable="false"></div>`
-    : "";
-  return `<figure class="ch ch--${kind}">${device}${objectPicture(card, "ch-obj", true)}</figure>`;
+  return caseArt(card, { mode: "hero", label, eager: true, sizes: "(max-width: 1100px) 110vw, 900px" });
 }
 
 /** курсор разводит слои героя; вне экрана и при скрытой вкладке парение предмета стоит */
 export function mountHero(root: HTMLElement, scroller: HTMLElement) {
-  const figures = [...root.querySelectorAll<HTMLElement>(".ch")];
+  const figures = [...root.querySelectorAll<HTMLElement>(".ya")];
   const media = matchMedia("(prefers-reduced-motion: reduce)");
   const sync = () => figures.forEach((el) => el.classList.toggle("is-paused", media.matches || document.hidden || el.dataset.visible !== "true"));
   const io = new IntersectionObserver((entries) => { entries.forEach((e) => ((e.target as HTMLElement).dataset.visible = String(e.isIntersecting))); sync(); }, { root: scroller });

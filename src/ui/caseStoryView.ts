@@ -262,7 +262,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
         <header class="cs-hero">
           <div class="cs-hero-stage">
             <div class="cs-hero-text">
-              ${brandMark(card, "cs-brand")}
+              <p class="cs-hero-brand">${brandMark(card, "cs-brand")}<span>${esc(card.title)}</span></p>
               <p class="cs-kicker" data-reveal>${esc(s.hero.kicker)}</p>
               <h1 id="cv-title" tabindex="-1" data-reveal style="--rd:1">${keepHyphens(esc(s.hero.title))}</h1>
               <p class="cs-tagline" data-reveal style="--rd:2">${esc(s.hero.tagline)}</p>
