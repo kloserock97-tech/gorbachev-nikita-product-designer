@@ -558,6 +558,10 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 .story-lead { display: inline-block; color: #2b2b26; text-decoration: none; border-bottom: 1px solid color-mix(in srgb, #3A3A34 28%, transparent); transition: border-color 0.25s ease, color 0.25s ease; }
 .story-lead::after { content: " →"; white-space: nowrap; }
 .story-lead:hover, .story-lead:focus-visible { color: #14140f; border-bottom-color: currentColor; }
+/* v74.2: блок About не ловит мышь (pointer-events: none — под ним сцена и компьютер), и ссылка это наследовала:
+   на неё нельзя было нажать. Пока страница About на экране, ссылкам нажатие возвращается */
+.story-on .story-hero a { pointer-events: auto; }
+.story-lead:active { scale: 0.98; }
 
 /* вход: как .sf-reveal на Tilda, в обе стороны */
 /* v17: и из размытия, как тексты oryzo.ai — строка «наводится на резкость» */
