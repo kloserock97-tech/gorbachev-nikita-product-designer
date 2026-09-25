@@ -1,84 +1,137 @@
 /* v74: мокап по правилам бренда Яндекса — стили к caseArt.ts.
    --m — микромодуль: 1/60 узкой стороны контейнера. Все размеры и отступы — целые или половинные модули.
    --cx, --cy — центр крупной фигуры, --S — её сторона (фигура — скруглённый квадрат, повёрнутый на 45°,
-   как в образце GRIF AI). Экран — внутри фигуры и срезается её краем. */
+   как в образце GRIF AI). Экран — внутри фигуры и срезается её краем.
+
+   v74.1 — отделка: плоская заливка читалась дёшево. Теперь у фигуры материал (свет слева сверху, светлая
+   кромка, тень, мелкое зерно), акцент — матовое стекло поверх угла фигуры, у окна блик на стекле и тень в
+   три слоя (контакт, полутень, воздух), стрелка — стеклянная и отзывается на наведение.
+   Слои расходятся за курсором с разной глубиной (--px, --py пишут сцены героя и главы) и при смене кейса
+   (--d пишет casesCardPreview.ts): ближний слой едет быстрее дальнего. */
 .ya {
   position: relative; margin: 0; container-type: size; overflow: visible;
   --m: calc(min(100cqw, 100cqh) / 60);
   --r: calc(var(--m) * 5);                 /* скругление крупной фигуры — 5 модулей */
-  --deep: color-mix(in srgb, var(--accent, #2f5fd0) 38%, #0b0d14);
+  --deep: color-mix(in srgb, var(--accent, #2f5fd0) 34%, #080a10);
+  --lit: color-mix(in srgb, var(--accent, #2f5fd0) 78%, #fff);
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .ya-shape, .ya-accent { position: absolute; left: calc(var(--cx) - var(--S) / 2); top: calc(var(--cy) - var(--S) / 2); width: var(--S); height: var(--S); rotate: 45deg; }
 
-/* крупная фигура: от глубокого тона к цвету кейса, со светом сверху — как фигура в образце */
+/* ── крупная фигура ───────────────────────────────────────────────────── */
 .ya-shape {
   z-index: 1; overflow: hidden; border-radius: var(--r);
-  background: linear-gradient(135deg, var(--deep) 18%, color-mix(in srgb, var(--accent, #2f5fd0) 82%, #fff) 88%);
-  box-shadow: 0 calc(var(--m) * 3) calc(var(--m) * 8) calc(var(--m) * -2) color-mix(in srgb, var(--deep) 55%, transparent);
+  background:
+    radial-gradient(70% 55% at 12% 10%, color-mix(in srgb, var(--lit) 70%, transparent), transparent 62%),
+    radial-gradient(60% 60% at 95% 95%, color-mix(in srgb, var(--accent, #2f5fd0) 60%, transparent), transparent 70%),
+    linear-gradient(135deg, var(--deep) 12%, color-mix(in srgb, var(--accent, #2f5fd0) 70%, var(--deep)) 58%, var(--lit) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    inset calc(var(--m) * 0.6) calc(var(--m) * 0.6) calc(var(--m) * 1.2) rgba(255, 255, 255, 0.12),
+    calc(var(--m) * 2) calc(var(--m) * 4) calc(var(--m) * 9) calc(var(--m) * -2) color-mix(in srgb, var(--deep) 60%, transparent);
+  translate: calc(var(--d, 0) * var(--m) * 14 + var(--px, 0) * var(--m) * 0.6) calc(var(--py, 0) * var(--m) * 0.5);
+  transition: translate 0.9s var(--ease);
 }
+/* зерно: без него крупная гладкая заливка на экране выглядит пластиком */
 .ya-glow {
-  position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(45% 45% at 22% 22%, color-mix(in srgb, var(--accent, #2f5fd0) 55%, #fff) 0%, transparent 70%);
-  opacity: 0.55;
-}
-/* фигура-акцент: сдвинута на 2 модуля от крупной и выглядывает из-за её верхнего края; скругление — четверть */
-.ya-accent {
-  z-index: 0; --S2: calc(var(--S) * 0.34);
-  width: var(--S2); height: var(--S2);
-  left: calc(var(--cx) - var(--S) * 0.47 - var(--S2) / 2 - var(--m) * 2);
-  top: calc(var(--cy) - var(--S) * 0.47 - var(--S2) / 2 + var(--m) * 2);
-  border-radius: calc(var(--r) / 4 * 3);
-  background: color-mix(in srgb, var(--accent, #2f5fd0) 38%, #fff);
-  opacity: 0.8;
+  position: absolute; inset: 0; pointer-events: none; mix-blend-mode: overlay; opacity: 0.32;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* Экран: внутри повёрнутой фигуры. rotate(-45deg) возвращает его вертикально, дальше — сдвиг в модулях от
-   центра фигуры и разворот в перспективе. Срезает его край фигуры (overflow: hidden у .ya-shape) */
+/* ── фигура-акцент: матовое стекло поверх угла фигуры ─────────────────────
+   Сдвинута на 2 модуля от крупной (правило), скругление — четверть от её скругления, но не мельче
+   полутора модулей: иначе угол у стекла читается острым */
+.ya-accent {
+  z-index: 2; --S2: calc(var(--S) * 0.3);
+  width: var(--S2); height: var(--S2);
+  left: calc(var(--cx) - var(--S) * 0.5 - var(--S2) * 0.28 - var(--m) * 2);
+  top: calc(var(--cy) - var(--S) * 0.5 - var(--S2) * 0.08);
+  border-radius: max(calc(var(--r) / 4), calc(var(--m) * 1.8));
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.55), color-mix(in srgb, var(--lit) 30%, rgba(255, 255, 255, 0.12)));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55), inset 0 calc(var(--m) * 0.5) calc(var(--m) * 1) rgba(255, 255, 255, 0.4), 0 calc(var(--m) * 2) calc(var(--m) * 5) rgba(10, 14, 30, 0.18);
+  translate: calc(var(--d, 0) * var(--m) * 34 + var(--px, 0) * var(--m) * 1.8) calc(var(--py, 0) * var(--m) * 1.4);
+  transition: translate 0.9s var(--ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ya-accent { -webkit-backdrop-filter: blur(calc(var(--m) * 1.2)) saturate(1.4); backdrop-filter: blur(calc(var(--m) * 1.2)) saturate(1.4); background: linear-gradient(135deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.08)); }
+}
+
+/* ── экран ────────────────────────────────────────────────────────────────
+   Внутри повёрнутой фигуры. rotate(-45deg) возвращает его вертикально, дальше — сдвиг в модулях от центра
+   фигуры и разворот в перспективе. Срезает его край фигуры (overflow: hidden у .ya-shape).
+   Параллакс экрана — отдельным translate: фигура повёрнута на 45°, поэтому сдвиг по экрану (X, Y) пересчитан
+   в её оси: ((X + Y)·0,707, (Y − X)·0,707) */
 .ya-screen, .ya-solo {
   position: absolute; left: 50%; top: 50%; transform-origin: 0 0;
+  --sx: calc(var(--d, 0) * var(--m) * 16 - var(--px, 0) * var(--m) * 1.2);
+  --sy: calc(var(--py, 0) * var(--m) * -1);
+  translate: calc((var(--sx) + var(--sy)) * 0.7071) calc((var(--sy) - var(--sx)) * 0.7071);
+  transition: translate 0.9s var(--ease);
 }
 .ya-screen {
   width: var(--W); display: flex; flex-direction: column; overflow: hidden;
-  border-radius: calc(var(--m) * 1.5); background: #15171c;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), calc(var(--m) * -2) calc(var(--m) * 3) calc(var(--m) * 6) rgba(0, 0, 0, 0.4);
+  border-radius: calc(var(--m) * 1.4); background: #15171c;
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    calc(var(--m) * -0.4) calc(var(--m) * 0.6) calc(var(--m) * 1) rgba(0, 0, 0, 0.25),
+    calc(var(--m) * -2) calc(var(--m) * 3.5) calc(var(--m) * 5) rgba(0, 0, 0, 0.28),
+    calc(var(--m) * -5) calc(var(--m) * 8) calc(var(--m) * 14) rgba(0, 0, 0, 0.3);
   transform: rotate(-45deg) translate(var(--tx), var(--ty)) perspective(calc(var(--m) * 160)) rotateY(-14deg) rotateX(9deg) rotateZ(-8deg);
 }
 .ya-chrome {
   position: relative; flex: none; display: flex; align-items: center; gap: calc(var(--m) * 0.7);
   height: calc(var(--m) * 3.4); padding: 0 calc(var(--m) * 1.4);
-  background: linear-gradient(180deg, #fbfbfc, #ececef); border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: linear-gradient(180deg, #fdfdfd, #ececef); border-bottom: 1px solid rgba(0, 0, 0, 0.09);
 }
-.ya-chrome i { width: calc(var(--m) * 1.1); aspect-ratio: 1; border-radius: 50%; background: #ff5f57; }
+.ya-chrome i { width: calc(var(--m) * 1.1); aspect-ratio: 1; border-radius: 50%; background: #ff5f57; box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.18); }
 .ya-chrome i:nth-child(2) { background: #febc2e; }
 .ya-chrome i:nth-child(3) { background: #28c840; }
+.ya-nav { width: calc(var(--m) * 2.8); height: auto; margin-left: calc(var(--m) * 1.2); fill: none; stroke: #6e6e73; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
 .ya-chrome span {
-  position: absolute; left: 50%; top: 50%; translate: -50% -50%; max-width: 50%;
-  padding: 0.25em 1em; border-radius: calc(var(--m) * 0.8); background: rgba(0, 0, 0, 0.055);
-  font-size: calc(var(--m) * 1.35); font-weight: 500; color: #3a3a3f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  position: absolute; left: 50%; top: 50%; translate: -50% -50%; max-width: 46%;
+  padding: 0.3em 1.2em; border-radius: calc(var(--m) * 0.8); background: rgba(0, 0, 0, 0.05); box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.06);
+  font-size: calc(var(--m) * 1.3); font-weight: 500; color: #3a3a3f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .ya-shot { display: block; width: 100%; height: auto; user-select: none; -webkit-user-drag: none; }
+/* блик на стекле: мягкая косая засветка сверху слева — выдаёт, что это экран, а не плоская картинка */
+.ya-glare {
+  position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.04) 28%, transparent 46%);
+}
 /* мобильный: экран приложения в тонкой тёмной рамке, почти прямо */
 .ya-screen--phone {
   width: var(--Wp); aspect-ratio: 402 / 874; border-radius: calc(var(--m) * 4);
-  border: calc(var(--m) * 0.8) solid #111318;
+  border: calc(var(--m) * 0.7) solid #111318;
   transform: rotate(-45deg) translate(var(--txp), var(--typ)) perspective(calc(var(--m) * 160)) rotateY(-12deg) rotateX(6deg) rotateZ(6deg);
 }
-.ya-screen--phone .ya-shot { width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: calc(var(--m) * 3.2); }
+.ya-screen--phone .ya-shot { width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: calc(var(--m) * 3.3); }
 /* без экранов — предмет кейса по центру фигуры */
 .ya-solo { width: calc(var(--S) * 0.62); aspect-ratio: var(--oar, 1); transform: rotate(-45deg) translate(-50%, -50%); }
 .ya-solo .ya-obj { display: block; width: 100%; height: 100%; }
 .ya-solo .ya-obj img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 calc(var(--m) * 2) calc(var(--m) * 3) rgba(0, 0, 0, 0.35)); }
 
-/* акцентная плашка: овал 6 модулей в высоту... здесь круг 9 модулей со стрелкой, заходит на фигуру на 1 модуль */
+/* ── стрелка: стеклянная плашка, заходит на фигуру на 1 модуль ─────────── */
 .ya-tag {
-  position: absolute; z-index: 2; display: grid; place-items: center;
-  width: calc(var(--m) * 11); aspect-ratio: 1; border-radius: 38%;
-  left: calc(var(--cx) - var(--S) * 0.354 - var(--m) * 11 + var(--m) * 1);
+  position: absolute; z-index: 3; display: grid; place-items: center;
+  width: calc(var(--m) * 10); aspect-ratio: 1; border-radius: 36%;
+  left: calc(var(--cx) - var(--S) * 0.354 - var(--m) * 10 + var(--m) * 1);
   top: calc(var(--cy) + var(--S) * 0.354 - var(--m) * 4);
-  background: rgba(255, 255, 255, 0.82); color: var(--accent, #2f5fd0);
-  box-shadow: 0 calc(var(--m) * 1) calc(var(--m) * 3) rgba(0, 0, 0, 0.12);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.7));
+  color: var(--accent, #2f5fd0);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.9), 0 calc(var(--m) * 0.4) calc(var(--m) * 0.8) rgba(0, 0, 0, 0.08), 0 calc(var(--m) * 2) calc(var(--m) * 5) rgba(0, 0, 0, 0.14);
+  translate: calc(var(--d, 0) * var(--m) * 44 + var(--px, 0) * var(--m) * 2.4) calc(var(--py, 0) * var(--m) * 1.8);
+  transition: translate 0.9s var(--ease), scale 0.4s var(--ease);
 }
-.ya-tag svg { width: 42%; height: auto; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+@media (hover: hover) and (pointer: fine) {
+  .ya-tag { -webkit-backdrop-filter: blur(calc(var(--m) * 1)); backdrop-filter: blur(calc(var(--m) * 1)); background: linear-gradient(160deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.55)); }
+}
+.ya-tag svg { width: 40%; height: auto; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: translate 0.4s var(--ease); }
+/* наведение на карточку: стрелка тянется вперёд */
+@media (hover: hover) {
+  :is(.cc-win, .cs-hero-stage):hover .ya-tag { scale: 1.06; }
+  :is(.cc-win, .cs-hero-stage):hover .ya-tag svg { translate: calc(var(--m) * 0.7) 0; }
+}
 
 /* ── шапка кейса: фигура крупная и уходит за правый и нижний край сцены ── */
 .ya--hero { --S: calc(var(--m) * 58); --cx: calc(100cqw - var(--m) * 26); --cy: calc(var(--m) * 41);
@@ -89,14 +142,19 @@
 .ya--fit { --S: calc(var(--m) * 46); --cx: calc(50cqw + var(--m) * 6); --cy: calc(var(--m) * 30);
   --W: calc(var(--m) * 74); --tx: calc(var(--m) * -23); --ty: calc(var(--m) * -17);
   --Wp: calc(var(--m) * 19); --txp: calc(var(--m) * -6); --typ: calc(var(--m) * -15); }
-
-@media (prefers-reduced-motion: no-preference) {
-  .ya--hero .ya-shape { animation: ya-in 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-  .ya--hero .ya-accent { animation: ya-in 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s both; }
-  .ya--hero .ya-tag { animation: ya-pop 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s both; }
-}
-@keyframes ya-in { from { opacity: 0; translate: calc(var(--m) * 6) calc(var(--m) * 4); } }
-@keyframes ya-pop { from { opacity: 0; scale: 0.6; } }
+/* в главе слои едут прямо за прокруткой — без запаздывания, иначе смена кейса «плывёт» */
+.ya--fit :is(.ya-shape, .ya-accent, .ya-screen, .ya-solo) { transition: none; }
+.ya--fit .ya-tag { transition: scale 0.4s var(--ease); }
 
 /* на узкой шапке фигура срезана низом сцены, и плашка со стрелкой оказывалась наполовину под краем */
 @media (max-width: 1100px) { .ya--hero .ya-tag { display: none; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .ya--hero .ya-shape { animation: ya-in 1.2s var(--ease) both; }
+  .ya--hero .ya-accent { animation: ya-in 1.2s var(--ease) 0.14s both; }
+  .ya--hero .ya-screen, .ya--hero .ya-solo { animation: ya-fade 1.1s var(--ease) 0.25s both; }
+  .ya--hero .ya-tag { animation: ya-pop 0.8s var(--ease) 0.55s both; }
+}
+@keyframes ya-in { from { opacity: 0; scale: 0.94; } }
+@keyframes ya-fade { from { opacity: 0; } }
+@keyframes ya-pop { from { opacity: 0; scale: 0.6; } }

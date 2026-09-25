@@ -17,6 +17,8 @@ import "./caseArt.css";
 
 const BASE = import.meta.env.BASE_URL;
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+/* стрелки «назад / вперёд» в строке окна — как у Safari: без них строка читалась пустой полосой */
+const nav = `<svg class="ya-nav" viewBox="0 0 28 12" aria-hidden="true"><path d="M6 2 2 6l4 4"/><path d="M18 2l4 4-4 4" opacity=".45"/></svg>`;
 const arrow = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15"/><path d="m13 6 6 6-6 6"/></svg>`;
 
 /** srcset из манифеста двойных снимков: мокап крупный, на экране с DPR 2 нужен файл вдвое больше */
@@ -44,8 +46,8 @@ export function caseArt(c: CaseItem, o: ArtOptions) {
   const screen = !s
     ? `<span class="ya-solo">${objectPicture(c, "ya-obj", o.eager)}</span>`
     : s.device === "phone"
-      ? `<span class="ya-screen ya-screen--phone">${img}</span>`
-      : `<span class="ya-screen"><span class="ya-chrome" aria-hidden="true"><i></i><i></i><i></i><span>${esc(c.title)}</span></span>${img}</span>`;
+      ? `<span class="ya-screen ya-screen--phone">${img}<i class="ya-glare" aria-hidden="true"></i></span>`
+      : `<span class="ya-screen"><span class="ya-chrome" aria-hidden="true"><i></i><i></i><i></i>${nav}<span>${esc(c.title)}</span></span>${img}<i class="ya-glare" aria-hidden="true"></i></span>`;
   return `<figure class="ya ya--${o.mode} ya--${kind}" style="${lookVars(c)}"${alt ? "" : ` aria-hidden="true"`}>
     <i class="ya-accent" aria-hidden="true"></i>
     <span class="ya-shape"><span class="ya-glow" aria-hidden="true"></span>${screen}</span>

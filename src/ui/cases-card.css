@@ -12,23 +12,38 @@
 /* цифра результата живёт в стеклянной плашке у окна — в текстовой колонке она повторялась бы */
 .cases[data-preview="card"] .cw-fact { display: none; }
 
-/* ── большая рамка главы ────────────────────────────────────────────────── */
-/* Обнимает всю главу: заголовок, окно, дугу и текст. Без backdrop-filter — под ней живой WebGL-холст,
-   и размытие на весь экран пересчитывалось бы каждый кадр. Глубину дают налёт, кромка и тень. */
+/* ── рамка главы: матовое стекло вокруг чистого окна ───────────────────────
+   Положение окна, скругление и вырез в стекле считает casesCardPreview.ts (fit): окно сужается от краёв экрана
+   вместе с появлением главы и стоит под доком. Стекло — только снаружи окна: там фон размыт и высветлен,
+   внутри окна луг чистый и резкий. Размытие — на экранах с мышью; на телефоне поле просто высветлено: там
+   размывать живой холст каждый кадр слишком дорого */
+.cc-mat {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.07)),
+    rgba(28, 34, 22, 0.32);
+}
+@media (hover: hover) and (pointer: fine) {
+  .cc-mat {
+    -webkit-backdrop-filter: blur(22px) saturate(1.35) brightness(1.08);
+    backdrop-filter: blur(22px) saturate(1.35) brightness(1.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05));
+  }
+}
+/* кромка окна: светлая линия по краю стекла, внутренний блик сверху и тень, которую стекло бросает внутрь */
 .cc-frame {
   position: absolute; z-index: 0; pointer-events: none;
-  top: calc(var(--head-top, 120px) - clamp(28px, 3.6vh, 44px));
-  left: calc(var(--side, 60px) - clamp(18px, 2.2vw, 40px)); right: calc(var(--side, 60px) - clamp(18px, 2.2vw, 40px));
-  bottom: clamp(14px, 2.4vh, 28px);
-  border-radius: clamp(22px, 2.2vw, 36px);
-  background: var(--glass);
   box-shadow:
-    inset 0 0 0 1px var(--glass-edge),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    inset 0 -40px 80px -40px rgba(0, 0, 0, 0.25),
-    0 30px 80px -30px rgba(0, 0, 0, 0.45);
-  opacity: var(--e, 1); scale: calc(0.97 + var(--e, 1) * 0.03);
+    0 0 0 1px rgba(255, 255, 255, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 18px 40px -24px rgba(0, 0, 0, 0.45),
+    inset 0 -30px 60px -40px rgba(0, 0, 0, 0.35);
 }
+/* заголовок главы стоит внутри окна с полем в 4 модуля от его верха */
+.cases[data-mode="wheel"][data-preview="card"] { --head-top: calc(var(--frame-top, 100px) + clamp(26px, 4.2vh, 46px)); }
+.cases.is-narrow[data-mode="wheel"][data-preview="card"] { --head-top: calc(var(--frame-top, 64px) + 18px); }
+/* дуга-барабан не видна: её место заняло оглавление; пункты остаются в разметке — к ним обращается оглавление */
+.cases[data-preview="card"] .cw-wheel { visibility: hidden; pointer-events: none; }
 .cases[data-mode="wheel"] .cw, .cases[data-mode="wheel"] .cases-head { z-index: 1; }
 
 .cc { position: absolute; inset: 0; color: #fff; }
@@ -86,7 +101,6 @@
 @keyframes cc-float { from { translate: 0 5px; } to { translate: 0 -5px; } }
 
 /* ── телефон и планшет под палец ────────────────────────────────────────── */
-.cases.is-narrow .cc-frame { top: calc(var(--head-top, 70px) - 18px); left: 8px; right: 8px; bottom: 10px; border-radius: 22px; }
 .cases.is-narrow .cc-chip { font-size: 11px; padding: 6px 10px; border-radius: 11px; }
 .cases.is-narrow .cc-brand { top: 0; right: 0; }
 .cases.is-narrow .cc-brand-img { height: 14px; max-width: 60px; }
@@ -99,3 +113,44 @@
   right: calc(var(--side, 60px) - clamp(18px, 2.2vw, 40px) + clamp(14px, 1.4vw, 22px));
   bottom: calc(clamp(14px, 2.4vh, 28px) + clamp(14px, 1.4vw, 22px));
 }
+
+/* ── оглавление кейсов ────────────────────────────────────────────────────
+   Справа в окне рамки. Подсветка — стеклянная полоса, которая едет к текущему кейсу по дробному положению
+   (--pos пишет casesCardPreview.ts): смена кейса видна не только в мокапе, но и здесь. */
+.cc-index {
+  --row: clamp(40px, 5.4vh, 54px);
+  position: absolute; z-index: 2; pointer-events: auto;
+  right: calc(clamp(18px, 2.2vw, 40px) + clamp(84px, 7vw, 120px)); top: 50%;
+  width: clamp(240px, 21vw, 340px); translate: 0 -50%;
+  display: grid; grid-auto-rows: var(--row);
+  opacity: var(--e, 1); transition: opacity 0.3s ease;
+}
+.cc-ix-glow {
+  position: absolute; left: 0; right: 0; top: 0; height: var(--row); border-radius: 16px; pointer-events: none;
+  translate: 0 calc(var(--pos, 0) * var(--row));
+  background: var(--glass);
+  box-shadow: inset 0 0 0 1px var(--glass-edge), inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 10px 30px -12px rgba(0, 0, 0, 0.4);
+}
+.cc-ix {
+  position: relative; display: flex; align-items: center; gap: 16px; padding: 0 18px;
+  color: rgba(255, 255, 255, 0.5); text-decoration: none; font-size: clamp(15px, 1.1vw, 18px); font-weight: 400; letter-spacing: -0.01em;
+  transition: color 0.35s ease;
+}
+.cc-ix-n { font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; opacity: 0.7; }
+.cc-ix-t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-ix.is-on { color: #fff; font-weight: 500; }
+.cc-ix:focus-visible { outline: 2px solid #fff; outline-offset: -2px; border-radius: 16px; }
+@media (hover: hover) { .cc-ix:not(.is-on):hover { color: rgba(255, 255, 255, 0.85); } }
+.cc-ix-now { display: none; }
+
+/* телефон: вместо списка — полоса из сегментов и название текущего кейса над ней */
+.cases.is-narrow .cc-index {
+  --row: 0px; right: 64px; left: 64px; width: auto; top: auto; translate: none;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px; grid-auto-rows: auto;
+}
+.cases.is-narrow .cc-ix-glow { display: none; }
+.cases.is-narrow .cc-ix { flex: 1; height: 4px; padding: 0; border-radius: 2px; background: rgba(255, 255, 255, 0.25); font-size: 0; }
+.cases.is-narrow .cc-ix.is-on { flex: 3; background: #fff; }
+.cases.is-narrow .cc-ix > span { display: none; }
+.cases.is-narrow .cc-ix-now { display: block; order: -1; flex-basis: 100%; margin: 0 0 6px; font-size: 13px; color: rgba(255, 255, 255, 0.8); }
