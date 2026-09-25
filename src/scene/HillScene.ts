@@ -1228,6 +1228,7 @@ export class HillScene {
   private storyEnd: Pose = { pos: new THREE.Vector3(), yaw: 0, pitch: 0, roll: 0 };
   private storyPose: Pose = { pos: new THREE.Vector3(), yaw: 0, pitch: 0, roll: 0 };
   private coolWB = new THREE.Vector3(0.86, 0.95, 1.12);
+  private static readonly OVERCAST_WB = new THREE.Vector3(0.97, 1.0, 1.04);
   /** вызывается каждый кадр со сглаженным прогрессом — для DOM-слоя */
   onStory?: (s: number) => void;
 
@@ -1294,10 +1295,12 @@ export class HillScene {
     const alt = c > 0 && this.walkReady ? 1 - wo * wo * (3 - 2 * wo) : 0;
     fx.alt = alt;
     if (alt > 0) {
-      /* тёмный грейд Meadow Walk: приглушённый цвет, контраст, тяжёлая виньетка (поверх погоды холма) */
-      fx.vibrance += (-0.5 - fx.vibrance) * alt;
-      fx.contrast += (1.12 - fx.contrast) * alt;
-      fx.vignette = this.vignetteBase + (0.85 - this.vignetteBase) * alt;
+      /* v73: пасмурный грейд по референсу (docs/prompts/v73-cases-grade.md): цвет приглушён, но не выбит в серое,
+         контраст мягкий — его держат белые цветы против неба, виньетка лёгкая: центр чуть светлее краёв.
+         Был тёмный грейд Meadow Walk — насыщенность −0.5, контраст 1.12, виньетка 0.85 — почти ночь */
+      fx.vibrance += (-0.15 - fx.vibrance) * alt;
+      fx.contrast += (1.04 - fx.contrast) * alt;
+      fx.vignette = this.vignetteBase + (0.45 - this.vignetteBase) * alt;
       fx.raysEnabled = false;
     } else if (fx.vignette !== this.vignetteBase) {
       fx.vignette = this.vignetteBase;
@@ -1321,6 +1324,8 @@ export class HillScene {
     fx.radial = this.reduced ? 0 : zoomBlur(fu);
     fx.aberration = this.reduced ? 0 : aberrationAt(fu);
     fx.whiteBalance.set(1, 1, 1).lerp(this.coolWB, g);
+    /* v73: в «Кейсах» баланс белого чуть холоднее — серое небо референса без тёплого налёта холма */
+    if (fx.alt > 0) fx.whiteBalance.lerp(HillScene.OVERCAST_WB, fx.alt);
     fx.fill = fu;
     const sk = ramp(s, ...STORY.studio);
     const studioMix = sk * sk * (3 - 2 * sk);
