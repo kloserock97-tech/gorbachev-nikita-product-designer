@@ -18,6 +18,13 @@ import { initCaseView } from "./ui/caseView";
 import { liteReason, enterLite, rememberLite } from "./ui/lite";
 import { initLangToggle } from "./ui/langToggle";
 import { initI18n, onLang, t } from "./i18n";
+
+/* v74.2: ширина полосы прокрутки. Сетка первого экрана считается от 100vw (с полосой), а всё закреплённое
+   (fixed) — от видимой ширины без неё: кнопка звука и кнопки «Кейсов» стояли левее правого поля карточки
+   ровно на ширину полосы. --sbw возвращает им общую вертикаль */
+const syncScrollbar = () => document.documentElement.style.setProperty("--sbw", `${Math.max(0, innerWidth - document.documentElement.clientWidth)}px`);
+syncScrollbar();
+addEventListener("resize", syncScrollbar);
 import { cue } from "./audio/bus";
 import { CASES, CHAPTER, CHAPTER2, TIMELINE, chapters } from "./scene/story";
 import { topFor } from "./ui/storyScroll";

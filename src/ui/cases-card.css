@@ -40,7 +40,7 @@
     inset 0 -30px 60px -40px rgba(0, 0, 0, 0.35);
 }
 /* заголовок главы стоит внутри окна с полем в 4 модуля от его верха */
-.cases[data-mode="wheel"][data-preview="card"] { --head-top: calc(var(--frame-top, 100px) + clamp(26px, 4.2vh, 46px)); }
+.cases[data-mode="wheel"][data-preview="card"] { --head-top: calc(var(--frame-top, 100px) + clamp(26px, 4.2vh, 46px)); --side: calc(50 * var(--u, 1px)); }
 .cases.is-narrow[data-mode="wheel"][data-preview="card"] { --head-top: calc(var(--frame-top, 64px) + 18px); }
 /* дуга-барабан не видна: её место заняло оглавление; пункты остаются в разметке — к ним обращается оглавление */
 .cases[data-preview="card"] .cw-wheel { visibility: hidden; pointer-events: none; }
@@ -109,9 +109,10 @@
 .cases.is-narrow[data-preview="card"] .cw-fact { display: flex; }
 
 /* кнопки шага — внутри рамки, у её правого нижнего угла, а не на её кромке */
+/* правый край кнопок — поле страницы (50u): на одной вертикали с кнопкой звука и карточкой первого экрана */
 .cases[data-preview="card"][data-mode="wheel"]:not(.is-narrow) .cw-steps {
-  right: calc(var(--side, 60px) - clamp(18px, 2.2vw, 40px) + clamp(14px, 1.4vw, 22px));
-  bottom: calc(clamp(14px, 2.4vh, 28px) + clamp(14px, 1.4vw, 22px));
+  right: calc(50 * var(--u, 1px) - var(--sbw, 0px));
+  bottom: calc(clamp(14px, 2.4vh, 28px) + 22px);
 }
 
 /* ── оглавление кейсов ────────────────────────────────────────────────────
@@ -120,7 +121,7 @@
 .cc-index {
   --row: clamp(40px, 5.4vh, 54px);
   position: absolute; z-index: 2; pointer-events: auto;
-  right: calc(clamp(18px, 2.2vw, 40px) + clamp(84px, 7vw, 120px)); top: 50%;
+  right: calc(50 * var(--u, 1px) - var(--sbw, 0px) + 46px + clamp(28px, 3vw, 56px)); top: 50%;
   width: clamp(240px, 21vw, 340px); translate: 0 -50%;
   display: grid; grid-auto-rows: var(--row);
   opacity: var(--e, 1); transition: opacity 0.3s ease;
@@ -154,3 +155,20 @@
 .cases.is-narrow .cc-ix.is-on { flex: 3; background: #fff; }
 .cases.is-narrow .cc-ix > span { display: none; }
 .cases.is-narrow .cc-ix-now { display: block; order: -1; flex-basis: 100%; margin: 0 0 6px; font-size: 13px; color: rgba(255, 255, 255, 0.8); }
+
+/* v74.2: сетка главы совпадает с первым экраном — поля 50u. Заголовок, текст, плашки и кнопки стоят по ним;
+   низ текстовой колонки и кнопок шага — одна линия, в 22 px от нижней кромки рамки */
+.cases[data-preview="card"][data-mode="wheel"]:not(.is-narrow) .cases-head { left: var(--side); }
+.cases[data-preview="card"][data-mode="wheel"]:not(.is-narrow) .cw-preview { bottom: calc(clamp(14px, 2.4vh, 28px) + 22px); }
+.cases[data-preview="card"]:not(.is-narrow) .cc-kind { left: 0; }
+
+/* v74.2, телефон: те же поля, что у первого экрана (34u ≈ 18 px), — заголовок, колонка, кнопки шага и
+   оглавление стоят по одной вертикали и не прижимаются к кромке рамки */
+.cases.is-narrow[data-preview="card"] { --side: calc(34 * var(--u, 0.54px)); }
+.cases.is-narrow[data-preview="card"] .cases-head { left: var(--side); right: var(--side); }
+.cases.is-narrow[data-preview="card"] .cw-preview { left: var(--side); right: var(--side); }
+.cases.is-narrow[data-mode="wheel"][data-preview="card"] .cw-step[data-d="-1"] { left: var(--side); }
+.cases.is-narrow[data-mode="wheel"][data-preview="card"] .cw-step--next { right: var(--side); left: auto; }
+.cases.is-narrow[data-preview="card"] .cc-index { left: calc(var(--side) + 58px); right: calc(var(--side) + 58px); }
+.cases.is-narrow .cc-kind { left: 0; }
+.cases.is-narrow .cc-brand { right: 0; }

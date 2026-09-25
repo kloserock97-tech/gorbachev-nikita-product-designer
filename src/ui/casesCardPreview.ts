@@ -82,7 +82,11 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
       const dock = document.querySelector<HTMLElement>(".dock")?.getBoundingClientRect();
       const gap = narrowNow ? 10 : clamp(W * 0.012, 12, 20);
       const top0 = Math.max(dock && dock.bottom > 0 && dock.bottom < H * 0.3 ? dock.bottom + gap : 0, narrowNow ? 64 : 92);
-      const side0 = narrowNow ? 8 : clamp(W * 0.022, 18, 40);
+      /* v74.2: одна сетка с первым экраном: поля страницы — 50 единиц (--u в hero.css: ширина / 1600), окно
+         рамки на 22 px шире, поэтому текст и кнопки внутри стоят ровно по полям, как заголовок и карточка холма */
+      const u = Math.min(innerWidth / 1600, 1900 / 1600);
+      const side0 = narrowNow ? 8 : 50 * u - 22;
+      const sbw = innerWidth - W; // сетка — от 100vw, окно главы — без полосы прокрутки
       const bottom0 = narrowNow ? 10 : clamp(H * 0.024, 14, 28);
       const r0 = narrowNow ? 22 : clamp(W * 0.02, 22, 36);
       /* окно сужается к месту вместе с появлением главы: в начале оно во весь экран и рамки не видно */
@@ -92,15 +96,13 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
       if (key === lastKey) return;
       lastKey = key;
       root.style.setProperty("--frame-top", `${top0.toFixed(1)}px`);
-      const x0 = side, y0 = top, x1 = W - side, y1 = H - bottom;
+      const x0 = side, y0 = top, x1 = W - Math.max(0, side - sbw * k), y1 = H - bottom;
       frame.style.cssText = `left:${x0}px;top:${y0}px;width:${x1 - x0}px;height:${y1 - y0}px;border-radius:${r}px;opacity:${k.toFixed(3)}`;
       /* весь экран минус скруглённое окно: evenodd оставляет только поле вокруг */
       const hole = `M${x0 + r} ${y0}H${x1 - r}A${r} ${r} 0 0 1 ${x1} ${y0 + r}V${y1 - r}A${r} ${r} 0 0 1 ${x1 - r} ${y1}H${x0 + r}A${r} ${r} 0 0 1 ${x0} ${y1 - r}V${y0 + r}A${r} ${r} 0 0 1 ${x0 + r} ${y0}Z`;
-      /* док и кнопка звука лежат слоем ниже главы — стекло размыло бы и их. Вырезаем под ними окна */
-      const holes = [".dock", ".sound-fab"].map((sel) => document.querySelector<HTMLElement>(sel)?.getBoundingClientRect()).filter((b): b is DOMRect => !!b && b.width > 0 && b.bottom > 0 && b.top < H)
-        .map((b) => { const p = 3, q = Math.min(b.height / 2 + p, 22); const X0 = b.left - p, Y0 = b.top - p, X1 = b.right + p, Y1 = b.bottom + p;
-          return `M${X0 + q} ${Y0}H${X1 - q}A${q} ${q} 0 0 1 ${X1} ${Y0 + q}V${Y1 - q}A${q} ${q} 0 0 1 ${X1 - q} ${Y1}H${X0 + q}A${q} ${q} 0 0 1 ${X0} ${Y1 - q}V${Y0 + q}A${q} ${q} 0 0 1 ${X0 + q} ${Y0}Z`; }).join(" ");
-      mat.style.clipPath = `path(evenodd, "M0 0H${W}V${H}H0Z ${hole} ${holes}")`;
+      /* стекло — по бокам и снизу окна, от его верхней кромки вниз. Полоса над рамкой, где док и кнопка звука,
+         остаётся чистой: навигация не заключена в рамку */
+      mat.style.clipPath = `path(evenodd, "M0 ${y0}H${W}V${H}H0Z ${hole}")`;
       mat.style.opacity = k.toFixed(3);
     };
     new MutationObserver(fit).observe(root, { attributes: true, attributeFilter: ["style", "class"] });

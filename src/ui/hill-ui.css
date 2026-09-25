@@ -115,13 +115,15 @@ body {
      он выше окна. Всё, что стоит у нижнего края кадра, привязано и к высоте окна: статистика, кнопка ветра и
      «Дальше» поднимаются вместе с нижним краем и не обрезаются */
   .stage { --stat-top: min(calc(770 * var(--u)), calc(100svh - 40 * var(--u) - 26px)); }
-  .scroll { top: min(calc(690 * var(--u)), calc(100svh - 150 * var(--u) - 14px)); }
-  .play-wrap { left: calc(470 * var(--u)); top: calc(var(--stat-top) - 46 * var(--u)); width: calc(64 * var(--u)); height: calc(64 * var(--u)); }
+  /* v74.2: сетка первого экрана — поля 50u слева и справа, нижняя строка — по низу карточки. «Дальше» стоит по
+     центральной оси и кончается на той же нижней линии, кнопка ветра — по центру строки статистики */
+  .scroll { left: calc(793 * var(--u)); top: calc(var(--stat-top) - 102 * var(--u)); }
+  .play-wrap { left: calc(560 * var(--u)); top: calc(var(--stat-top) - 12 * var(--u)); width: calc(64 * var(--u)); height: calc(64 * var(--u)); }
   .gust { width: calc(38 * var(--u)); height: calc(38 * var(--u)); margin: calc(-19 * var(--u)) 0 0 calc(-19 * var(--u)); }
   .gust svg { width: calc(13 * var(--u)); height: calc(13 * var(--u)); margin-left: calc(2 * var(--u)); }
 
-  .stat--a { left: calc(64 * var(--u)); top: var(--stat-top); }
-  .stat--b { left: calc(300 * var(--u)); top: var(--stat-top); }
+  .stat--a { left: calc(50 * var(--u)); top: var(--stat-top); }
+  .stat--b { left: calc(286 * var(--u)); top: var(--stat-top); }
 
   /* v19: одна карточка справа — «How the hill was grown»; «Who sits here?» ушла в скролл-историю */
   /* v68: карточка прижата к правому полю кадра тем же отступом, что и текстовая колонка слева (50u),
@@ -843,7 +845,8 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 }
 .sound-fab {
   --h: max(40px, calc(46 * var(--u)));
-  position: fixed; z-index: 30; top: calc(38 * var(--u)); right: clamp(16px, 4.4vw, 88px);
+  /* v74.2: правый край — поле страницы (50u), как у карточки первого экрана и кнопок шага в «Кейсах» */
+  position: fixed; z-index: 30; top: calc(38 * var(--u)); right: calc(50 * var(--u) - var(--sbw, 0px));
   display: inline-flex; align-items: center; height: var(--h); min-width: var(--h); padding: 0; margin: 0;
   border: 1px solid rgba(248, 250, 240, 0.14); border-radius: 999px; cursor: pointer;
   background: var(--glass, rgba(30, 36, 27, 0.8)); color: rgba(244, 241, 234, 0.82);
@@ -894,7 +897,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 @keyframes sound-ring { 0% { opacity: 0.8; scale: 1; } 35%, 100% { opacity: 0; scale: 1.7; } }
 
 @media (max-width: 900px) {
-  .sound-fab { --h: 46px; top: auto; bottom: max(16px, env(safe-area-inset-bottom)); right: 14px; translate: 0 8px; }
+  .sound-fab { --h: 46px; top: auto; bottom: max(16px, env(safe-area-inset-bottom)); right: calc(34 * var(--u)); translate: 0 8px; }
   /* счётчик и полоса ленты кейсов не заходят под кнопку */
   .cases[data-mode="swipe"] .cases-foot { padding-right: 76px; }
 }

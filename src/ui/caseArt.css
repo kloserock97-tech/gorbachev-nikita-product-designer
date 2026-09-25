@@ -158,3 +158,9 @@
 @keyframes ya-in { from { opacity: 0; scale: 0.94; } }
 @keyframes ya-fade { from { opacity: 0; } }
 @keyframes ya-pop { from { opacity: 0; scale: 0.6; } }
+
+/* телефон: колонка главы уже, чем высота, и фигура в 46 модулей выходила за край экрана.
+   Здесь она меньше и стоит по центру колонки */
+.cases.is-narrow .ya--fit { --S: calc(var(--m) * 36); --cx: 50cqw; --cy: calc(var(--m) * 29);
+  --W: calc(var(--m) * 58); --tx: calc(var(--m) * -18); --ty: calc(var(--m) * -13);
+  --Wp: calc(var(--m) * 15); --txp: calc(var(--m) * -5); --typ: calc(var(--m) * -12); }
