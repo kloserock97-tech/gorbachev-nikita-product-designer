@@ -1006,8 +1006,11 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 .sf-nav a { color: #fff; text-decoration: none; opacity: 0.88; transition: opacity 0.2s ease; }
 .sf-nav a:hover { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }
 @media (max-width: 900px) {
-  /* v76.1: внизу справа на телефоне стоит кнопка звука — строка с копирайтом и ссылками кончается над ней */
-  .site-footer { padding-top: 96px; padding-bottom: calc(max(16px, env(safe-area-inset-bottom)) + 62px); }
+  .site-footer { padding-top: 96px; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+  /* v76.2: в футере нижний край экрана — у навигации: строка с копирайтом и ссылками стоит у самого низа, как
+     принято у футера. Кнопка звука, которая на телефоне живёт внизу справа, в футере переезжает в правый
+     верхний угол — навбар к этому месту уже уехал, угол свободен, и кнопка ничего не перекрывает */
+  body:has(.site-footer.is-on) .sound-fab { top: max(16px, env(safe-area-inset-top)); bottom: auto; }
   .sf-pill, .sf-copy { height: 46px; padding: 0 16px; font-size: 14px; }
   .sf-bar { font-size: 13px; }
 }
