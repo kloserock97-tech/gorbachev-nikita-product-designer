@@ -296,7 +296,8 @@ export function createPostFx(
       mask.uniforms.tColor.value = src.texture;
       if (low && !covered && !reuse) {
         quarter.uniforms.tInput.value = bgRT.texture;
-        quarter.uniforms.uR.value = params.bgBlur * 0.016;
+        /* v73.1: луг кейсов размыт слабее холма — трава, цветы и камни читаются фактурой, а не пятном */
+        quarter.uniforms.uR.value = params.bgBlur * 0.016 * (1 - 0.7 * Math.min(1, params.alt));
         quarter.uniforms.uMode.value = 0;
         draw(quarter, bgBlurRT);
         if (altMix) {

@@ -23,24 +23,25 @@ const WAVE_LIFE = 2.6;
 const WAVE_REACH = 0.4 + WAVE_SPEED * WAVE_LIFE + 2.5;
 const SEA = -1.6;
 
-/* v73: пасмурный пресет вместо сумеречного (docs/prompts/v73-cases-grade.md, референс — цветущий склон под
-   серым небом). Цвета линейные. Зелень — шалфей и оливка, а не сочная трава: в пасмурный день насыщенность
-   падает, и контраст держится на тоне — белые цветы против серого неба и глубоких теней в траве */
+/* v73.1: лесная поляна в контровом свете (docs/prompts/v73-cases-grade.md, второй референс — моховой холм
+   на фоне тёмного леса). Цвета линейные. Зелень тёплая, жёлто-зелёная, синего в ней почти нет; кромки
+   травинок горят лаймом от солнца за травой; цветы — красно-оранжевые. Пасмурный серый пресет (первый
+   референс) владелец не принял: трава и камни растворились в светлом тумане */
 const C = {
-  lush: new THREE.Vector3(0.06, 0.1, 0.035),
-  meadow: new THREE.Vector3(0.18, 0.22, 0.07),
-  dry: new THREE.Vector3(0.32, 0.31, 0.17),
-  rock: new THREE.Vector3(0.4, 0.39, 0.37),
-  path: new THREE.Vector3(0.46, 0.43, 0.36),
-  root: new THREE.Vector3(0.026, 0.036, 0.014),
-  tip: new THREE.Vector3(0.19, 0.24, 0.07),
-  tipDry: new THREE.Vector3(0.3, 0.31, 0.17),
-  stone: new THREE.Vector3(0.45, 0.44, 0.42),
-  flower: new THREE.Vector3(0.95, 0.93, 0.85),
-  flowerYellow: new THREE.Vector3(0.55, 0.46, 0.2),
+  lush: new THREE.Vector3(0.035, 0.06, 0.012),
+  meadow: new THREE.Vector3(0.07, 0.13, 0.025),
+  dry: new THREE.Vector3(0.16, 0.18, 0.05),
+  rock: new THREE.Vector3(0.3, 0.29, 0.25),
+  path: new THREE.Vector3(0.36, 0.32, 0.22),
+  root: new THREE.Vector3(0.01, 0.016, 0.004),
+  tip: new THREE.Vector3(0.12, 0.24, 0.035),
+  tipDry: new THREE.Vector3(0.24, 0.3, 0.06),
+  stone: new THREE.Vector3(0.36, 0.35, 0.3),
+  flower: new THREE.Vector3(0.72, 0.16, 0.05),
+  flowerYellow: new THREE.Vector3(0.85, 0.36, 0.14),
 };
-/* небо и туман: нейтральный холодный серый — на референсе (106–115, 111–122, 115–129) в sRGB */
-const NIGHT = new THREE.Color("#a4abb3");
+/* фон и туман: тёмный лес — почти чёрный с зелёной дымкой, на референсе (10–38, 10–42, 14–29) в sRGB */
+const NIGHT = new THREE.Color("#141a10");
 
 const cursorFieldGLSL = /* glsl */ `
 uniform vec4 uHead;
@@ -106,8 +107,8 @@ export class Meadow {
   private readonly heightScene = new THREE.Scene();
   private readonly heightCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   private readonly texel: number;
-  /* солнце за облаками: высоко, слабо и без закатного тона — мягкие короткие тени */
-  private readonly sun = new THREE.DirectionalLight("#f1f0ec", 1.9);
+  /* солнце низко в глубине кадра, тёплое: контровой свет, как луч сквозь лес на референсе */
+  private readonly sun = new THREE.DirectionalLight("#ffe2a8", 3.4);
   private readonly grass: { geo: THREE.InstancedBufferGeometry; max: number; center: THREE.Vector2; tile: number }[] = [];
   private readonly materials: THREE.Material[] = [];
   private readonly geometries: THREE.BufferGeometry[] = [];
@@ -151,8 +152,8 @@ export class Meadow {
     this.U.uSize.value = this.worldSize;
     this.U.uTexel.value = 1 / q.heightRes;
     this.scene.background = NIGHT.clone();
-    /* туман гуще прежнего: дальний луг тает в сером небе, как склон на референсе */
-    this.scene.fog = new THREE.FogExp2(NIGHT.getHex(), 0.017);
+    /* даль тонет в темноте леса, ближний склон остаётся в свету */
+    this.scene.fog = new THREE.FogExp2(NIGHT.getHex(), 0.02);
 
     this.heightRT = new THREE.WebGLRenderTarget(q.heightRes, q.heightRes, {
       type: THREE.HalfFloatType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: false,
@@ -191,8 +192,8 @@ export class Meadow {
   }
 
   private buildLights() {
-    /* пасмурно: главный свет — рассеянный от неба сверху, холодный; снизу — отражённый от травы */
-    this.scene.add(new THREE.HemisphereLight("#d4d9de", "#4a4d3e", 3.2));
+    /* под пологом леса рассеянного света мало и он зелёный; главный — солнце за травой */
+    this.scene.add(new THREE.HemisphereLight("#8a9a62", "#0b0d07", 0.9));
     this.sun.castShadow = this.q.shadows;
     const s = this.sun.shadow;
     s.mapSize.set(2048, 2048);
@@ -359,7 +360,7 @@ export class Meadow {
             attribute vec4 aSeed;
             uniform vec2 uGrassCenter; uniform float uGrassTile; uniform vec2 uBladeH; uniform vec2 uBladeW;
             uniform float uTime; uniform float uWindTime; uniform float uSea;
-            varying float vGrassY; varying float vGrassTint; varying float vFlower;`)
+            varying float vGrassY; varying float vGrassTint; varying float vFlower; varying float vGlow;`)
           .replace("#include <beginnormal_vertex>", "vec3 objectNormal = vec3(0.0, 1.0, 0.0);")
           .replace("#include <begin_vertex>", /* glsl */ `
             float T = uGrassTile;
@@ -398,11 +399,17 @@ export class Meadow {
             vGrassTint = clamp(r3 * 0.6 + gust * 0.5 + 0.2, 0.0, 1.0);
             /* v73: цветы — кончики части травинок в пятнах-куртинах; чаще белые, изредка жёлтые. Под размытием
                главы они читаются мягкими светлыми пятнами, как цветущие кусты на референсе */
-            float patch = smoothstep(0.1, 0.34, tdNoise(wxz * 0.085 + 31.0));
+            float flowerPatch = smoothstep(0.2, 0.42, tdNoise(wxz * 0.085 + 31.0));
             float pick = fract(r1 * 7.31 + r2 * 3.17);
-            vFlower = pick < 0.6 * patch ? (fract(r2 * 11.3) < 0.2 ? 2.0 : 1.0) : 0.0;`);
+            vFlower = pick < 0.22 * flowerPatch ? (fract(r2 * 11.3) < 0.4 ? 2.0 : 1.0) : 0.0;
+            /* пятна света: солнце пробивается сквозь полог — по склону медленно плывут освещённые поляны */
+            vGlow = smoothstep(-0.1, 0.45, tdNoise(wxz * 0.05 + vec2(uWindTime * 0.015, -uWindTime * 0.01) + 13.0));`);
         sh.fragmentShader = sh.fragmentShader
-          .replace("#include <common>", "#include <common>\nvarying float vGrassY;\nvarying float vGrassTint;\nvarying float vFlower;")
+          .replace("#include <common>", "#include <common>\nvarying float vGrassY;\nvarying float vGrassTint;\nvarying float vFlower;\nvarying float vGlow;")
+          /* контровой свет: кончики травинок светятся лаймом на просвет — в освещённых пятнах сильнее */
+          .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+            float lit = pow(clamp(vGrassY, 0.0, 1.0), 3.5) * mix(0.1, 1.0, vGlow * vGlow);
+            totalEmissiveRadiance += (vFlower > 0.5 ? diffuseColor.rgb * 0.8 : vec3(0.16, 0.3, 0.035)) * lit;`)
           /* обратная грань не переворачивает нормаль — иначе стебли чёрные */
           .replace("#include <normal_fragment_begin>", "#include <normal_fragment_begin>\n normal = normalize(vNormal);")
           /* clamp: у основания интерполяция даёт −1e-7, pow от отрицательного = NaN → чёрные вспышки через bloom */
@@ -519,9 +526,14 @@ export class Meadow {
         uniform vec3 uCam; uniform float uTime; uniform float uDpr;
         ${cursorFieldGLSL}
         varying float vAlpha;
+        varying float vSpin;
+        varying float vTone;
         void main() {
+          vSpin = uTime * (0.8 + aSeed.z * 1.6) + aSeed.x * 20.0;
+          vTone = fract(aSeed.y * 7.1);
           vec3 box = vec3(56.0, 22.0, 56.0);
-          vec3 p = aSeed * box + vec3(sin(uTime * 0.13 + aSeed.x * 40.0) * 1.2, uTime * (aSeed.y - 0.4) * 0.12, uTime * 0.35);
+          /* v73.1: лепестки медленно падают и кружатся, а не висят пылью */
+          vec3 p = aSeed * box + vec3(sin(uTime * 0.4 + aSeed.x * 40.0) * 1.4, -uTime * (0.35 + aSeed.y * 0.5), uTime * 0.35);
           vec3 origin = uCam - box * vec3(0.5, 0.65, 0.5);
           vec3 w = origin + mod(p - origin, box);
           vec3 field = cursorField(w.xz);
@@ -529,7 +541,7 @@ export class Meadow {
           w.y += field.z * (0.6 + 1.2 * aSeed.y);
           vec4 mv = viewMatrix * vec4(w, 1.0);
           gl_Position = projectionMatrix * mv;
-          float size = (1.2 + 5.0 * pow(fract(aSeed.z * 9.13), 6.0)) * uDpr * 14.0 / -mv.z;
+          float size = (2.4 + 5.0 * pow(fract(aSeed.z * 9.13), 4.0)) * uDpr * 14.0 / -mv.z;
           /* не меньше 2 px: субпиксельные точки мерцают между кадрами */
           gl_PointSize = clamp(size, 2.0 * uDpr, 7.0 * uDpr);
           float tw = 0.75 + 0.25 * sin(uTime * (0.6 + aSeed.x * 1.2) + aSeed.y * 50.0);
@@ -537,9 +549,17 @@ export class Meadow {
         }`,
       fragmentShader: /* glsl */ `
         varying float vAlpha;
+        varying float vSpin;
+        varying float vTone;
         void main() {
-          float a = smoothstep(0.5, 0.1, length(gl_PointCoord - 0.5)) * vAlpha;
-          gl_FragColor = vec4(vec3(0.95, 0.93, 0.9) * a, a);
+          /* лепесток: вытянутый эллипс, поворачивается и «переворачивается» (сплющивается) в полёте */
+          vec2 q = gl_PointCoord - 0.5;
+          float c = cos(vSpin), s = sin(vSpin);
+          q = mat2(c, -s, s, c) * q;
+          q.y /= max(0.25, abs(sin(vSpin * 0.7))) * 0.55;
+          float a = smoothstep(0.5, 0.3, length(q)) * vAlpha;
+          vec3 col = mix(vec3(0.95, 0.42, 0.26), vec3(0.98, 0.72, 0.52), vTone);
+          gl_FragColor = vec4(col * a, a);
         }`,
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     });
@@ -584,7 +604,8 @@ export class Meadow {
     const smooth = (x: number) => x * x * (3 - 2 * x);
     const pathX = (tt: number) => 16 * Math.sin(tt * 0.029) + 6 * Math.sin(tt * 0.071 + 1.3);
     const breath = 0.5 + 0.5 * Math.sin(t * 0.05 + 1.9);
-    let height = THREE.MathUtils.lerp(5, 10.5, smooth(breath)) + Math.sin(t * 0.105) * 1.2;
+    /* v73.1: ниже к траве (было 5–10.5 м): с высоты травинки меньше пикселя, и луг читался гладким бархатом */
+    let height = THREE.MathUtils.lerp(2.2, 4.4, smooth(breath)) + Math.sin(t * 0.105) * 0.5;
     this.walked += dt * 2.1;
     this.mouse.lerp(this.hover ? this.pointer : Meadow.ZERO, 1 - Math.exp(-dt * 2.4));
     const x = pathX(t) + this.mouse.x * 0.6;
@@ -594,11 +615,11 @@ export class Meadow {
     for (const ahead of [0, 4, 9]) ground = Math.max(ground, terrainHeight(x + Math.sin(heading) * ahead, z - Math.cos(heading) * ahead, t));
     if (this.groundSmooth === null) this.groundSmooth = ground;
     this.groundSmooth += (ground - this.groundSmooth) * Math.min(1, dt * (ground > this.groundSmooth ? 3 : 0.8));
-    height = Math.max(height, this.groundSmooth + 3.2);
+    height = Math.max(height, this.groundSmooth + 1.7);
     const lift = THREE.MathUtils.clamp((height - 4) / 15, 0, 1);
     /* v73: взгляд чуть сверху вниз, под углом: склон с цветами занимает кадр, серое небо — полосой сверху.
        Было −14…−40° (одна трава и чёрная полоска неба), почти горизонт (−4…−13°) владельцу показался плоским */
-    const pitch = THREE.MathUtils.degToRad(THREE.MathUtils.lerp(-11, -21, smooth(lift)) + Math.sin(t * 0.13) * 2 + this.mouse.y * 2.5);
+    const pitch = THREE.MathUtils.degToRad(THREE.MathUtils.lerp(-10, -17, smooth(lift)) + Math.sin(t * 0.13) * 2 + this.mouse.y * 2.5);
     const yaw = THREE.MathUtils.degToRad(THREE.MathUtils.radToDeg(heading) * 0.8 + Math.sin(t * 0.057) * 9 - this.mouse.x * 4);
     this.camera.position.set(x, height, z);
     this.dir.set(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
@@ -619,7 +640,7 @@ export class Meadow {
     }
 
     /* солнце: низко, из глубины кадра справа — длинные тени к зрителю */
-    const el = THREE.MathUtils.degToRad(58), az = THREE.MathUtils.degToRad(35);
+    const el = THREE.MathUtils.degToRad(22), az = THREE.MathUtils.degToRad(12);
     const fx = Math.round(this.look.x / 0.05) * 0.05, fz = Math.round(this.look.z / 0.05) * 0.05;
     this.sun.target.position.set(fx, 0, fz);
     this.sun.position.set(fx + Math.sin(az) * Math.cos(el) * 80, Math.sin(el) * 80, fz - Math.cos(az) * Math.cos(el) * 80);
