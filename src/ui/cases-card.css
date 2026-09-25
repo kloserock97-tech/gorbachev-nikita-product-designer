@@ -188,3 +188,4 @@
 /* v74.3: мокапы кейсов лежат стопкой, соседние прозрачны, но оставались над текущим и перехватывали нажатие:
    жмёшь на GRIF — открываются «ИИ-агенты». Нажимается только текущий */
 .cc-win:not(.is-cur) { pointer-events: none; }
+@media (hover: none) and (pointer: coarse) { .cc-mat:not(.cc-mat--hero) { bottom: auto; height: 100vh; height: 100lvh; } }

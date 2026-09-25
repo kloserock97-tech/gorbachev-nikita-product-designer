@@ -107,7 +107,10 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
       frame.style.cssText = `left:${x0}px;top:${y0}px;width:${x1 - x0}px;height:${y1 - y0}px;border-radius:${r}px;opacity:${k.toFixed(3)}`;
       /* весь экран минус скруглённое окно: evenodd оставляет только поле вокруг */
       const hole = `M${x0 + r} ${y0}H${x1 - r}A${r} ${r} 0 0 1 ${x1} ${y0 + r}V${y1 - r}A${r} ${r} 0 0 1 ${x1 - r} ${y1}H${x0 + r}A${r} ${r} 0 0 1 ${x0} ${y1 - r}V${y0 + r}A${r} ${r} 0 0 1 ${x0 + r} ${y0}Z`;
-      mat.style.clipPath = `path(evenodd, "M0 0H${W}V${H}H0Z ${hole}")`;
+      /* стекло на телефоне тянется до низа большого окна (под спрятанной панелью браузера), глава — только до
+         низа малого: иначе при спрятанной панели снизу оставалась полоса без стекла */
+      const MH = Math.max(H, mat.clientHeight);
+      mat.style.clipPath = `path(evenodd, "M0 0H${W}V${MH}H0Z ${hole}")`;
       /* стекло в первом экране не наследует видимость главы — гасим его сами: глава скрыта или уходит в футер */
       const leave = parseFloat(root.style.getPropertyValue("--leave")) || 0;
       const shown = root.classList.contains("is-on") ? Math.max(0, 1 - leave) : 0;

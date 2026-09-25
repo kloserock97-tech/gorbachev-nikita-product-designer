@@ -581,7 +581,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 
 /* полоса прогресса у правого края, как у oryzo.ai: тонкая, светлая над холмом и тёмная над страницей */
 .story-progress {
-  position: fixed; top: 0; right: 0; z-index: 30; width: 3px; height: 100vh; height: 100dvh;
+  position: fixed; top: 0; right: 0; z-index: 30; width: 3px; height: 100vh; height: 100svh;
   pointer-events: none; opacity: 0; transition: opacity 0.4s ease;
 }
 .story-progress::before {
@@ -1158,4 +1158,17 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 .case-view #cv-title:focus { outline: none; }
 @media (prefers-reduced-motion: reduce) {
   .case-view { translate: none; }
+}
+
+/* v74.3: панель браузера на телефоне. Когда адресная строка и нижнее меню прячутся при прокрутке, окно
+   вырастает на 50–90 px. Холст, страница About, глава «Кейсы» и футер были растянуты по текущему окну
+   (inset: 0) и на каждое прятанье меняли размер: сцена пересчитывала кадр, компьютер переставлялся в
+   промежутке между абзацами, рамка «Кейсов» прыгала — листать было неприятно.
+   Приём из практики мобильной вёрстки: фон — по большому окну (lvh, панель спрятана): он всегда закрывает
+   экран и не меняется; интерфейс — по малому (svh, панель видна): он никогда не уходит под панель и тоже не
+   меняется. dvh, который едет вслед за панелью, как раз и даёт рывки. Прогресс истории уже считается от
+   устойчивой высоты (viewH в storyScroll.ts) */
+@media (hover: none) and (pointer: coarse) {
+  #scene { top: 0; bottom: auto; height: 100vh; height: 100lvh; }
+  .story-hero, .cases, .site-footer { bottom: auto; height: 100vh; height: 100svh; }
 }
