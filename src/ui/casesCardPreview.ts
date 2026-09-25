@@ -79,6 +79,13 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
       const e = parseFloat(root.style.getPropertyValue("--e")) || 0;
       const W = root.clientWidth, H = root.clientHeight;
       const narrowNow = root.classList.contains("is-narrow");
+      /* v74.3: стекло — во всём поле вокруг окна, и в полосе над ним тоже. Чтобы навбар лёг поверх стекла, а не
+         под него, на широком экране слой стекла живёт в первом экране (.hero), между холстом и доком: док
+         остаётся чётким без вырезов и рамок вокруг него. На телефоне первый экран уезжает вместе с доком,
+         и стекло остаётся в главе */
+      const hero = document.querySelector<HTMLElement>(".hero");
+      const home = !narrowNow && hero ? hero : root;
+      if (mat.parentElement !== home) { home.prepend(mat); mat.classList.toggle("cc-mat--hero", home === hero); lastKey = ""; }
       const dock = document.querySelector<HTMLElement>(".dock")?.getBoundingClientRect();
       const gap = narrowNow ? 10 : clamp(W * 0.012, 12, 20);
       const top0 = Math.max(dock && dock.bottom > 0 && dock.bottom < H * 0.3 ? dock.bottom + gap : 0, narrowNow ? 64 : 92);
@@ -92,7 +99,7 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
       /* окно сужается к месту вместе с появлением главы: в начале оно во весь экран и рамки не видно */
       const k = reduced ? (e > 0 ? 1 : 0) : ease(e * 1.25);
       const top = top0 * k, side = side0 * k, bottom = bottom0 * k, r = r0 * k;
-      const key = [W, H, top, side, bottom].map((v) => v.toFixed(1)).join("|");
+      const key = [W, H, top, side, bottom, root.classList.contains("is-on") ? 1 : 0, root.style.getPropertyValue("--leave")].map((v) => (typeof v === "number" ? v.toFixed(1) : v)).join("|");
       if (key === lastKey) return;
       lastKey = key;
       root.style.setProperty("--frame-top", `${top0.toFixed(1)}px`);
@@ -100,10 +107,12 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
       frame.style.cssText = `left:${x0}px;top:${y0}px;width:${x1 - x0}px;height:${y1 - y0}px;border-radius:${r}px;opacity:${k.toFixed(3)}`;
       /* весь экран минус скруглённое окно: evenodd оставляет только поле вокруг */
       const hole = `M${x0 + r} ${y0}H${x1 - r}A${r} ${r} 0 0 1 ${x1} ${y0 + r}V${y1 - r}A${r} ${r} 0 0 1 ${x1 - r} ${y1}H${x0 + r}A${r} ${r} 0 0 1 ${x0} ${y1 - r}V${y0 + r}A${r} ${r} 0 0 1 ${x0 + r} ${y0}Z`;
-      /* стекло — по бокам и снизу окна, от его верхней кромки вниз. Полоса над рамкой, где док и кнопка звука,
-         остаётся чистой: навигация не заключена в рамку */
-      mat.style.clipPath = `path(evenodd, "M0 ${y0}H${W}V${H}H0Z ${hole}")`;
-      mat.style.opacity = k.toFixed(3);
+      mat.style.clipPath = `path(evenodd, "M0 0H${W}V${H}H0Z ${hole}")`;
+      /* стекло в первом экране не наследует видимость главы — гасим его сами: глава скрыта или уходит в футер */
+      const leave = parseFloat(root.style.getPropertyValue("--leave")) || 0;
+      const shown = root.classList.contains("is-on") ? Math.max(0, 1 - leave) : 0;
+      mat.style.opacity = (k * shown).toFixed(3);
+      mat.style.visibility = k * shown > 0.001 ? "" : "hidden";
     };
     new MutationObserver(fit).observe(root, { attributes: true, attributeFilter: ["style", "class"] });
     addEventListener("resize", () => { lastKey = ""; fit(); });

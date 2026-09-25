@@ -181,3 +181,10 @@
 @media (prefers-reduced-motion: reduce) {
   .cc-chip, .cc.is-live .cc-chip { animation: none; transition: opacity 0.2s ease; transform: none; }
 }
+
+/* v74.3: на широком экране стекло — слой первого экрана: над холстом, под доком (z-index дока — 5) */
+.cc-mat--hero { position: fixed; z-index: 4; }
+
+/* v74.3: мокапы кейсов лежат стопкой, соседние прозрачны, но оставались над текущим и перехватывали нажатие:
+   жмёшь на GRIF — открываются «ИИ-агенты». Нажимается только текущий */
+.cc-win:not(.is-cur) { pointer-events: none; }
