@@ -171,6 +171,9 @@ export function initStory(scene: Scene) {
     /* глава «Кейсы»: страница уходит вверх ровно с рваным краем (сцена: storyTear — доля кадра) */
     const lift = c > 0 ? Math.max(0, scene.storyTear + 0.12) : 0;
     setVar(hero, "--lift", (lift * 100).toFixed(2) + "vh");
+    /* v74.2: бумага больше не уезжает, а растворяется облаком (shaders.ts) — текст и его подложки растворяются
+       вместе с ней, иначе светлые плашки About висели прямоугольниками над открывшимся лугом */
+    setVar(hero, "opacity", c > 0 ? Math.max(0, 1 - lift * 1.8).toFixed(3) : "");
     const nowGone = lift > 1.2;
     if (nowGone !== gone) { gone = nowGone; hero.style.visibility = gone ? "hidden" : ""; }
 

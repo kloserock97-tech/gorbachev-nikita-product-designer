@@ -1273,7 +1273,8 @@ export class HillScene {
     /* глава «Кейсы»: страница уходит вверх рваным краем, сцена за ней размыта */
     const tu = ramp(c, ...CASES.tear);
     const tearK = tu * tu * (3 - 2 * tu);
-    this.storyTear = c > 0 ? -0.12 + tearK * 1.32 : -1;
+    /* v74.2: край уходит от −0.12 до 1.5 — облачная кромка шириной в треть кадра должна целиком уйти за верх */
+    this.storyTear = c > 0 ? -0.12 + tearK * 1.62 : -1;
     fx.tear = this.storyTear;
     /* v32: с лугом кадр под заставкой резкий, размытие — перед лентой (CASES.blur); без луга (?walk=0 или не успел
        собраться) холм размывается сразу, как раньше: резкий холм с MSAA на весь кадр стоит ~25 мс против ~4,5 */
@@ -1327,8 +1328,11 @@ export class HillScene {
     const fu = ramp(s, ...STORY.fill);
     fx.glitch = g * TRANSITION.glitch;
     fx.glitchSeed = Math.floor(t * 18) + Math.floor(s * 60);
-    fx.radial = this.reduced ? 0 : zoomBlur(fu);
-    fx.aberration = this.reduced ? 0 : aberrationAt(fu);
+    /* v74.2: тот же воздух на выходе из About в «Кейсы»: смаз лучами от центра и разъезд каналов к краям
+       поднимаются и гаснут вместе с растворением бумаги — переход не рвёт лист, а уносит его */
+    const tearAir = c > 0 && !this.reduced ? ramp(c, ...CASES.tear) : 0;
+    fx.radial = this.reduced ? 0 : Math.max(zoomBlur(fu), zoomBlur(tearAir) * 0.7);
+    fx.aberration = this.reduced ? 0 : Math.max(aberrationAt(fu), tearAir > 0 && tearAir < 1 ? aberrationAt(Math.sin(tearAir * Math.PI)) * 0.8 : 0);
     fx.whiteBalance.set(1, 1, 1).lerp(this.coolWB, g);
     /* v73.1: в «Кейсах» баланс белого чуть теплее — солнечный луч сквозь лес */
     if (fx.alt > 0) fx.whiteBalance.lerp(HillScene.OVERCAST_WB, fx.alt);
@@ -1390,7 +1394,7 @@ export class HillScene {
     let dist = this.camera.aspect < 1 ? 1.95 : 1.42;
     const e = this.storyEnd;
     const slot = this.camera.aspect < 1 ? this.storySlot : null;
-    if (slot && slot.bottom - slot.top > 120) {
+    if (slot && slot.bottom - slot.top > 48) {
       /* v43: на вертикальном экране компьютер вписывается в свободное место между текстами страницы About.
          Расстояние — из габарита компьютера и высоты промежутка (и ширины окна), сдвиг по высоте — к центру
          промежутка. Раньше стоял на фиксированных 1,95 м по центру кадра и на невысоких телефонах закрывал
@@ -1401,7 +1405,8 @@ export class HillScene {
       const fitH = (size.y * c.height) / (2 * tanH * (slot.bottom - slot.top));
       const fitW = size.x / (2 * tanH * this.camera.aspect * 0.8);
       /* ближняя грань ближе центра и выглядит крупнее — запас 12 % */
-      dist = Math.min(3.4, Math.max(1.5, Math.max(fitH, fitW) * 1.12));
+      /* v74.2: ещё 14 процентов — воздух между компьютером и абзацами над и под ним */
+      dist = Math.min(7, Math.max(1.5, Math.max(fitH, fitW) * 1.12 * 1.14));
       e.pos.copy(this.storyEndCam).addScaledVector(fwd, dist);
       const mid = (slot.top + slot.bottom) / 2 - c.top;
       e.pos.y += (0.5 - mid / c.height) * 2 * dist * tanH;
@@ -1415,19 +1420,23 @@ export class HillScene {
     e.pitch = -Math.atan2(toCam.y, Math.hypot(toCam.x, toCam.z)) * 0.9;
 
     const pose = flightPose(this.pcRest, e, u, this.storyPose);
+    /* v74.2: на вертикальном экране компьютер стоит в промежутке между абзацами. Поворот по скроллу, наклон за
+       пальцем и заметное покачивание делали его болтающимся, а повёрнутый боком он становился шире промежутка
+       и заезжал на текст. Там он только чуть дышит */
+    const still = this.camera.aspect < 1;
     /* остановился — чуть «дышит», чтобы не выглядел наклейкой */
-    const hover = ramp(u, 0.9, 1) * (this.reduced ? 0 : 1);
+    const hover = ramp(u, 0.9, 1) * (this.reduced ? 0 : still ? 0.35 : 1);
     pose.pos.y += Math.sin(t * 1.3) * 0.01 * hover;
     pose.yaw += Math.sin(t * 0.7) * 0.025 * hover;
     /* v17: встал — поворачивается за курсором, как предмет в руках (oryzo) */
-    const tiltOn = this.reduced ? 0 : ramp(u, 0.8, 1);
+    const tiltOn = this.reduced || still ? 0 : ramp(u, 0.8, 1);
     const tk = 1 - Math.exp(-dt * 4);
     this.pcTilt.x += (this.pointer.x * tiltOn - this.pcTilt.x) * tk;
     this.pcTilt.y += (this.pointer.y * tiltOn - this.pcTilt.y) * tk;
     pose.yaw += this.pcTilt.x * 0.22;
     pose.pitch -= this.pcTilt.y * 0.1;
     /* v18: на странице About поворачивается по скроллу — показывает бок и возвращается к зрителю */
-    if (STORY_FX.spin && !this.reduced) {
+    if (STORY_FX.spin && !this.reduced && !still) {
       const sp = ramp(s, ...STORY.spin);
       pose.yaw += Math.sin(sp * Math.PI) * 0.55;
       pose.roll += Math.sin(sp * Math.PI * 2) * 0.03;

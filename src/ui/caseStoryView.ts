@@ -28,6 +28,10 @@ import "./case-story.css";
 const BASE = import.meta.env.BASE_URL;
 /* всё, что уходит в разметку, проходит типограф показа: неразрывные пробелы после предлогов, у чисел и перед тире */
 const esc = (s: string) => tidy(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+/* v74.2: адрес сайта в тексте кейса («stories.mos.ru») — настоящая ссылка, а не слово: его хочется открыть.
+   Применяется к уже экранированному тексту; точка в конце предложения в ссылку не попадает */
+const linkify = (html: string) =>
+  html.replace(/\b((?:[a-z0-9-]+\.)+(?:ru|com|app|io|dev|design))(\/[\w/-]*)?(?=[\s.,;:)!?]|$)/gi, (m) => `<a class="cs-link" href="https://${m}" target="_blank" rel="noopener">${m}</a>`);
 const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** «Заход»: первое предложение (или часть до двоеточия) — чернилами, продолжение — серым. Одно предложение
@@ -98,7 +102,7 @@ const methodCard = (m: Method, k: number) => `
     <h3>${esc(m.title)}</h3>
     <dl>
       <div><dt>${t("cs.question")}</dt><dd>${esc(m.question)}</dd></div>
-      ${m.sample ? `<div><dt>${t("cs.sample")}</dt><dd>${esc(m.sample)}</dd></div>` : ""}
+      ${m.sample ? `<div><dt>${t("cs.sample")}</dt><dd>${linkify(esc(m.sample))}</dd></div>` : ""}
     </dl>
     <p class="cs-method-finding"><b>${t("cs.finding")}</b>${esc(m.finding)}</p>
     ${m.image ? fig(m.image) : ""}
@@ -265,7 +269,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
               <p class="cs-hero-brand">${brandMark(card, "cs-brand")}<span>${esc(card.title)}</span></p>
               <p class="cs-kicker" data-reveal>${esc(s.hero.kicker)}</p>
               <h1 id="cv-title" tabindex="-1" data-reveal style="--rd:1">${keepHyphens(esc(s.hero.title))}</h1>
-              <p class="cs-tagline" data-reveal style="--rd:2">${esc(s.hero.tagline)}</p>
+              <p class="cs-tagline" data-reveal style="--rd:2">${linkify(esc(s.hero.tagline))}</p>
             </div>
             ${heroStage(card, card.title)}
           </div>

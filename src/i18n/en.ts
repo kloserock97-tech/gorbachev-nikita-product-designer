@@ -141,7 +141,7 @@ const en = {
 
   /* v32: заставка главы «Кейсы» над лугом и заметки после ленты */
   "walk.kicker": "Case studies · 2024–2026",
-  "walk.title": "Five shipped products and two concepts",
+  "walk.title": "Six products and two concepts",
   "walk.sub": "Internal tools, city services and AI products. Each case tells what was there, what I did and what came of it.",
   "shelf.title": "WebGL experiments",
 

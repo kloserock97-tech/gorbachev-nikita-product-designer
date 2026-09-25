@@ -122,11 +122,14 @@ export function layoutTimeline(input: TimelineInput) {
   const footer = input.narrow ? 2.2 : 2.5;
   const step = Math.min(0.9, Math.max(0.4, input.step));
   /* сцены главы «Кейсы» в экранах от её начала */
-  const tear: Span = [0, 0.72 * k];
-  const intro: Span = [0.52 * k, 2.17 * k];
-  const blur: Span = [1.91 * k, 2.43 * k];
-  const cardsIn: Span = [2.26 * k, 2.98 * k];
-  const stripStart = 2.88 * k; // первая карточка трогается, когда лента почти встала
+  /* v74.2: переход About → «Кейсы» длиннее (было 0.72 экрана): бумага не рвётся, а растворяется облаком,
+     и растворению нужно время, чтобы читаться. Всё, что после него, сдвинуто на ту же добавку L */
+  const L = 0.58 * k;
+  const tear: Span = [0, 1.3 * k];
+  const intro: Span = [0.52 * k + L, 2.17 * k + L];
+  const blur: Span = [1.91 * k + L, 2.43 * k + L];
+  const cardsIn: Span = [2.26 * k + L, 2.98 * k + L];
+  const stripStart = 2.88 * k + L; // первая карточка трогается, когда лента почти встала
   const stripEnd = stripStart + Math.max(1, input.cases - 1) * step;
   const stripOut: Span = [stripEnd, stripEnd + 0.43 * k];
   const notesStart = stripEnd + 0.26 * k;

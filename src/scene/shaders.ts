@@ -1329,13 +1329,14 @@ void main(){
     paperMask = clamp(1.0 - smoothstep(level - 0.14, level + 0.14, uv.y + edge), 0.0, 1.0);
     /* v19: страница оторвана снизу и уходит вверх — рваный край бумаги (крупные зубцы + волокна),
        под краем на сцене — тень от листа */
+    /* v74.2: страница больше не рвётся, а растворяется снизу вверх облачной кромкой — тем же приёмом, что
+       заливка на входе в About (наклон, два слоя шума, мягкий край 0.14). Рваные зубцы, тень под листом
+       и волокна убраны: переход стал воздушным, как переход с первого экрана */
     if (uTear > -0.19) {
-      float jag = (vnoise(vec2(uv.x * 7.0, 3.1)) - 0.5) * 0.07 + (vnoise(vec2(uv.x * 38.0, 7.7)) - 0.5) * 0.022 + (hash21(vec2(floor(uv.x / uTexel.x * 0.5), 1.0)) - 0.5) * 0.004;
-      float d = uv.y - (uTear + jag);
+      float cloud = -uv.x * 0.08 + (vnoise(uv * 3.0 + vec2(0.0, uTear * 1.5)) - 0.5) * 0.24 + (vnoise(uv * 9.0 - vec2(0.0, uTear * 2.0)) - 0.5) * 0.09;
+      float d = uv.y - (uTear + cloud);
       tearD = d;
-      float px = uTexel.y * 1.5;
-      c *= 1.0 - (1.0 - smoothstep(-0.07, 0.0, d)) * step(d, 0.0) * 0.28;
-      paperMask *= smoothstep(-px, px, d);
+      paperMask *= smoothstep(-0.16, 0.14, d);
     }
     vec3 paper = uFillColor;
     /* студийный фон вместо плоской бумаги (v17, по мотивам oryzo.ai): за компьютером светлое
@@ -1359,12 +1360,6 @@ void main(){
     paper += (hash21(floor(gl_FragCoord.xy)) - 0.5) * 0.04;
     /* кант рваной бумаги: у самого края лист чуть темнее (толщина, тень волокон), за краем —
        рваные белые волокна, торчащие наружу */
-    if (uTear > -0.19) {
-      float rim = 1.0 - smoothstep(0.0, uTexel.y * 5.0, tearD);
-      paper *= 1.0 - rim * 0.14;
-      float fiber = step(0.62, vnoise(vec2(uv.x * 260.0, 2.0))) * (1.0 - smoothstep(-uTexel.y * 7.0, 0.0, tearD)) * step(-uTexel.y * 7.0, tearD);
-      c = mix(c, vec3(0.93, 0.925, 0.91), fiber * 0.85 * step(tearD, 0.0));
-    }
     c = mix(c, paper, paperMask);
   }
   /* бегущая строка: огромные буквы едут по скроллу за компьютером — по «бумаге», под тенью и ПК */
