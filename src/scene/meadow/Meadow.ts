@@ -33,7 +33,7 @@ const C = {
   dry: new THREE.Vector3(0.16, 0.18, 0.05),
   rock: new THREE.Vector3(0.3, 0.29, 0.25),
   /* v73.3: дорожки светлее и теплее — на тёмной поляне они читаются тропинками, а не шумом */
-  path: new THREE.Vector3(0.62, 0.5, 0.3),
+  path: new THREE.Vector3(0.4, 0.34, 0.22),
   root: new THREE.Vector3(0.01, 0.016, 0.004),
   tip: new THREE.Vector3(0.12, 0.24, 0.035),
   tipDry: new THREE.Vector3(0.24, 0.3, 0.06),
@@ -271,8 +271,8 @@ export class Meadow {
             /* тёмная кромка вдоль тропы — утоптанная земля в тени травы: светлая тропа между тёмных краёв */
             verge += (smoothstep(3.5, 5.5, dpx) - smoothstep(6.5, 10.0, dpx)) * on;
           }
-          col *= 1.0 - 0.45 * clamp(verge, 0.0, 1.0);
-          diffuseColor.rgb = mix(col, ${vec3u(C.path)} * (0.85 + 0.3 * n3), clamp(paths, 0.0, 1.0));`)
+          col *= 1.0 - 0.28 * clamp(verge, 0.0, 1.0);
+          diffuseColor.rgb = mix(col, ${vec3u(C.path)} * (0.85 + 0.3 * n3), clamp(paths, 0.0, 1.0) * 0.8);`)
         .replace("#include <normal_fragment_maps>", /* glsl */ `
           #include <normal_fragment_maps>
           {
