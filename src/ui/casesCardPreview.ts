@@ -16,6 +16,9 @@
 import type { CaseItem } from "../data/cases";
 import { onLang, t } from "../i18n";
 import { pad2 } from "../lib/format";
+import { CASES, CHAPTER, CHAPTER2 } from "../scene/story";
+import { topFor } from "./storyScroll";
+import { cue } from "../audio/bus";
 import { brandMark } from "./caseLook";
 import { caseArt } from "./caseArt";
 import "./cases-card.css";
@@ -130,24 +133,33 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
   index.className = "cc-index";
   index.innerHTML = `<i class="cc-ix-glow" aria-hidden="true"></i>${list
     .map((c, i) => `<a class="cc-ix" href="#/work/${c.id}" data-i="${i}"><span class="cc-ix-n">${pad2(i + 1)}</span><span class="cc-ix-t"></span></a>`)
-    .join("")}<p class="cc-ix-now" aria-hidden="true"></p>`;
+    .join("")}<a class="cc-ix-go" href="#"><span class="cc-ix-go-l"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8.5 7H17v8.5"/></svg></a><p class="cc-ix-now" aria-hidden="true"></p>`;
   root?.appendChild(index);
   const ixs = [...index.querySelectorAll<HTMLAnchorElement>(".cc-ix")];
 
   const ixNow = index.querySelector<HTMLElement>(".cc-ix-now")!;
+  const go = index.querySelector<HTMLAnchorElement>(".cc-ix-go")!;
   const paintIndex = () => {
     list = getList();
     index.setAttribute("aria-label", t("work.title"));
+    go.querySelector(".cc-ix-go-l")!.textContent = t("cases.cta");
     ixs.forEach((a, i) => { a.querySelector(".cc-ix-t")!.textContent = list[i].title; });
   };
   paintIndex();
   onLang(paintIndex);
+  /* v74.4: пункт оглавления только переключает кейс — прокручивает к нему, даже если он уже активный, внутрь не
+     проваливается. Открывают кейс кнопка «Смотреть кейс» у активного пункта и сама карточка. Раньше щелчок по
+     активному пункту открывал кейс — и человек, который просто листал оглавление, неожиданно уходил со страницы */
+  const toCase = (i: number) => {
+    const n = ixs.length;
+    const c = CASES.strip[0] + (CASES.strip[1] - CASES.strip[0]) * (i / Math.max(1, n - 1));
+    scrollTo({ top: topFor(CHAPTER + (CHAPTER2 - CHAPTER) * c), behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? ("instant" as ScrollBehavior) : "smooth" });
+  };
   ixs.forEach((a, i) => a.addEventListener("click", (e) => {
-    const twin = root?.querySelector<HTMLAnchorElement>(`.cw-item[data-i="${i}"]`);
-    if (!twin) return;
     e.preventDefault();
-    twin.click();
+    if (!a.classList.contains("is-on")) { toCase(i); cue("progress-step", 0.6); }
   }));
+  go.addEventListener("click", () => cue("forward"));
 
   const wins = [...box.querySelectorAll<HTMLElement>(".cc-win")];
   /* снимка может не быть (кейс только заводят) — тогда в окне остаётся поле цвета кейса, а не битая картинка */
@@ -213,6 +225,8 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
     /* подсветка в оглавлении едет за дробным положением: смена кейса видна и справа */
     const cur = clamp(Math.round(pos), 0, ixs.length - 1);
     ixs.forEach((a, i) => { a.classList.toggle("is-on", i === cur); a.setAttribute("aria-current", i === cur ? "true" : "false"); });
+    /* кнопка открытия едет за подсветкой и ведёт в текущий кейс */
+    if (list[cur]) go.href = `#/work/${list[cur].id}`;
     index.style.setProperty("--pos", pos.toFixed(3));
     index.style.setProperty("--n", String(ixs.length));
     ixNow.textContent = `${pad2(cur + 1)} / ${pad2(ixs.length)} · ${list[cur]?.title ?? ""}`;

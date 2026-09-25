@@ -122,7 +122,7 @@
   --row: clamp(40px, 5.4vh, 54px);
   position: absolute; z-index: 2; pointer-events: auto;
   right: calc(50 * var(--u, 1px) - var(--sbw, 0px) + 46px + clamp(28px, 3vw, 56px)); top: 50%;
-  width: clamp(240px, 21vw, 340px); translate: 0 -50%;
+  width: clamp(300px, 25vw, 400px); translate: 0 -50%;
   display: grid; grid-auto-rows: var(--row);
   opacity: var(--e, 1); transition: opacity 0.3s ease;
 }
@@ -189,3 +189,27 @@
    жмёшь на GRIF — открываются «ИИ-агенты». Нажимается только текущий */
 .cc-win:not(.is-cur) { pointer-events: none; }
 @media (hover: none) and (pointer: coarse) { .cc-mat:not(.cc-mat--hero) { bottom: auto; height: 100vh; height: 100lvh; } }
+
+/* v74.4: кнопки «Смотреть кейс» под текстом больше нет — кейс открывается карточкой, а на широком экране ещё и
+   кнопкой у активного пункта оглавления. Колонка под карточкой свободнее: только метка и подзаголовок */
+.cases[data-preview="card"] .cw-open { display: none; }
+.cases[data-preview="card"] .cw-info { gap: clamp(8px, 1.4vh, 14px); }
+.cases[data-preview="card"] .cw-sub { max-width: 30em; }
+/* кнопка у активного пункта: стоит в конце подсвеченной строки и едет вместе с подсветкой */
+.cc-ix-go {
+  position: absolute; right: 8px; top: calc(var(--row) / 2); z-index: 1;
+  translate: 0 calc(var(--pos, 0) * var(--row) - 50%);
+  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 14px; border-radius: 999px;
+  background: #fff; color: #141613; text-decoration: none; font-size: 13px; font-weight: 500; white-space: nowrap;
+  box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.45);
+  transition: scale 0.16s cubic-bezier(0.23, 1, 0.32, 1), background 0.18s ease;
+}
+.cc-ix-go svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: translate 0.2s cubic-bezier(0.23, 1, 0.32, 1); }
+@media (hover: hover) { .cc-ix-go:hover svg { translate: 1.5px -1.5px; } }
+.cc-ix-go:active { scale: 0.96; }
+.cc-ix-go:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+/* название активного пункта не заезжает под кнопку */
+.cc-ix.is-on { padding-right: 148px; }
+.cases.is-narrow .cc-ix-go { display: none; }
+.cases.is-narrow .cc-ix.is-on { padding-right: 0; }
+.cases.is-narrow[data-preview="card"] .cw-info { grid-template-columns: 1fr; }
