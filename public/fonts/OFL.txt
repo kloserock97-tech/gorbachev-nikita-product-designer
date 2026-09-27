@@ -4,6 +4,7 @@ Onest — Copyright 2021 The Onest Project Authors (https://github.com/googlefon
 Playfair Display — Copyright 2005–2023 The Playfair Project Authors (https://github.com/clauseggers/Playfair)
 Caveat — Copyright 2014 The Caveat Project Authors (https://github.com/googlefonts/caveat)
 Oswald — Copyright 2016 The Oswald Project Authors (https://github.com/googlefonts/OswaldFont)
+Ugol — Copyright 2018 The Manrope Project Authors (https://github.com/googlefonts/manrope); modified 2026 by Nikita Gorbachev (arc N, И, Й, bridges Л, Д). Derivative of Manrope, OFL 1.1
 
 The files are the unmodified subsets served by Google Fonts (woff2, split by unicode-range).
 

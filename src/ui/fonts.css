@@ -26,3 +26,21 @@
 /* Акцентное слово в крупном заголовке: курсивная антиква внутри гротеска. Антиква оптически мельче гротеска того же
    кегля, поэтому чуть крупнее; вес обычный, трекинг нулевой. Одно слово на заголовок, не чаще. */
 .serif-accent { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.06em; letter-spacing: -0.01em; }
+
+/* v78: Ugol — акцентный шрифт бренда (Logo/v3-base: Manrope OFL + дуга в прописных N, И, Й и мосты Л, Д).
+   Только крупные заголовки и цифры; весь текст остаётся на Onest. Пять статичных весов по ~18 КБ,
+   браузер качает только те, что встретились на странице. Курсив .serif-accent внутри заголовков — по-прежнему Playfair,
+   сжатые названия кейсов в колесе (Oswald) не тронуты. */
+@font-face { font-family: "Ugol"; font-style: normal; font-weight: 300; font-display: swap; src: url("/fonts/ugol-300.woff2") format("woff2"); }
+@font-face { font-family: "Ugol"; font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/ugol-400.woff2") format("woff2"); }
+@font-face { font-family: "Ugol"; font-style: normal; font-weight: 500; font-display: swap; src: url("/fonts/ugol-500.woff2") format("woff2"); }
+@font-face { font-family: "Ugol"; font-style: normal; font-weight: 600; font-display: swap; src: url("/fonts/ugol-600.woff2") format("woff2"); }
+@font-face { font-family: "Ugol"; font-style: normal; font-weight: 700; font-display: swap; src: url("/fonts/ugol-700.woff2") format("woff2"); }
+
+:root { --accent-font: "Ugol", var(--font); }
+
+/* главная: первый экран, «Привет», глава «Кейсы», названия и цифры кейсов; страница кейса: заголовки и KPI */
+.headline, .story-hi, .cases-kicker, .cases-now, .sf-title,
+.cw-t, .cw-fact b, .cl-fact b, .cl-title, .case-title,
+.cs-hero h1, .cs-lead, .cs-kpi b, .cs-takeaway, .cs-next-text b,
+.cs-decision h3, .cs-mistake h3, .cs-deep-head h3 { font-family: var(--accent-font); }
