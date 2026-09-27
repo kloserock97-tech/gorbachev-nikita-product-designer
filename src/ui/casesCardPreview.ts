@@ -37,7 +37,11 @@ export type CardPreview = {
 /** содержимое карточки: веб — снимок во всю карточку, мобильный — экран приложения на поле цвета кейса,
     без экранов — предмет кейса */
 const media = (c: CaseItem) => {
-  const s = c.look.screen;
+  const s = c.look.screen, d = c.look.diorama;
+  if (d) {
+    const scr = s && d.quad ? `<span class="cx-dio-screen" style="width:${s.w}px;height:${s.h}px"><img class="cx-shot" data-src="${BASE}${s.src}" alt="" decoding="async" draggable="false"><i class="cx-dio-glare"></i></span>` : "";
+    return `<span class="cx-media cx-media--dio"><img class="cx-dio-img" data-src="${BASE}${d.src}" width="${d.w}" height="${d.h}" alt="" decoding="async" draggable="false">${scr}</span>`;
+  }
   if (!s) return `<span class="cx-media cx-media--obj">${objectPicture(c, "cx-obj")}</span>`;
   const img = `<img class="cx-shot" data-src="${BASE}${s.src}" alt="" decoding="async" draggable="false">`;
   return s.device === "phone" ? `<span class="cx-media cx-media--phone"><span class="cx-app">${img}</span></span>` : `<span class="cx-media">${img}</span>`;
@@ -45,6 +49,25 @@ const media = (c: CaseItem) => {
 
 /** подзаголовок без хвоста после двоеточия — хвост пересказывает цифру результата, а она стоит в своей строке */
 const headOf = (s: string) => { const i = s.indexOf(":"); return i > 12 ? s.slice(0, i) : s; };
+
+/** место диорамы: доли кадра референса и пропорция картинки — в переменные для cases-card.css */
+const dioVars = (c: CaseItem) => {
+  const d = c.look.diorama;
+  return d ? `;--ax:${d.at[0]};--ay:${d.at[1]};--aw:${d.at[2]};--ar:${(d.h / d.w).toFixed(4)};--nw:${d.nw ?? 1.12};--nx:${d.nx ?? 0.5};--gl:${d.glow ?? "255,170,70"}` : "";
+};
+
+/** matrix3d, который кладёт прямоугольник w×h на четырёхугольник q (углы по часовой от левого верхнего) */
+const quadMatrix = (w: number, h: number, q: [number, number][]) => {
+  const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = q;
+  const sx = x0 - x1 + x2 - x3, sy = y0 - y1 + y2 - y3;
+  const dx1 = x1 - x2, dx2 = x3 - x2, dy1 = y1 - y2, dy2 = y3 - y2;
+  const den = dx1 * dy2 - dx2 * dy1;
+  const g = (sx * dy2 - dx2 * sy) / den, k = (dx1 * sy - sx * dy1) / den;
+  const a = x1 - x0 + g * x1, b = x3 - x0 + k * x3, d = y1 - y0 + g * y1, e = y3 - y0 + k * y3;
+  /* единичный квадрат → четырёхугольник, затем масштаб w×h → единичный */
+  const m = [a / w, d / w, 0, g / w, b / h, e / h, 0, k / h, 0, 0, 1, 0, x0, y0, 0, 1];
+  return `matrix3d(${m.map((v) => +v.toFixed(8)).join(",")})`;
+};
 
 export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[]): CardPreview {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -63,7 +86,7 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
     <div class="cx-center">
       <button class="cx-next" type="button"><span class="cx-next-l"></span><span class="cx-next-n"></span><b class="cx-next-t"></b></button>
       <div class="cx-stack">
-        ${list.map((c, i) => `<a class="cx-card" href="#/work/${c.id}" data-i="${i}" tabindex="-1" aria-hidden="true" style="${lookVars(c)}">${media(c)}</a>`).join("")}
+        ${list.map((c, i) => `<a class="cx-card${c.look.diorama ? " cx-card--dio" : ""}" href="#/work/${c.id}" data-i="${i}" tabindex="-1" aria-hidden="true" style="${esc(lookVars(c) + dioVars(c))}">${media(c)}</a>`).join("")}
         <span class="cx-cursor" aria-hidden="true"><i></i><span class="cx-cursor-l"></span></span>
         <span class="cx-brand" aria-hidden="true"></span>
       </div>
@@ -125,7 +148,13 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
     const widest = Math.max(1, ...[...title.querySelectorAll<HTMLElement>(".cx-w")].map((w) => w.scrollWidth));
     if (widest > max) title.style.fontSize = `${(parseFloat(getComputedStyle(title).fontSize) * (max / widest) * 0.98).toFixed(1)}px`;
   };
-  addEventListener("resize", () => requestAnimationFrame(fitTitle));
+  /* на телефоне факты бывают в две строки: название стоит над их верхом, а не на постоянной высоте, иначе
+     двухстрочное название на узком экране наезжало на таблицу */
+  const stackTitle = () => {
+    if (!root.classList.contains("is-narrow")) { title.style.bottom = ""; return; }
+    title.style.bottom = `${(box.clientHeight - facts.offsetTop + 14).toFixed(0)}px`;
+  };
+  addEventListener("resize", () => requestAnimationFrame(() => { fitTitle(); stackTitle(); }));
   void document.fonts?.ready.then(fitTitle);
   let shown = -1;
   let swapTimer = 0;
@@ -141,12 +170,15 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
       [t("cases.f.result"), `${c.stat.value} — ${c.stat.label}`],
     ];
     facts.innerHTML = rows.map(([a, b], k) => `<div style="--k:${k}"><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join("");
+    stackTitle();
     const ni = i + 1 >= n ? 0 : i + 1;
     q(".cx-next-n").textContent = `[${pad2(ni + 1)}]`;
     q(".cx-next-t").textContent = list[ni].title;
     const brand = q(".cx-brand");
     brand.innerHTML = brandMark(c, "cx-brand-img");
-    brand.hidden = !brand.firstElementChild;
+    brand.hidden = !brand.firstElementChild || !!c.look.diorama || !!c.look.scene;
+    placeNext();
+    refit();
     box.classList.remove("is-in");
     if (reduced) { box.classList.add("is-in"); return; }
     requestAnimationFrame(() => requestAnimationFrame(() => box.classList.add("is-in")));
@@ -164,14 +196,68 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
   };
   onLang(() => { paintStatic(); const i = shown; shown = -1; if (i >= 0) paint(i); });
 
-  const live = () => { box.classList.add("is-live"); };
-  const calm = () => { box.classList.remove("is-live"); };
+  /* v78: живые сцены кейсов (src/caseScene) — свой прозрачный холст под карточками. Модуль грузится, когда глава
+     вот-вот появится (warm); пока сцена не готова или WebGL не поднялся, видна картинка-диорама */
+  type LiveScene = { i: number; setPresence(v: number): void; setPointer(x: number, y: number): void; pause(): void; resume(): void; resize(): void };
+  const refit = () => requestAnimationFrame(() => { for (const s of scenes) s.resize(); });
+  const scenes: LiveScene[] = [];
+  let lastPos = 0;
+  const presenceOf = (i: number) => clamp(1 - Math.abs(i - lastPos) * 1.8, 0, 1);
+  /* свободная область для сцены: правее списка кейсов, ниже панели, выше названия и таблицы фактов — с воздухом.
+     Название у каждого кейса своей длины, поэтому область меряется заново при смене кейса */
+  const safeArea = () => {
+    const B = box.getBoundingClientRect();
+    if (!B.width) return null;
+    const rel = (el: Element) => { const r = el.getBoundingClientRect(); return { l: r.left - B.left, t: r.top - B.top, r: r.right - B.left, b: r.bottom - B.top }; };
+    const air = Math.max(20, Math.min(40, B.width * 0.022));
+    const ti = rel(title), fa = rel(facts);
+    if (root.classList.contains("is-narrow")) {
+      const nx = rel(next);
+      return { l: 0, r: B.width, t: nx.b + 10, b: ti.t - 14 };
+    }
+    const li = rel(q(".cx-list"));
+    return { l: li.r + air, r: B.width - air, t: bandTop() + next.offsetHeight + air * 0.6, b: Math.min(ti.t, fa.t) - air };
+  };
+  const bootScenes = () => {
+    list.forEach((c, i) => {
+      const kind = c.look.scene;
+      if (!kind) return;
+      void import("../caseScene/registry").then((r) => r.SCENES[kind]()).then(async (create) => {
+        const canvas = document.createElement("canvas");
+        canvas.className = "cx-scene";
+        canvas.setAttribute("aria-hidden", "true");
+        box.querySelector(".cx-shade")!.after(canvas);
+        try {
+          const sc = create(canvas);
+          sc.setSafe(safeArea);
+          await sc.ready;
+          const ls: LiveScene = { i, setPresence: sc.setPresence, setPointer: sc.setPointer, pause: sc.pause, resume: sc.resume, resize: sc.stage.resize };
+          scenes.push(ls);
+          cards[i].classList.add("is-scene");
+          ls.setPresence(presenceOf(i));
+          if (!box.classList.contains("is-live")) ls.pause();
+        } catch {
+          canvas.remove();
+        }
+      });
+    });
+  };
+  const fineMouse = matchMedia("(hover: hover) and (pointer: fine)");
+  root.addEventListener("pointermove", (e) => {
+    if (!scenes.length || !fineMouse.matches) return;
+    for (const s of scenes) s.setPointer((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1);
+  });
+  addEventListener("resize", refit);
+
+  const live = () => { box.classList.add("is-live"); for (const s of scenes) s.resume(); };
+  const calm = () => { box.classList.remove("is-live"); for (const s of scenes) s.pause(); };
 
   let warmed = false;
   const warm = () => {
     if (warmed) return;
     warmed = true;
     for (const img of box.querySelectorAll<HTMLImageElement>("img[data-src]")) { img.src = img.dataset.src!; delete img.dataset.src; }
+    bootScenes();
   };
 
   let reachOn = false;
@@ -179,6 +265,8 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
   const drum = (pos: number) => {
     if (Math.abs(pos - lastDrum) < 0.001) return;
     lastDrum = pos;
+    lastPos = pos;
+    for (const s of scenes) s.setPresence(presenceOf(s.i));
     cards.forEach((el, i) => {
       const d = i - pos, ad = Math.abs(d);
       el.classList.toggle("is-far", ad > 1);
@@ -194,8 +282,40 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
     segs.forEach((s, i) => s.classList.toggle("is-on", i === cur));
   };
   const reach = (on: boolean) => { reachOn = on; lastDrum = -999; };
-  const layout = () => { /* раскладка — CSS; пересчитывать нечего */ };
+  /* экран на диораме: раскладка CSS, а четырёхугольник экрана считается от настоящего размера картинки */
+  const dios = cards.map((el, i) => ({ el: el.querySelector<HTMLElement>(".cx-dio-screen"), c: list[i] })).filter((x) => x.el);
+  const layout = () => {
+    /* диорамы считают место от центра окна главы, а стопка стоит чуть выше: поправка — разница центров */
+    const r = box.getBoundingClientRect(), st = stack.getBoundingClientRect();
+    stack.style.setProperty("--fx", `${(r.left + r.width / 2 - st.left - st.width / 2).toFixed(1)}px`);
+    stack.style.setProperty("--fy", `${(r.top + r.height / 2 - st.top - st.height / 2).toFixed(1)}px`);
+    for (const { el, c } of dios) {
+      const pic = el!.parentElement!, W = pic.clientWidth, H = pic.clientHeight, s = c.look.screen!;
+      if (W && H) el!.style.transform = quadMatrix(s.w, s.h, c.look.diorama!.quad!.map(([x, y]) => [x * W, y * H] as [number, number]));
+    }
+    placeNext();
+  };
+  /* над диорамой «Далее» встаёт к её верхнему краю: на картинке сверху почти пусто, предмет начинается с ~4 % высоты */
+  /* у живой сцены «Далее» стоит полосой сверху, под панелью, а сцена начинается ниже — строки не наезжают
+     на карточки. Верх полосы — тот же, что верх свободной области в safeArea */
+  const bandTop = () => Math.max(84, box.clientHeight * 0.1);
+  const placeNext = () => {
+    if (list[shown]?.look.scene && !box.closest(".is-narrow")) {
+      const cur = parseFloat(next.style.getPropertyValue("--ny")) || 0;
+      const top = next.getBoundingClientRect().top - box.getBoundingClientRect().top - cur;
+      next.style.setProperty("--ny", `${(bandTop() - top).toFixed(1)}px`);
+      return;
+    }
+    const pic = cards[shown]?.classList.contains("cx-card--dio") ? cards[shown].querySelector<HTMLElement>(".cx-dio-img") : null;
+    if (!pic || box.closest(".is-narrow")) { next.style.setProperty("--ny", "0px"); return; }
+    const top = stack.getBoundingClientRect().top + pic.offsetTop + (pic.parentElement!.parentElement as HTMLElement).offsetTop + pic.offsetHeight * (list[shown].look.diorama?.next ?? 0.04);
+    const nb = next.getBoundingClientRect().bottom - (parseFloat(next.style.getPropertyValue("--ny")) || 0);
+    next.style.setProperty("--ny", `${Math.min(0, top - nb - 10).toFixed(1)}px`);
+  };
+  addEventListener("resize", () => requestAnimationFrame(layout));
+  new ResizeObserver(() => layout()).observe(stack);
 
   paint(0);
+  layout();
   return { layout, drum, paint, live, calm, warm, reach };
 }

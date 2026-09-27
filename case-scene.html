@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Сцена кейса — стенд</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #0c0f08; overflow: hidden; font: 13px/1.4 system-ui, sans-serif; color: #fff; }
+      .bg, .ref, canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+      .bg, .ref { object-fit: contain; pointer-events: none; }
+      .ref { opacity: 0; z-index: 3; }
+      canvas { z-index: 2; }
+      .hud { position: fixed; z-index: 4; left: 12px; bottom: 12px; padding: 8px 12px; border-radius: 10px; background: rgba(0,0,0,.6); }
+    </style>
+  </head>
+  <body>
+    <img class="bg" alt="" />
+    <canvas id="scene"></canvas>
+    <img class="ref" alt="" />
+    <div class="hud">R — референс поверх · B — фон · I — вход заново</div>
+    <script type="module" src="/src/caseScene/stand.ts"></script>
+  </body>
+</html>

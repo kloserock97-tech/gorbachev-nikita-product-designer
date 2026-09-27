@@ -51,6 +51,8 @@
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
 }
 .cx-next-l { margin-right: auto; opacity: 0.72; }
+/* над диорамой строка «Далее» поднимается к её верхнему краю (сдвиг --ny считает casesCardPreview.ts) и лежит поверх */
+.cx-next { position: relative; z-index: 3; translate: 0 var(--ny, 0px); transition: translate 0.4s var(--ease-x); }
 .cx-next-n { opacity: 0.7; font-variant-numeric: tabular-nums; }
 .cx-next-t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; transition: translate 0.2s var(--ease-x); }
 .cx-next-l, .cx-next-n { white-space: nowrap; flex: none; }
@@ -79,6 +81,43 @@
 .cx-app .cx-shot { object-position: 50% 0; }
 .cx-media--obj .cx-obj { position: absolute; inset: 10%; display: block; }
 .cx-media--obj .cx-obj img { width: 100%; height: 100%; object-fit: contain; }
+/* v77: диорама — сцена без карточки, по референсам Никиты. Размер и место взяты с референса (1672×941): картинка
+   1060×720 стоит по центру окна, поэтому ширина — доля окна, а в низком окне — доля высоты. Название и факты
+   рисуются поверх неё, как на референсе. Экран телефона — настоящий снимок, наложенный matrix3d (casesCardPreview.ts). */
+.cx-card--dio {
+  /* --rw — ширина кадра референса, вписанного в окно; место и ширина — доли этого кадра (--ax, --ay, --aw из cases.ts),
+     --fx/--fy — поправка от центра стопки к центру окна (casesCardPreview.ts), --dk — общий запас, чтобы над
+     диорамой оставалось место строке «Далее» */
+  --rw: min(100vw, 177.7vh); --dk: 0.94; --dw: calc(var(--aw) * var(--rw) * var(--dk));
+  inset: auto; left: 50%; top: 50%; width: var(--dw); height: calc(var(--dw) * var(--ar));
+  margin: calc(var(--fy, 0px) + (var(--ay) - 0.5) * var(--rw) * 0.5628 - var(--dw) * var(--ar) / 2 + 2vh) 0 0 calc(var(--fx, 0px) + (var(--ax) - 0.5) * var(--rw) - var(--dw) / 2);
+  overflow: visible; border-radius: 0; background: none; box-shadow: none; transform-origin: 50% 60%;
+}
+/* свечение сцены: при вырезке ореол вокруг стекла почти ушёл, возвращаем его мягким тёплым пятном */
+.cx-card--dio::before {
+  content: ""; position: absolute; inset: 4% 6% 2%; z-index: -1; pointer-events: none; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(var(--gl), 0.3), rgba(var(--gl), 0.1) 55%, rgba(var(--gl), 0) 100%);
+  filter: blur(18px);
+}
+.cx-media--dio { inset: 0; }
+/* v78: живая сцена кейса — холст на всю главу под карточками; карточка остаётся ссылкой, но её картинку прячем */
+.cx-scene { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.cx-card.is-scene .cx-media, .cx-card.is-scene::before { visibility: hidden; }
+.cx-card.is-scene { background: none; box-shadow: none; }
+.cx-card--dio .cx-shot { width: 100%; height: 100%; object-fit: cover; }
+.cx-dio-img { display: block; width: 100%; height: 100%; user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 0 14px rgba(var(--gl), 0.3)); }
+.cx-dio-screen { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; border-radius: 96px; background: #0b0d10; backface-visibility: hidden; }
+.cx-dio-screen .cx-shot { object-position: 50% 0; }
+/* блик и тёплый отсвет платформы по краю экрана — чтобы снимок лёг в свет сцены, а не висел наклейкой */
+.cx-dio-glare {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 28%),
+    linear-gradient(to left, rgba(255, 160, 60, 0.22), rgba(255, 160, 60, 0) 16%),
+    linear-gradient(to top, rgba(255, 150, 60, 0.16), rgba(255, 150, 60, 0) 12%);
+}
+@media (hover: hover) { .cx-stack.is-hover .cx-card--dio.is-cur .cx-media { scale: 1.02; } }
+
 /* знак продукта на карточке — светлая плашка в углу */
 .cx-brand { position: absolute; z-index: 2; left: 14px; top: 14px; display: grid; place-items: center; height: 30px; padding: 0 11px; border-radius: 999px; background: rgba(250, 250, 248, 0.92); box-shadow: 0 4px 14px -6px rgba(0, 0, 0, 0.35); pointer-events: none; }
 .cx-brand[hidden] { display: none; }
@@ -135,6 +174,7 @@
 .cases.is-narrow .cx-list { display: none; }
 .cases.is-narrow .cx-center { top: calc(72px + env(safe-area-inset-top)); translate: -50% 0; width: min(64vw, calc((100svh - 470px) * 0.9)); }
 .cases.is-narrow .cx-next { font-size: 13px; margin-bottom: 8px; }
+.cases.is-narrow .cx-card--dio { --dw: calc(var(--nw) * 100vw); margin: calc(var(--dw) * var(--ar) * -0.5 + 9svh) 0 0 calc(var(--dw) * var(--nx) * -1); }
 .cases.is-narrow .cx-title { left: var(--side); right: var(--side); width: auto; bottom: calc(242px + env(safe-area-inset-bottom)); font-size: clamp(40px, 12.5vw, 72px); }
 .cases.is-narrow .cx-facts { left: var(--side); right: var(--side); width: auto; bottom: calc(150px + env(safe-area-inset-bottom)); }
 .cases.is-narrow .cx-facts div { grid-template-columns: 40% 1fr; padding: 8px 0; gap: 10px; }

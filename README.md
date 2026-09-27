@@ -163,7 +163,7 @@ The objects are cut out of generated still lifes (prompts and provenance in [doc
 | Tree, boulders, distant ridges | generated in code, `src/scene/tree.ts`, `rocks.ts`, `vista.ts` | this project |
 | HDRI `qwantani_sunset_puresky` | Poly Haven | CC0 |
 | UI sound cues | uisfx (uisfx.com), "zen" set | CC0 |
-| Onest, Playfair Display (italic), Caveat fonts | Google Fonts, self-hosted in `public/fonts` | OFL, text in `public/fonts/OFL.txt` |
+| Onest, Playfair Display (italic), Caveat, Oswald, Golos Text fonts | Google Fonts, self-hosted in `public/fonts` | OFL, text in `public/fonts/OFL.txt` |
 | three.js, Draco decoder | three.js authors; Google | MIT; Apache-2.0 |
 | "Hash without Sine" in the grass shader | David Hoskins | MIT |
 | Grass rendering ideas | "Procedural Grass in Ghost of Tsushima", GDC 2021 | reference only |

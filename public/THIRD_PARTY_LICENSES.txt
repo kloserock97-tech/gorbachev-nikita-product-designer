@@ -46,7 +46,7 @@ Nature ambience — synthesised in code for this project.
 
 FONTS
 -----
-Onest, Playfair Display (italic), Caveat, Oswald — Google Fonts, self-hosted — SIL Open Font License 1.1
+Onest, Playfair Display (italic), Caveat, Oswald, Golos Text — Google Fonts, self-hosted — SIL Open Font License 1.1
   (fonts/OFL.txt)
 
 CODE
