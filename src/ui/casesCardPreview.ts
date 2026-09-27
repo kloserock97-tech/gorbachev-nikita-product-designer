@@ -222,6 +222,13 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
     list.forEach((c, i) => {
       const kind = c.look.scene;
       if (!kind) return;
+      /* пока сцена грузится, карточка пустая: картинка-диорама появлялась на секунды и резко менялась на сцену
+         в другом месте. Диорама — только если сцена не поднялась */
+      cards[i].classList.add("is-scene");
+      const fallback = () => {
+        cards[i].classList.remove("is-scene");
+        for (const img of cards[i].querySelectorAll<HTMLImageElement>("img[data-src]")) { img.src = img.dataset.src!; delete img.dataset.src; }
+      };
       void import("../caseScene/registry").then((r) => r.SCENES[kind]()).then(async (create) => {
         const canvas = document.createElement("canvas");
         canvas.className = "cx-scene";
@@ -233,13 +240,13 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
           await sc.ready;
           const ls: LiveScene = { i, setPresence: sc.setPresence, setPointer: sc.setPointer, pause: sc.pause, resume: sc.resume, resize: sc.stage.resize };
           scenes.push(ls);
-          cards[i].classList.add("is-scene");
           ls.setPresence(presenceOf(i));
           if (!box.classList.contains("is-live")) ls.pause();
         } catch {
           canvas.remove();
+          fallback();
         }
-      });
+      }, fallback);
     });
   };
   const fineMouse = matchMedia("(hover: hover) and (pointer: fine)");
@@ -256,8 +263,8 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
   const warm = () => {
     if (warmed) return;
     warmed = true;
-    for (const img of box.querySelectorAll<HTMLImageElement>("img[data-src]")) { img.src = img.dataset.src!; delete img.dataset.src; }
     bootScenes();
+    for (const img of box.querySelectorAll<HTMLImageElement>(".cx-card:not(.is-scene) img[data-src]")) { img.src = img.dataset.src!; delete img.dataset.src; }
   };
 
   let reachOn = false;
