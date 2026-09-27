@@ -100,8 +100,6 @@ body {
 .dock-mark { width: calc(36 * var(--u)); padding: 0; background: #eef1e7; border-color: #eef1e7; color: #23261f; }
 .dock-mark svg { width: 70%; height: 70%; display: block; fill: currentColor; overflow: visible; }
 /* v45: фонтан кита оживает под курсором */
-.dock-mark-spout { transform-origin: 6.3px 5.5px; transition: scale 0.35s var(--ease); }
-.dock-mark[data-near="true"] .dock-mark-spout, .dock-mark:focus-visible .dock-mark-spout { scale: 1.25; }
 .dock-mark[data-near="true"] { background: #fff; border-color: #fff; color: #1b1e18; }
 /* текущий раздел — из той же бумаги, что карточки */
 .dock-item.is-active { background: var(--card); border-color: var(--card); color: var(--card-ink); box-shadow: 0 calc(5 * var(--u)) calc(14 * var(--u)) rgba(12, 17, 9, 0.22); }
