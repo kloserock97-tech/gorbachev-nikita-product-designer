@@ -163,6 +163,7 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
     title.innerHTML = letters(c.title);
     fitTitle();
     const phone = c.look.screen?.device === "phone";
+    box.classList.toggle("has-scene", !!c.look.scene);
     const rows: [string, string][] = [
       [t("cases.f.about"), headOf(c.subtitle)],
       [t("cases.f.where"), c.tag],
@@ -212,8 +213,9 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
     const air = Math.max(20, Math.min(40, B.width * 0.022));
     const ti = rel(title), fa = rel(facts);
     if (root.classList.contains("is-narrow")) {
-      const nx = rel(next);
-      return { l: 0, r: B.width, t: nx.b + 10, b: ti.t - 14 };
+      /* на телефоне у кейса со сценой нет строки «Далее» (переключают кнопки внизу): сцене отдан весь верх */
+      const top = next.offsetParent ? rel(next).b + 10 : Math.max(56, B.height * 0.08);
+      return { l: 0, r: B.width, t: top, b: ti.t - 18 };
     }
     const li = rel(q(".cx-list"));
     return { l: li.r + air, r: B.width - air, t: bandTop() + next.offsetHeight + air * 0.6, b: Math.min(ti.t, fa.t) - air };

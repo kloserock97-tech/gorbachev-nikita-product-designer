@@ -300,7 +300,8 @@ const GLOW_FRAG = /* glsl */ `
   void main() {
     vec2 q = vUv * 2.0 - 1.0;
     float r = dot(q, q);
-    gl_FragColor = vec4(uColor * exp(-r * 3.2) * uOpacity, 0.0);
+    /* к краю пятна свет гаснет ровно в ноль: иначе на тёмном фоне телефона был виден край прямоугольника */
+    gl_FragColor = vec4(uColor * exp(-r * 3.2) * smoothstep(1.0, 0.55, r) * uOpacity, 0.0);
   }
 `;
 export function glow(w: number, h: number, color: string, opacity: number) {

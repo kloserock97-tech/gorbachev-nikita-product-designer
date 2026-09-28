@@ -51,6 +51,7 @@ const paintPin = (s: number) => sheet(120, 150, s, (ctx: Ctx) => {
 export function createGuruScene(canvas: HTMLCanvasElement): CaseScene {
   return createCaseScene(canvas, {
     hub: HUB,
+    squeeze: 0.95,
     box: [430, 150, 1310, 735],
     async build(k) {
       k.glow(830, 500, -200, 1000, 760, "#ff9a40", 0.46);

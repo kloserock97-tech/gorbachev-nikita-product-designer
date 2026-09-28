@@ -104,6 +104,8 @@
 .cx-scene { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .cx-card.is-scene .cx-media, .cx-card.is-scene::before { visibility: hidden; }
 .cx-card.is-scene { background: none; box-shadow: none; }
+/* телефон, кейс со сценой: строки «Далее» нет — кейсы листают кнопки внизу, а сцена занимает верх экрана */
+.cases.is-narrow .cx.has-scene .cx-next { display: none; }
 .cx-card--dio .cx-shot { width: 100%; height: 100%; object-fit: cover; }
 .cx-dio-img { display: block; width: 100%; height: 100%; user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 0 14px rgba(var(--gl), 0.3)); }
 .cx-dio-screen { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; border-radius: 96px; background: #0b0d10; backface-visibility: hidden; }

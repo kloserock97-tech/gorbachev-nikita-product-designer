@@ -36,15 +36,27 @@ export type Safe = { l: number; t: number; r: number; b: number };
 
 /** сцена вписывается в свободную область целиком, с воздухом, и никогда не крупнее, чем на референсе.
     На телефоне композиции позволено быть шире экрана (края уходят за кадр), но по высоте — строго в область */
-const fitBox = (box: [number, number, number, number], hub: [number, number], safe: () => Safe | null): Fit => (w, h) => {
-  const [x0, y0, x1, y1] = box;
+/** на телефоне композиция сжимается по горизонтали: спутники подтягиваются к середине, а сами карточки
+    не сплющиваются (у них обратный масштаб). Так вся сцена помещается в ширину и остаётся читаемой */
+export const NARROW_SQUEEZE = 0.8;
+/** на телефоне спутники мельче главной панели: иначе они упираются в края экрана или налезают на неё */
+const NARROW_SAT = 0.72;
+const fitBox = (box: [number, number, number, number], hub: [number, number], safe: () => Safe | null, onSqueeze: (f: number) => void, squeeze = NARROW_SQUEEZE): Fit => (w, h) => {
+  const narrow = w / h < 0.8;
+  const f = narrow ? squeeze : 1;
+  onSqueeze(f);
+  const sq = (x: number) => 836 + (x - 836) * f;
+  const x0 = sq(box[0]), x1 = sq(box[2]), y0 = box[1], y1 = box[3];
   const bw = x1 - x0, bh = y1 - y0;
+  void hub;
   const a = safe() ?? { l: w * 0.04, t: h * 0.08, r: w * 0.96, b: h * 0.92 };
   const sw = Math.max(40, a.r - a.l), sh = Math.max(40, a.b - a.t);
   const ref = Math.min(w / 1672, h / 941);
-  if (w / h < 0.8) {
-    const s = Math.min((1.3 * w) / bw, sh / bh);
-    return { s, fx: w / 2 - (hub[0] - 836) * s, fy: (a.t + a.b) / 2 - ((y0 + y1) / 2 - 470.5) * s };
+  if (narrow) {
+    const s = Math.min((0.9 * w) / bw, sh / bh);
+    /* лишнее место по высоте делится 60/40: сцена ближе к названию, а не висит под верхним краем */
+    const cy = a.t + (sh - bh * s) * 0.6 + (bh * s) / 2;
+    return { s, fx: w / 2 - ((x0 + x1) / 2 - 836) * s, fy: cy - ((y0 + y1) / 2 - 470.5) * s };
   }
   const s = Math.min(sw / bw, sh / bh, ref);
   return { s, fx: (a.l + a.r) / 2 - ((x0 + x1) / 2 - 836) * s, fy: (a.t + a.b) / 2 - ((y0 + y1) / 2 - 470.5) * s };
@@ -57,7 +69,7 @@ function makeKit(stage: Stage, hub: THREE.Vector3) {
   const anims: Anim[] = [];
   const ribbonU: Record<string, THREE.IUniform>[] = [];
   const sparkU: Record<string, THREE.IUniform>[] = [];
-  const floaters: { m: THREE.Object3D; base: THREE.Vector3; ph: number; amp: number; enter: number }[] = [];
+  const floaters: { m: THREE.Object3D; base: THREE.Vector3; ph: number; amp: number; enter: number; main: boolean }[] = [];
   let seed = 7;
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 
@@ -192,7 +204,8 @@ function makeKit(stage: Stage, hub: THREE.Vector3) {
       const m = card(o);
       m.renderOrder = o.order ?? 3;
       m.rotation.set(deg(o.r[0]), deg(o.r[1]), deg(o.r[2]), "YXZ");
-      const fl = { m, base: at(o.c[0], o.c[1], o.z), ph: floaters.length * 1.7, amp: o.amp ?? 4, enter: 0 };
+      /* главная панель — порядок 5 и её подложка 1, остальное спутники */
+      const fl = { m, base: at(o.c[0], o.c[1], o.z), ph: floaters.length * 1.7, amp: o.amp ?? 4, enter: 0, main: o.order === 5 || o.order === 1 };
       floaters.push(fl);
       const u = (m.material as THREE.ShaderMaterial).uniforms.uOpacity;
       anims.push({ delay: o.delay, dur: 0.95, apply: (p, g) => { fl.enter = easeOut(p); u.value = Math.min(1, p * 2.2) * g; } });
@@ -201,6 +214,10 @@ function makeKit(stage: Stage, hub: THREE.Vector3) {
     },
   };
 
+  /** обратный масштаб карточек при сжатии композиции — карточка сохраняет пропорции */
+  const unsqueeze = (f: number) => {
+    for (const fl of floaters) { const k = f < 1 && !fl.main ? NARROW_SAT : 1; fl.m.scale.set(k / f, k, k); }
+  };
   const step = (ti: number, g: number, t: number, reduced: boolean) => {
     for (const a of anims) a.apply((ti - a.delay) / a.dur, g);
     for (const f of floaters) {
@@ -214,13 +231,14 @@ function makeKit(stage: Stage, hub: THREE.Vector3) {
     for (const u of ribbonU) u.uTime.value = t;
     for (const u of sparkU) u.uTime.value = t;
   };
-  return Object.assign(kit, { step });
+  return Object.assign(kit, { step, unsqueeze });
 }
 
 /** сцена кейса: свой прозрачный холст, цикл отрисовки только пока кейс на экране */
-export function createCaseScene(canvas: HTMLCanvasElement, o: { hub: [number, number]; box: [number, number, number, number]; build(kit: Kit): Promise<void> }): CaseScene {
+export function createCaseScene(canvas: HTMLCanvasElement, o: { hub: [number, number]; box: [number, number, number, number]; /** сжатие по ширине на телефоне */ squeeze?: number; build(kit: Kit): Promise<void> }): CaseScene {
   let safe: (() => Safe | null) | null = null;
-  const stage = createStage(canvas, fitBox(o.box, o.hub, () => safe?.() ?? null));
+  let squeeze = 1;
+  const stage = createStage(canvas, fitBox(o.box, o.hub, () => safe?.() ?? null, (f) => { squeeze = f; }, o.squeeze));
   const { renderer, scene, camera, root } = stage;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const kit = makeKit(stage, at(o.hub[0], o.hub[1], -120));
@@ -242,6 +260,8 @@ export function createCaseScene(canvas: HTMLCanvasElement, o: { hub: [number, nu
     if (presence <= 0.001) intro = -1;
     if (intro >= 0) intro += dt;
     look.lerp(pointer, 0.06);
+    root.scale.x = squeeze;
+    kit.unsqueeze(squeeze);
     root.rotation.set(-look.y * 0.035, look.x * 0.05, 0);
     kit.step(reduced ? 99 : Math.max(0, intro), presence, now / 1000, reduced);
     renderer.getDrawingBufferSize(res);

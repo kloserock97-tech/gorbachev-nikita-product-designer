@@ -64,6 +64,7 @@ const paintDone = (s: number) => sheet(300, 180, s, (ctx: Ctx) => {
 export function createPlatiScene(canvas: HTMLCanvasElement): CaseScene {
   return createCaseScene(canvas, {
     hub: HUB,
+    squeeze: 0.9,
     box: [350, 170, 1440, 790],
     async build(k) {
       k.glow(870, 520, -200, 900, 760, "#ffb440", 0.4);
