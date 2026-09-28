@@ -129,6 +129,7 @@ export class HillScene {
     uGrassLook: { value: new THREE.Vector4(...(["gtr", "gsky", "gao"] as const).map((k, i) => { const v = new URLSearchParams(location.search).get(k); return v === null ? [1.4, 0.92, 0.5][i] : Number(v); }).concat(0) as [number, number, number, number]) },
     uHaze: { value: /[?&]haze=0/.test(location.search) ? 0 : 1 },
     /* v80: дымка теплее к солнцу и прохладнее в стороне (shaders.ts, fogTint); ?aerial=0 — прежняя ровная */
+    uSkyHorizon: { value: new THREE.Color("#f4d49a") },
     uAerial: { value: /[?&]aerial=0/.test(location.search) ? new THREE.Vector2(0, 0) : new THREE.Vector2(1, 1) },
     /* v72: насколько дальше обычного стоит камера (телефон) — на столько же отодвигается дымка */
     uFogShift: { value: 0 },
@@ -350,7 +351,7 @@ export class HillScene {
         uZenith: { value: new THREE.Color("#b3c1c8") },
         uHigh: { value: new THREE.Color("#d8ddd8") },
         uMid: { value: new THREE.Color("#efebdd") },
-        uHorizon: { value: new THREE.Color("#f4d49a") },
+        uHorizon: this.uniforms.uSkyHorizon,
         uGlow: { value: new THREE.Color("#f7c27e") },
         uSunDir: this.uniforms.uSunDir,
         uSunCol: { value: new THREE.Color(1.6, 1.15, 0.7) },
@@ -374,7 +375,7 @@ export class HillScene {
       sky: { uZenith: u.uZenith, uHigh: u.uHigh, uMid: u.uMid, uHorizon: u.uHorizon, uGlow: u.uGlow, uSunDir: u.uSunDir, uSunCol: u.uSunCol, uMie: u.uMie },
       sh: this.uniforms.uSH,
       ambient: this.uniforms.uAmbient,
-      fog: this.uniforms.uFogCol,
+      horizon: this.uniforms.uSkyHorizon,
     }));
   }
 

@@ -27,8 +27,8 @@ type Ridge = {
 /* Высоты подобраны под кадр: ближняя гряда поднимается над горизонтом на пару градусов, дальние — выше, но
    не выше нижней трети неба, где заголовок. Зелень — тёмная оливка травы, к дали холоднее и синее */
 const RIDGES: Ridge[] = [
-  { r: 44, base: -1.2, lo: 0.4, hi: 2.4, freq: 3.2, forest: 1.1, crown: 1.1, tint: "#2c3a1c", aerial: 0.36, mist: 0.9, seed: 1.7 },
-  { r: 80, base: -1.5, lo: 2.2, hi: 7.5, freq: 2.4, forest: 1.8, crown: 1.9, tint: "#2f3d2a", aerial: 0.52, mist: 2.0, seed: 5.3 },
+  { r: 44, base: -1.2, lo: 0.4, hi: 2.4, freq: 3.2, forest: 1.1, crown: 1.1, tint: "#2c3a1c", aerial: 0.36, mist: 2.2, seed: 1.7 },
+  { r: 80, base: -1.5, lo: 2.2, hi: 7.5, freq: 2.4, forest: 1.8, crown: 1.9, tint: "#2f3d2a", aerial: 0.52, mist: 3.0, seed: 5.3 },
   { r: 140, base: -2, lo: 7, hi: 20, freq: 1.9, forest: 2.6, crown: 3.4, tint: "#303c4c", aerial: 0.62, mist: 4, seed: 9.1 },
   /* v78: самая дальняя гряда (горы, r 240, до 42 м) убрана по просьбе Никиты — она закрывала солнце у горизонта */
 ];
@@ -43,7 +43,7 @@ export function createVista(shared: {
   sky: Record<string, THREE.IUniform>;
   sh: THREE.IUniform;
   ambient: THREE.IUniform;
-  fog: THREE.IUniform;
+  horizon: THREE.IUniform;
 }): THREE.Group {
   const group = new THREE.Group();
   group.name = "vista";
@@ -104,7 +104,7 @@ export function createVista(shared: {
 
 /* v80: равнина вокруг земли холма до гряд (shaders.ts, plainFragment). У края земли — тот же рельеф, чуть ниже:
    под краем земли равнина не выглядывает, а зазора между ними нет; дальше она уходит в долину */
-function createPlain(shared: { sky: Record<string, THREE.IUniform>; sh: THREE.IUniform; ambient: THREE.IUniform; fog: THREE.IUniform }) {
+function createPlain(shared: { sky: Record<string, THREE.IUniform>; sh: THREE.IUniform; ambient: THREE.IUniform; horizon: THREE.IUniform }) {
   const size = 120, seg = 80;
   const geo = new THREE.PlaneGeometry(size, size, seg, seg);
   geo.rotateX(-Math.PI / 2);
@@ -119,7 +119,7 @@ function createPlain(shared: { sky: Record<string, THREE.IUniform>; sh: THREE.IU
   const mat = new THREE.ShaderMaterial({
     vertexShader: plainVertex,
     fragmentShader: plainFragment,
-    uniforms: { ...shared.sky, uSH: shared.sh, uAmbient: shared.ambient, uFogCol: shared.fog, uHole: { value: GROUND_HALF - 0.6 } },
+    uniforms: { ...shared.sky, uSH: shared.sh, uAmbient: shared.ambient, uSkyHorizon: shared.horizon, uHole: { value: GROUND_HALF - 0.6 } },
   });
   const mesh = new THREE.Mesh(geo, mat);
   /* после земли и травы, раньше гряд: гряды за равниной не считаются там, где их закрывает земля */

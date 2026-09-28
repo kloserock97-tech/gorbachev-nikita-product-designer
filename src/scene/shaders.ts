@@ -16,6 +16,8 @@ uniform float uBackLight;
 uniform vec4 uGrassLook;
 /* v80: воздушная перспектива: x — сила тёплого ореола дымки к солнцу, y — насколько дымка прохладнее в стороне от него */
 uniform vec2 uAerial;
+/* цвет неба у горизонта (общий объект с небом — погода меняет его на месте) */
+uniform vec3 uSkyHorizon;
 uniform vec3 uSunDir;
 uniform vec3 uSunCol;
 uniform vec3 uSH[9];
@@ -68,7 +70,10 @@ vec3 fogTint(vec3 w){
   const float g = 0.7;
   float hg = (1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * mu, 1.5) * ((1.0 - g) * (1.0 - g) / (1.0 + g));
   vec3 cool = uFogCol * mix(vec3(1.0), vec3(0.86, 0.92, 1.02), uAerial.y);
-  return mix(cool, uFogCol, smoothstep(-0.2, 0.6, mu)) + uSunCol * hg * 0.16 * uAerial.x;
+  vec3 fog = mix(cool, uFogCol, smoothstep(-0.2, 0.6, mu)) + uSunCol * hg * 0.16 * uAerial.x;
+  /* даль (равнина за холмом) уходит в цвет горизонта — в тот же, в котором тонут подножия гряд: иначе земля
+     вдали оставалась серовато-бежевой, гряды над ней — тёплыми, и на стыке читалась полоса */
+  return mix(fog, uSkyHorizon + uSunCol * hg * 0.16 * uAerial.x, smoothstep(14.0, 30.0, length(w - cameraPosition)) * uAerial.y);
 }
 
 /* облучённость из SH9 — та же формула, что shGetIrradianceAt в three */
@@ -754,7 +759,7 @@ export const plainFragment = /* glsl */ `
 ${SKY_PARS}
 uniform vec3 uSH[9];
 uniform float uAmbient;
-uniform vec3 uFogCol;
+uniform vec3 uSkyHorizon;
 uniform float uHole;     /* полуразмер квадрата земли холма — там равнины нет */
 varying vec3 vW;
 void main(){
@@ -767,9 +772,10 @@ void main(){
   sky += uSunCol * (pow(cosA, 90.0) * 0.3 + pow(cosA, 12.0) * 0.06) + skyMie(d);
   vec3 up = max(vec3(0.0), uSH[0] * 0.886227 + uSH[1] * 1.023328) * uAmbient;
   vec3 soil = vec3(0.045, 0.062, 0.018) * up * 0.6;
-  /* у края земли — её же дымка (uFogCol, как airFog), к первой гряде — цвет неба, как в тумане у её подножия */
-  vec3 fogc = mix(uFogCol, sky, smoothstep(24.0, 46.0, dist));
-  float fog = clamp(0.76 + 0.2 * smoothstep(22.0, 50.0, dist), 0.0, 0.97);
+  /* у края земли — её же дымка, к первой гряде — цвет неба, как в тумане у её подножия */
+  vec3 fogc = mix(uSkyHorizon, sky, smoothstep(24.0, 40.0, dist));
+  /* к первой гряде дымка густеет до конца: у её подножия равнина — ровно цвет неба, как и сама гряда там */
+  float fog = clamp(0.76 + 0.24 * smoothstep(22.0, 43.0, dist), 0.0, 1.0);
   gl_FragColor = vec4(mix(soil, fogc, fog), 1.0);
 }
 `;
@@ -856,7 +862,9 @@ void main(){
   sky += uSunCol * (pow(cosA, 90.0) * 0.3 + pow(cosA, 12.0) * 0.06) + skyMie(d);
   /* воздух: доля неба растёт к подножию — там в низинах туман */
   float mist = uMist > 0.0 ? exp(-max(vW.y - uBase, 0.0) / uMist) : 0.0;
-  float air = clamp(uAerial + (1.0 - uAerial) * mist * 0.85, 0.0, 1.0);
+  /* v80: у самого подножия гряда целиком тонет в дымке — там она сходится с равниной (plainFragment) одним цветом,
+     без ровной границы; выше темнеет плавно, на высоту слоя тумана */
+  float air = clamp(uAerial + (1.0 - uAerial) * mist, 0.0, 1.0);
   gl_FragColor = vec4(mix(c, sky, air), cov);
 }
 `;
