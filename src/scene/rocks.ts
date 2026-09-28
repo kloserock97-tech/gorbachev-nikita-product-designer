@@ -75,6 +75,17 @@ export function createRocks(uniforms: Record<string, THREE.IUniform>) {
     mesh.rotation.set(0, r.yaw, 0);
     /* нижняя часть в земле: центр опущен так, чтобы над склоном торчала доля (1 − sink) высоты */
     mesh.position.set(r.x, heightAt(r.x, r.z) + half * r.h * 1.6 * (1 - 2 * r.sink), r.z);
+    /* v81: высота земли под каждой вершиной — шейдер темнит низ камня от настоящего склона с кочками,
+       а не от гладкого купола */
+    mesh.updateMatrix();
+    const pos = mesh.geometry.attributes.position as THREE.BufferAttribute;
+    const ground = new Float32Array(pos.count);
+    const v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(mesh.matrix);
+      ground[i] = heightAt(v.x, v.z);
+    }
+    mesh.geometry.setAttribute("aGround", new THREE.BufferAttribute(ground, 1));
     group.add(mesh);
   }
   return group;

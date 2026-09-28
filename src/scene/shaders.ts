@@ -33,6 +33,31 @@ uniform float uFogShift; /* v72: камера отъехала (телефон) 
 /* облака: xy — сдвиг узора по ветру, z — покрытие (0 — теней нет); uWet — мокрая трава после дождя */
 uniform vec3 uCloud;
 uniform float uWet;
+/* v81: заземление, как затенение неба у основания предметов в Unreal (DFAO, Lumen). У валунов, кресла и столика
+   трава, цветы и земля видят меньше неба, а за предметом, в стороне от солнца, ещё и теряют просвет: закрыта
+   самая яркая часть неба — зарево над холмом. Без этого валуны и ножки мебели «стоят на картинке», а не в траве.
+   uOcc: xy — центр пятна (мир, xz), z — радиус, w — сила; w = 0 — слот пуст */
+uniform vec4 uOcc[6];
+uniform float uOccOn;
+/* x — доля неба, y — доля солнца и просвета (1 — ничего не закрыто) */
+vec2 groundOcc(vec3 w){
+  vec2 k = vec2(1.0);
+  if (uOccOn < 0.5) return k;
+  vec2 away = normalize(-uSunDir.xz + 1e-5);
+  for (int i = 0; i < 6; i++){
+    vec4 o = uOcc[i];
+    if (o.w < 0.001) continue;
+    vec2 d = (w.xz - o.xy) / o.z;
+    float r = length(d);
+    /* хвост: полоса за предметом по направлению от солнца, к трём радиусам сходит на нет */
+    float along = dot(d, away);
+    float across = abs(d.x * away.y - d.y * away.x);
+    float tail = smoothstep(0.2, 0.9, along) * (1.0 - smoothstep(0.6, 1.15, across)) * (1.0 - smoothstep(1.4, 3.0, along));
+    k.x *= 1.0 - o.w * max(1.0 - smoothstep(0.75, 1.9, r), tail * 0.6);
+    k.y *= 1.0 - o.w * max(1.0 - smoothstep(0.8, 1.3, r), tail);
+  }
+  return k;
+}
 
 /* Тени облаков, плывущие по лугу (GoT). Узор — сумма четырёх синусоид, а не шум с хешем:
    ту же функцию повторяет JS (src/scene/weather.ts), чтобы кресло и собака темнели
@@ -326,6 +351,11 @@ void main(){
      узкий лепесток у солнца тоже умеренный: сильный ложился на гребне ровной жёлтой полосой */
   float scatter = 0.25 * 0.36 / (3.14159 * ggx * ggx) + 0.8 * pow(voL, 12.0);
   vBack = wrapNoL * scatter * smoothstep(0.3, 0.8, t) * (1.0 - 0.5 * smoothstep(0.85, 1.0, t)) * uBackLight * cloud;
+  vec2 occ = groundOcc(wp.xyz);
+  vSky *= occ.x;
+  vSun *= occ.y;
+  vBack *= occ.y;
+  vSpec *= occ.y;
   vFog = airFog(wp.xyz, dist);
   vec4 sc = uShadowMatrix * wp;
   vShadowP = sc.xyz * 0.5 + 0.5;
@@ -454,9 +484,10 @@ void main(){
   /* венчики смотрят в небо, всё остальное — к небу и к камере */
   vec3 N = aPart > 5.5 ? normalize(vec3(sway.x * 4.0, 1.0, sway.y * 4.0)) : normalize(vec3(toCam.x, dist * 0.8, toCam.z));
   float cloud = cloudShade(wp.xyz);
-  vLight = shIrradiance(N) * uAmbient + uSunCol * max(dot(N, uSunDir), 0.0) * 0.7 * cloud;
+  vec2 occ = groundOcc(wp.xyz);
+  vLight = shIrradiance(N) * uAmbient * occ.x + uSunCol * max(dot(N, uSunDir), 0.0) * 0.7 * cloud * occ.y;
   /* метёлки и лепестки просвечивают против низкого солнца */
-  vBackP = pow(max(dot(-V, uSunDir), 0.0), 4.0) * uBackLight * cloud;
+  vBackP = pow(max(dot(-V, uSunDir), 0.0), 4.0) * uBackLight * cloud * occ.y;
   vFog = airFog(wp.xyz, dist);
   vec4 sc = uShadowMatrix * wp;
   vShadowP = sc.xyz * 0.5 + 0.5;
@@ -565,8 +596,9 @@ void main(){
   soil = mix(soil, vec3(0.060, 0.052, 0.022), smoothstep(0.72, 0.9, n2(vW.xz * 0.9 + 4.0)) * 0.5);
   vec3 N = normalize(vN);
   float shadow = max(propShadow(vW), dogShadow(vW));
-  vec3 light = shIrradiance(N) * uAmbient * 0.6 * mix(1.0, 0.3, shadow)
-             + uSunCol * max(dot(N, uSunDir), 0.0) * (1.0 - shadow) * cloudShade(vW);
+  vec2 occ = groundOcc(vW);
+  vec3 light = shIrradiance(N) * uAmbient * 0.6 * mix(1.0, 0.3, shadow) * occ.x
+             + uSunCol * max(dot(N, uSunDir), 0.0) * (1.0 - shadow) * cloudShade(vW) * occ.y;
   vec3 c = soil * light * mix(1.0, 0.7, uWet);
   c = mix(c, fogTint(vW), airFog(vW, vDist));
   gl_FragColor = vec4(c, 1.0);
@@ -960,6 +992,7 @@ export const leafFragment = /* glsl */ `
 ${LIGHT_PARS}
 uniform sampler2D uLeafTex;
 uniform float uA2C;       /* 1 — MSAA есть, край листа сглаживается покрытием */
+uniform float uLeafTrans; /* v81: сила просвета листвы (HillScene, ?ltr=) */
 varying vec3 vW;
 varying vec3 vN;
 varying vec2 vUv;
@@ -982,10 +1015,18 @@ void main(){
   float sunLit = smoothstep(-0.35, 0.55, vSunSide) * mix(0.35, 1.0, vDepth);
   vec3 light = shIrradiance(N) * uAmbient * 0.8 * ao
              + uSunCol * max(dot(N, uSunDir), 0.0) * sunLit * cloudShade(vW);
-  /* лист на просвет: смотрим против солнца — край кроны светится тёплой зеленью */
-  float back = pow(max(dot(-V, uSunDir), 0.0), 3.0);
-  vec3 trans = uSunCol * vec3(0.20, 0.30, 0.05) * back * smoothstep(0.55, 1.0, vDepth) * (0.35 + 0.65 * t.r);
-  vec3 c = albedo * light + trans * 0.35;
+  /* v81: лист на просвет по модели Two Sided Foliage, как у травы (Unreal): обёрнутый диффуз по −N·L на
+     лепесток рассеяния к солнцу. Сквозь крону свет проходит только там, где она тонкая: по контуру и с
+     солнечной стороны, — там листья светятся жёлто-зелёным, а середина кроны остаётся тёмной. Прежний просвет
+     лежал ровно по всей внешней оболочке, и крона читалась плоской оливковой заливкой */
+  float wrapNoL = clamp((-dot(N, uSunDir) + 0.5) / 2.25, 0.0, 1.0);
+  float voL = clamp(dot(-V, uSunDir), 0.0, 1.0);
+  float ggx = (voL * 0.36 - voL) * voL + 1.0;
+  float scatter = 0.25 * 0.36 / (3.14159 * ggx * ggx) + 0.9 * pow(voL, 8.0);
+  float thin = max(pow(1.0 - abs(dot(N, V)), 2.0), smoothstep(-0.1, 0.7, vSunSide)) * smoothstep(0.5, 1.0, vDepth);
+  vec3 transCol = mix(vec3(0.16, 0.36, 0.03), vec3(0.30, 0.33, 0.06), vRand * 0.7);
+  vec3 trans = transCol * uSunCol * wrapNoL * scatter * thin * (0.35 + 0.65 * t.r) * cloudShade(vW);
+  vec3 c = albedo * light + trans * uLeafTrans;
   /* дерево стоит дальше кресла, но воздух на нём слабее, чем на траве той же дали: тёмная крона держит
      глубину кадра, а бледная сливалась с небом */
   c = mix(c, fogTint(vW), airFog(vW, vDist) * 0.6);
@@ -996,17 +1037,24 @@ void main(){
 /* ---- v72: валуны (rocks.ts) ----
    Серый гранит с тёплым крапом, сверху мох и пятна лишайника, у земли темнее (трава и сырость), по краю —
    контровая кайма от солнца за холмом. Фактура — шум по локальным координатам камня: валун может стоять где
-   угодно, узор с ним не «плывёт» */
+   угодно, узор с ним не «плывёт».
+   v81: камень выглядел мыльным — ровный светло-серый, гладкий. Солнце светит ему в спину, к камере он повёрнут
+   теневой стороной, и под рассеянным светом неба рельеф нормалями почти не виден. Камень читается через тёмные
+   впадины, светлые обветренные бугры, крап, лишайник и мох с чёткой кромкой — поэтому поле высот идёт и в
+   нормаль, и в цвет, и в затенение. Низ камня темнеет от настоящей высоты земли под ним (aGround) */
 export const rockVertex = /* glsl */ `
+attribute float aGround;  /* высота земли под вершиной (rocks.ts) */
 varying vec3 vW;
 varying vec3 vN;
 varying vec3 vL;
 varying float vDist;
+varying float vAbove;
 void main(){
   vec4 wp = modelMatrix * vec4(position, 1.0);
   vW = wp.xyz;
   vL = position;
   vN = normalize(mat3(modelMatrix) * normal);
+  vAbove = wp.y - aGround;
   vDist = distance(cameraPosition, wp.xyz);
   gl_Position = projectionMatrix * viewMatrix * wp;
 }
@@ -1018,6 +1066,7 @@ varying vec3 vW;
 varying vec3 vN;
 varying vec3 vL;
 varying float vDist;
+varying float vAbove;
 float h31(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
 float n3(vec3 p){
   vec3 i = floor(p), f = fract(p);
@@ -1025,35 +1074,61 @@ float n3(vec3 p){
   return mix(mix(mix(h31(i), h31(i + vec3(1, 0, 0)), u.x), mix(h31(i + vec3(0, 1, 0)), h31(i + vec3(1, 1, 0)), u.x), u.y),
              mix(mix(h31(i + vec3(0, 0, 1)), h31(i + vec3(1, 0, 1)), u.x), mix(h31(i + vec3(0, 1, 1)), h31(i + vec3(1, 1, 1)), u.x), u.y), u.z);
 }
-float hillAt(vec2 p){ return 2.3 * exp(-(p.x * p.x / 46.24 + p.y * p.y / 19.36)); }
 void main(){
-  /* рельеф поверхности: нормаль сбита шумом — бугры и выбоины без лишней геометрии */
+  /* поле высот поверхности: 0 — впадина, 1 — бугор. Впадины — по средним и мелким октавам: по крупной они
+     ложились большими тёмными пятнами, как грязь */
+  float hLo = n3(vL * 3.2 + 1.3), hMid = n3(vL * 8.0 + 4.1), hHi = n3(vL * 19.0 + 7.7);
+  float hf = hLo * 0.45 + hMid * 0.35 + hHi * 0.2;
+  float cav = smoothstep(0.12, 0.34, hHi * 0.65 + hMid * 0.35);
+  float ridge = smoothstep(0.6, 0.8, hf);
+  /* крупный рельеф — шумом нормали, как раньше */
   vec3 bump = vec3(n3(vL * 7.0 + 1.3), n3(vL * 7.0 + 9.1), n3(vL * 7.0 + 17.7)) - 0.5;
   bump += (vec3(n3(vL * 23.0 + 4.0), n3(vL * 23.0 + 8.0), n3(vL * 23.0 + 12.0)) - 0.5) * 0.5;
-  vec3 N = normalize(normalize(vN) + mat3(modelMatrix) * bump * 0.55);
+  vec3 N0 = normalize(normalize(vN) + mat3(modelMatrix) * bump * 0.45);
+  /* мелкий — наклон по полю высот через производные экрана (Mikkelsen, «Bump Mapping Unparametrized Surfaces»,
+     так же делает bumpMap в three): бугры в 3 см */
+  vec3 dpx = dFdx(vW), dpy = dFdy(vW);
+  vec3 r1 = cross(dpy, N0), r2 = cross(N0, dpx);
+  float det = dot(dpx, r1);
+  vec3 grad = sign(det) * (dFdx(hf) * r1 + dFdy(hf) * r2) * 0.03;
+  vec3 N = normalize(abs(det) * N0 - grad);
   vec3 V = normalize(cameraPosition - vW);
-  /* светлый гранит: на холме он единственное серое пятно, и тёмный камень тонул в траве того же тона */
+
+  /* гранит: пятнистый серо-бежевый, крап тёмной слюды и светлого шпата */
   float mottle = n3(vL * 4.5) * 0.55 + n3(vL * 13.0) * 0.3 + n3(vL * 1.3) * 0.15;
-  float speck = n3(vL * 60.0);
-  vec3 stone = mix(vec3(0.25, 0.205, 0.150), vec3(0.39, 0.325, 0.240), mottle);
-  stone *= 0.9 + 0.16 * speck;
-  /* трещины и выбоины: тёмные прожилки там, где шум переходит через середину. Солнце светит камню в спину,
-     и рельеф нормалями под рассеянным светом неба почти не виден — прожилки видны при любом свете */
-  float crack = smoothstep(0.0, 0.03, abs(n3(vL * 2.6 + 2.0) - 0.5));
-  stone *= mix(0.74, 1.0, crack);
-  /* мох — пятнами по верху; лишайник — бледные пятна по бокам */
-  float mossMask = smoothstep(0.55, 0.85, N.y * 0.7 + n3(vL * 3.1 + 5.0) * 0.6);
-  vec3 moss = mix(vec3(0.030, 0.048, 0.013), vec3(0.060, 0.080, 0.020), n3(vL * 9.0));
-  vec3 alb = mix(stone, moss, mossMask * 0.8);
-  float lichen = smoothstep(0.7, 0.78, n3(vL * 6.5 + 11.0)) * (1.0 - mossMask);
-  alb = mix(alb, vec3(0.30, 0.29, 0.17), lichen * 0.55);
-  /* у земли — темнее: сырость и тень травы */
-  float ground = smoothstep(0.35, 0.0, vW.y - hillAt(vW.xz));
-  alb *= mix(1.0, 0.45, ground);
-  float ao = mix(0.55, 1.0, smoothstep(-0.2, 0.7, N.y * 0.5 + 0.5));
-  vec3 light = shIrradiance(N) * uAmbient * 0.75 * ao + uSunCol * max(dot(N, uSunDir), 0.0) * cloudShade(vW);
-  float rim = pow(1.0 - max(dot(N, V), 0.0), 4.0) * pow(max(dot(-V, uSunDir), 0.0), 3.0) * (1.0 - ground);
-  vec3 c = alb * light + uSunCol * vec3(0.12, 0.09, 0.05) * rim;
+  vec3 stone = mix(vec3(0.21, 0.180, 0.132), vec3(0.30, 0.262, 0.196), mottle);
+  float grain = n3(vL * 34.0);
+  stone *= 1.0 - 0.16 * smoothstep(0.62, 0.86, grain) + 0.08 * smoothstep(0.34, 0.16, grain);
+  /* во впадинах пыль и тень, бугры выбелены ветром */
+  stone *= mix(0.7, 1.0, cav);
+  stone *= 1.0 + 0.1 * ridge;
+  /* трещины: не сплошной сеткой, а местами и разной толщины */
+  float crackW = mix(0.012, 0.03, n3(vL * 5.0 + 9.0));
+  float crack = smoothstep(0.0, crackW, abs(n3(vL * 2.6 + 2.0) - 0.5));
+  stone *= mix(1.0, mix(0.5, 1.0, crack), smoothstep(0.4, 0.6, n3(vL * 1.7 + 3.0)));
+
+  /* мох: по верху и во впадинах, кромка чёткая, но рваная */
+  float mossN = n3(vL * 3.1 + 5.0) * 0.6 + n3(vL * 12.0 + 2.0) * 0.4;
+  float mossMask = smoothstep(0.53, 0.6, N0.y * 0.55 + mossN * 0.55 + (1.0 - cav) * 0.12);
+  vec3 moss = mix(vec3(0.026, 0.044, 0.011), vec3(0.074, 0.094, 0.022), n3(vL * 20.0));
+  vec3 alb = mix(stone, moss, mossMask * 0.9);
+  /* лишайник: бледно-серо-зелёные корки на боках и редкие оранжевые пятна сверху */
+  float lich = n3(vL * 6.5 + 11.0) * 0.7 + n3(vL * 18.0) * 0.3;
+  float lichen = smoothstep(0.68, 0.71, lich) * (1.0 - mossMask);
+  alb = mix(alb, vec3(0.25, 0.26, 0.18), lichen * 0.45);
+  float orange = smoothstep(0.76, 0.78, n3(vL * 9.0 + 23.0)) * (1.0 - mossMask) * smoothstep(-0.1, 0.5, N0.y);
+  alb = mix(alb, vec3(0.30, 0.16, 0.045), orange * 0.6);
+
+  /* у земли: сырость и зелёный налёт, а трава и склон закрывают низ камня от неба */
+  float wet = 1.0 - smoothstep(0.0, 0.2, vAbove);
+  alb = mix(alb * mix(1.0, 0.5, wet), vec3(0.03, 0.04, 0.012), wet * 0.3);
+  float contact = mix(0.3, 1.0, smoothstep(0.0, 0.22, vAbove));
+
+  float ao = mix(0.55, 1.0, smoothstep(-0.2, 0.7, N.y * 0.5 + 0.5)) * mix(0.7, 1.0, cav) * contact;
+  vec3 light = shIrradiance(N) * uAmbient * 0.75 * ao + uSunCol * max(dot(N, uSunDir), 0.0) * cloudShade(vW) * contact;
+  /* контровая кайма против солнца; мох по кромке светится зеленью, как трава на просвет */
+  float rim = pow(1.0 - max(dot(N0, V), 0.0), 4.0) * pow(max(dot(-V, uSunDir), 0.0), 3.0) * (1.0 - wet);
+  vec3 c = alb * light + uSunCol * mix(vec3(0.12, 0.09, 0.05), vec3(0.10, 0.17, 0.03), mossMask) * rim;
   c = mix(c, fogTint(vW), airFog(vW, vDist));
   gl_FragColor = vec4(c, 1.0);
 }

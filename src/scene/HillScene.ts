@@ -53,6 +53,17 @@ const FOOTPRINTS: [number, number, number, number][] = [
    ⚠️ меняли SUN_DIR — перезапустить node tools/bake-hdri.mjs (SH неба запечены под него).
    Тени реквизита кладёт другой, «небесный» ключ повыше — от низкого солнца
    тень кресла тянулась бы на пять метров к камере. */
+/* v81: пятна заземления (shaders.ts, groundOcc) — валуны, кресло и столик: [x, z, радиус, сила] в мире; ?occ=0 — без них */
+function groundOccluders() {
+  const c = Math.cos(PROPS_YAW), s = Math.sin(PROPS_YAW);
+  const noRocks = /[?&]rocks=0/.test(location.search);
+  const rocks = rockFootprints().map((r) => new THREE.Vector4(r.x, r.z, Math.max(r.rx, r.rz) * 1.05, noRocks ? 0 : 0.6));
+  const props = FOOTPRINTS.map(([x, z, rx, rz], i) => new THREE.Vector4(x * c + z * s, -x * s + z * c, Math.max(rx, rz), i === 0 ? 0.5 : 0.4));
+  const all = [...rocks, ...props];
+  while (all.length < 6) all.push(new THREE.Vector4());
+  return all.slice(0, 6);
+}
+
 const SUN_DIR = new THREE.Vector3(-0.08, 0.04, -1).normalize();
 const SHADOW_DIR = new THREE.Vector3(0.25, 1.0, -0.55).normalize();
 
@@ -145,6 +156,10 @@ export class HillScene {
     /* тени облаков (сдвиг xy, покрытие z) и мокрая трава — ведёт src/scene/weather.ts */
     uCloud: { value: new THREE.Vector3(0, 0, 0) },
     uWet: { value: 0 },
+    uOcc: { value: groundOccluders() },
+    /* v81: просвет листвы дерева (shaders.ts, leafFragment); подбор ?ltr= */
+    uLeafTrans: { value: Number(new URLSearchParams(location.search).get("ltr") ?? 2.5) },
+    uOccOn: { value: /[?&]occ=0/.test(location.search) ? 0 : 1 },
   };
 
   /* курсор: «голова» догоняет точку на холме, следы остаются позади и гаснут */
