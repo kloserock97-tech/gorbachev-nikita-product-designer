@@ -45,7 +45,9 @@ body {
 
 #scene { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 
-/* тонкие вертикальные направляющие сетки */
+/* тонкие вертикальные направляющие сетки. v78: Никита попросил убрать полосы с фона первого экрана —
+   направляющие больше не показываются (разметка осталась, её используют отступы) */
+.guides { display: none; }
 .guides { position: absolute; top: calc(-40 * var(--u)); bottom: calc(-40 * var(--u)); left: 0; right: 0; pointer-events: none; }
 .guides i {
   position: absolute; top: 0; bottom: 0; width: 1px;
