@@ -43,6 +43,47 @@ type Look = { kind: "viewer" | "chair" | "side" | "sky"; until: number; side: nu
 type Pose = Map<string, { q: THREE.Quaternion; p: THREE.Vector3 }>;
 export type DogState = { rain: boolean; sleep: boolean };
 
+/* v82: шерсть на просвет и низ в траве. Матовый стандартный материал светит только гранями, повёрнутыми к
+   источнику, а солнце у Келли за спиной — к зрителю она стояла ровной светлой фигуркой. У настоящей шерсти против
+   солнца светится край: свет проходит сквозь кончики волос по силуэту (как кайма меха в Unreal, Hair/Subsurface).
+   Кайма считается от тех же направленных ламп three, что и остальной свет собаки (контровой «rim» из HillScene),
+   поэтому гаснет с погодой и под тенью облака вместе с ними. Светлая шерсть светится сильнее тёмной.
+   Низ: трава закрывает от неба нижние ~20 см корпуса и лап — пока Келли сидит на земле (uDog.w).
+   ?fur=0 — без обоих */
+const FUR_K = /[?&]fur=0/.test(location.search) ? 0 : Number(new URLSearchParams(location.search).get("fur") ?? 1);
+function furLook(m: THREE.MeshStandardMaterial, uDog: { value: THREE.Vector4 }) {
+  if (FUR_K <= 0) return;
+  m.customProgramCacheKey = () => "kelly-fur";
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uDog = uDog;
+    sh.uniforms.uFurK = { value: FUR_K };
+    sh.vertexShader = sh.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying float vFurY;")
+      .replace("#include <project_vertex>", "#include <project_vertex>\n  vFurY = (modelMatrix * vec4(transformed, 1.0)).y;");
+    sh.fragmentShader = sh.fragmentShader
+      .replace("#include <common>", "#include <common>\nvarying float vFurY;\nuniform vec4 uDog;\nuniform float uFurK;")
+      .replace("#include <opaque_fragment>", `{
+    vec3 Vv = normalize(vViewPosition);
+    float fres = pow(1.0 - saturate(dot(normal, Vv)), 2.0);
+    float lum = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));
+    vec3 fur = vec3(0.0);
+    #if NUM_DIR_LIGHTS > 0
+    for (int i = 0; i < NUM_DIR_LIGHTS; i++) {
+      vec3 L = directionalLights[i].direction;
+      float back = pow(saturate(dot(-Vv, L)), 4.0);
+      float wrap = saturate((dot(normal, L) + 0.6) / 1.6);
+      fur += directionalLights[i].color * back * wrap;
+    }
+    #endif
+    /* у земли низкое солнце закрыто травой — кайма у лап гаснет, иначе верх лап светился жёлтым пятном */
+    float inGrass = uDog.w * (1.0 - smoothstep(0.02, 0.22, vFurY - uDog.y));
+    outgoingLight += fur * fres * smoothstep(0.02, 0.5, lum) * mix(diffuseColor.rgb, vec3(1.0, 0.92, 0.8), 0.5) * uFurK * (1.0 - inGrass);
+    outgoingLight *= 1.0 - 0.45 * inGrass * min(uFurK, 1.0);
+  }
+  #include <opaque_fragment>`);
+  };
+}
+
 const easeOutBack = (x: number) => { const c = 1.6; return 1 + (c + 1) * (x - 1) ** 3 + c * (x - 1) ** 2; };
 
 export class Dog {
@@ -100,7 +141,7 @@ export class Dog {
       mesh.receiveShadow = true; // тень кресла ложится и на собаку
       mesh.layers.enable(6); // v72: лучи над Келли приглушаются, как над креслом (SHIELD_LAYER в HillScene)
       const m = mesh.material as THREE.MeshStandardMaterial;
-      if (m) { m.roughness = 0.9; m.metalness = 0; m.envMapIntensity = 0.8; }
+      if (m) { m.roughness = 0.9; m.metalness = 0; m.envMapIntensity = 0.8; furLook(m, this.uniforms.uDog); }
     });
     this.group.add(model);
 
