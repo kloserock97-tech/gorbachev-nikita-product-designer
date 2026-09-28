@@ -28,7 +28,7 @@ export type Kinetic = {
 /** onTexture — заранее залить текстуру в видеопамять (renderer.initTexture) */
 export function createKinetic(onTexture?: (t: THREE.Texture) => void): Kinetic {
   const H = 300;
-  const font = `700 ${Math.round(H * KINETIC_FONT)}px Onest, "Segoe UI", system-ui, sans-serif`;
+  const font = `700 ${Math.round(H * KINETIC_FONT)}px Ugol, Onest, "Segoe UI", system-ui, sans-serif`; // Ugol — акцентный шрифт бренда (fonts.css)
   let offLang = () => {};
   const k: Kinetic = { texture: null!, ratio: 1, headFrac: 0.2, dispose: () => { offLang(); k.texture.dispose(); } };
   /* размер канваса у загруженной текстуры не меняем (three хранит её неизменяемой) —

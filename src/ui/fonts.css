@@ -42,5 +42,8 @@
 /* главная: первый экран, «Привет», глава «Кейсы», названия и цифры кейсов; страница кейса: заголовки и KPI */
 .headline, .story-hi, .cases-kicker, .cases-now, .sf-title,
 .cw-t, .cw-fact b, .cl-fact b, .cl-title, .case-title,
-.cs-hero h1, .cs-lead, .cs-kpi b, .cs-takeaway, .cs-next-text b,
-.cs-decision h3, .cs-mistake h3, .cs-deep-head h3 { font-family: var(--accent-font); }
+.walk-word, .shelf-title, .shelf-name, .shelf-now,
+.cs-hero h1, .cs-hero-brand span, .cs-lead, .cs-kpi b, .cs-takeaway, .cs-next-text b,
+.cs-decision h3, .cs-mistake h3, .cs-deep-head h3, .cs-method h3, .cs-flow-col h3, .cs-part h4,
+.cs-gal-title, .cs-outcomes b, .cs-deep-title b, .cs-before b, .cs-roadmap b { font-family: var(--accent-font); }
+/* Надпись «Hi there! / Привет» в 3D-сцене рисуется на канвасе — шрифт задан в src/scene/kinetic.ts */
