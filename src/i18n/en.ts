@@ -134,7 +134,6 @@ const en = {
   "cases.kicker": 'Case studies<sup class="cases-sup"></sup>',
   "cases.meta": "Web, mobile and AI · 2024–2026",
   "cases.cta": "View case",
-  "cases.upnext": "Next:",
   "cases.open": "Open",
   "cases.f.about": "Project:",
   "cases.f.where": "Where and when:",
@@ -142,7 +141,6 @@ const en = {
   "cases.f.result": "Result:",
   "cases.prev": "Previous case",
   "cases.next": "Next case",
-  "cases.project": "Case",
   "cases.swipe": "Swipe sideways",
 
   /* v32: заставка главы «Кейсы» над лугом и заметки после ленты */

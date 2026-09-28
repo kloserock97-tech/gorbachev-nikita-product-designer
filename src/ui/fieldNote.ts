@@ -11,6 +11,7 @@
    а в совсем низком окне описание прокручивается внутри (is-tight). На телефоне карточка просто растёт, высоту
    кадра под неё считает CSS из --m-open, которую меряем здесь. Стили — hero/note-card.css. */
 import "./hero/note-card.css";
+import { bodyHas, onBodyState } from "../lib/bodyState";
 import { pad2 as pad } from "../lib/format";
 import notes from "../data/notes";
 import { cue } from "../audio/bus";
@@ -56,7 +57,9 @@ export function initFieldNote() {
   const phone = matchMedia("(hover: none) and (pointer: coarse)").matches;
   const syncVideo = () => {
     if (!video?.dataset.note) return;
-    const want = !phone && inView && !document.hidden && !document.body.classList.contains("story-away");
+    /* v79: и не во время загрузки (карточка ещё скрыта, а ролик качался и декодировался), и не под открытым
+       компьютером или страницей кейса */
+    const want = !phone && inView && !document.hidden && bodyHas("is-ready") && !bodyHas("story-away") && !bodyHas("pc-focus") && !bodyHas("case-open");
     if (want && video.paused) void video.play().catch(() => {});
     else if (!want && !video.paused) video.pause();
   };
@@ -290,6 +293,7 @@ export function initFieldNote() {
   video?.addEventListener("playing", () => { if (video.dataset.note === notes[index].id) card.classList.add("is-playing"); });
   new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; syncVideo(); }).observe(card);
   document.addEventListener("visibilitychange", syncVideo);
+  onBodyState(syncVideo);
   let scrollRaf = 0;
   addEventListener("scroll", () => { if (!scrollRaf) scrollRaf = requestAnimationFrame(() => { scrollRaf = 0; syncVideo(); }); }, { passive: true });
 

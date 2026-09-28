@@ -45,19 +45,6 @@
 
 /* ── карточка по центру ───────────────────────────────────────────────── */
 .cx-center { position: absolute; left: 50%; top: 44%; translate: -50% -50%; width: clamp(240px, 22vw, 380px); }
-.cx-next {
-  display: flex; align-items: baseline; gap: 8px; width: 100%; margin: 0 0 12px; padding: 0;
-  border: 0; background: none; color: #fff; font: inherit; font-size: 14px; cursor: pointer; pointer-events: auto;
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
-}
-.cx-next-l { margin-right: auto; opacity: 0.72; }
-/* над диорамой строка «Далее» поднимается к её верхнему краю (сдвиг --ny считает casesCardPreview.ts) и лежит поверх */
-.cx-next { position: relative; z-index: 3; translate: 0 var(--ny, 0px); transition: translate 0.4s var(--ease-x); }
-.cx-next-n { opacity: 0.7; font-variant-numeric: tabular-nums; }
-.cx-next-t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; transition: translate 0.2s var(--ease-x); }
-.cx-next-l, .cx-next-n { white-space: nowrap; flex: none; }
-@media (hover: hover) { .cx-next:hover .cx-next-t { translate: 3px 0; } }
-.cx-next:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 6px; }
 
 .cx-stack { position: relative; aspect-ratio: 0.9; }
 .cx-card {
@@ -104,10 +91,6 @@
 .cx-scene { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .cx-card.is-scene .cx-media, .cx-card.is-scene::before { visibility: hidden; }
 .cx-card.is-scene { background: none; box-shadow: none; }
-/* телефон, кейс со сценой: строки «Далее» нет — кейсы листают кнопки внизу, а сцена занимает верх экрана */
-.cases.is-narrow .cx.has-scene .cx-next { display: none; }
-/* v78: строку «Далее» убрали совсем — слева и так виден весь список кейсов, а на телефоне листают кнопки внизу */
-.cases[data-preview="card"] .cx-next { display: none; }
 .cx-card--dio .cx-shot { width: 100%; height: 100%; object-fit: cover; }
 .cx-dio-img { display: block; width: 100%; height: 100%; user-select: none; -webkit-user-drag: none; filter: drop-shadow(0 0 14px rgba(var(--gl), 0.3)); }
 .cx-dio-screen { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; border-radius: 96px; background: #0b0d10; backface-visibility: hidden; }
@@ -122,10 +105,6 @@
 }
 @media (hover: hover) { .cx-stack.is-hover .cx-card--dio.is-cur .cx-media { scale: 1.02; } }
 
-/* знак продукта на карточке — светлая плашка в углу */
-.cx-brand { position: absolute; z-index: 2; left: 14px; top: 14px; display: grid; place-items: center; height: 30px; padding: 0 11px; border-radius: 999px; background: rgba(250, 250, 248, 0.92); box-shadow: 0 4px 14px -6px rgba(0, 0, 0, 0.35); pointer-events: none; }
-.cx-brand[hidden] { display: none; }
-.cx-brand-img { height: 16px; width: auto; max-width: 90px; object-fit: contain; }
 
 /* курсор-круг «Открыть»: над карточкой вместо стрелки мыши */
 .cx-cursor {
@@ -177,7 +156,6 @@
 .cases.is-narrow[data-preview="card"] { --side: calc(34 * var(--u, 0.54px)); }
 .cases.is-narrow .cx-list { display: none; }
 .cases.is-narrow .cx-center { top: calc(72px + env(safe-area-inset-top)); translate: -50% 0; width: min(64vw, calc((100svh - 470px) * 0.9)); }
-.cases.is-narrow .cx-next { font-size: 13px; margin-bottom: 8px; }
 .cases.is-narrow .cx-card--dio { --dw: calc(var(--nw) * 100vw); margin: calc(var(--dw) * var(--ar) * -0.5 + 9svh) 0 0 calc(var(--dw) * var(--nx) * -1); }
 .cases.is-narrow .cx-title { left: var(--side); right: var(--side); width: auto; bottom: calc(242px + env(safe-area-inset-bottom)); font-size: clamp(40px, 12.5vw, 72px); }
 /* v78: переключатель кейсов — у нижнего края, в зоне большого пальца; факты и название стоят над ним */

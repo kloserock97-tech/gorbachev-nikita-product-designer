@@ -2,12 +2,9 @@
    очередь «Пользователи» 2494:85178, профиль 2494:85463, страница комментария (cases/moderator-dashboard/01).
    Шрифт — Golos Text, цвета статусов сняты с макета. Спутники — тёмное дымчатое стекло, как на референсе Никиты,
    поэтому фон у них полупрозрачный и текст светлый. */
-import { FONT, loadFonts } from "./paint";
+import { INK, MUTED, canvasFor, font, loadFonts, loadImage, rr, wrap, type Ctx } from "./draw";
 
-const BASE = import.meta.env.BASE_URL;
-const DIR = `${BASE}cases/moderator-dashboard/scene/`;
-type Ctx = CanvasRenderingContext2D;
-const font = (w: number, size: number) => `${w} ${size}px "${FONT}"`;
+const DIR = `${import.meta.env.BASE_URL}cases/moderator-dashboard/scene/`;
 export const STATUS = { new: { t: "Новый", c: "#26c42d" }, edited: { t: "Отредактирован", c: "#618db1" }, work: { t: "В работе", c: "#717171" } } as const;
 /* статусы и жалобы десяти пользователей из очереди (макет 2494:85178) */
 const QUEUE: { s: keyof typeof STATUS; n: number }[] = [
@@ -15,31 +12,9 @@ const QUEUE: { s: keyof typeof STATUS; n: number }[] = [
   { s: "new", n: 2 }, { s: "edited", n: 3 }, { s: "work", n: 3 }, { s: "work", n: 3 }, { s: "edited", n: 3 },
 ];
 const DARK = "rgba(24, 22, 18, 0.62)";
-const INK = "#f4efe6", MUTED = "rgba(244, 239, 230, 0.62)";
 
-export function loadImage(src: string) {
-  return new Promise<HTMLImageElement>((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
-}
 export const moderatorImage = (name: string) => loadImage(DIR + name);
 
-const canvasFor = (w: number, h: number, scale: number) => {
-  const c = document.createElement("canvas");
-  c.width = Math.round(w * scale); c.height = Math.round(h * scale);
-  const ctx = c.getContext("2d")!;
-  ctx.scale(scale, scale);
-  return { c, ctx };
-};
-const rr = (ctx: Ctx, x: number, y: number, w: number, h: number, r: number) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); };
-function wrap(ctx: Ctx, text: string, maxW: number) {
-  const out: string[] = [];
-  let line = "";
-  for (const w of text.split(" ")) {
-    const t = line ? `${line} ${w}` : w;
-    if (ctx.measureText(t).width > maxW && line) { out.push(line); line = w; } else line = t;
-  }
-  if (line) out.push(line);
-  return out;
-}
 /** плашка статуса, как в таблице: серая капсула, цветная точка, подпись */
 function pill(ctx: Ctx, s: keyof typeof STATUS, x: number, y: number, dark = false) {
   ctx.font = font(400, 14);

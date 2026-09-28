@@ -46,7 +46,8 @@ for (const p of PS) {
   const gl = await ev(`__gl.take()`);
   const task = ((m1.TaskDuration - m0.TaskDuration) * 1000) / frames;
   const script = ((m1.ScriptDuration - m0.ScriptDuration) * 1000) / frames;
-  console.log(`\n── p=${p}  fps ${(frames / 3).toFixed(0)}  main thread ${task.toFixed(2)} ms/frame (script ${script.toFixed(2)})  DOM nodes ${m1.Nodes}  JS heap ${(m1.JSHeapUsedSize / 1e6).toFixed(0)} MB`);
+  const style = ((m1.RecalcStyleDuration - m0.RecalcStyleDuration) * 1000) / frames, layout = ((m1.LayoutDuration - m0.LayoutDuration) * 1000) / frames;
+  console.log(`\n── p=${p}  fps ${(frames / 3).toFixed(0)}  main thread ${task.toFixed(2)} ms/frame (script ${script.toFixed(2)}, style ${style.toFixed(2)}, layout ${layout.toFixed(2)}, style recalcs ${((m1.RecalcStyleCount - m0.RecalcStyleCount) / frames).toFixed(1)}/frame)  DOM nodes ${m1.Nodes}  JS heap ${(m1.JSHeapUsedSize / 1e6).toFixed(0)} MB`);
   for (const c of gl) console.log(`   ${c.lost ? "LOST " : ""}${c.shown ? "visible" : "hidden "}  ${c.name.padEnd(22)} ${c.px.padEnd(11)} draws/frame ${(c.draws / frames).toFixed(1).padStart(6)}  instances/frame ${Math.round(c.instances / frames)}`);
 }
 close();

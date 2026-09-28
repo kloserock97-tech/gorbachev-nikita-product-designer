@@ -278,7 +278,7 @@ function initFinder(scene: Scene, vf: HTMLElement) {
     const dt = Math.min(0.05, (now - lastT) / 1000);
     lastT = now;
     if (!r) {
-      if (shown) { shown = false; vf.style.opacity = "0"; vf.style.visibility = "hidden"; }
+      if (shown) { shown = false; vf.style.opacity = "0"; vf.style.visibility = "hidden"; vf.classList.remove("is-shown"); }
       return;
     }
     /* отступ; на входе рамка шире и «сжимается» на объект */
@@ -288,6 +288,7 @@ function initFinder(scene: Scene, vf: HTMLElement) {
       shown = true;
       Object.assign(cur, { x: tx, y: ty, w: tw, h: th });
       vf.style.visibility = "visible";
+      vf.classList.add("is-shown");
     } else {
       /* ведёт с лёгкой инерцией, как оператор камеру, — не прилипает к каждому кадру полёта */
       const k = 1 - Math.exp(-dt * 14);

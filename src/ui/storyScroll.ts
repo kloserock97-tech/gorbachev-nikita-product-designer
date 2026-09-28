@@ -22,7 +22,7 @@ const story = () => document.querySelector<HTMLElement>(".story");
    смены окна. */
 let probe: HTMLElement | null = null;
 let cached = 0;
-export function viewH() {
+function viewH() {
   if (cached) return cached;
   if (!probe) {
     probe = document.createElement("i");

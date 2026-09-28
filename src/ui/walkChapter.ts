@@ -5,6 +5,7 @@
    v32.1 сравнивали вживую четыре формата (колода, раскрытие, лента, лента с размытым фоном) — Никита выбрал колоду (v33).
    Всё ведёт прогресс главы (как лента кейсов в cases.ts): DOM-трансформы без собственных таймеров. */
 import notes, { type Note } from "../data/notes";
+import { bodyHas, onBodyState } from "../lib/bodyState";
 import { pad2 as pad } from "../lib/format";
 import { cue } from "../audio/bus";
 import { onLang, t, type Key } from "../i18n";
@@ -155,7 +156,7 @@ export function initWalkChapter(scene: StoryScene) {
     cards.forEach((card, i) => {
       const v = card.querySelector("video");
       if (!v) return;
-      if (i === idx && shelfOn && !document.hidden) {
+      if (i === idx && shelfOn && !document.hidden && !bodyHas("case-open")) {
         if (v.preload !== "auto") v.preload = "auto";
         if (v.paused) void v.play().catch(() => {});
       } else if (!v.paused) v.pause();
@@ -314,4 +315,5 @@ export function initWalkChapter(scene: StoryScene) {
   };
 
   document.addEventListener("visibilitychange", () => playOnly(document.hidden ? -1 : current));
+  onBodyState(() => playOnly(current));
 }

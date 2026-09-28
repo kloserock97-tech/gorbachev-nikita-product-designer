@@ -2,13 +2,12 @@
    иконки и фото взяты из Figma-файла «Сообщества» (LdUrYy9cNus6q7005xnmXo, лента 2103:12251). Так текст остаётся
    резким на любом экране: холст рисуется в разрешении, которое карточка займёт на экране, а не растягивается
    из готовой картинки. Размеры ниже — в единицах макета Figma (1 ед. = 1 px макета). */
+import { cover, canvasFor as blank, font, loadFonts, loadImage, rr, wrap, type Ctx } from "./draw";
 
-const BASE = import.meta.env.BASE_URL;
-const DIR = `${BASE}cases/community/scene/`;
-export const FONT = "Golos Text";
+const DIR = `${import.meta.env.BASE_URL}cases/community/scene/`;
 
 /* теги продукта: цвет плашки и иконка — из компонента Tag (3930:55550) */
-export const TAGS = {
+const TAGS = {
   journey: { t: "Путешествие", bg: "#e2f8ff" },
   communal: { t: "ЖКХ", bg: "#f5e8e8" },
   disease: { t: "Болезнь", bg: "#fff1e4" },
@@ -25,56 +24,7 @@ export type TagId = keyof typeof TAGS;
 
 const C = { heading: "#020202", primary: "#212121", icon: "#5d6570", secondary: "#efefef" };
 
-let fontsReady: Promise<void> | null = null;
-/** шрифт продукта — Golos Text (OFL), лежит в public/fonts */
-export function loadFonts() {
-  if (fontsReady) return fontsReady;
-  const faces = [
-    new FontFace(FONT, `url(${BASE}fonts/golos-cyrillic.woff2)`, { weight: "400 600", unicodeRange: "U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116" }),
-    new FontFace(FONT, `url(${BASE}fonts/golos-latin.woff2)`, { weight: "400 600", unicodeRange: "U+0000-00FF, U+2000-206F, U+20AC, U+2122, U+2190-2199, U+2212" }),
-  ];
-  fontsReady = Promise.all(faces.map((f) => f.load().then(() => document.fonts.add(f)))).then(() =>
-    Promise.all(["400", "500", "600"].map((w) => document.fonts.load(`${w} 16px "${FONT}"`, "Аа"))).then(() => undefined),
-  );
-  return fontsReady;
-}
-
-const images = new Map<string, Promise<HTMLImageElement>>();
-export function img(name: string) {
-  let p = images.get(name);
-  if (!p) {
-    p = new Promise((res, rej) => { const i = new Image(); i.decoding = "async"; i.onload = () => res(i); i.onerror = rej; i.src = DIR + name; });
-    images.set(name, p);
-  }
-  return p;
-}
-
-type Ctx = CanvasRenderingContext2D;
-const font = (w: number, size: number) => `${w} ${size}px "${FONT}"`;
-
-function rr(ctx: Ctx, x: number, y: number, w: number, h: number, r: number | [number, number, number, number]) {
-  ctx.beginPath();
-  ctx.roundRect(x, y, w, h, r);
-}
-
-/** фото в прямоугольник по правилу object-fit: cover, со сдвигом фокуса fy (0 — верх, 0.5 — центр) */
-function cover(ctx: Ctx, im: HTMLImageElement, x: number, y: number, w: number, h: number, fx = 0.5, fy = 0.5, zoom = 1) {
-  const s = Math.max(w / im.width, h / im.height) * zoom;
-  const sw = w / s, sh = h / s;
-  ctx.drawImage(im, (im.width - sw) * fx, (im.height - sh) * fy, sw, sh, x, y, w, h);
-}
-
-function wrap(ctx: Ctx, text: string, maxW: number) {
-  const words = text.split(" ");
-  const lines: string[] = [];
-  let line = "";
-  for (const w of words) {
-    const test = line ? `${line} ${w}` : w;
-    if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = w; } else line = test;
-  }
-  if (line) lines.push(line);
-  return lines;
-}
+export const img = (name: string) => loadImage(DIR + name);
 
 /** тег: плашка 32 высотой, отступы 10, иконка 16 + 4 + подпись 14/20 */
 async function tag(ctx: Ctx, id: TagId | "all", x: number, y: number) {
@@ -110,14 +60,7 @@ async function arrowButton(ctx: Ctx, x: number, y: number) {
   ctx.drawImage(await img("arrow.svg"), x + 12, y + 12, 24, 24);
 }
 
-const canvasFor = (w: number, h: number, scale: number) => {
-  const c = document.createElement("canvas");
-  c.width = Math.round(w * scale); c.height = Math.round(h * scale);
-  const ctx = c.getContext("2d")!;
-  ctx.scale(scale, scale);
-  ctx.textBaseline = "alphabetic";
-  return { c, ctx };
-};
+const canvasFor = blank;
 
 /* ── главная карточка: шапка ленты + ряд тегов + первая публикация (Publication Card 2103:24833) ───────────── */
 export const MAIN = { w: 652, h: 612 };

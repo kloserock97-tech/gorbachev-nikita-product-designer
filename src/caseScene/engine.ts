@@ -11,16 +11,16 @@ import { Line2 } from "three/examples/jsm/lines/Line2.js";
 import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
 import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 
-export const FRAME = { w: 1672, h: 941 };
+const FRAME = { w: 1672, h: 941 };
 const FOV = 30;
 /** чистое сложение света: цвет прибавляется, альфа холста не растёт — свет ложится на луг под холстом */
-export const addLight = (m: THREE.Material) => {
+const addLight = (m: THREE.Material) => {
   m.blending = THREE.CustomBlending;
   m.blendSrc = THREE.OneFactor; m.blendDst = THREE.OneFactor;
   m.blendSrcAlpha = THREE.ZeroFactor; m.blendDstAlpha = THREE.OneFactor;
   return m;
 };
-export const DIST = FRAME.h / 2 / Math.tan(THREE.MathUtils.degToRad(FOV / 2));
+const DIST = FRAME.h / 2 / Math.tan(THREE.MathUtils.degToRad(FOV / 2));
 
 /** точка кадра референса (px) на глубине z → мировые координаты, которые на экране попадут в ту же точку */
 export const at = (px: number, py: number, z = 0) => {
@@ -379,11 +379,18 @@ export function createHost(canvas: HTMLCanvasElement): Host {
   const subs: (() => void)[] = [];
   const size = { w: 1, h: 1 };
   const dpr = () => Math.min(2, devicePixelRatio);
+  let px = "";
   const resize = () => {
     size.w = canvas.clientWidth || innerWidth;
     size.h = canvas.clientHeight || innerHeight;
-    renderer.setPixelRatio(dpr());
-    renderer.setSize(size.w, size.h, false);
+    /* буфер кадра пересоздаётся только при настоящей смене размера: глава зовёт resize и при смене кейса
+       (у названия своя длина — своя свободная область), и тогда достаточно пересчитать камеры */
+    const key = `${size.w}x${size.h}@${dpr()}`;
+    if (key !== px) {
+      px = key;
+      renderer.setPixelRatio(dpr());
+      renderer.setSize(size.w, size.h, false);
+    }
     for (const fn of subs) fn();
   };
   resize();
@@ -401,7 +408,7 @@ export type Stage = {
 };
 /** как кадр референса лежит в окне: s — css-пикселей на пиксель кадра, fx/fy — где на экране центр кадра (css px) */
 export type Fit = (w: number, h: number) => { s: number; fx: number; fy: number };
-export const containFit: Fit = (w, h) => ({ s: Math.min(w / FRAME.w, h / FRAME.h), fx: w / 2, fy: h / 2 });
+const containFit: Fit = (w, h) => ({ s: Math.min(w / FRAME.w, h / FRAME.h), fx: w / 2, fy: h / 2 });
 
 export function createStage(host: Host, fit: Fit = containFit): Stage {
   const scene = new THREE.Scene();

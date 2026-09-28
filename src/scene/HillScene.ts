@@ -1870,6 +1870,14 @@ export class HillScene {
     return false;
   }
 
+  /** холм в этом кадре не рисуется: те же условия, что в postfx.render() (covered и altFull) */
+  private hillHidden() {
+    const p = this.fx.params;
+    const covered = p.fill >= 0.999 && p.tear <= -0.2;
+    const portal = p.portal > 0.001 && p.portal < 0.999;
+    return covered || (!!p.altRender && p.alt >= 0.999 && !portal);
+  }
+
   private updateCursor(dt: number) {
     const hitNow = !this.reduced && this.pickHill();
     if (hitNow) {
@@ -2014,10 +2022,13 @@ export class HillScene {
     const dt = Math.min(this.timer.getDelta(), 0.05);
     this.uniforms.uTime.value += dt;
     this.screen?.update(this.uniforms.uTime.value, dt);
+    /* v79: холм не виден — под белой страницей About или в «Кейсах», где вместо него луг. Тогда не считаем то,
+       что живёт только на холме: собаку, поиск точки под курсором (сотни шагов по рельефу на кадр) и семена */
+    const hillShown = !this.hillHidden();
     const lookAt = this.pc && this.storyCh1 > 0.1 && this.storyCh2 <= 0 && this.storyCh3 <= 0 ? this.pc.position : this.headLive && !this.focusOn ? this.head.pos : null;
     /* v24: в дождь — кепка с зонтиком; в футере Келли спит клубочком на кресле (с запасом, чтобы не дёргалась на границе) */
     const sleep = this.dog?.isSleeping ? this.storyCh3 > 0.06 : this.storyCh3 > 0.12;
-    this.dog?.update(dt, lookAt, this.camera.position, { rain: this.weather.kind === "rain", sleep });
+    if (hillShown) this.dog?.update(dt, lookAt, this.camera.position, { rain: this.weather.kind === "rain", sleep });
 
     this.uniforms.uWind.value = (this.reduced ? 0.25 : 1) * this.weather.windScale + this.gustAmount(this.uniforms.uTime.value);
     /* пока играет интро, экспозицией и цветом постобработки управляет оно */
@@ -2050,8 +2061,10 @@ export class HillScene {
       this.updateStudio();
       this.onStoryFrame?.();
     }
-    this.updateCursor(dt);
-    this.driftSeeds(dt);
+    if (hillShown) {
+      this.updateCursor(dt);
+      this.driftSeeds(dt);
+    }
     /* регулятор качества меряет видеокарту только на спокойном холме (quality.ts) */
     if (!this.shadersReady || this.pendingCompile > 0) return;
     if (this.walk && this.fx.params.alt > 0) {

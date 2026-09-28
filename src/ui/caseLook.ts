@@ -8,7 +8,7 @@ const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
 /** v65: внутри кейса цвет один на всех — графит на холодном светло-сером, как у Apple. Шесть палитр на длинной
    странице спорили с экранами продукта и между собой; цвет кейса теперь несёт только предмет-обложка.
    Карточка в ленте и меню «Кейсы» остаются в цвете кейса (tone "color"). */
-export const MONO = { stage: ["#f0f0f3", "#e2e2e7"], ink: "#1d1d1f", accent: "#1d1d1f" } as const;
+const MONO = { stage: ["#f0f0f3", "#e2e2e7"], ink: "#1d1d1f", accent: "#1d1d1f" } as const;
 export type LookTone = "color" | "mono";
 
 /** переменные вида для атрибута style: тона сцены, чернила, акцент и раскладка предмета */
@@ -36,7 +36,7 @@ export const objectPicture = (c: CaseItem, cls: string, eager = false) => {
    в рамке: у веба — полоска браузера, у мобильного — силуэт телефона. Форма рамки и есть ответ «на чём».
    Экран берётся уменьшенной копией (public/cases/thumbs, tools/make-webp.mjs): на карточке он занимает
    пару сотен пикселей, и тащить ради этого полноразмерный снимок незачем. */
-export const caseThumb = (id: string) => `cases/thumbs/${id}.webp`;
+const caseThumb = (id: string) => `cases/thumbs/${id}.webp`;
 
 /** настоящий экран продукта в рамке устройства; null — у кейса открытых экранов нет */
 export const screenDevice = (c: CaseItem, cls: string) => {

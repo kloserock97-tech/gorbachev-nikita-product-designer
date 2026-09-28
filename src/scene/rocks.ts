@@ -9,7 +9,7 @@ import { heightAt, makeRng } from "./terrain";
 import { rockFragment, rockVertex } from "./shaders";
 
 /* x, z — где лежит; size — поперечник, м; h — доля высоты; yaw — поворот; sink — на сколько доля высоты в земле */
-export const ROCKS = [
+const ROCKS = [
   { x: 1.3, z: 4.45, size: 0.9, h: 0.6, yaw: 0.6, sink: 0.36, seed: 11 },
   { x: 1.85, z: 4.2, size: 0.36, h: 0.7, yaw: 2.1, sink: 0.3, seed: 23 },
   { x: -4.1, z: 2.3, size: 0.62, h: 0.62, yaw: 1.2, sink: 0.36, seed: 37 },

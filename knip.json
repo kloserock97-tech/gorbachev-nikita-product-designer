@@ -1,0 +1,7 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["index.html", "case-scene.html", "src/caseScene/stand.ts", "tools/*.mjs", "tools/lib/*.mjs"],
+  "project": ["src/**/*.ts", "tools/**/*.mjs"],
+  "ignoreBinaries": ["pkill", "ffmpeg", "ffprobe"],
+  "ignoreExportsUsedInFile": { "type": true }
+}

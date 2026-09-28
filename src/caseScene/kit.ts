@@ -9,9 +9,9 @@ import type { Line2 } from "three/examples/jsm/lines/Line2.js";
 import type { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 import { at, bubble, card, canvasTexture, createStage, glow, line, ribbon, rock, sparks, type CardOpts, type Fit, type Host, type Stage } from "./engine";
 
-export const deg = THREE.MathUtils.degToRad;
+const deg = THREE.MathUtils.degToRad;
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
-export const easeOut = (t: number) => 1 - Math.pow(1 - clamp01(t), 3);
+const easeOut = (t: number) => 1 - Math.pow(1 - clamp01(t), 3);
 
 export type CaseScene = {
   stage: Stage;
@@ -30,13 +30,13 @@ type P3 = [number, number, number];
 
 /** свободная область окна главы (css px), куда можно ставить сцену: между списком кейсов, строкой «Далее»,
     названием и таблицей фактов. Её меряет глава (casesCardPreview.ts); на стенде — всё окно с полями */
-export type Safe = { l: number; t: number; r: number; b: number };
+type Safe = { l: number; t: number; r: number; b: number };
 
 /** сцена вписывается в свободную область целиком, с воздухом, и никогда не крупнее, чем на референсе.
     На телефоне композиции позволено быть шире экрана (края уходят за кадр), но по высоте — строго в область */
 /** на телефоне композиция сжимается по горизонтали: спутники подтягиваются к середине, а сами карточки
     не сплющиваются (у них обратный масштаб). Так вся сцена помещается в ширину и остаётся читаемой */
-export const NARROW_SQUEEZE = 0.8;
+const NARROW_SQUEEZE = 0.8;
 /** на телефоне спутники мельче главной панели: иначе они упираются в края экрана или налезают на неё */
 const NARROW_SAT = 0.72;
 const fitBox = (box: [number, number, number, number], hub: [number, number], safe: () => Safe | null, onSqueeze: (f: number) => void, squeeze = NARROW_SQUEEZE): Fit => (w, h) => {

@@ -138,7 +138,6 @@ const ru: Record<keyof typeof en, string> = {
   "cases.meta": "Веб, мобайл и ИИ · 2024–2026",
   "cases.swipe": "Листайте вбок",
   "cases.cta": "Смотреть кейс",
-  "cases.upnext": "Далее:",
   "cases.open": "Открыть",
   "cases.f.about": "О проекте:",
   "cases.f.where": "Где и когда:",
@@ -146,7 +145,6 @@ const ru: Record<keyof typeof en, string> = {
   "cases.f.result": "Результат:",
   "cases.prev": "Предыдущий кейс",
   "cases.next": "Следующий кейс",
-  "cases.project": "Кейс",
 
   /* v32: заставка главы «Кейсы» над лугом и заметки после ленты */
   "walk.kicker": "Кейсы · 2024–2026",

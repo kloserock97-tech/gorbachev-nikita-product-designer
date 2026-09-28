@@ -248,7 +248,9 @@ let shownInfo = -1;
     if (key === lastKey) return;
     lastKey = key;
     root.style.setProperty("--e", e.toFixed(3));
-    items.forEach((a, i) => {
+    /* v79: в виде «карточка» дуга, деления и колонка текста скрыты (cases-card.css) — не пишем в них в каждом
+       кадре прокрутки: это было около 80 записей стилей на кадр впустую */
+    if (!asCard) items.forEach((a, i) => {
       const d = i - active;
       const ad = Math.abs(d);
       const ang = reduced ? Math.round(d) * step : d * step;
@@ -277,14 +279,16 @@ let shownInfo = -1;
     if (idx !== current) {
       if (current >= 0) cue("progress-step", 0.5);
       current = idx;
-      if (now) now.textContent = pad(idx + 1);
-      paintInfo(idx, shown);
+      if (!asCard) {
+        if (now) now.textContent = pad(idx + 1);
+        paintInfo(idx, shown);
+      }
       paintSteps();
       /* спутники разлетаются заново на каждом новом кейсе */
       if (card) { card.paint(idx); card.live(); }
       turnTo(idx);
     }
-    if (bar) bar.style.transform = `scaleX(${(active / Math.max(1, n - 1)).toFixed(4)})`;
+    if (bar && !asCard) bar.style.transform = `scaleX(${(active / Math.max(1, n - 1)).toFixed(4)})`;
   };
 
   /* клик по названию: неактивное — довезти колесо, активное — открыть кейс */
@@ -385,6 +389,7 @@ let shownInfo = -1;
   addEventListener("touchcancel", () => (tSwipe = false), { passive: true });
 
   const prev = scene.onStory;
+  let lastLeave = "";
   scene.onStory = (p) => {
     prev?.(p);
     lastP = p;
@@ -392,7 +397,8 @@ let shownInfo = -1;
     /* экраны продукта включаются, когда глава вот-вот покажется: до этого они только утяжеляют старт */
     if (c > CASES.cardsIn[0] - 0.12) card?.warm();
     const vis = c > CASES.cardsIn[0] && c < CASES.stripOut[1] && f <= 0;
-    root.style.setProperty("--leave", ramp(c, ...CASES.stripOut).toFixed(3));
+    const leave = ramp(c, ...CASES.stripOut).toFixed(3);
+    if (leave !== lastLeave) { lastLeave = leave; root.style.setProperty("--leave", leave); }
     if (vis !== shown) {
       shown = vis;
       root.classList.toggle("is-on", vis);
