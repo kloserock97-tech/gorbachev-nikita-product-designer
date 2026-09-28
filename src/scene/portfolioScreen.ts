@@ -425,9 +425,8 @@ export class PortfolioScreen {
     /* обо мне: фото и анкета */
     this.anchors[0] = y - 46;
     y = this.sectionBar(g, ME().sections[0], M, y, inner, paint);
-    const photoW = 250, photoH = 290;
-    if (paint) this.photoFrame(g, M, y, photoW, photoH);
-    const tx = M + photoW + 28, tw = inner - photoW - 28;
+    /* v78: второе фото убрано — портрет уже есть на первом экране; анкета на всю ширину */
+    const tx = M, tw = inner;
     let ty = y;
     const labelW = 128, rowH = 44;
     for (const [k, v] of ME().profile) {
@@ -444,7 +443,7 @@ export class PortfolioScreen {
     ty += 18;
     g.font = `16px ${BODY}`;
     ty = this.wrap(g, ME().hello, tx, ty + 6, tw, 26, paint, TEXT);
-    y = Math.max(y + photoH + 20, ty) + 22;
+    y = ty + 22;
 
     this.anchors[1] = y - 46;
     y = this.sectionBar(g, ME().sections[1], M, y, inner, paint);
@@ -685,14 +684,6 @@ export class PortfolioScreen {
     g.drawImage(img, sx, sy, sw, sh, x, y, w, h);
   }
 
-  private photoFrame(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
-    g.fillStyle = "#d4d0c8"; g.fillRect(x, y, w, h);
-    g.fillStyle = "#fff"; g.fillRect(x, y, w, 2); g.fillRect(x, y, 2, h);
-    g.fillStyle = "#808080"; g.fillRect(x, y + h - 2, w, 2); g.fillRect(x + w - 2, y, 2, h);
-    if (this.photo.complete && this.photo.naturalWidth) this.cover(g, this.photo, x + 8, y + 8, w - 16, h - 36, 0.25);
-    g.font = `12px ${BODY}`; g.fillStyle = "#333"; g.textAlign = "center";
-    g.fillText("me_2026.jpg", x + w / 2, y + h - 12); g.textAlign = "left";
-  }
 
   /** Вписывает картинку как object-fit: cover; bias — какую часть по вертикали оставить. */
 
