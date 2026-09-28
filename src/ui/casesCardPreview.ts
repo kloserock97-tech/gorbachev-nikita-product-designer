@@ -214,7 +214,7 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
     const ti = rel(title), fa = rel(facts);
     if (root.classList.contains("is-narrow")) {
       /* на телефоне у кейса со сценой нет строки «Далее» (переключают кнопки внизу): сцене отдан весь верх */
-      const top = next.offsetParent ? rel(next).b + 10 : Math.max(56, B.height * 0.08);
+      const top = next.offsetParent ? rel(next).b + 10 : Math.max(76, B.height * 0.1);
       return { l: 0, r: B.width, t: top, b: ti.t - 18 };
     }
     const li = rel(q(".cx-list"));

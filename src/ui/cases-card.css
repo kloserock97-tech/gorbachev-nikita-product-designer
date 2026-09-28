@@ -178,13 +178,16 @@
 .cases.is-narrow .cx-next { font-size: 13px; margin-bottom: 8px; }
 .cases.is-narrow .cx-card--dio { --dw: calc(var(--nw) * 100vw); margin: calc(var(--dw) * var(--ar) * -0.5 + 9svh) 0 0 calc(var(--dw) * var(--nx) * -1); }
 .cases.is-narrow .cx-title { left: var(--side); right: var(--side); width: auto; bottom: calc(242px + env(safe-area-inset-bottom)); font-size: clamp(40px, 12.5vw, 72px); }
-.cases.is-narrow .cx-facts { left: var(--side); right: var(--side); width: auto; bottom: calc(150px + env(safe-area-inset-bottom)); }
+/* v78: переключатель кейсов — у нижнего края, в зоне большого пальца; факты и название стоят над ним */
+.cases.is-narrow .cx-facts { left: var(--side); right: var(--side); width: auto; bottom: calc(84px + env(safe-area-inset-bottom)); }
 .cases.is-narrow .cx-facts div { grid-template-columns: 40% 1fr; padding: 8px 0; gap: 10px; }
 .cases.is-narrow .cx-facts div:nth-child(1), .cases.is-narrow .cx-facts div:nth-child(3) { display: none; }
 .cases.is-narrow .cx-facts div:nth-child(2) { border-top: 0; }
-.cases.is-narrow .cx-seg { display: flex; gap: 6px; position: absolute; left: calc(var(--side) + 58px); right: calc(var(--side) + 58px); bottom: calc(114px + env(safe-area-inset-bottom)); margin: 0; }
+.cases.is-narrow .cx-seg { display: flex; gap: 6px; position: absolute; left: calc(var(--side) + 58px); right: calc(var(--side) + 58px); bottom: calc(39px + env(safe-area-inset-bottom)); margin: 0; }
 .cx-seg i { flex: 1; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.28); transition: flex 0.3s var(--ease-x), background 0.3s ease; }
 .cx-seg i.is-on { flex: 3; background: #fff; }
 .cases.is-narrow[data-mode="wheel"][data-preview="card"] .cw-step[data-d="-1"] { left: var(--side); }
 .cases.is-narrow[data-mode="wheel"][data-preview="card"] .cw-step--next { right: var(--side); left: auto; }
-.cases.is-narrow[data-mode="wheel"][data-preview="card"] .cw-steps { bottom: calc(96px + env(safe-area-inset-bottom)); }
+.cases.is-narrow[data-mode="wheel"][data-preview="card"] .cw-steps { bottom: calc(18px + env(safe-area-inset-bottom)); }
+/* кнопка звука на это время уходит в правый верхний угол, как в подвале: внизу её место занимает «вперёд» */
+body:has(.cases.is-narrow.is-on) .sound-fab { top: max(16px, env(safe-area-inset-top)); bottom: auto; }
