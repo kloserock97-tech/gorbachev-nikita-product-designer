@@ -27,15 +27,15 @@
    кегля, поэтому чуть крупнее; вес обычный, трекинг нулевой. Одно слово на заголовок, не чаще. */
 .serif-accent { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.06em; letter-spacing: -0.01em; }
 
-/* v78: Ugol — акцентный шрифт бренда (Logo/v3-base: Manrope OFL + дуга в прописных N, И, Й и мосты Л, Д).
+/* v78: Ugol — акцентный шрифт бренда (Logo/v3-base: Manrope OFL + дуга в N, И, Й, и, й и мосты Л, Д, л, д).
    Только крупные заголовки и цифры; весь текст остаётся на Onest. Пять статичных весов по ~18 КБ,
    браузер качает только те, что встретились на странице. Курсив .serif-accent внутри заголовков — по-прежнему Playfair,
    сжатые названия кейсов в колесе (Oswald) не тронуты. */
-@font-face { font-family: "Ugol"; font-style: normal; font-weight: 300; font-display: swap; src: url("/fonts/ugol-300.woff2") format("woff2"); }
-@font-face { font-family: "Ugol"; font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/ugol-400.woff2") format("woff2"); }
-@font-face { font-family: "Ugol"; font-style: normal; font-weight: 500; font-display: swap; src: url("/fonts/ugol-500.woff2") format("woff2"); }
-@font-face { font-family: "Ugol"; font-style: normal; font-weight: 600; font-display: swap; src: url("/fonts/ugol-600.woff2") format("woff2"); }
-@font-face { font-family: "Ugol"; font-style: normal; font-weight: 700; font-display: swap; src: url("/fonts/ugol-700.woff2") format("woff2"); }
+@font-face { font-family: "Ugol"; font-style: normal; font-weight: 300; font-display: swap; src: url("/fonts/ugol-300.woff2?v=2") format("woff2"); }
+@font-face { font-family: "Ugol"; font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/ugol-400.woff2?v=2") format("woff2"); }
+@font-face { font-family: "Ugol"; font-style: normal; font-weight: 500; font-display: swap; src: url("/fonts/ugol-500.woff2?v=2") format("woff2"); }
+@font-face { font-family: "Ugol"; font-style: normal; font-weight: 600; font-display: swap; src: url("/fonts/ugol-600.woff2?v=2") format("woff2"); }
+@font-face { font-family: "Ugol"; font-style: normal; font-weight: 700; font-display: swap; src: url("/fonts/ugol-700.woff2?v=2") format("woff2"); }
 
 :root { --accent-font: "Ugol", var(--font); }
 
