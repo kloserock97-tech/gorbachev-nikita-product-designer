@@ -370,6 +370,7 @@ export class HillScene {
       sky: { uZenith: u.uZenith, uHigh: u.uHigh, uMid: u.uMid, uHorizon: u.uHorizon, uGlow: u.uGlow, uSunDir: u.uSunDir, uSunCol: u.uSunCol },
       sh: this.uniforms.uSH,
       ambient: this.uniforms.uAmbient,
+      fog: this.uniforms.uFogCol,
     }));
   }
 

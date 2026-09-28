@@ -7,7 +7,8 @@
    вместе с небом, а самая дальняя гряда не отличается от неба ничем, кроме формы. */
 import * as THREE from "three";
 import { fbm } from "./terrain";
-import { vistaFragment, vistaVertex } from "./shaders";
+import { heightAt } from "./terrain";
+import { plainFragment, plainVertex, vistaFragment, vistaVertex } from "./shaders";
 
 type Ridge = {
   r: number;       // радиус дуги от центра холма, м
@@ -35,13 +36,18 @@ const RIDGES: Ridge[] = [
 /* дуга за холмом и по бокам: камера смотрит в −z, на широком экране кадр захватывает и бока */
 const THETA0 = -Math.PI - 0.7, THETA1 = 0.7;
 
+/** полуразмер квадрата земли холма (HillScene.buildGround, 44 м) — равнина начинается чуть внутри, под ним */
+const GROUND_HALF = 22;
+
 export function createVista(shared: {
   sky: Record<string, THREE.IUniform>;
   sh: THREE.IUniform;
   ambient: THREE.IUniform;
+  fog: THREE.IUniform;
 }): THREE.Group {
   const group = new THREE.Group();
   group.name = "vista";
+  group.add(createPlain(shared));
   RIDGES.forEach((g, li) => {
     /* сегмент дуги ≈ 1.5 м у ближней гряды: плавный профиль идёт вершинами, кроны — во фрагментах */
     const segs = Math.round(((THETA1 - THETA0) * g.r) / Math.max(1.5, g.r / 40));
@@ -94,4 +100,30 @@ export function createVista(shared: {
     group.add(mesh);
   });
   return group;
+}
+
+/* v80: равнина вокруг земли холма до гряд (shaders.ts, plainFragment). У края земли — тот же рельеф, чуть ниже:
+   под краем земли равнина не выглядывает, а зазора между ними нет; дальше она уходит в долину */
+function createPlain(shared: { sky: Record<string, THREE.IUniform>; sh: THREE.IUniform; ambient: THREE.IUniform; fog: THREE.IUniform }) {
+  const size = 120, seg = 80;
+  const geo = new THREE.PlaneGeometry(size, size, seg, seg);
+  geo.rotateX(-Math.PI / 2);
+  const pos = geo.attributes.position as THREE.BufferAttribute;
+  /* от края земли равнина уходит вниз, в долину: ближняя гряда (подножие на −1,2 м) поднимается из дымки, а не
+     прячется за плоской равниной с ровной кромкой */
+  const sm = (a: number, b: number, x: number) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), z = pos.getZ(i);
+    pos.setY(i, heightAt(x, z) - 0.08 - 3.2 * sm(GROUND_HALF - 0.5, 42, Math.max(Math.abs(x), Math.abs(z))));
+  }
+  const mat = new THREE.ShaderMaterial({
+    vertexShader: plainVertex,
+    fragmentShader: plainFragment,
+    uniforms: { ...shared.sky, uSH: shared.sh, uAmbient: shared.ambient, uFogCol: shared.fog, uHole: { value: GROUND_HALF - 0.6 } },
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  /* после земли и травы, раньше гряд: гряды за равниной не считаются там, где их закрывает земля */
+  mesh.renderOrder = 3;
+  mesh.frustumCulled = false;
+  return mesh;
 }

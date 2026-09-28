@@ -303,9 +303,9 @@ void main(){
   float wrapNoL = clamp((-dot(N, uSunDir) + 0.5) / 2.25, 0.0, 1.0);
   float voL = clamp(dot(-V, uSunDir), 0.0, 1.0);
   float ggx = (voL * 0.36 - voL) * voL + 1.0;
-  /* широкий лепесток Unreal на нашей плотной траве заливал весь луг ровной жёлто-зелёной дымкой — его доля мала,
-     а основное свечение даёт узкий лепесток рядом с солнцем: светятся гребень и трава у солнца */
-  float scatter = 0.25 * 0.36 / (3.14159 * ggx * ggx) + 2.2 * pow(voL, 24.0);
+  /* широкий лепесток Unreal на нашей плотной траве заливал весь луг ровной жёлто-зелёной дымкой — его доля мала;
+     узкий лепесток у солнца тоже умеренный: сильный ложился на гребне ровной жёлтой полосой */
+  float scatter = 0.25 * 0.36 / (3.14159 * ggx * ggx) + 0.8 * pow(voL, 12.0);
   vBack = wrapNoL * scatter * smoothstep(0.3, 0.8, t) * (1.0 - 0.5 * smoothstep(0.85, 1.0, t)) * uBackLight * cloud;
   vFog = airFog(wp.xyz, dist);
   vec4 sc = uShadowMatrix * wp;
@@ -713,6 +713,42 @@ void main(){
 }
 `;
 
+/* ---- v80: равнина между холмом и первой грядой (vista.ts) ----
+   Земля холма — квадрат 44×44 м, и её дальний край читался светлой полосой с прямой кромкой. Равнина лежит
+   вокруг, начинается под краем земли и уходит под гряды; цвет — дёрн в дымке, к дали та же дымка, что у подножия
+   гряд (цвет неба по направлению взгляда), поэтому ни край земли, ни подножие гряды не дают шва */
+export const plainVertex = /* glsl */ `
+varying vec3 vW;
+void main(){
+  vec4 wp = modelMatrix * vec4(position, 1.0);
+  vW = wp.xyz;
+  gl_Position = projectionMatrix * viewMatrix * wp;
+}
+`;
+export const plainFragment = /* glsl */ `
+${SKY_PARS}
+uniform vec3 uSH[9];
+uniform float uAmbient;
+uniform vec3 uFogCol;
+uniform float uHole;     /* полуразмер квадрата земли холма — там равнины нет */
+varying vec3 vW;
+void main(){
+  if (max(abs(vW.x), abs(vW.z)) < uHole) discard;
+  vec3 view = vW - cameraPosition;
+  float dist = length(view);
+  vec3 d = view / dist;
+  vec3 sky = skyBase(d);
+  float cosA = max(dot(d, uSunDir), 0.0);
+  sky += uSunCol * (pow(cosA, 90.0) * 0.3 + pow(cosA, 12.0) * 0.06);
+  vec3 up = max(vec3(0.0), uSH[0] * 0.886227 + uSH[1] * 1.023328) * uAmbient;
+  vec3 soil = vec3(0.045, 0.062, 0.018) * up * 0.6;
+  /* у края земли — её же дымка (uFogCol, как airFog), к первой гряде — цвет неба, как в тумане у её подножия */
+  vec3 fogc = mix(uFogCol, sky, smoothstep(24.0, 46.0, dist));
+  float fog = clamp(0.76 + 0.2 * smoothstep(22.0, 50.0, dist), 0.0, 0.97);
+  gl_FragColor = vec4(mix(soil, fogc, fog), 1.0);
+}
+`;
+
 /* ---- v72: дальний план — гряды холмов с лесом за холмом (vista.ts) ----
    Каждая гряда — лента вокруг холма. Силуэт режется во фрагментах: плавный профиль гряды приходит из вершин
    (vTop), кроны деревьев поверх — шумом по длине дуги, так кромка леса не зависит от густоты сетки.
@@ -774,13 +810,18 @@ void main(){
   vec3 view = vW - cameraPosition;
   vec3 d = normalize(view);
   /* нормаль гряды: к камере и вверх, у самой кромки — к небу */
-  float edge = smoothstep(top - max(uForest, 0.6) * 0.9, top, vW.y);
+  /* v80: переход от кромки к телу гряды — на две с половиной высоты крон, а не на одну: короткий переход
+     проводил под лесом ровную горизонтальную черту */
+  float edge = smoothstep(top - max(uForest, 0.6) * 2.5, top, vW.y);
   vec3 n = normalize(-vec3(d.x, 0.0, d.z) + vec3(0.0, mix(0.55, 1.4, edge), 0.0));
   vec3 light = max(vec3(0.0), vec3(
     uSH[0] * 0.886227 + uSH[1] * 1.023328 * n.y + uSH[2] * 1.023328 * n.z + uSH[3] * 1.023328 * n.x
   )) * uAmbient;
-  /* лесная фактура: тёмные прогалы между кронами, светлее к кромке */
-  float tex = 0.78 + 0.22 * vh(floor(vArc.x / (uCrown * 0.5)) + floor(vW.y / max(uCrown * 0.4, 0.5)) * 13.0);
+  /* лесная фактура: тёмные прогалы между кронами, светлее к кромке. v80: только в полосе леса у гребня и плавным
+     шумом вдоль гряды — прежний узор квантовался по высоте ступеньками, и тело гряды расчерчивалось
+     горизонтальными линиями */
+  float forestBand = smoothstep(top - max(uForest, 0.6) * 3.0, top, vW.y);
+  float tex = mix(0.9, 0.78 + 0.22 * vn1(vArc.x / (uCrown * 0.5)), forestBand);
   vec3 c = uTint * light * tex * mix(0.85, 1.15, edge);
   /* контровое солнце: гребень против солнца светится тонкой тёплой каймой */
   float toSun = pow(max(dot(normalize(vec3(d.x, 0.0, d.z)), normalize(vec3(uSunDir.x, 0.0, uSunDir.z))), 0.0), 6.0);
