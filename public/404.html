@@ -113,7 +113,8 @@
 
   var bg = document.querySelector(".bg");
   bg.addEventListener("load", function () { bg.classList.add("on"); });
-  bg.src = base + "ui/hill-poster.webp";
+  /* вертикальный экран — свой кадр: из широкого вырезалась бы середина холма без кресла */
+  bg.src = base + (matchMedia("(orientation: portrait)").matches ? "ui/hill-poster-m.webp" : "ui/hill-poster.webp");
 
   document.querySelectorAll("[data-" + lang + "]").forEach(function (el) {
     var text = el.getAttribute("data-" + lang);

@@ -1036,6 +1036,16 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   position: relative; min-height: 100vh; min-height: 100svh;
   background: #e8e3d3 url("/ui/hill-poster.webp") 50% 62% / cover no-repeat;
 }
+/* v83: постеры сняты с нынешнего холма (дерево, гряды, камни). Композиция широкого кадра — по золотому сечению,
+   кресло справа; вертикальный экран вырезал бы из него середину без кресла — у него свой кадр, как у 3D на телефоне */
+@media (max-aspect-ratio: 3/4) {
+  /* первый экран лёгкой версии выше самого экрана (карточка проектов уходит за край), и cover растягивал постер —
+     кресло садилось на кромку карточки. Постер — ровно в высоту экрана от верха (но не уже его), ниже — цвет травы */
+  .lite .hero {
+    background: #605d25 url("/ui/hill-poster-m.webp") 50% 0 / auto max(100vh, 216.4vw) no-repeat;
+    background-size: auto max(100svh, 216.4vw);
+  }
+}
 .lite .stage { opacity: 1 !important; translate: none !important; }
 /* v79: этот блок стоял в файле трижды подряд — оставлен один, с тем же итоговым результатом */
 .lite .story-hero, .lite .cases, .lite .site-footer {
