@@ -93,7 +93,8 @@ src/
     caseLook.ts      the look of a case (stage colours, object) shared by the card, the menu and the case page
     case-cards.css   the case card; case-story.css — the case page
     casesWheel.ts    the Work chapter: titles on an arc, the case card and the text
-    casesCardPreview.ts  the card itself: a light sheet with the product screen and the result figure, satellites around it
+    casesCardPreview.ts  the chapter's layout: case list, title, fact table and the live scene of each case
+  caseScene/         one three.js scene per case (glass cards, ribbons, orbits, sparks), sharing one WebGL context (host.ts); dev stand: /case-scene.html?case=<id>
     casesWheelGl.ts  the old cut-out object preview, kept behind ?cases=wheel
     hero/            first screen: layout, dock, metal buttons, parallax
   audio/             nature ambience and UI sound cues
@@ -128,6 +129,7 @@ The `tools/` scripts drive a headless Chrome over the DevTools protocol:
 - `pre-shader-stalls.js` with `cdp-eval.mjs --pre tools/pre-shader-stalls.js --fresh` lists shader programs that block the main thread on a cold cache. `cdp-profile.mjs --lines <function>` splits a function's self time by source line.
 - `cdp-touch.mjs` emulates a phone with a real finger in Chrome and runs gesture scripts from `tools/touch/*.json` (swipe, fling, screenshot, probe).
 - `cdp-cards.mjs` walks the Work chapter and the side projects on a phone: a finger swipe forward and back, the step buttons, the arrow keys, and whether the chapter stays put when the browser's address bar slides in and out (it changes `innerHeight` without moving the page).
+- `cdp-chapter-perf.mjs` measures each chapter of the scroll story (`--ps 0,0.2,0.5,0.97`): frame rate, main-thread time per frame split into script and style recalculation, and draw calls and instances per frame for every WebGL canvas (via `pre-draw-count.js`). It is how offscreen work was found: an endless CSS animation recalculating styles every frame, eight case-scene contexts where one draws.
 - `crop.ps1` crops and enlarges a screenshot region without smoothing, to inspect single pixels.
 - `site-study.mjs` studies somebody else's page for reference: screenshots while scrolling plus the numbers behind the look (the type scale actually used, tracking, line height, tile radii and backgrounds, button sizes). Nothing from the page is stored except numbers and frames for yourself.
 - `audit-nature-loader.mjs` checks the loading screen: growth phases, focus, clean-up, reduced motion, deep links, context loss, frame pace.
