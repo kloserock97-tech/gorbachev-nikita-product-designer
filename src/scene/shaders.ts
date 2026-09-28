@@ -11,6 +11,9 @@ export const TRAIL_SLOTS = 6;
    перекрываются в несколько слоёв), для земли — во фрагментах */
 const LIGHT_PARS = /* glsl */ `
 uniform float uBackLight;
+/* v80: свет травы в духе Unreal: x — просвет (Two Sided Foliage), y — доля неба внутри дёрна, z — сила затенения
+   у корня; w — запас */
+uniform vec4 uGrassLook;
 uniform vec3 uSunDir;
 uniform vec3 uSunCol;
 uniform vec3 uSH[9];
@@ -293,10 +296,17 @@ void main(){
   /* блик по середине травинки, не на самом кончике (иначе дальние треугольники
      дают светлую «крупу» точек), и гаснет вдали */
   vSpec = pow(max(dot(N, H), 0.0), 28.0) * smoothstep(0.25, 0.65, t) * (1.0 - 0.7 * smoothstep(0.8, 1.0, t)) * smoothstep(14.0, 5.0, dist) * cloud * (1.0 + uWet * 3.0);
-  /* солнце за холмом просвечивает кончики — только против света */
-  /* просвет — в верхней трети травинки, но не в самой вершине: вершина кончика
-     меньше пикселя, и свет, собранный в ней, давал цепочки ярких точек */
-  vBack = pow(max(dot(-V, uSunDir), 0.0), 6.0) * smoothstep(0.35, 0.75, t) * (1.0 - 0.55 * smoothstep(0.8, 1.0, t)) * uBackLight * cloud;
+  /* v80: просвет по модели Two Sided Foliage из Unreal (TwoSidedBxDF): свет с изнанки листа — «обёрнутый»
+     диффуз по −N·L (wrap 0.5), умноженный на широкий GGX-лепесток рассеяния к солнцу (шероховатость 0.6) по
+     направлению взгляда. Против низкого солнца светятся верхние две трети травинки; у самой вершины свет
+     приглушён: она меньше пикселя, и собранный в ней свет давал цепочки ярких точек */
+  float wrapNoL = clamp((-dot(N, uSunDir) + 0.5) / 2.25, 0.0, 1.0);
+  float voL = clamp(dot(-V, uSunDir), 0.0, 1.0);
+  float ggx = (voL * 0.36 - voL) * voL + 1.0;
+  /* широкий лепесток Unreal на нашей плотной траве заливал весь луг ровной жёлто-зелёной дымкой — его доля мала,
+     а основное свечение даёт узкий лепесток рядом с солнцем: светятся гребень и трава у солнца */
+  float scatter = 0.25 * 0.36 / (3.14159 * ggx * ggx) + 2.2 * pow(voL, 24.0);
+  vBack = wrapNoL * scatter * smoothstep(0.3, 0.8, t) * (1.0 - 0.5 * smoothstep(0.85, 1.0, t)) * uBackLight * cloud;
   vFog = airFog(wp.xyz, dist);
   vec4 sc = uShadowMatrix * wp;
   vShadowP = sc.xyz * 0.5 + 0.5;
@@ -343,12 +353,16 @@ void main(){
   /* мокрая трава темнее и насыщеннее — вода заполняет микрорельеф листа */
   col *= mix(1.0, 0.72, uWet);
 
-  /* самозатенение внутри дёрна: у корня неба почти не видно */
+  /* самозатенение внутри дёрна: у корня неба почти не видно. v80: как у травы в Unreal (затенение неба внутри
+     луга — Lumen/DFAO) нижняя треть почти чёрно-оливковая, и небо внутри дёрна видно не целиком (uGrassLook.y) */
   float ao = mix(0.14, 1.0, smoothstep(0.0, 0.85, vT));
+  ao = mix(ao, mix(0.05, 1.0, pow(smoothstep(0.0, 1.0, vT), 1.35)), uGrassLook.z);
   float shadow = max(propShadowAt(vShadowP, vW), dogShadow(vW));
 
-  vec3 c = col * (vSky * mix(1.0, 0.35, shadow) + vSun * (1.0 - shadow)) * ao;
-  c += col * uSunCol * vBack * 1.1 * (1.0 - shadow);
+  vec3 c = col * (vSky * uGrassLook.y * mix(1.0, 0.35, shadow) + vSun * (1.0 - shadow)) * ao;
+  /* цвет просвета светлее и желтее альбедо: свет проходит сквозь лист и окрашивается им (Subsurface Color) */
+  vec3 trans = mix(vec3(0.16, 0.38, 0.03), vec3(0.34, 0.33, 0.07), smoothstep(0.6, 1.0, vTone) * 0.6);
+  c += trans * uSunCol * vBack * uGrassLook.x * (1.0 - shadow);
   /* блик — светлее и желтее альбедо, как восковой налёт на листе */
   c += vec3(0.55, 0.52, 0.30) * uSunCol * vSpec * 0.08 * (1.0 - shadow);
 

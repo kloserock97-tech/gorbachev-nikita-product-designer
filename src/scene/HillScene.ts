@@ -125,6 +125,8 @@ export class HillScene {
     uShadowTexel: { value: 1 / 1024 },
     uShadowOn: { value: 0 },
     uBackLight: { value: /[?&]back=0/.test(location.search) ? 0 : 1 },
+    /* v80: свет травы как в Unreal (shaders.ts, uGrassLook). Подбор по адресу: ?gtr=просвет&gsky=небо&gao=корни */
+    uGrassLook: { value: new THREE.Vector4(...(["gtr", "gsky", "gao"] as const).map((k, i) => { const v = new URLSearchParams(location.search).get(k); return v === null ? [1.4, 0.92, 0.5][i] : Number(v); }).concat(0) as [number, number, number, number]) },
     uHaze: { value: /[?&]haze=0/.test(location.search) ? 0 : 1 },
     /* v72: насколько дальше обычного стоит камера (телефон) — на столько же отодвигается дымка */
     uFogShift: { value: 0 },
