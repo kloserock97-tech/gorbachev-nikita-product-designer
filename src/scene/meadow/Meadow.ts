@@ -455,7 +455,12 @@ export class Meadow {
 
   private buildPebbles() {
     const U = this.U;
-    const count = Math.round(this.q.near / 6);
+    /* v79: камешек виден, только если его r1 меньше маски, а маска по формуле ниже не выше ~0,41 (полосы до 0,1,
+       берег 0,12, прожилки 0,18). Экземпляры с r1 выше не показывались никогда, но шейдер считал их дважды за
+       кадр — в цвете и в тени. Теперь r1 берётся сразу из [0; R1MAX], а экземпляров во столько же раз меньше:
+       видимые камешки распределены так же, работы — на 58 % меньше */
+    const R1MAX = 0.42;
+    const count = Math.round((this.q.near / 6) * R1MAX);
     let g: THREE.BufferGeometry = new THREE.IcosahedronGeometry(1, 0);
     g.deleteAttribute("normal");
     g.deleteAttribute("uv");
@@ -468,7 +473,7 @@ export class Meadow {
     geo.setAttribute("position", g.attributes.position);
     geo.setAttribute("normal", g.attributes.normal);
     const seeds = new Float32Array(count * 4);
-    for (let i = 0; i < seeds.length; i++) seeds[i] = Math.random();
+    for (let i = 0; i < seeds.length; i++) seeds[i] = Math.random() * (i % 4 === 2 ? R1MAX : 1);
     geo.setAttribute("aSeed", new THREE.InstancedBufferAttribute(seeds, 4));
     geo.instanceCount = count;
     this.geometries.push(g, geo);
@@ -491,7 +496,8 @@ export class Meadow {
       float edge = 1.0 - smoothstep(0.8, 1.0, max(fromC.x, fromC.y));
       float h = hfHeight(wxz);
       float sea = uSea;
-      float r1 = aSeed.z; float r2 = aSeed.w; float r3 = fract(r2 * 13.17 + r1 * 3.1);
+      /* r1 — снова равномерно в [0; 1) для поворота и оттенка; порог видимости — сырое aSeed.z (см. R1MAX) */
+      float r1 = aSeed.z / ${R1MAX.toFixed(3)}; float r2 = aSeed.w; float r3 = fract(r2 * 13.17 + r1 * 3.1);
       float bands = 0.0;
       for (int k = 0; k < 2; k++) {
         float fk = float(k);
@@ -507,7 +513,7 @@ export class Meadow {
       wxz += field.xy * 0.9 * jitter;
       float lift = field.z * (0.1 + 0.32 * fract(r1 * 31.7)) * jitter;
       if (field.z > 0.0005) h = hfHeight(wxz);
-      float visible = step(r1, mask) * edge * smoothstep(sea - 0.05, sea + 0.08, h);
+      float visible = step(aSeed.z, mask) * edge * smoothstep(sea - 0.05, sea + 0.08, h);
       float sc = mix(0.04, 0.2, pow(fract(r2 * 3.7), 2.6)) * (0.85 + 0.4 * min(bands + shoreBand, 1.0)) * visible;
       mat3 rot = mdRot(vec3(r1 * 6.2832 + field.y * 0.6, r2 * 6.2832 + field.z * (r3 - 0.5) * 0.8, r3 * 6.2832 - field.x * 0.6));
       vec3 transformed = rot * (position * vec3(1.0, 0.62, 0.85)) * sc + vec3(wxz.x, h + sc * 0.3 + lift, wxz.y);`;
