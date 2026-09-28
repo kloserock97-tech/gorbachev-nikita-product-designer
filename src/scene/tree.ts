@@ -11,7 +11,7 @@ import { makeRng } from "./terrain";
 import { barkFragment, barkVertex, leafFragment, leafVertex } from "./shaders";
 
 type V = THREE.Vector3;
-type Limb = { pts: V[]; rad: number[] };
+type Limb = { pts: V[]; rad: number[]; cont: boolean }; /* cont — ветвь продолжает ведущий побег */
 
 const UP = new THREE.Vector3(0, 1, 0);
 
@@ -95,7 +95,7 @@ export function createTree(uniforms: Record<string, THREE.IUniform>, o: TreeOpti
       pts.push(depth > 0 ? inCrown(next) : next);
       rad.push(r * (1 - ((i + 1) / n) * 0.42));
     }
-    limbs.push({ pts, rad });
+    limbs.push({ pts, rad, cont: depth < MAX });
     if (depth >= MAX - 1) {
       for (let i = Math.floor(n / 2); i <= n; i++) clusters.push({ p: pts[i].clone(), d: d.clone() });
       if (depth >= MAX) return;
@@ -127,26 +127,49 @@ export function createTree(uniforms: Record<string, THREE.IUniform>, o: TreeOpti
   /* кора: каждая ветвь — одна трубка по своим точкам. Отдельные конусы на каждый отрезок давали на стыках
      светлые кольца (торцы разного радиуса ловили контровой свет). Кольца ориентируются по средней касательной,
      опорный вектор — один на ветвь, чтобы трубка не перекручивалась. Ветки тоньше 1.5 см с двадцати метров не
-     видны — у них только листва */
-  const bp: number[] = [], bn: number[] = [], bi: number[] = [];
-  for (const { pts, rad } of limbs) {
-    if (rad[0] < 0.015) continue;
-    const k = rad[0] > 0.06 ? 9 : 5;
+     видны — у них только листва.
+     v83: ствол и сучья были гладкими трубками с гранями на изгибах — розовые пластиковые трубы на просвет.
+     Толстые ветви теперь идут по сплайну (Catmull-Rom, три кольца на отрезок), граней по окружности больше,
+     профиль неровный: продольные валики медленно закручиваются вдоль ветви, у земли ствол расширяется
+     корневыми «лапами». aTan — ось ветви в вершине: вдоль неё шейдер вытягивает трещины коры. Нормали — по
+     готовой поверхности, чтобы валики и лапы давали свет и тень. Генератор случайных чисел здесь не трогаем:
+     после коры из него берётся подбивка кроны, и она бы сдвинулась */
+  const bp: number[] = [], bt: number[] = [], bi: number[] = [];
+  limbs.forEach(({ pts: raw, rad: rawR, cont }, li0) => {
+    if (rawR[0] < 0.015) return;
+    const trunk = li0 === 0;
+    let pts = raw, rad = rawR;
+    if (rawR[0] > 0.04) {
+      const sub = (raw.length - 1) * 3;
+      pts = new THREE.CatmullRomCurve3(raw, false, "centripetal").getPoints(sub);
+      rad = pts.map((_, i) => {
+        const fr = (i / sub) * (rawR.length - 1);
+        const a = Math.min(Math.floor(fr), rawR.length - 2);
+        return rawR[a] + (rawR[a + 1] - rawR[a]) * (fr - a);
+      });
+    }
+    const k = rad[0] > 0.12 ? 14 : rad[0] > 0.06 ? 10 : 6;
+    const ph = li0 * 2.39996;
     const dir0 = new THREE.Vector3().subVectors(pts[pts.length - 1], pts[0]).normalize();
     const ref = Math.abs(dir0.y) < 0.9 ? UP : new THREE.Vector3(1, 0, 0);
     const base = bp.length / 3;
+    let along = 0;
     for (let i = 0; i < pts.length; i++) {
+      if (i > 0) along += pts[i].distanceTo(pts[i - 1]);
       const tan = new THREE.Vector3().subVectors(pts[Math.min(i + 1, pts.length - 1)], pts[Math.max(i - 1, 0)]).normalize();
       const u = new THREE.Vector3().crossVectors(tan, ref).normalize();
       const v = new THREE.Vector3().crossVectors(tan, u);
-      /* у самого основания ствол расширяется к корням */
-      const r = rad[i] * (limbs[0].pts === pts && i === 0 ? 1.35 : 1);
+      /* у земли (y = 0 дерева) ствол расширяется, под землёй — во всю ширину корней */
+      const low = Math.exp(-Math.max(pts[i].y, 0) / 0.3);
       for (let j = 0; j < k; j++) {
         const t = (j / k) * Math.PI * 2;
         const cs = Math.cos(t), sn = Math.sin(t);
         const nx = u.x * cs + v.x * sn, ny = u.y * cs + v.y * sn, nz = u.z * cs + v.z * sn;
+        const flare = trunk ? 1 + 0.5 * low + 0.45 * low * Math.max(0, Math.cos(5 * t + 0.7)) ** 2 : 1;
+        const ridges = rawR[0] > 0.04 ? 1 + 0.06 * Math.sin(3 * t + ph + along * 2.2) + 0.03 * Math.sin(7 * t - ph * 1.7 + along * 3.1) : 1;
+        const r = rad[i] * flare * ridges;
         bp.push(pts[i].x + nx * r, pts[i].y + ny * r, pts[i].z + nz * r);
-        bn.push(nx, ny, nz);
+        bt.push(tan.x, tan.y, tan.z);
       }
     }
     for (let i = 0; i < pts.length - 1; i++) {
@@ -158,17 +181,19 @@ export function createTree(uniforms: Record<string, THREE.IUniform>, o: TreeOpti
     /* скруглённый торец: у тонкой ветви конец спрятан в листве, но открытая труба на просвет читалась дырой */
     const n = pts.length;
     const tip = new THREE.Vector3().subVectors(pts[n - 1], pts[n - 2]).normalize();
-    const cap = pts[n - 1].clone().addScaledVector(tip, rad[n - 1] * 0.7);
+    /* v83: у ветви, которую продолжает побег, торец почти плоский — округлый торчал на развилке уступом */
+    const cap = pts[n - 1].clone().addScaledVector(tip, rad[n - 1] * (cont ? 0.15 : 0.7));
     const ci = bp.length / 3;
     bp.push(cap.x, cap.y, cap.z);
-    bn.push(tip.x, tip.y, tip.z);
+    bt.push(tip.x, tip.y, tip.z);
     const last = base + (n - 1) * k;
     for (let j = 0; j < k; j++) bi.push(last + j, last + ((j + 1) % k), ci);
-  }
+  });
   const barkGeo = new THREE.BufferGeometry();
   barkGeo.setAttribute("position", new THREE.Float32BufferAttribute(bp, 3));
-  barkGeo.setAttribute("normal", new THREE.Float32BufferAttribute(bn, 3));
+  barkGeo.setAttribute("aTan", new THREE.Float32BufferAttribute(bt, 3));
   barkGeo.setIndex(bi);
+  barkGeo.computeVertexNormals();
   barkGeo.computeBoundingSphere();
 
   /* крона: центр и радиус — по пучкам */
@@ -214,7 +239,11 @@ export function createTree(uniforms: Record<string, THREE.IUniform>, o: TreeOpti
   leafGeo.computeBoundingSphere();
 
   const shared = { ...uniforms, uTreeBase: { value: o.base.clone() }, uTreeH: { value: o.height } };
-  const bark = new THREE.Mesh(barkGeo, new THREE.ShaderMaterial({ vertexShader: barkVertex, fragmentShader: barkFragment, uniforms: shared }));
+  const bark = new THREE.Mesh(barkGeo, new THREE.ShaderMaterial({
+    vertexShader: barkVertex,
+    fragmentShader: barkFragment,
+    uniforms: { ...shared, uCrownC: { value: crown }, uCrownR: { value: crownR } },
+  }));
   const leafMat = new THREE.ShaderMaterial({
     vertexShader: leafVertex,
     fragmentShader: leafFragment,

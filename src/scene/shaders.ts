@@ -928,34 +928,75 @@ vec3 treeSway(vec3 local, vec3 world){
 export const barkVertex = /* glsl */ `
 ${FIELD_PARS}
 ${TREE_PARS}
+attribute vec3 aTan;      /* v83: ось ветви (tree.ts) */
 varying vec3 vW;
 varying vec3 vN;
 varying float vDist;
 varying float vY;
+varying vec3 vL;
+varying vec3 vTan;
 void main(){
   vec4 wp = modelMatrix * vec4(position, 1.0);
   wp.xyz += treeSway(position, wp.xyz);
   vW = wp.xyz;
   vN = normalize(mat3(modelMatrix) * normal);
   vY = position.y;
+  vL = position;
+  vTan = aTan;
   vDist = distance(cameraPosition, wp.xyz);
   gl_Position = projectionMatrix * viewMatrix * wp;
 }
 `;
+/* v83: кора. Прежняя — ровный тёмный цвет с каймой: на просвет ствол и сучья читались гладкими трубками.
+   Трещины — шум, растянутый вдоль оси ветви: борозды идут вдоль ствола, валики между ними светлее, в бороздах
+   темно, рельеф — в нормали (производные экрана, как у валунов). Узор по локальным координатам дерева до
+   качания ветром — не плывёт. Мелкие октавы гаснут, когда ячейка меньше пикселя: иначе ствол рябил бы на ветру.
+   Мох — у земли и по верху сучьев, лишайник — светлыми пятнами. Внутри кроны листва закрывает и небо, и солнце,
+   а кайма против солнца ложится только на валики — край ствола «рваный», а не ровная розовая полоса */
 export const barkFragment = /* glsl */ `
 ${LIGHT_PARS}
+uniform vec3 uCrownC;     /* центр кроны (локально) */
+uniform float uCrownR;
 varying vec3 vW;
 varying vec3 vN;
 varying float vDist;
 varying float vY;
+varying vec3 vL;
+varying vec3 vTan;
+float hb(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+float nb(vec3 p){
+  vec3 i = floor(p), f = fract(p);
+  vec3 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(hb(i), hb(i + vec3(1, 0, 0)), u.x), mix(hb(i + vec3(0, 1, 0)), hb(i + vec3(1, 1, 0)), u.x), u.y),
+             mix(mix(hb(i + vec3(0, 0, 1)), hb(i + vec3(1, 0, 1)), u.x), mix(hb(i + vec3(0, 1, 1)), hb(i + vec3(1, 1, 1)), u.x), u.y), u.z);
+}
 void main(){
-  vec3 N = normalize(vN);
-  /* кора: тёмная серо-коричневая, у земли темнее и зеленее (мох) */
-  vec3 bark = mix(vec3(0.030, 0.028, 0.012), vec3(0.055, 0.042, 0.030), smoothstep(0.0, 1.2, vY));
-  vec3 light = shIrradiance(N) * uAmbient * 0.7 + uSunCol * max(dot(N, uSunDir), 0.0) * cloudShade(vW);
+  vec3 A = normalize(vTan);
+  vec3 q = vL - A * dot(vL, A) * 0.82;
+  float px = length(fwidth(vL));
+  float o1 = 1.0 - smoothstep(0.35, 0.9, px * 26.0);
+  float o2 = 1.0 - smoothstep(0.35, 0.9, px * 60.0);
+  float fis = 0.5 + (nb(q * 26.0) - 0.5) * 0.7 * o1 + (nb(q * 60.0 + 3.1) - 0.5) * 0.45 * o2;
+  float ridge = smoothstep(0.34, 0.62, fis);
+  vec3 N0 = normalize(vN);
+  vec3 dpx = dFdx(vW), dpy = dFdy(vW);
+  vec3 r1 = cross(dpy, N0), r2 = cross(N0, dpx);
+  float det = dot(dpx, r1);
+  vec3 grad = sign(det) * (dFdx(fis) * r1 + dFdy(fis) * r2) * 0.012;
+  vec3 N = normalize(abs(det) * N0 - grad);
   vec3 V = normalize(cameraPosition - vW);
-  /* контровая кайма по краю ствола и ветвей против солнца */
-  float rim = pow(1.0 - max(dot(N, V), 0.0), 3.0) * pow(max(dot(-V, uSunDir), 0.0), 4.0);
+  /* серо-бурая кора: валики светлее и серее, борозды почти чёрные */
+  vec3 bark = mix(vec3(0.016, 0.013, 0.010), vec3(0.058, 0.050, 0.040), ridge);
+  bark *= 0.85 + 0.3 * nb(vL * 3.0);
+  float moss = smoothstep(0.5, 0.75, (1.0 - smoothstep(0.0, 1.1, vY)) * 0.7 + N0.y * 0.35 + nb(vL * 5.0) * 0.4 - 0.1);
+  bark = mix(bark, mix(vec3(0.022, 0.036, 0.010), vec3(0.050, 0.068, 0.016), ridge), moss * 0.8);
+  float lich = smoothstep(0.74, 0.78, nb(vL * 9.0 + 7.0)) * (1.0 - moss);
+  bark = mix(bark, vec3(0.085, 0.09, 0.066), lich * 0.3);
+  float inCrown = 1.0 - smoothstep(0.55, 1.05, length(vL - uCrownC) / uCrownR);
+  float ao = mix(0.6, 1.0, ridge) * (1.0 - 0.45 * inCrown);
+  float sunVis = cloudShade(vW) * (1.0 - 0.75 * inCrown);
+  vec3 light = shIrradiance(N) * uAmbient * 0.7 * ao + uSunCol * max(dot(N, uSunDir), 0.0) * sunVis;
+  float rim = pow(1.0 - max(dot(N0, V), 0.0), 4.0) * pow(max(dot(-V, uSunDir), 0.0), 4.0) * mix(0.25, 1.0, ridge) * sunVis;
   vec3 c = bark * light + uSunCol * vec3(0.20, 0.14, 0.06) * rim;
   c = mix(c, fogTint(vW), airFog(vW, vDist) * 0.6);
   gl_FragColor = vec4(c, 1.0);
