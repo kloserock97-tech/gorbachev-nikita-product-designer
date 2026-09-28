@@ -29,7 +29,7 @@ const RIDGES: Ridge[] = [
   { r: 44, base: -1.2, lo: 0.4, hi: 2.4, freq: 3.2, forest: 1.1, crown: 1.1, tint: "#2c3a1c", aerial: 0.36, mist: 0.9, seed: 1.7 },
   { r: 80, base: -1.5, lo: 2.2, hi: 7.5, freq: 2.4, forest: 1.8, crown: 1.9, tint: "#2f3d2a", aerial: 0.52, mist: 2.0, seed: 5.3 },
   { r: 140, base: -2, lo: 7, hi: 20, freq: 1.9, forest: 2.6, crown: 3.4, tint: "#303c4c", aerial: 0.62, mist: 4, seed: 9.1 },
-  { r: 240, base: -3, lo: 16, hi: 42, freq: 1.4, forest: 0, crown: 8, tint: "#3e4658", aerial: 0.76, mist: 8, seed: 13.9 },
+  /* v78: самая дальняя гряда (горы, r 240, до 42 м) убрана по просьбе Никиты — она закрывала солнце у горизонта */
 ];
 
 /* дуга за холмом и по бокам: камера смотрит в −z, на широком экране кадр захватывает и бока */
