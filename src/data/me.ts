@@ -22,7 +22,7 @@ const me = {
   profile: [
     ["Name", "Nikita Gorbachev"],
     ["Occupation", "Product Designer"],
-    ["Languages", "English (C1), Russian"],
+    ["Languages", "Russian — native, English — professional working proficiency"],
   ],
 
   hello:
