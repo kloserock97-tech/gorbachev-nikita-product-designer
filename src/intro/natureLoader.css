@@ -3,16 +3,12 @@
   /* the column never grows to fit the oversized stage: the stage overflows it evenly on both sides */
   display: grid; grid-template-rows: auto 1fr auto; grid-template-columns: minmax(0, 1fr);
   padding: clamp(22px, 4vw, 56px);
-  --band: .18;
-  /* v62: a grey photo studio. From the top layer down: a vignette, two soft bands of window light across the wall,
-     a pool of light behind the object, and the cyclorama itself: the wall brightens towards the sweep and the floor
-     falls off towards the camera. Neutral grey with a breath of cool, so the warm moss and the bluish glass carry the
-     colour. All gradients, nothing to download; the grain on top keeps them from banding. */
+  /* v78: светлая студия по скриншоту Никиты: холодно-серая стена светлеет к линии пола (~68 % высоты), пол у камеры
+     чуть темнее, тёмной виньетки нет; за объектом мягкое пятно света */
   background:
-    radial-gradient(ellipse 125% 105% at 50% 44%, #1c1d2000 52%, #1c1d2066 100%),
-    linear-gradient(104deg, rgb(255 255 255 / 0) 25%, rgb(255 255 255 / var(--band)) 35%, rgb(255 255 255 / 0) 46%, rgb(255 255 255 / 0) 55%, rgb(255 255 255 / calc(var(--band) * .7)) 63%, rgb(255 255 255 / 0) 74%),
-    radial-gradient(ellipse 44% 40% at 50% 44%, #d0d1d3e6 0%, #d0d1d300 100%),
-    linear-gradient(180deg, #96979a 0%, #a8a9ac 36%, #b6b7b9 60%, #a3a4a7 78%, #8a8b8e 100%);
+    radial-gradient(ellipse 62% 20% at 50% 68%, #f8f9fbe6 0%, #f8f9fb00 100%),
+    radial-gradient(ellipse 46% 42% at 50% 42%, #eef0f3cc 0%, #eef0f300 100%),
+    linear-gradient(180deg, #d2d5da 0%, #dcdfe3 34%, #e8eaed 58%, #f3f4f6 68%, #e5e7ea 82%, #d5d8dc 100%);
   color: #17181a;
   font-family: var(--font);
   opacity: 1; transition: opacity .65s ease;
@@ -24,13 +20,10 @@
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 .nature-loader.is-leaving { opacity: 0; pointer-events: none; }
-.nature-loader__top { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; font-size: 12px; letter-spacing: .04em; z-index: 1; }
-.nature-loader__identity { display: grid; gap: 5px; }
-.nature-loader__identity b { font-weight: 650; }
-.nature-loader__identity span { opacity: .7; font-size: 10px; }
-/* v65: строка позиционирования читается, пока растёт сад: имя и роль на экране с первой секунды загрузчика */
-.nature-loader__pitch { letter-spacing: .02em; text-transform: none; opacity: .52 !important; }
-.nature-loader__edition { font-size: 10px; opacity: .68; }
+.nature-loader__top { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; z-index: 1; padding: clamp(0px, .8vw, 12px) clamp(0px, .6vw, 10px) 0; }
+.nature-loader__identity { display: grid; gap: 6px; }
+.nature-loader__identity b { font-weight: 650; font-size: clamp(13px, 1.05vw, 17px); letter-spacing: .05em; }
+.nature-loader__identity span, .nature-loader__edition { font-size: clamp(11px, .85vw, 14px); color: #4a4d53; letter-spacing: .07em; }
 /* The object is large in the frame. The stage is bigger than its grid row and overlaps the header and the title on
    purpose: the canvas is transparent, only the slab in the middle of it is opaque. */
 .nature-loader__stage { position: relative; z-index: 1; align-self: center; justify-self: center; width: min(96vh, 980px, 128vw); aspect-ratio: 1; margin: -14vh 0 -12vh; pointer-events: none; }
@@ -38,10 +31,12 @@
 .nature-loader__stage.has-render::before { display: none; }
 .nature-loader canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity .45s ease; }
 .nature-loader__stage.has-render canvas { opacity: 1; }
-.nature-loader__bottom { width: min(330px, 100%); justify-self: center; text-align: center; margin-top: -22px; z-index: 1; }
-.nature-loader__title { margin: 0 0 12px; font-size: clamp(20px, 2.4vw, 28px); font-weight: 500; letter-spacing: -.035em; }
-.nature-loader__line { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 10px; color: #33353a; }
-.nature-loader__track { height: 2px; margin: 12px 0 6px; background: #17181a26; overflow: hidden; }
+/* v78: крупная строка этапа, под ней полоса и счётчик этапов в одну строку */
+.nature-loader__bottom { width: min(500px, 100%); justify-self: center; text-align: center; margin: -22px 0 clamp(12px, 5vh, 64px); z-index: 1; }
+.nature-loader__title { margin: 0 0 clamp(14px, 2.4vh, 26px); font-size: clamp(26px, 2.7vw, 46px); font-weight: 400; letter-spacing: -.03em; line-height: 1.1; }
+.nature-loader__line { display: flex; align-items: center; gap: clamp(14px, 1.6vw, 26px); }
+.nature-loader__track { flex: 1; height: 3px; border-radius: 2px; background: #17181a1f; overflow: hidden; }
+.nature-loader__step { flex: none; font-size: clamp(12px, .95vw, 15px); color: #4a4d53; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
 .nature-loader__track i { display: block; height: 100%; width: 100%; background: #1d1e20; transform-origin: left; transform: scaleX(var(--garden-progress, 0)); }
 /* The way out for a device that cannot cope, offered only when loading drags on. Cut from the same frosted glass as
    the slab. */
@@ -57,8 +52,8 @@
 .nature-loader__fallback:active { transform: translateY(1px) scale(.985); }
 .nature-loader__fallback:focus-visible { outline: 2px solid #17181a; outline-offset: 4px; }
 .nature-loader.is-slow .nature-loader__fallback { display: block; }
-/* on a narrow screen the bands of window light squeeze into streaks and read as brushed metal: keep only a hint */
-@media (max-width: 700px) { .nature-loader { --band: .06; } }
+/* on a narrow screen the stage line is shorter, as on the phone reference */
+@media (max-width: 700px) { .nature-loader__bottom { width: min(340px, 100%); } }
 body.garden-loading { overflow: hidden; }
 @media (max-height: 620px) {
   .nature-loader { padding: 18px 24px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto 1fr; }

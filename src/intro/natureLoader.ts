@@ -24,14 +24,16 @@ export function createNatureLoader(onDone: () => void, onLite: () => void): Natu
   root.setAttribute("aria-labelledby", "garden-title");
   root.innerHTML = `
     <header class="nature-loader__top">
-      <div class="nature-loader__identity"><b>NIKITA GORBACHEV</b><span>PRODUCT DESIGNER</span><span class="nature-loader__pitch">${ru ? "Сложные продукты и сервисы с ИИ" : "Complex products and AI services"}</span></div>
+      <div class="nature-loader__identity"><b>NIKITA GORBACHEV</b><span>PRODUCT DESIGNER</span></div>
       <span class="nature-loader__edition">${ru ? "ЦИФРОВАЯ ПРИРОДА" : "DIGITAL NATURE"} · 01</span>
     </header>
     <div class="nature-loader__stage" aria-hidden="true"><canvas></canvas></div>
     <div class="nature-loader__bottom">
-      <h1 class="nature-loader__title" id="garden-title">${ru ? "Всё начинается с малого." : "Every idea starts small."}</h1>
-      <div class="nature-loader__line"><span class="nature-loader__status" role="status" aria-live="polite"></span><span aria-hidden="true">01 — 03</span></div>
-      <div class="nature-loader__track" role="progressbar" aria-label="${ru ? "Подготовка портфолио" : "Preparing portfolio"}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
+      <h1 class="nature-loader__title nature-loader__status" id="garden-title" role="status" aria-live="polite">${ru ? "Подготавливаю свет." : "Setting the light."}</h1>
+      <div class="nature-loader__line">
+        <div class="nature-loader__track" role="progressbar" aria-label="${ru ? "Подготовка портфолио" : "Preparing portfolio"}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
+        <span class="nature-loader__step" aria-hidden="true">01 / 03</span>
+      </div>
       <button class="nature-loader__fallback" type="button">${ru ? "Открыть лёгкую версию" : "Open lightweight version"}</button>
     </div>`;
   document.body.appendChild(root);
@@ -41,6 +43,7 @@ export function createNatureLoader(onDone: () => void, onLite: () => void): Natu
   inert.forEach(({ e }) => { e.inert = true; });
   const fallback = root.querySelector<HTMLButtonElement>(".nature-loader__fallback")!;
   const label = root.querySelector<HTMLElement>(".nature-loader__status")!;
+  const stepEl = root.querySelector<HTMLElement>(".nature-loader__step")!;
   const track = root.querySelector<HTMLElement>(".nature-loader__track")!;
   const stage = root.querySelector<HTMLElement>(".nature-loader__stage")!;
   const canvas = root.querySelector("canvas")!;
@@ -121,7 +124,9 @@ export function createNatureLoader(onDone: () => void, onLite: () => void): Natu
     const index = complete ? 3 : progress < .36 ? 0 : progress < .72 ? 1 : 2;
     if (index !== statusIndex) {
       statusIndex = index;
-      label.textContent = (ru ? ["Подготавливаю свет и материалы", "Собираю пространство", "Последние детали", "Можно исследовать"] : ["Preparing light and materials", "Building the scene", "Finishing touches", "Ready to explore"])[index];
+      /* v78: по скриншоту Никиты крупная строка — сам этап загрузки, справа от полосы — номер этапа */
+      label.textContent = (ru ? ["Подготавливаю свет.", "Собираю пространство.", "Последние детали.", "Можно исследовать."] : ["Setting the light.", "Building the space.", "Finishing touches.", "Ready to explore."])[index];
+      stepEl.textContent = `0${Math.min(3, index + 1)} / 03`;
     }
     // Let the completed edge-to-edge garden read before the dissolve begins.
     if (complete && (reduced || elapsed - completedAt >= .32)) finish();
