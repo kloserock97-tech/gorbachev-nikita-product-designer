@@ -109,12 +109,12 @@ body {
 /* ── заголовок и подзаголовок ─────────────────────────────────────────────── */
 .headline {
   position: absolute; z-index: 4; left: calc(46 * var(--u)); top: calc(202 * var(--u));
-  font-size: calc(63 * var(--u)); line-height: calc(65 * var(--u)); font-weight: 300; letter-spacing: calc(-0.4 * var(--u));
+  font-size: calc(63 * var(--u)); line-height: calc(65 * var(--u)); font-weight: 500; letter-spacing: calc(-0.4 * var(--u));
 }
 .headline span { display: block; padding-bottom: 0.04em; }
 .headline span i { display: inline-block; font-style: normal; }
 body.lang-ru .headline {
-  font-weight: 400;
+  font-weight: 500;   /* Ugol, средний: в тонком штрихе дуга в «и» почти не видна (28.09) */
   letter-spacing: calc(-0.7 * var(--u));
 }
 .lede {
