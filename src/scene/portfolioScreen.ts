@@ -1,9 +1,13 @@
 import * as THREE from "three";
 import { getMe } from "../data/me";
-import { onLang } from "../i18n";
+import { getLang, onLang } from "../i18n";
 
 /* v27: тексты экрана берутся на текущем языке; при переключении страница перерисовывается */
 const ME = getMe;
+/* v78: подписи первого экрана (баннер и три кнопки) — здесь, а не в me.ts: они часть вёрстки экрана */
+const HERO = () => getLang() === "ru"
+  ? { line: "Цифровые продукты  •  Интерфейсы  •  Системы", buttons: ["Обо мне", "Проекты", "Контакты"] }
+  : { line: "Digital products  •  Interfaces  •  Systems", buttons: ["About", "Projects", "Contact"] };
 
 /* Экран ретро-компьютера — рабочий стол начала 2000-х: обои с холмом, окно браузера
    с личной домашней страницей, панель задач с кнопкой Start и часами.
@@ -148,6 +152,11 @@ export class PortfolioScreen {
   private scrollTo = 0;
   private active = false;
   private minute = -1;
+  /* v78: первый экран страницы — баннер и три кнопки (как на картинке Никиты). Кнопки листают страницу к разделу.
+     Места кнопок и разделов — в логических пикселях страницы, их пишет layout */
+  private buttons: { x: number; y: number; w: number; h: number; to: number }[] = [];
+  private anchors: number[] = [];
+  private hover = -1;
 
   constructor() {
     this.chrome.width = SW;
@@ -406,45 +415,15 @@ export class PortfolioScreen {
       g.fillStyle = "#ffffff"; g.fillRect(0, 0, PWL, this.page.height / K);
     }
 
-    /* шапка-баннер */
-    let y = 0;
-    const bh = 176;
-    if (paint) {
-      const bg = g.createLinearGradient(0, 0, PWL, bh);
-      bg.addColorStop(0, "#10288a"); bg.addColorStop(0.55, "#3b6fe0"); bg.addColorStop(1, "#8fd3ff");
-      g.fillStyle = bg; g.fillRect(0, 0, PWL, bh);
-      g.fillStyle = "#ffe36b";
-      for (const [x, sy, r] of [[60, 42, 9], [PWL - 70, 38, 11], [PWL - 140, 128, 7], [110, 140, 6], [PWL / 2 + 300, 70, 5]]) this.star(g, x, sy, r);
-      g.textAlign = "center";
-      g.font = `italic bold 60px ${DISPLAY}`;
-      g.lineWidth = 8; g.strokeStyle = "#0a1a5c"; g.strokeText(ME().site, PWL / 2, 96);
-      const word = g.createLinearGradient(0, 50, 0, 100);
-      word.addColorStop(0, "#fff7b0"); word.addColorStop(0.5, "#ffd23a"); word.addColorStop(1, "#ff8a1f");
-      g.fillStyle = word; g.fillText(ME().site, PWL / 2, 96);
-      g.font = `bold 20px ${BODY}`; g.fillStyle = "#eaf2ff"; g.fillText(ME().tagline, PWL / 2, 140);
-      g.textAlign = "left";
-    }
-    y = bh + 40;
-
-    /* строка ссылок */
-    g.font = `17px ${BODY}`;
-    if (paint) {
-      const parts = ME().nav;
-      const sep = "  |  ";
-      const total = parts.reduce((s, p, i) => s + g.measureText(p).width + (i ? g.measureText(sep).width : 0), 0);
-      let x = (PWL - total) / 2;
-      parts.forEach((p, i) => {
-        if (i) { g.fillStyle = "#888"; g.fillText(sep, x, y); x += g.measureText(sep).width; }
-        g.fillStyle = LINK; g.fillText(p, x, y);
-        g.fillRect(x, y + 3, g.measureText(p).width, 1.5);
-        x += g.measureText(p).width;
-      });
-    }
-    y += 22;
-    if (paint) this.bevelRule(g, M, y, inner);
-    y += 30;
+    /* v78: первый экран — ровно одна высота окна: космос с горизонтом Земли, имя, фото и три кнопки */
+    const heroH = Math.round(VIEW_H / K);
+    const hero = this.heroLayout(heroH);
+    if (paint) this.paintHero(g, heroH, hero);
+    this.buttons = hero.buttons.map((b, i) => ({ ...b, to: i }));
+    let y = heroH + 36;
 
     /* обо мне: фото и анкета */
+    this.anchors[0] = y - 46;
     y = this.sectionBar(g, ME().sections[0], M, y, inner, paint);
     const photoW = 250, photoH = 290;
     if (paint) this.photoFrame(g, M, y, photoW, photoH);
@@ -467,6 +446,7 @@ export class PortfolioScreen {
     ty = this.wrap(g, ME().hello, tx, ty + 6, tw, 26, paint, TEXT);
     y = Math.max(y + photoH + 20, ty) + 22;
 
+    this.anchors[1] = y - 46;
     y = this.sectionBar(g, ME().sections[1], M, y, inner, paint);
     g.font = `17px ${BODY}`;
     for (const p of ME().now) y = this.wrap(g, p, M, y + 4, inner, 28, paint, TEXT) + 12;
@@ -492,6 +472,7 @@ export class PortfolioScreen {
     }
     y += 12;
 
+    this.anchors[2] = y - 46;
     y = this.sectionBar(g, ME().sections[3], M, y, inner, paint);
     for (const [k, v] of ME().contacts) {
       g.font = `bold 16px ${BODY}`;
@@ -529,6 +510,153 @@ export class PortfolioScreen {
       g.textAlign = "left";
     }
     return y + 50;
+  }
+
+  /* ───────────────────────── первый экран ───────────────────────── */
+
+  private heroLayout(h: number) {
+    const bw = 318, bh = 70, gap = 14;
+    const bx = PWL - 30 - bw;
+    const by0 = h - 30 - (bh * 3 + gap * 2);
+    const photo = { x: 30, y: by0 - 4, w: bx - 30 - 24, h: bh * 3 + gap * 2 + 8 };
+    return { photo, buttons: [0, 1, 2].map((i) => ({ x: bx, y: by0 + i * (bh + gap), w: bw, h: bh })) };
+  }
+
+  private paintHero(g: CanvasRenderingContext2D, h: number, hero: ReturnType<PortfolioScreen["heroLayout"]>) {
+    const W = PWL;
+    /* всё первого экрана — в пределах его высоты: край шара Земли иначе заливал страницу ниже */
+    g.save(); g.beginPath(); g.rect(0, 0, W, h); g.clip();
+    /* космос: глубокий синий сверху, светлее к горизонту */
+    const sky = g.createLinearGradient(0, 0, 0, h);
+    sky.addColorStop(0, "#0b2fb8"); sky.addColorStop(0.42, "#1f63ec"); sky.addColorStop(1, "#3f8cff");
+    g.fillStyle = sky; g.fillRect(0, 0, W, h);
+    /* Земля: край огромного шара, светится голубым */
+    const R = W * 1.35, cx = W / 2, cy = 236 + R;
+    const halo = g.createRadialGradient(cx, cy, R - 6, cx, cy, R + 40);
+    halo.addColorStop(0, "rgba(190,235,255,0.9)"); halo.addColorStop(0.25, "rgba(120,200,255,0.55)"); halo.addColorStop(1, "rgba(80,160,255,0)");
+    g.fillStyle = halo; g.beginPath(); g.arc(cx, cy, R + 40, 0, Math.PI * 2); g.fill();
+    const earth = g.createLinearGradient(0, 236, 0, h);
+    earth.addColorStop(0, "#5aa8ff"); earth.addColorStop(0.18, "#2a74e6"); earth.addColorStop(1, "#1a4fc4");
+    g.fillStyle = earth; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill();
+    /* облачные разводы на планете */
+    g.save(); g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.clip();
+    g.fillStyle = "rgba(255,255,255,0.10)";
+    for (const [x, y, rx, ry] of [[120, 262, 90, 7], [330, 256, 130, 6], [560, 266, 110, 8], [240, 300, 150, 10], [520, 320, 120, 9], [80, 360, 120, 12]]) { g.beginPath(); g.ellipse(x, y, rx, ry, -0.04, 0, Math.PI * 2); g.fill(); }
+    g.restore();
+    /* звёзды: мелкие точки и крупные жёлтые искры */
+    g.fillStyle = "rgba(255,255,255,0.75)";
+    for (let i = 0; i < 40; i++) g.fillRect((i * 97.3) % W, (i * 53.7) % 220, 1.6, 1.6);
+    g.fillStyle = "#ffe14a";
+    for (const [x, y, r] of [[W * 0.33, 30, 9], [W * 0.72, 44, 12], [22, 150, 7], [W * 0.23, 170, 8], [W - 60, 186, 14], [W - 36, 216, 7]]) this.sparkle(g, x, y, r);
+    /* орбита вокруг имени — дугами, чтобы не перечёркивать буквы */
+    g.save(); g.translate(W / 2, 96); g.rotate(-0.05);
+    g.strokeStyle = "#ffd23a"; g.lineWidth = 3; g.lineCap = "round";
+    for (const [a, b] of [[0.94, 1.32], [1.9, 2.08], [0.02, 0.2]]) { g.beginPath(); g.ellipse(0, 0, W * 0.47, 44, 0, Math.PI * a, Math.PI * b); g.stroke(); }
+    g.restore();
+    /* имя: золото с тёмно-синей обводкой, наклон — как у логотипов тех лет */
+    const name = ME().profile[0][1];
+    g.textAlign = "center"; g.textBaseline = "alphabetic";
+    let fs = 66;
+    g.font = `italic 900 ${fs}px ${DISPLAY}`;
+    while (g.measureText(name).width > W - 70 && fs > 30) { fs -= 2; g.font = `italic 900 ${fs}px ${DISPLAY}`; }
+    g.lineJoin = "round";
+    g.lineWidth = 12; g.strokeStyle = "#0a1a6a"; g.strokeText(name, W / 2, 112);
+    g.lineWidth = 5; g.strokeStyle = "#ff9a1a"; g.strokeText(name, W / 2, 112);
+    const gold = g.createLinearGradient(0, 112 - fs * 0.8, 0, 112);
+    gold.addColorStop(0, "#fffbc4"); gold.addColorStop(0.45, "#ffd42a"); gold.addColorStop(1, "#ff8e14");
+    g.fillStyle = gold; g.fillText(name, W / 2, 112);
+    g.font = `bold 40px ${DISPLAY}`;
+    g.lineWidth = 6; g.strokeStyle = "#0a2a8a"; g.strokeText(ME().tagline, W / 2, 160);
+    g.fillStyle = "#ffffff"; g.fillText(ME().tagline, W / 2, 160);
+    g.font = `16px "Courier New", "Lucida Console", monospace`; g.fillStyle = "#e8f0ff";
+    g.fillText(HERO().line, W / 2, 196);
+    g.textAlign = "left";
+
+    /* фото в рамке */
+    const p = hero.photo;
+    g.fillStyle = "rgba(0,20,80,0.35)"; this.round(g, p.x + 4, p.y + 6, p.w, p.h, 10); g.fill();
+    const fr = g.createLinearGradient(0, p.y, 0, p.y + p.h);
+    fr.addColorStop(0, "#f2f7ff"); fr.addColorStop(1, "#bcd3f7");
+    g.fillStyle = fr; this.round(g, p.x, p.y, p.w, p.h, 10); g.fill();
+    g.save(); this.round(g, p.x + 9, p.y + 9, p.w - 18, p.h - 18, 4); g.clip();
+    g.fillStyle = "#5a3a1c"; g.fillRect(p.x + 9, p.y + 9, p.w - 18, p.h - 18);
+    if (this.photo.complete && this.photo.naturalWidth) this.cover(g, this.photo, p.x + 9, p.y + 9, p.w - 18, p.h - 18, 0.2);
+    g.restore();
+    g.strokeStyle = "#5b86d6"; g.lineWidth = 1.5; this.round(g, p.x + 9, p.y + 9, p.w - 18, p.h - 18, 4); g.stroke();
+    g.fillStyle = "#ffe14a";
+    this.sparkle(g, p.x + p.w - 46, p.y + 46, 10); this.sparkle(g, p.x + 34, p.y + p.h * 0.62, 8);
+
+    /* три кнопки: выбранная (наведённая) — жёлтая, без наведения — первая */
+    const labels = HERO().buttons;
+    const on = this.hover < 0 ? 0 : this.hover;
+    hero.buttons.forEach((b, i) => {
+      const sel = i === on;
+      g.fillStyle = "rgba(0,20,80,0.35)"; this.round(g, b.x + 3, b.y + 5, b.w, b.h, 10); g.fill();
+      const bg = g.createLinearGradient(0, b.y, 0, b.y + b.h);
+      if (sel) { bg.addColorStop(0, "#fff7a8"); bg.addColorStop(0.5, "#ffe03a"); bg.addColorStop(1, "#f5c400"); }
+      else { bg.addColorStop(0, "#ffffff"); bg.addColorStop(0.55, "#eef3ff"); bg.addColorStop(1, "#c9d9fa"); }
+      g.fillStyle = bg; this.round(g, b.x, b.y, b.w, b.h, 10); g.fill();
+      g.strokeStyle = "#1c47c8"; g.lineWidth = 3; this.round(g, b.x + 1.5, b.y + 1.5, b.w - 3, b.h - 3, 9); g.stroke();
+      g.fillStyle = "rgba(255,255,255,0.6)"; this.round(g, b.x + 8, b.y + 5, b.w - 16, 5, 3); g.fill();
+      this.heroIcon(g, i, b.x + 42, b.y + b.h / 2);
+      g.font = `bold 30px ${DISPLAY}`; g.fillStyle = "#101c7a"; g.textBaseline = "middle";
+      g.fillText(labels[i], b.x + 84, b.y + b.h / 2 + 1);
+      g.strokeStyle = "#101c7a"; g.lineWidth = 3.5; g.lineJoin = "miter"; g.lineCap = "butt";
+      g.beginPath(); g.moveTo(b.x + b.w - 34, b.y + b.h / 2 - 9); g.lineTo(b.x + b.w - 25, b.y + b.h / 2); g.lineTo(b.x + b.w - 34, b.y + b.h / 2 + 9); g.stroke();
+      g.textBaseline = "alphabetic";
+    });
+    g.restore();
+  }
+
+  private heroIcon(g: CanvasRenderingContext2D, i: number, cx: number, cy: number) {
+    g.lineWidth = 2.6; g.strokeStyle = "#101c7a"; g.lineJoin = "round";
+    if (i === 0) {
+      g.fillStyle = "#6aa8ff";
+      g.beginPath(); g.arc(cx, cy - 8, 8, 0, Math.PI * 2); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(cx - 15, cy + 16); g.quadraticCurveTo(cx - 15, cy + 2, cx, cy + 2); g.quadraticCurveTo(cx + 15, cy + 2, cx + 15, cy + 16); g.closePath(); g.fill(); g.stroke();
+    } else if (i === 1) {
+      g.fillStyle = "#ffd23a";
+      g.beginPath(); g.moveTo(cx - 17, cy - 11); g.lineTo(cx - 6, cy - 11); g.lineTo(cx - 2, cy - 7); g.lineTo(cx + 17, cy - 7); g.lineTo(cx + 17, cy + 13); g.lineTo(cx - 17, cy + 13); g.closePath(); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(cx - 17, cy - 2); g.lineTo(cx + 17, cy - 2); g.stroke();
+    } else {
+      g.fillStyle = "#8fc0ff";
+      g.beginPath(); g.rect(cx - 17, cy - 11, 34, 23); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(cx - 17, cy - 11); g.lineTo(cx, cy + 3); g.lineTo(cx + 17, cy - 11); g.stroke();
+    }
+  }
+
+  /** четырёхлучевая искра, как на картинках тех лет */
+  private sparkle(g: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
+    g.beginPath();
+    g.moveTo(cx, cy - r); g.quadraticCurveTo(cx, cy, cx + r, cy); g.quadraticCurveTo(cx, cy, cx, cy + r);
+    g.quadraticCurveTo(cx, cy, cx - r, cy); g.quadraticCurveTo(cx, cy, cx, cy - r); g.fill();
+  }
+
+  /** Точка на экране (uv модели, 0…1 сверху) → номер кнопки первого экрана или −1. Кривизну стекла учитываем так же, как шейдер. */
+  private buttonAt(u: number, v: number) {
+    const cx = u - 0.5, cy = v - 0.5, r2 = cx * cx + cy * cy;
+    const k = 1 + this.material.uniforms.uCurve.value * r2 * (1 + 1.6 * r2);
+    const x = (0.5 + cx * k) * SW - PAGE.x0, y = (0.5 + cy * k) * SH - PAGE.y0;
+    if (x < 0 || y < 0 || x > PW || y > VIEW_H) return -1;
+    const lx = x / K, ly = (y + this.scroll) / K;
+    return this.buttons.findIndex((b) => lx >= b.x && lx <= b.x + b.w && ly >= b.y && ly <= b.y + b.h);
+  }
+
+  /** Наведение: подсветить кнопку; true — курсор над кнопкой */
+  hoverAt(u: number, v: number) {
+    const i = this.active ? this.buttonAt(u, v) : -1;
+    if (i !== this.hover) { this.hover = i; this.layout(true); this.pageTex.needsUpdate = true; }
+    return i >= 0;
+  }
+
+  /** Клик по кнопке — страница листается к её разделу; true — клик пришёлся на кнопку */
+  clickAt(u: number, v: number) {
+    if (!this.active) return false;
+    const i = this.buttonAt(u, v);
+    if (i < 0) return false;
+    const y = (this.anchors[this.buttons[i].to] ?? 0) * K;
+    this.scrollTo = THREE.MathUtils.clamp(y, 0, Math.max(0, this.contentH - VIEW_H));
+    return true;
   }
 
   /* ───────────────────────── мелкие рисовалки ───────────────────────── */

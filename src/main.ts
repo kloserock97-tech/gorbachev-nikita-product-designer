@@ -255,6 +255,7 @@ function start3d(caseView?: CaseView) {
   };
   function closePc() {
     if (!scene.computerFocused) return;
+    body.classList.remove("pc-button");
     scene.setComputerFocus(false);
     cue("close");
     pcAnim();
@@ -360,6 +361,21 @@ function start3d(caseView?: CaseView) {
     dragY = e.clientY;
   });
   window.addEventListener("pointerup", () => (dragY = null));
+  /* v78: кнопки «Обо мне / Проекты / Контакты» на первом экране монитора — наведение и клик */
+  let screenDown: { x: number; y: number } | null = null;
+  window.addEventListener("pointermove", (e) => {
+    if (!scene.computerFocused || e.pointerType !== "mouse") return;
+    body.classList.toggle("pc-button", scene.hoverScreen(e.clientX, e.clientY));
+  }, { passive: true });
+  window.addEventListener("pointerdown", (e) => { screenDown = scene.computerFocused ? { x: e.clientX, y: e.clientY } : null; });
+  window.addEventListener("click", (e) => {
+    const d = screenDown;
+    screenDown = null;
+    if (!d || !scene.computerFocused || (e.target as Element).closest("a, button")) return;
+    /* палец тянул страницу — это прокрутка, а не нажатие */
+    if (Math.hypot(e.clientX - d.x, e.clientY - d.y) > 8) return;
+    if (scene.clickScreen(e.clientX, e.clientY)) cue("press");
+  });
   window.addEventListener("pointercancel", () => (dragY = null));
   window.addEventListener("touchmove", (e) => { if (scene.computerFocused) e.preventDefault(); }, { passive: false });
   /* для CDP-замеров */

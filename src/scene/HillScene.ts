@@ -1648,6 +1648,29 @@ export class HillScene {
     if (on) this.computeFocusPose();
   }
 
+  /* v78: кнопки первого экрана страницы на мониторе — наведение и клик. Луч из точки окна в меш экрана,
+     uv попадания отдаём экрану: он сам учитывает кривизну стекла и прокрутку */
+  private screenUv(clientX: number, clientY: number) {
+    if (!this.screenMesh || !this.focusOn) return null;
+    const r = this.canvasRect;
+    this.hitNdc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+    this.raycaster.setFromCamera(this.hitNdc, this.camera);
+    const hit = this.raycaster.intersectObject(this.screenMesh, false)[0];
+    return hit?.uv ?? null;
+  }
+
+  /** курсор над кнопкой экрана? (подсвечивает её) */
+  hoverScreen(clientX: number, clientY: number) {
+    const uv = this.screenUv(clientX, clientY);
+    return this.screen?.hoverAt(uv ? uv.x : -1, uv ? uv.y : -1) ?? false;
+  }
+
+  /** клик по экрану: кнопка листает страницу к разделу; true — клик пришёлся на кнопку */
+  clickScreen(clientX: number, clientY: number) {
+    const uv = this.screenUv(clientX, clientY);
+    return uv ? this.screen?.clickAt(uv.x, uv.y) ?? false : false;
+  }
+
   scrollScreen(px: number) {
     this.screen?.scrollBy(px);
   }

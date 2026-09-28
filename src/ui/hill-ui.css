@@ -239,6 +239,8 @@ body {
 
 /* ── компьютер: наведение и режим «журнал в руках» ─────────────────────── */
 .pc-hover, .pc-hover #scene { cursor: pointer; }
+/* v78: курсор над кнопкой первого экрана на мониторе */
+.pc-focus.pc-button, .pc-focus.pc-button #scene { cursor: pointer; }
 .pc-tip {
   position: fixed; left: 0; top: 0; z-index: 30; pointer-events: none;
   padding: 6px 11px 7px; border-radius: 999px;
