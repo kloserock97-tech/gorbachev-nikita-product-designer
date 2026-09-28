@@ -48,7 +48,8 @@ const CARD_FRAG = /* glsl */ `
   uniform float uInnerR;
   uniform vec2 uRep, uOff;
   uniform vec3 uTint;
-  uniform float uRim;        // кромка стекла: 0 — только картинка (пин и т. п.)       // тон стекла: молочно-белый или дымчатый тёмный   // вырезка из текстуры: масштаб и сдвиг uv
+  uniform float uRim;
+  uniform float uLinear;        // кромка стекла: 0 — только картинка (пин и т. п.)       // тон стекла: молочно-белый или дымчатый тёмный   // вырезка из текстуры: масштаб и сдвиг uv
   varying vec2 vUv;
   varying vec3 vN, vV;
 
@@ -84,6 +85,10 @@ const CARD_FRAG = /* glsl */ `
       float inside = 1.0 - smoothstep(-ai, ai, di);
       vec2 uv = (p / uInner + 0.5) * uRep + uOff;
       vec4 c = texture2D(uMap, vec2(uv.x, uv.y), uBlur);
+      /* текстура приходит в линейном цвете (sRGB-текстура), а стекло рисуется «как есть»: без обратного перевода
+         полутона содержимого темнели — тёмный интерфейс GRIF на карточке выглядел тусклым. uLinear — только для
+         непрозрачных снимков экранов; у карточек-спутников с полупрозрачным фоном перевод выбеливал бы стекло */
+      if (uLinear > 0.5) c.rgb = pow(c.rgb, vec3(1.0 / 2.2));
       /* тень содержимого на стекле и лёгкий тёплый отсвет у нижнего края содержимого */
       float sh = (1.0 - smoothstep(0.0, uBorder * 0.6, di)) * (1.0 - inside) * 0.12;
       col = mix(col, vec3(0.2, 0.16, 0.1), sh);
@@ -116,6 +121,8 @@ export type CardOpts = {
   tint?: string;
   /** яркость кромки стекла, 0 — без кромки */
   rim?: number;
+  /** содержимое — снимок экрана: вернуть ему яркость из линейного цвета */
+  screen?: boolean;
 };
 export function card(o: CardOpts) {
   const margin = o.margin ?? 40;
@@ -142,6 +149,7 @@ export function card(o: CardOpts) {
       uMargin: { value: margin },
       uRep: { value: o.rep ?? new THREE.Vector2(1, 1) },
       uRim: { value: o.rim ?? 1 },
+      uLinear: { value: o.screen ? 1 : 0 },
       uTint: { value: new THREE.Color(o.tint ?? "#fffcf7") },
       uOff: { value: o.off ?? new THREE.Vector2(0, 0) },
     },

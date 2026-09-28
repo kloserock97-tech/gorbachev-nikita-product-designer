@@ -2,6 +2,7 @@
    парящем острове со светящимися горизонталями, за ней стеклянный пузырь, вокруг стеклянные карточки.
    Содержимое — из Figma-файла продукта (fpMhI2lUFjbMoiZVOVcJHe, «New concept»):
    - главная панель — чат «Анализ встречи» (кадр 05) целиком, с шторкой черновика справа, рендер Figma 2×;
+     файл сцены уменьшен до 1600 px — ближе к размеру на экране, чтобы тонкий светлый текст не размывался мипмапами;
    - спутники — оттуда же: «Собрал контекст», черновик письма Сергею через Gmail, договорённости встречи
      и память «при Сергее не упоминать конкурента X».
    Референс придумал «Резюме встречи, готово за 10 секунд» — здесь время из самого экрана: 1 мин 47 сек. */
@@ -87,7 +88,7 @@ export function createGrifScene(canvas: HTMLCanvasElement): CaseScene {
       const im = await caseImage("grif-ai/scene/chat.webp");
       const iw = 620, ih = (iw * im.height) / im.width;
       k.card({ size: [iw + 26, ih + 26], radius: 34, glass: 0.35, tint: "#2a2d22", halo: 0, c: [922, 470], z: -45, r: [-6, 14, 4], delay: 0.08, amp: 3, order: 1 });
-      k.card({ map: k.imageTexture(im), size: [iw + 30, ih + 30], inner: [iw, ih], radius: 34, innerRadius: 20, glass: 0.5, tint: "#3a3e2a", warm: 0.4, halo: 0.34, margin: 70, c: [898, 462], z: 0, r: [-6, 14, 4], delay: 0, amp: 3, order: 5 });
+      k.card({ map: k.imageTexture(im), size: [iw + 30, ih + 30], inner: [iw, ih], radius: 34, innerRadius: 20, glass: 0.5, tint: "#8a8f78", warm: 0.4, halo: 0.4, screen: true, margin: 70, c: [898, 462], z: 0, r: [-6, 14, 4], delay: 0, amp: 3, order: 5 });
 
       const sat = async (paint: (s: number) => Promise<HTMLCanvasElement>, w0: number, h0: number, w: number, c: [number, number], z: number, r: [number, number, number], delay: number, order = 3) => {
         const cv = await paint((w / w0) * ts * 2);
