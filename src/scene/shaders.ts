@@ -460,6 +460,13 @@ varying vec3 vColor;
 
 void main(){
   float c = cos(aPlant.x), s = sin(aPlant.x);
+  /* v81: венчик поворачивается наклонной плоскостью к камере (разброс ±30° по фазе). При случайном повороте цветок,
+     стоящий к камере боком, виден ребром обеих плоскостей — жёлтой чёрточкой или крестиком */
+  if (aPart > 5.5) {
+    vec2 d = cameraPosition.xz - (modelMatrix * vec4(aOffset, 1.0)).xz;
+    float yaw = atan(-d.x, -d.y) + (aPlant.w - 0.5) * 1.05;
+    c = cos(yaw); s = sin(yaw);
+  }
   vec3 lp = position * aPlant.y;
   lp.xz = mat2(c, -s, s, c) * lp.xz;
 
