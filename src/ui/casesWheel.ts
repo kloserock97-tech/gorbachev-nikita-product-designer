@@ -279,10 +279,9 @@ let shownInfo = -1;
     if (idx !== current) {
       if (current >= 0) cue("progress-step", 0.5);
       current = idx;
-      if (!asCard) {
-        if (now) now.textContent = pad(idx + 1);
-        paintInfo(idx, shown);
-      }
+      /* счётчик — раз на смену кейса (по нему проверяет tools/cdp-cards.mjs); колонку текста в виде «карточка» не видно */
+      if (now) now.textContent = pad(idx + 1);
+      if (!asCard) paintInfo(idx, shown);
       paintSteps();
       /* спутники разлетаются заново на каждом новом кейсе */
       if (card) { card.paint(idx); card.live(); }
@@ -376,7 +375,9 @@ let shownInfo = -1;
   let tx = 0, ty = 0, tSwipe = false;
   addEventListener("touchstart", (ev) => {
     const tt = ev.changedTouches[0];
-    if (!shown || !tt || ev.touches.length > 1 || !wrap.contains(tt.target as Node)) { tSwipe = false; return; }
+    /* v79: жест ловим по всей главе. В виде «карточка» палец попадает на сцену и карточку кейса (.cx), а они
+       лежат вне обёртки колеса — свайп по ним не листал кейсы вовсе */
+    if (!shown || !tt || ev.touches.length > 1 || !root.contains(tt.target as Node)) { tSwipe = false; return; }
     tx = tt.clientX; ty = tt.clientY; tSwipe = true;
   }, { passive: true });
   addEventListener("touchend", (ev) => {

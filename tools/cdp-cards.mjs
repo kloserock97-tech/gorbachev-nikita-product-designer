@@ -117,7 +117,8 @@ async function chapter(title, at, counter, prevSel, nextSel, swipeSel, swipeDx) 
   ok(n[4] === n[0], `вернулись на ту же карточку: ${path[0]} → ${path[4]}`);
 }
 
-await chapter("глава «Кейсы»", 0.55, ".cases-now", ".cw-step[data-d='-1']", ".cw-step--next", ".cw-preview", 150);
+/* v79: свайп — по видимой сцене кейса (.cx-stack), а не по скрытой колонке колеса */
+await chapter("глава «Кейсы»", 0.55, ".cases-now", ".cw-step[data-d='-1']", ".cw-step--next", ".cx-stack", 150);
 await chapter("заметки «по вечерам»", 0.80, ".shelf-now", ".shelf-step[data-d='-1']", ".shelf-step--next", ".shelf-stage", 220);
 
 console.log("\n── адресная строка телефона ──");
