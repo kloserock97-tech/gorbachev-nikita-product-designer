@@ -14,6 +14,8 @@ uniform float uBackLight;
 /* v80: свет травы в духе Unreal: x — просвет (Two Sided Foliage), y — доля неба внутри дёрна, z — сила затенения
    у корня; w — запас */
 uniform vec4 uGrassLook;
+/* v80: воздушная перспектива: x — сила тёплого ореола дымки к солнцу, y — насколько дымка прохладнее в стороне от него */
+uniform vec2 uAerial;
 uniform vec3 uSunDir;
 uniform vec3 uSunCol;
 uniform vec3 uSH[9];
@@ -55,6 +57,18 @@ float airFog(vec3 w, float dist){
   float distant = smoothstep(9.0, 30.0, dist) * 0.55;
   float low = (1.0 - exp(-dist * 0.035)) * exp(-max(w.y - 0.2, 0.0) * 1.15) * 0.55;
   return clamp(distant + low * uHaze, 0.0, 0.8);
+}
+
+/* v80: цвет дымки по направлению взгляда, как в небесной модели Unreal (Sky Atmosphere, Height Fog с
+   directional inscattering): рассеяние Ми к солнцу — лепесток Хеньи–Гринстейна (g = 0,7) — даёт тёплое свечение
+   воздуха вокруг солнца, в стороне дымка прохладнее и чуть темнее. Средний цвет остаётся uFogCol */
+vec3 fogTint(vec3 w){
+  vec3 v = normalize(w - cameraPosition);
+  float mu = dot(v, uSunDir);
+  const float g = 0.7;
+  float hg = (1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * mu, 1.5) * ((1.0 - g) * (1.0 - g) / (1.0 + g));
+  vec3 cool = uFogCol * mix(vec3(1.0), vec3(0.86, 0.92, 1.02), uAerial.y);
+  return mix(cool, uFogCol, smoothstep(-0.2, 0.6, mu)) + uSunCol * hg * 0.16 * uAerial.x;
 }
 
 /* облучённость из SH9 — та же формула, что shGetIrradianceAt в three */
@@ -370,7 +384,7 @@ void main(){
      изнанкой — по лугу бегут серебристые пятна */
   c += vec3(0.075, 0.085, 0.05) * vGust * vGust * vT * uAmbient;
   c *= 1.0 - vPress * 0.15;
-  c = mix(c, uFogCol, vFog);
+  c = mix(c, fogTint(vW), vFog);
   float coverage = 1.0;
   if (uA2C > 0.5) {
     /* uv.x: 0 — левый край, 1 — правый; у кончика края сходятся, fwidth это учитывает */
@@ -504,7 +518,7 @@ void main(){
   col *= mix(1.0, 0.8, uWet);
   vec3 c = col * vLight * ao * mix(1.0, 0.45, shadow);
   c += col * uSunCol * vBackP * translucency * (1.0 - shadow);
-  c = mix(c, uFogCol, vFog);
+  c = mix(c, fogTint(vW), vFog);
   /* без MSAA alphaToCoverage ничего не делает, и венчик рисовался целым квадратом — «цветы квадратиками» */
   if (uNoMsaa > 0.5 && alpha < 0.5) discard;
   gl_FragColor = vec4(c, alpha);
@@ -549,7 +563,7 @@ void main(){
   vec3 light = shIrradiance(N) * uAmbient * 0.6 * mix(1.0, 0.3, shadow)
              + uSunCol * max(dot(N, uSunDir), 0.0) * (1.0 - shadow) * cloudShade(vW);
   vec3 c = soil * light * mix(1.0, 0.7, uWet);
-  c = mix(c, uFogCol, airFog(vW, vDist));
+  c = mix(c, fogTint(vW), airFog(vW, vDist));
   gl_FragColor = vec4(c, 1.0);
 }
 `;
@@ -678,6 +692,17 @@ uniform vec3 uHorizon;
 uniform vec3 uGlow;
 uniform vec3 uSunDir;
 uniform vec3 uSunCol;
+uniform float uMie;
+/* v80: рассеяние Ми вокруг солнца (Хеньи–Гринстейн, g = 0,76) — широкое тёплое свечение неба на закате, как в
+   Sky Atmosphere у Unreal. Та же модель, что у дымки на земле (fogTint), поэтому небо, гряды и воздух над лугом
+   светятся вокруг солнца согласованно. Сильнее у горизонта: там луч солнца идёт через толщу воздуха */
+vec3 skyMie(vec3 d){
+  float mu = dot(d, uSunDir);
+  const float g = 0.76;
+  float hg = (1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * mu, 1.5) * ((1.0 - g) * (1.0 - g) / (1.0 + g));
+  float low = 1.0 - smoothstep(-0.05, 0.45, d.y) * 0.7;
+  return uSunCol * hg * 0.22 * low * uMie;
+}
 vec3 skyBase(vec3 d){
   float e = d.y;
   vec3 c = mix(uHorizon, uMid, smoothstep(-0.02, 0.17, e));
@@ -704,7 +729,7 @@ void main(){
   float cosA = max(dot(d, uSunDir), 0.0);
   float halo = pow(cosA, 900.0) * 2.2 + pow(cosA, 90.0) * 0.45 + pow(cosA, 12.0) * 0.06;
   float disc = smoothstep(0.99965, 0.99985, cosA) * uSunDisc;
-  c += uSunCol * (halo + disc);
+  c += uSunCol * (halo + disc) + skyMie(d);
 
   /* дизеринг против полос в плавном градиенте */
   float dither = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
@@ -739,7 +764,7 @@ void main(){
   vec3 d = view / dist;
   vec3 sky = skyBase(d);
   float cosA = max(dot(d, uSunDir), 0.0);
-  sky += uSunCol * (pow(cosA, 90.0) * 0.3 + pow(cosA, 12.0) * 0.06);
+  sky += uSunCol * (pow(cosA, 90.0) * 0.3 + pow(cosA, 12.0) * 0.06) + skyMie(d);
   vec3 up = max(vec3(0.0), uSH[0] * 0.886227 + uSH[1] * 1.023328) * uAmbient;
   vec3 soil = vec3(0.045, 0.062, 0.018) * up * 0.6;
   /* у края земли — её же дымка (uFogCol, как airFog), к первой гряде — цвет неба, как в тумане у её подножия */
@@ -828,7 +853,7 @@ void main(){
   c += uSunCol * uTint * 6.0 * toSun * smoothstep(top - 0.25 - uForest * 0.3, top, vW.y) * (1.0 - uAerial);
   vec3 sky = skyBase(d);
   float cosA = max(dot(d, uSunDir), 0.0);
-  sky += uSunCol * (pow(cosA, 90.0) * 0.3 + pow(cosA, 12.0) * 0.06);
+  sky += uSunCol * (pow(cosA, 90.0) * 0.3 + pow(cosA, 12.0) * 0.06) + skyMie(d);
   /* воздух: доля неба растёт к подножию — там в низинах туман */
   float mist = uMist > 0.0 ? exp(-max(vW.y - uBase, 0.0) / uMist) : 0.0;
   float air = clamp(uAerial + (1.0 - uAerial) * mist * 0.85, 0.0, 1.0);
@@ -885,7 +910,7 @@ void main(){
   /* контровая кайма по краю ствола и ветвей против солнца */
   float rim = pow(1.0 - max(dot(N, V), 0.0), 3.0) * pow(max(dot(-V, uSunDir), 0.0), 4.0);
   vec3 c = bark * light + uSunCol * vec3(0.20, 0.14, 0.06) * rim;
-  c = mix(c, uFogCol, airFog(vW, vDist) * 0.6);
+  c = mix(c, fogTint(vW), airFog(vW, vDist) * 0.6);
   gl_FragColor = vec4(c, 1.0);
 }
 `;
@@ -955,7 +980,7 @@ void main(){
   vec3 c = albedo * light + trans * 0.35;
   /* дерево стоит дальше кресла, но воздух на нём слабее, чем на траве той же дали: тёмная крона держит
      глубину кадра, а бледная сливалась с небом */
-  c = mix(c, uFogCol, airFog(vW, vDist) * 0.6);
+  c = mix(c, fogTint(vW), airFog(vW, vDist) * 0.6);
   gl_FragColor = vec4(c, a);
 }
 `;
@@ -1021,7 +1046,7 @@ void main(){
   vec3 light = shIrradiance(N) * uAmbient * 0.75 * ao + uSunCol * max(dot(N, uSunDir), 0.0) * cloudShade(vW);
   float rim = pow(1.0 - max(dot(N, V), 0.0), 4.0) * pow(max(dot(-V, uSunDir), 0.0), 3.0) * (1.0 - ground);
   vec3 c = alb * light + uSunCol * vec3(0.12, 0.09, 0.05) * rim;
-  c = mix(c, uFogCol, airFog(vW, vDist));
+  c = mix(c, fogTint(vW), airFog(vW, vDist));
   gl_FragColor = vec4(c, 1.0);
 }
 `;

@@ -128,6 +128,8 @@ export class HillScene {
     /* v80: свет травы как в Unreal (shaders.ts, uGrassLook). Подбор по адресу: ?gtr=просвет&gsky=небо&gao=корни */
     uGrassLook: { value: new THREE.Vector4(...(["gtr", "gsky", "gao"] as const).map((k, i) => { const v = new URLSearchParams(location.search).get(k); return v === null ? [1.4, 0.92, 0.5][i] : Number(v); }).concat(0) as [number, number, number, number]) },
     uHaze: { value: /[?&]haze=0/.test(location.search) ? 0 : 1 },
+    /* v80: дымка теплее к солнцу и прохладнее в стороне (shaders.ts, fogTint); ?aerial=0 — прежняя ровная */
+    uAerial: { value: /[?&]aerial=0/.test(location.search) ? new THREE.Vector2(0, 0) : new THREE.Vector2(1, 1) },
     /* v72: насколько дальше обычного стоит камера (телефон) — на столько же отодвигается дымка */
     uFogShift: { value: 0 },
     /* v72: во сколько раз шире травинки, когда их меньше (ступени качества) — покрытие дёрна то же */
@@ -353,6 +355,8 @@ export class HillScene {
         uSunDir: this.uniforms.uSunDir,
         uSunCol: { value: new THREE.Color(1.6, 1.15, 0.7) },
         uSunDisc: { value: 6 },
+        /* v80: широкое свечение неба вокруг солнца (shaders.ts, skyMie); ?mie=0 — без него */
+        uMie: { value: /[?&]mie=0/.test(location.search) ? 0 : 1 },
       },
     });
     const sky = new THREE.Mesh(new THREE.SphereGeometry(300, 48, 24), this.sky);
@@ -367,7 +371,7 @@ export class HillScene {
   private buildVista() {
     const u = this.sky.uniforms;
     this.scene.add(createVista({
-      sky: { uZenith: u.uZenith, uHigh: u.uHigh, uMid: u.uMid, uHorizon: u.uHorizon, uGlow: u.uGlow, uSunDir: u.uSunDir, uSunCol: u.uSunCol },
+      sky: { uZenith: u.uZenith, uHigh: u.uHigh, uMid: u.uMid, uHorizon: u.uHorizon, uGlow: u.uGlow, uSunDir: u.uSunDir, uSunCol: u.uSunCol, uMie: u.uMie },
       sh: this.uniforms.uSH,
       ambient: this.uniforms.uAmbient,
       fog: this.uniforms.uFogCol,
