@@ -3,7 +3,7 @@
    карточка места. Содержимое — из макетов концепта: на телефоне главный экран (01-home); на карточках —
    «Дим-самы» с того же экрана и бар «Ронин» с его карточки места (09-place-card): рейтинг 4,7, 1,2 км.
    Референс придумал «Italian 3,4 km» и «Coffee 800 m» — здесь места из макета. */
-import { createCaseScene, type CaseScene } from "./kit";
+import { createCaseScene, type CaseScene, type SceneHost } from "./kit";
 import { MUTED, caseImage, chip, sheet, text, type Ctx } from "./draw";
 
 const HUB: [number, number] = [830, 470];
@@ -48,8 +48,8 @@ const paintPin = (s: number) => sheet(120, 150, s, (ctx: Ctx) => {
   ctx.beginPath(); ctx.moveTo(74, 84); ctx.lineTo(74, 36); ctx.quadraticCurveTo(86, 46, 80, 64); ctx.lineTo(74, 64); ctx.stroke();
 }, null);
 
-export function createGuruScene(canvas: HTMLCanvasElement): CaseScene {
-  return createCaseScene(canvas, {
+export function createGuruScene(host: SceneHost): CaseScene {
+  return createCaseScene(host, {
     hub: HUB,
     squeeze: 0.95,
     box: [430, 150, 1310, 735],

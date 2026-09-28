@@ -3,7 +3,7 @@
    Содержимое — настоящее, из Figma-файла продукта: главная публикация ленты и пять других публикаций с их
    фото, тегами и числом комментариев. Придуманных генератором фото (сакура, кафе, собака) здесь нет. */
 import * as THREE from "three";
-import { createCaseScene, type CaseScene } from "./kit";
+import { createCaseScene, type CaseScene, type SceneHost } from "./kit";
 import { MAIN, STORY, img, paintMain, paintStory, type Story } from "./paint";
 
 /* карточки-истории: центр (px кадра), ширина (px кадра), поворот (°), глубина */
@@ -24,8 +24,8 @@ const TILES: { photo: string; c: [number, number]; s: [number, number]; r: [numb
 ];
 const HUB: [number, number] = [872, 435];
 
-export function createCommunityScene(canvas: HTMLCanvasElement): CaseScene {
-  return createCaseScene(canvas, {
+export function createCommunityScene(host: SceneHost): CaseScene {
+  return createCaseScene(host, {
     hub: HUB,
     box: [300, 150, 1470, 720],
     async build(k) {

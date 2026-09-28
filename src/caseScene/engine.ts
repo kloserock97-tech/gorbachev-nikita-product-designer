@@ -355,7 +355,41 @@ export function bubble(r: number, color: string) {
   return new THREE.Mesh(new THREE.SphereGeometry(r, 64, 48), addLight(m));
 }
 
-/* ── рендерер ────────────────────────────────────────────────────────────────────────────────────────── */
+/* ── рендерер: один на все сцены кейсов ──────────────────────────────────────────────────────────────────
+   v79: раньше у каждой из восьми сцен был свой WebGL-контекст на холсте во всё окно. Рисовала одна, а семь
+   держали буферы кадра впустую; на iPhone столько контекстов браузер не держит и начинает гасить старые —
+   вплоть до контекста самого холма. Теперь рендерер и холст общие (Host), у сцены — только своя камера,
+   свет и граф объектов (Stage). */
+export type Host = {
+  renderer: THREE.WebGLRenderer;
+  canvas: HTMLCanvasElement;
+  /** размер холста в css-пикселях — один замер на все сцены */
+  size: { w: number; h: number };
+  dpr(): number;
+  resize(): void;
+  /** сцены подписываются, чтобы пересчитать камеры после смены размера */
+  onResize(fn: () => void): void;
+};
+export function createHost(canvas: HTMLCanvasElement): Host {
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setClearColor(0x000000, 0);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  /* сцены рисуются одна поверх другой (уходящая и приходящая при смене кейса) — очищаем кадр сами */
+  renderer.autoClear = false;
+  const subs: (() => void)[] = [];
+  const size = { w: 1, h: 1 };
+  const dpr = () => Math.min(2, devicePixelRatio);
+  const resize = () => {
+    size.w = canvas.clientWidth || innerWidth;
+    size.h = canvas.clientHeight || innerHeight;
+    renderer.setPixelRatio(dpr());
+    renderer.setSize(size.w, size.h, false);
+    for (const fn of subs) fn();
+  };
+  resize();
+  return { renderer, canvas, size, dpr, resize, onResize: (fn) => { subs.push(fn); fn(); } };
+}
+
 export type Stage = {
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;
@@ -369,10 +403,7 @@ export type Stage = {
 export type Fit = (w: number, h: number) => { s: number; fx: number; fy: number };
 export const containFit: Fit = (w, h) => ({ s: Math.min(w / FRAME.w, h / FRAME.h), fx: w / 2, fy: h / 2 });
 
-export function createStage(canvas: HTMLCanvasElement, fit: Fit = containFit): Stage {
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-  renderer.setClearColor(0x000000, 0);
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
+export function createStage(host: Host, fit: Fit = containFit): Stage {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(FOV, 16 / 9, 10, DIST * 3);
   camera.position.set(0, 0, DIST);
@@ -384,10 +415,7 @@ export function createStage(canvas: HTMLCanvasElement, fit: Fit = containFit): S
   scene.add(sun);
   let s = 1;
   const resize = () => {
-    const w = canvas.clientWidth, h = canvas.clientHeight;
-    const dpr = Math.min(2, devicePixelRatio);
-    renderer.setPixelRatio(dpr);
-    renderer.setSize(w, h, false);
+    const { w, h } = host.size;
     const f = fit(w, h);
     s = f.s;
     const visH = h / s;
@@ -397,6 +425,6 @@ export function createStage(canvas: HTMLCanvasElement, fit: Fit = containFit): S
     camera.setViewOffset(w, h, w / 2 - f.fx, h / 2 - f.fy, w, h);
     camera.updateProjectionMatrix();
   };
-  resize();
-  return { renderer, scene, camera, root, resize, pxScale: () => s * Math.min(2, devicePixelRatio) };
+  host.onResize(resize);
+  return { renderer: host.renderer, scene, camera, root, resize, pxScale: () => s * host.dpr() };
 }

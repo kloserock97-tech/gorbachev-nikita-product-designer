@@ -4,7 +4,7 @@
    (2:8266), щит — узел 2615:15972, карточки — шаги настройки фильтра (2:8281), экран статистики
    («На финишной прямой — 90 %», «СМС заблокировано 7», «Предотвращено мошеннических звонков 7»)
    и итог кейса: +25 % доходят до включённой защиты. */
-import { createCaseScene, type CaseScene } from "./kit";
+import { createCaseScene, type CaseScene, type SceneHost } from "./kit";
 import { MUTED, caseImage, para, sheet, text, type Ctx } from "./draw";
 
 const HUB: [number, number] = [860, 450];
@@ -55,8 +55,8 @@ const paintResult = (s: number) => sheet(240, 130, s, (ctx: Ctx) => {
   para(ctx, "доходят до включённой защиты", 20, 92, 200, { size: 13, color: MUTED, lh: 17 });
 }, BG, 20);
 
-export function createSpamScene(canvas: HTMLCanvasElement): CaseScene {
-  return createCaseScene(canvas, {
+export function createSpamScene(host: SceneHost): CaseScene {
+  return createCaseScene(host, {
     hub: HUB,
     box: [360, 170, 1400, 720],
     async build(k) {

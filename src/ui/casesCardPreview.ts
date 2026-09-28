@@ -197,10 +197,12 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
   };
   onLang(() => { paintStatic(); const i = shown; shown = -1; if (i >= 0) paint(i); });
 
-  /* v78: живые сцены кейсов (src/caseScene) — свой прозрачный холст под карточками. Модуль грузится, когда глава
-     вот-вот появится (warm); пока сцена не готова или WebGL не поднялся, видна картинка-диорама */
-  type LiveScene = { i: number; setPresence(v: number): void; setPointer(x: number, y: number): void; pause(): void; resume(): void; resize(): void };
-  const refit = () => requestAnimationFrame(() => { for (const s of scenes) s.resize(); });
+  /* v78: живые сцены кейсов (src/caseScene) под карточками. Модуль грузится, когда глава вот-вот появится (warm);
+     пока сцена не готова или WebGL не поднялся, видна картинка-диорама.
+     v79: холст и WebGL-контекст один на все сцены (caseScene/host.ts) — раньше у каждой был свой */
+  type LiveScene = { i: number; setPresence(v: number): void; setPointer(x: number, y: number): void };
+  let host: import("../caseScene/host").CaseHost | null = null;
+  const refit = () => requestAnimationFrame(() => host?.resize());
   const scenes: LiveScene[] = [];
   let lastPos = 0;
   const presenceOf = (i: number) => clamp(1 - Math.abs(i - lastPos) * 1.8, 0, 1);
@@ -221,6 +223,17 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
     return { l: li.r + air, r: B.width - air, t: bandTop() + next.offsetHeight + air * 0.6, b: Math.min(ti.t, fa.t) - air };
   };
   const bootScenes = () => {
+    if (!list.some((c) => c.look.scene)) return;
+    const canvas = document.createElement("canvas");
+    canvas.className = "cx-scene";
+    canvas.setAttribute("aria-hidden", "true");
+    canvas.style.visibility = "hidden";
+    box.querySelector(".cx-shade")!.after(canvas);
+    const hostReady = Promise.all([import("../caseScene/host"), import("../caseScene/registry")]).then(([h, r]) => {
+      host = h.createCaseHost(canvas);
+      if (!box.classList.contains("is-live")) host.pause();
+      return r.SCENES;
+    });
     list.forEach((c, i) => {
       const kind = c.look.scene;
       if (!kind) return;
@@ -231,21 +244,14 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
         cards[i].classList.remove("is-scene");
         for (const img of cards[i].querySelectorAll<HTMLImageElement>("img[data-src]")) { img.src = img.dataset.src!; delete img.dataset.src; }
       };
-      void import("../caseScene/registry").then((r) => r.SCENES[kind]()).then(async (create) => {
-        const canvas = document.createElement("canvas");
-        canvas.className = "cx-scene";
-        canvas.setAttribute("aria-hidden", "true");
-        box.querySelector(".cx-shade")!.after(canvas);
+      void hostReady.then((reg) => reg[kind]()).then(async (create) => {
         try {
-          const sc = create(canvas);
+          const sc = create(host!);
           sc.setSafe(safeArea);
           await sc.ready;
-          const ls: LiveScene = { i, setPresence: sc.setPresence, setPointer: sc.setPointer, pause: sc.pause, resume: sc.resume, resize: sc.stage.resize };
-          scenes.push(ls);
-          ls.setPresence(presenceOf(i));
-          if (!box.classList.contains("is-live")) ls.pause();
+          scenes.push({ i, setPresence: sc.setPresence, setPointer: sc.setPointer });
+          sc.setPresence(presenceOf(i));
         } catch {
-          canvas.remove();
           fallback();
         }
       }, fallback);
@@ -258,8 +264,8 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
   });
   addEventListener("resize", refit);
 
-  const live = () => { box.classList.add("is-live"); for (const s of scenes) s.resume(); };
-  const calm = () => { box.classList.remove("is-live"); for (const s of scenes) s.pause(); };
+  const live = () => { box.classList.add("is-live"); host?.resume(); };
+  const calm = () => { box.classList.remove("is-live"); host?.pause(); };
 
   let warmed = false;
   const warm = () => {

@@ -5,15 +5,15 @@
    - вокруг — очередь с жалобами, настоящий комментарий на проверке, статусы очереди и профиль
      «Юлия Некрасова» (2494:85463). Цифры спутников посчитаны по той же очереди, а не придуманы.
    На референсе спутники были про «1.2K проверено» и «Иванов Алексей» — генератор это сочинил. */
-import { createCaseScene, type CaseScene } from "./kit";
+import { createCaseScene, type CaseScene, type SceneHost } from "./kit";
 import { ACTIONS_CARD, COMMENT_CARD, PROFILE_CARD, QUEUE_CARD, STATS_CARD, moderatorImage, paintActions, paintComment, paintProfile, paintQueue, paintStats } from "./paintModerator";
 
 const HUB: [number, number] = [940, 440];
 const GOLD = "#ffc46a";
 const DARK = "#3a3326";
 
-export function createModeratorScene(canvas: HTMLCanvasElement): CaseScene {
-  return createCaseScene(canvas, {
+export function createModeratorScene(host: SceneHost): CaseScene {
+  return createCaseScene(host, {
     hub: HUB,
     box: [330, 150, 1610, 720],
     async build(k) {

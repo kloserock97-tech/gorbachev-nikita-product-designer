@@ -5,7 +5,7 @@
    команда из четырёх дизайнеров и итоги (~1 год, ~2 500 сотрудников в продукте).
    Референс придумал «+47 запросов» и «Roadmap & priorities» с чужими пунктами — их здесь нет. */
 import * as THREE from "three";
-import { createCaseScene, type CaseScene } from "./kit";
+import { createCaseScene, type CaseScene, type SceneHost } from "./kit";
 import { MUTED, hr, para, sheet, text, type Ctx } from "./draw";
 
 const HUB: [number, number] = [880, 420];
@@ -105,8 +105,8 @@ function table() {
   return g;
 }
 
-export function createLeadScene(canvas: HTMLCanvasElement): CaseScene {
-  return createCaseScene(canvas, {
+export function createLeadScene(host: SceneHost): CaseScene {
+  return createCaseScene(host, {
     hub: HUB,
     box: [280, 110, 1620, 620],
     async build(k) {

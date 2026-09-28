@@ -7,7 +7,7 @@
 import * as THREE from "three";
 import type { Line2 } from "three/examples/jsm/lines/Line2.js";
 import type { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
-import { at, bubble, card, canvasTexture, createStage, glow, line, ribbon, rock, sparks, type CardOpts, type Fit, type Stage } from "./engine";
+import { at, bubble, card, canvasTexture, createStage, glow, line, ribbon, rock, sparks, type CardOpts, type Fit, type Host, type Stage } from "./engine";
 
 export const deg = THREE.MathUtils.degToRad;
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -23,8 +23,6 @@ export type CaseScene = {
   setSafe(fn: () => Safe | null): void;
   /** стенд: показать сразу, без входа */
   still(): void;
-  pause(): void;
-  resume(): void;
 };
 
 type Anim = { delay: number; dur: number; apply(p: number, g: number): void };
@@ -234,53 +232,57 @@ function makeKit(stage: Stage, hub: THREE.Vector3) {
   return Object.assign(kit, { step, unsqueeze });
 }
 
-/** сцена кейса: свой прозрачный холст, цикл отрисовки только пока кейс на экране */
-export function createCaseScene(canvas: HTMLCanvasElement, o: { hub: [number, number]; box: [number, number, number, number]; /** сжатие по ширине на телефоне */ squeeze?: number; build(kit: Kit): Promise<void> }): CaseScene {
+/** сцена, которую ведёт общий цикл хоста (host.ts): обновить и нарисовать, если её видно */
+export type Driven = { active(): boolean; update(now: number, dt: number): void; draw(res: THREE.Vector2): void };
+/** общий хост сцен кейсов: рендерер, холст и один цикл кадров на всех */
+export type SceneHost = { gl: Host; add(d: Driven): void; kick(): void };
+
+/** сцена кейса: своя камера и граф объектов, рендерер и цикл кадров — общие (host.ts) */
+export function createCaseScene(host: SceneHost, o: { hub: [number, number]; box: [number, number, number, number]; /** сжатие по ширине на телефоне */ squeeze?: number; build(kit: Kit): Promise<void> }): CaseScene {
   let safe: (() => Safe | null) | null = null;
   let squeeze = 1;
-  const stage = createStage(canvas, fitBox(o.box, o.hub, () => safe?.() ?? null, (f) => { squeeze = f; }, o.squeeze));
+  const stage = createStage(host.gl, fitBox(o.box, o.hub, () => safe?.() ?? null, (f) => { squeeze = f; }, o.squeeze));
   const { renderer, scene, camera, root } = stage;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const kit = makeKit(stage, at(o.hub[0], o.hub[1], -120));
+  let built = false;
   const ready = (async () => {
     await o.build(kit);
     /* шейдеры собираются заранее, чтобы первый кадр входа не дёрнулся */
     await renderer.compileAsync(scene, camera);
+    built = true;
+    host.kick();
   })();
 
-  let raf = 0, last = 0, paused = false, built = false;
   let presence = 0, intro = -1; // intro — секунды с начала входа; −1 — вход ещё не начинался
-  const pointer = new THREE.Vector2(), look = new THREE.Vector2(), res = new THREE.Vector2();
-  const frame = (now: number) => {
-    raf = 0;
-    const dt = Math.min(0.05, last ? (now - last) / 1000 : 0.016);
-    last = now;
-    if (!built) return;
-    if (presence > 0.5 && intro < 0) intro = 0;
-    if (presence <= 0.001) intro = -1;
-    if (intro >= 0) intro += dt;
-    look.lerp(pointer, 0.06);
-    root.scale.x = squeeze;
-    kit.unsqueeze(squeeze);
-    root.rotation.set(-look.y * 0.035, look.x * 0.05, 0);
-    kit.step(reduced ? 99 : Math.max(0, intro), presence, now / 1000, reduced);
-    renderer.getDrawingBufferSize(res);
-    root.traverse((x) => { (x as Line2Like).material?.resolution?.set(res.x, res.y); });
-    renderer.render(scene, camera);
-    if (!paused && (presence > 0 || intro >= 0)) kick();
-  };
-  const kick = () => { if (!raf && !paused) raf = requestAnimationFrame(frame); };
-  void ready.then(() => { built = true; kick(); });
+  const pointer = new THREE.Vector2(), look = new THREE.Vector2();
+  host.add({
+    /* кадры нужны, пока кейс на экране или ещё доигрывает вход */
+    active: () => built && (presence > 0 || intro >= 0),
+    update(now, dt) {
+      if (presence > 0.5 && intro < 0) intro = 0;
+      if (presence <= 0.001) intro = -1;
+      if (intro >= 0) intro += dt;
+      look.lerp(pointer, 0.06);
+      root.scale.x = squeeze;
+      kit.unsqueeze(squeeze);
+      root.rotation.set(-look.y * 0.035, look.x * 0.05, 0);
+      kit.step(reduced ? 99 : Math.max(0, intro), presence, now / 1000, reduced);
+    },
+    draw(res) {
+      if (presence <= 0) return;
+      root.traverse((x) => { (x as Line2Like).material?.resolution?.set(res.x, res.y); });
+      renderer.render(scene, camera);
+    },
+  });
 
   return {
     stage,
     ready,
-    setPresence(v) { const was = presence; presence = clamp01(v); if (presence !== was) kick(); },
+    setPresence(v) { const was = presence; presence = clamp01(v); if (presence !== was) host.kick(); },
     setPointer(x, y) { pointer.set(x, y); },
-    setSafe(fn) { safe = fn; stage.resize(); kick(); },
-    still() { presence = 1; intro = 99; kick(); },
-    pause() { paused = true; cancelAnimationFrame(raf); raf = 0; },
-    resume() { paused = false; kick(); },
+    setSafe(fn) { safe = fn; stage.resize(); host.kick(); },
+    still() { presence = 1; intro = 99; host.kick(); },
   };
 }
 type Line2Like = THREE.Object3D & { material?: { resolution?: THREE.Vector2 } };

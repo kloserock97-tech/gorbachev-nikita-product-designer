@@ -4,7 +4,7 @@
    - уровни риска у оценённых (9 / 31 / 58 / 44 из того же реестра), итог кейса 6 → 0 передач,
      путь версии «новая → оценка → согласование → согласовано», риски версии из карточки агента.
    Референс придумал «+40 %» и «Причины риска: галлюцинации 12…» — их здесь нет. */
-import { createCaseScene, type CaseScene } from "./kit";
+import { createCaseScene, type CaseScene, type SceneHost } from "./kit";
 import { MUTED, caseImage, chip, hr, para, sheet, step, text, type Ctx } from "./draw";
 
 const HUB: [number, number] = [925, 450];
@@ -85,8 +85,8 @@ const paintRisks = (s: number) => sheet(300, 300, s, (ctx: Ctx) => {
   text(ctx, "…и ещё девять типов", 20, 286, { size: 13, color: MUTED });
 });
 
-export function createAiAgentsScene(canvas: HTMLCanvasElement): CaseScene {
-  return createCaseScene(canvas, {
+export function createAiAgentsScene(host: SceneHost): CaseScene {
+  return createCaseScene(host, {
     hub: HUB,
     box: [300, 130, 1640, 690],
     async build(k) {

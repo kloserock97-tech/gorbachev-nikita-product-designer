@@ -4,7 +4,7 @@
    «Плати частями» (01-sbol-widget), на карточках — цифры тех же экранов: ближайший платёж 3 100 ₽ 28 августа,
    7 из 12 платежей и 12 450 ₽ остатка, перенос на 6 сентября бесплатно, итог «стало свободнее на 3 100 ₽».
    Референс придумал «15 апреля» и «доступно 67 550 ₽» — их здесь нет. */
-import { createCaseScene, type CaseScene } from "./kit";
+import { createCaseScene, type CaseScene, type SceneHost } from "./kit";
 import { MUTED, caseImage, chip, para, sheet, text, type Ctx } from "./draw";
 
 const HUB: [number, number] = [860, 470];
@@ -61,8 +61,8 @@ const paintDone = (s: number) => sheet(300, 180, s, (ctx: Ctx) => {
   arrowBtn(ctx, 268, 144);
 }, BG, 22);
 
-export function createPlatiScene(canvas: HTMLCanvasElement): CaseScene {
-  return createCaseScene(canvas, {
+export function createPlatiScene(host: SceneHost): CaseScene {
+  return createCaseScene(host, {
     hub: HUB,
     squeeze: 0.9,
     box: [350, 170, 1440, 790],

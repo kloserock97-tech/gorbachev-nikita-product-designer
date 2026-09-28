@@ -6,7 +6,7 @@
    - спутники — оттуда же: «Собрал контекст», черновик письма Сергею через Gmail, договорённости встречи
      и память «при Сергее не упоминать конкурента X».
    Референс придумал «Резюме встречи, готово за 10 секунд» — здесь время из самого экрана: 1 мин 47 сек. */
-import { createCaseScene, type CaseScene } from "./kit";
+import { createCaseScene, type CaseScene, type SceneHost } from "./kit";
 import { MUTED, caseImage, chip, hr, para, sheet, text, type Ctx } from "./draw";
 
 const HUB: [number, number] = [900, 430];
@@ -68,8 +68,8 @@ const paintMemory = (s: number) => sheet(330, 64, s, (ctx: Ctx) => {
   para(ctx, "Запомнил: при Сергее не упоминать конкурента X", 60, 28, 256, { size: 13, color: TXT, lh: 17 });
 }, "rgba(20, 22, 30, 0.7)", 18);
 
-export function createGrifScene(canvas: HTMLCanvasElement): CaseScene {
-  return createCaseScene(canvas, {
+export function createGrifScene(host: SceneHost): CaseScene {
+  return createCaseScene(host, {
     hub: HUB,
     box: [370, 150, 1530, 720],
     async build(k) {
