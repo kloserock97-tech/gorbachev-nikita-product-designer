@@ -89,6 +89,18 @@ const shOut = sh.map((c) => c.map((v) => +(v * norm).toFixed(6)));
 const outJson = resolve("src/scene/hdri-baked.json");
 writeFileSync(outJson, JSON.stringify({ source: src.split(/[\\/]/).pop(), yaw: +yaw.toFixed(6), sunColor, sh: shOut }, null, 2));
 
+/* ── v84: копия для отражений — без солнца и теплее ──
+   Солнце в исходнике ярче неба в десятки тысяч раз (до 109 056 против единиц). Раньше копия брала его как
+   есть, PMREM размывал его в яркое пятно за спиной у реквизита, и под скользящим углом каждое ребро — кромка
+   столика, низ системного блока, подлокотники — ловило отражение: по краям шли оранжевые точки, пиксель
+   к пикселю. Солнце на реквизите и так рисует контровой свет (rim в HillScene.buildLights), гладко и без
+   бликов, поэтому здесь оно обрезано тем же порогом 8, что и в SH выше.
+   Сторону кресла, собаки и компьютера, обращённую к камере, освещает только это окружение, а небо в нём
+   голубое: подушки и белая шерсть уходили в серо-голубой. Копия сдвинута в тёплое. SH травы посчитаны выше,
+   до сдвига, и не меняются. Подбор — кадрами реквизита с подменой файла (orig / clamp / 1.14 / 1.25). */
+const ENV_CLAMP = 8;
+const ENV_TINT = [1.25, 1.0, 0.7];
+
 /* ── уменьшение 4× (среднее по блоку) и запись RGBE без сжатия ── */
 const S = 4, w2 = Math.floor(W / S), h2 = Math.floor(H / S);
 const header = `#?RADIANCE\nFORMAT=32-bit_rle_rgbe\n\n-Y ${h2} +X ${w2}\n`;
@@ -99,9 +111,9 @@ for (let y = 0; y < h2; y++) for (let x = 0; x < w2; x++) {
   const c = [0, 0, 0];
   for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
     const k = ((y * S + j) * W + x * S + i) * 3;
-    c[0] += data[k]; c[1] += data[k + 1]; c[2] += data[k + 2];
+    for (let ch = 0; ch < 3; ch++) c[ch] += Math.min(data[k + ch], ENV_CLAMP);
   }
-  for (let k = 0; k < 3; k++) c[k] /= S * S;
+  for (let k = 0; k < 3; k++) c[k] *= ENV_TINT[k] / (S * S);
   const m = Math.max(...c);
   if (m < 1e-32) { o += 4; continue; }
   const e = Math.ceil(Math.log2(m) + 1e-9);
