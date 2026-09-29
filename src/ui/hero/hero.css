@@ -125,8 +125,13 @@ body {
   position: absolute; z-index: 4; left: calc(46 * var(--u)); top: calc(351 * var(--u));
   font-family: var(--accent-font); font-size: calc(33 * var(--u)); line-height: 1.24; font-weight: 600;
 }
-/* у «И» в Ugol дуга вместо диагонали, и сдвоенное «ИИ» в «ИИ-продукты» читалось как «UU» — строку набираем Onest */
-body.lang-ru .focus { font-family: var(--font); }
+/* у «И» в Ugol дуга вместо диагонали, и сдвоенное «ИИ» в «ИИ-продукты» читалось как «UU» — строку набираем Onest;
+   Onest в 600 плотнее Ugol, поэтому 500 — по плотности как английская строка */
+body.lang-ru .focus { font-family: var(--font); font-weight: 500; }
+/* v85.1: «Продуктовый дизайнер» на треть длиннее «Product designer» и в том же кегле выходил шире имени (105 %) —
+   блок тяжелел книзу, а в английском строки сужаются: имя, роль ~0,75, дальше серые строки. В 0,62 кегля имени
+   роль ~0,84 его ширины; межстрочный 0,8 держит тот же зазор от имени до роли (12u), что в английском */
+body.lang-ru .headline .role { font-size: 0.62em; line-height: 0.8; }
 .lede {
   position: absolute; z-index: 4; left: calc(46 * var(--u)); top: calc(398 * var(--u));
   padding-left: calc(45 * var(--u)); white-space: nowrap;
