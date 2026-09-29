@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="100" viewBox="0 0 300 100">
+<!-- Логотип плитки Табло Яндекс Браузера: знак «N» из дока (Logo/v2/svg/mark-paper.svg), цвет бумаги на прозрачном,
+     во всю высоту, как просит Табло. Плитка графитовая — цвет в public/tableau.json.
+     PNG: node tools/make-tableau.mjs -->
+<g transform="translate(110.000 0) scale(1)"><path d="M0 100H20V74.538C30.615 90.372 44.633 100 60 100H80V0H60V82.704C40.662 82.704 24.437 55.963 20 19.897V0H0Z" fill="#F4F1EA"/></g>
+</svg>

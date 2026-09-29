@@ -1,0 +1,14 @@
+{
+  "name": "Nikita Gorbachev — Product Designer",
+  "short_name": "Nikita Gorbachev",
+  "start_url": "./",
+  "scope": "./",
+  "display": "browser",
+  "background_color": "#1C1B19",
+  "theme_color": "#e9d9b8",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -54,9 +54,11 @@ for (const name of [...classes].sort()) {
 const pub = walk(join(root, "public"));
 const assets = { unused: [], byTemplate: [], bytes: 0 };
 const dirTemplates = [...everything.matchAll(/([\w/-]+\/)\$\{/g)].map((m) => m[1]);
+/* иконки 192/512 и логотип Табло упомянуты только в манифестах (site.webmanifest, tableau.json) */
+const manifests = pub.filter((f) => [".webmanifest", ".json"].includes(extname(f))).map(read).join("\n");
 for (const file of pub) {
   const path = rel(file).replace(/^public\//, ""), name = basename(file), stem = name.replace(/\.[^.]+$/, "");
-  if (everything.includes(path) || everything.includes(name)) continue;
+  if (everything.includes(path) || everything.includes(name) || manifests.includes(name)) continue;
   /* имя без расширения: `${clip}.webm`, `${id}.webp` */
   const dir = dirTemplates.find((d) => path.startsWith(d) || path.includes("/" + d));
   if (dir || everything.includes(stem + ".") || everything.includes(`"${stem}"`)) { assets.byTemplate.push(`${path}  ← ${dir ?? stem}`); continue; }

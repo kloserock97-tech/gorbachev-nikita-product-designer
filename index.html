@@ -9,6 +9,11 @@
 <link rel="icon" href="/favicon.ico" sizes="32x32">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<!-- Иконки для браузеров и сервисов, которым мало SVG и 32 px (Chrome, Android, Яндекс Браузер). Табло Яндекса
+     берёт картинку сайта по домену, а в корне kloserock97-tech.github.io сайта нет — вместо него была буква.
+     Свой логотип плитки — через виджет: tableau.json (PNG 300×100 и цвет), логотип — tools/make-tableau.mjs -->
+<link rel="manifest" href="/site.webmanifest">
+<link rel="yandex-tableau-widget" href="/tableau.json">
 <!-- Превью ссылки: og:image — отдельная карточка 1200×630 (docs/media/og-cover.source.html, снимок Playwright).
      Формат — JPEG: LinkedIn и часть мессенджеров не показывают webp-превью. Абсолютные адреса обязательны,
      относительные краулеры не разворачивают. og:title/description подменяет i18n (src/i18n/index.ts, paint). -->
