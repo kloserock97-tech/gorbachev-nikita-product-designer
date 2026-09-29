@@ -128,14 +128,15 @@ body {
   position: absolute; z-index: 4; left: calc(46 * var(--u)); top: calc(351 * var(--u));
   font-family: var(--font); font-size: calc(33 * var(--u)); line-height: 1.24; font-weight: 600;
 }
-/* v85.2: русский блок — по русскому референсу Никиты (29.09). Имя, роль и серая строка кончаются на одной правой
-   линии: роль в 0,729 кегля имени (в Onest), серая строка — 30,9u (hill-ui.css). Роль ниже имени на 59u по базовым
-   линиям: у «Горбачев» хвост «р» (0,24 кегля имени), и при 47u он почти касался «дизайнер» (просвет 1,6u, замер по
-   чернилам). Путь «от исследований до роста» — в две строки, текст дальше от черты */
-body.lang-ru .headline .role { font-size: 0.729em; line-height: 1.107; }
-body.lang-ru .focus { font-weight: 500; }
-body.lang-ru .lede { padding-left: calc(69 * var(--u)); line-height: 1.436; }
-body.lang-ru .lede::before { top: 0.79em; }
+/* v85.4: русский блок, вариант A по выбору Никиты (29.09) — «лёгкость». Кириллица плотнее латиницы (почти нет
+   выносных), и те же веса выглядели темнее, а блок одной ширины (прямоугольник по референсу v85.2) — тяжёлым.
+   Теперь строки сужаются книзу, как в английском: роль 0,62 кегля имени и светлее (300), серая строка — 28u обычного
+   веса (hill-ui.css), путь — с тем же отступом от черты, что в английском, и чуть свободнее по строкам.
+   Роль ниже имени на 54u по базовым линиям: хвост «р» в «Горбачев» не доходит до неё (замер по чернилам) */
+body.lang-ru .headline .role { font-size: 0.62em; line-height: 1.28; font-weight: 300; }
+body.lang-ru .focus { font-weight: 400; }
+body.lang-ru .lede { line-height: 1.5; }
+body.lang-ru .lede::before { top: 0.83em; }
 .lede {
   position: absolute; z-index: 4; left: calc(46 * var(--u)); top: calc(398 * var(--u));
   padding-left: calc(45 * var(--u)); white-space: nowrap;
