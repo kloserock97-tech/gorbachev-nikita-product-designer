@@ -46,7 +46,7 @@
     white-space: normal; padding-left: max(30px, calc(45 * var(--u)));
     font-size: max(14px, calc(21 * var(--u))); line-height: 1.45;
   }
-  .lede::before { width: max(18px, calc(27 * var(--u))); top: 0.84em; }
+  .lede::before { width: max(18px, calc(27 * var(--u))); top: 0.8em; }
 
   .cta-wrap { grid-column: 1 / -1; justify-self: start; width: auto; height: auto; margin-top: max(18px, calc(30 * var(--u))); }
   .cta {

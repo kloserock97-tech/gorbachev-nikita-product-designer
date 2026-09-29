@@ -101,7 +101,7 @@
   if (!lang) lang = (navigator.languages || [navigator.language]).some(function (l) { return /^ru\b/i.test(l || ""); }) ? "ru" : "en";
 
   document.documentElement.lang = lang;
-  document.title = lang === "ru" ? "Страница не найдена — Никита Горбачёв" : "Page not found — Nikita Gorbachev";
+  document.title = lang === "ru" ? "Страница не найдена — Никита Горбачев" : "Page not found — Nikita Gorbachev";
 
   /* шрифт сайта лежит рядом с главной, а не у адреса, на который человек попал */
   var face = new FontFace("Lexend 404", 'url("' + base + 'fonts/lexend-latin.woff2") format("woff2")', { weight: "100 900", display: "swap" });

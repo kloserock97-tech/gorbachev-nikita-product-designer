@@ -3,7 +3,7 @@
 import type meEn from "./me";
 
 const me: typeof meEn = {
-  windowTitle: "Никита Горбачёв | домашняя страница",
+  windowTitle: "Никита Горбачев | домашняя страница",
   address: "http://www.nikita-gorbachev.com/about.htm",
   site: "Домашняя страница",
   tagline: "Продуктовый дизайнер",
@@ -12,7 +12,7 @@ const me: typeof meEn = {
   photo: "ui/portrait.jpg",
 
   profile: [
-    ["Имя", "Никита Горбачёв"],
+    ["Имя", "Никита Горбачев"],
     ["Занятие", "Продуктовый дизайнер"],
     ["Языки", "русский — родной, английский — профессиональное владение"],
   ],
