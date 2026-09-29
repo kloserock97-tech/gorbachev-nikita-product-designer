@@ -28,15 +28,23 @@
   /* открытая карточка растёт вниз, статистика остаётся на месте */
   .stage:has(.card--stove.is-open) .stat { top: calc(1324 * var(--u) + var(--m-card) + var(--m-open) + max(16px, calc(24 * var(--u)))); }
 
-  .headline, .lede, .cta-wrap { position: relative; left: auto; top: auto; }
+  .headline, .focus, .lede, .cta-wrap { position: relative; left: auto; top: auto; }
+  /* v85: те же четыре уровня, что на широком экране; пропорции имя : чем занимаюсь : путь мягче, иначе нижняя
+     строка на телефоне выходила 10px */
   .headline {
     grid-column: 1 / -1; margin: 0;
-    font-size: max(30px, calc(62 * var(--u))); line-height: 1.06;
+    font-size: max(34px, calc(70 * var(--u)));
+  }
+  .focus {
+    grid-column: 1 / -1; margin: max(10px, calc(18 * var(--u))) 0 0;
+    font-size: max(17px, calc(32 * var(--u)));
   }
   .lede {
-    grid-column: 1 / -1; width: auto; max-width: 34em; margin: max(12px, calc(22 * var(--u))) 0 0;
-    font-size: max(14px, calc(19 * var(--u))); line-height: 1.45;
+    grid-column: 1 / -1; width: auto; max-width: 34em; margin: max(6px, calc(10 * var(--u))) 0 0;
+    white-space: normal; padding-left: max(30px, calc(45 * var(--u)));
+    font-size: max(14px, calc(21 * var(--u))); line-height: 1.45;
   }
+  .lede::before { width: max(18px, calc(27 * var(--u))); top: 0.84em; }
 
   .cta-wrap { grid-column: 1 / -1; justify-self: start; width: auto; height: auto; margin-top: max(18px, calc(30 * var(--u))); }
   .cta {
@@ -77,6 +85,6 @@
 }
 @media (max-width: 900px) and (min-aspect-ratio: 1 / 1) {
   .stage { grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr); }
-  .headline, .lede, .cta-wrap { grid-column: 1; }
-  .headline { font-size: clamp(26px, 4.6vw, 40px); }
+  .headline, .focus, .lede, .cta-wrap { grid-column: 1; }
+  .headline { font-size: clamp(26px, 4.4vw, 40px); }
 }

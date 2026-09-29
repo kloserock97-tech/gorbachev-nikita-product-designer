@@ -72,12 +72,9 @@ export function enterLite(reason: string) {
   shelf?.removeAttribute("data-format");
   shelf?.querySelectorAll("video").forEach((v) => v.remove());
   shelf?.querySelectorAll<HTMLElement>(".shelf-card").forEach((c) => { c.style.transform = ""; c.style.opacity = ""; });
-  /* в лёгкой версии компьютера нет — лид обещает кейсы, а не рассказ компьютера */
-  const lede = document.querySelector<HTMLElement>(".lede");
   const liteLink = document.querySelector<HTMLAnchorElement>(".sf-lite");
   if (liteLink) liteLink.href = "?lite=0";
   const swap = () => {
-    if (lede) lede.textContent = t("hero.lede.lite");
     if (liteLink) liteLink.textContent = t("footer.nav.3d");
   };
   swap();

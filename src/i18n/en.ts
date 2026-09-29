@@ -25,10 +25,10 @@ const en = {
   "pc.hint": "Scroll to read · <kbd>Esc</kbd> to leave",
 
   /* первый экран */
-  "hero.name": "Nikita Gorbachev,",
-  "hero.role": "product designer",
-  "hero.lede": "I make complex products and AI services simple, from research to final screens, numbers and growth. Scroll down, the computer will explain.",
-  "hero.lede.lite": "I make complex products and AI services simple, from research to final screens, numbers and growth. Scroll down for the work.",
+  "hero.name": "Nikita Gorbachev",
+  "hero.role": "Product designer",
+  "hero.focus": "AI products & complex systems",
+  "hero.lede": "From research to final screens, systems and growth.",
   "hero.explore": "See the work",
   "hero.gust": "Call the wind",
   "hero.scroll": "Discover",

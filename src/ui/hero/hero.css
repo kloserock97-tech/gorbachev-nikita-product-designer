@@ -109,19 +109,33 @@ body {
 .dock-item--enter { color: var(--ink); background: rgba(255, 255, 255, 0.08); }
 
 /* ── заголовок и подзаголовок ─────────────────────────────────────────────── */
+/* v85: по референсу Никиты (картинка 1672×941) — четыре уровня. Имя крупно и плотно (Ugol 600), под ним роль
+   тоньше (400) и вплотную, ниже серым — чем занимаюсь (.focus, 600) и путь «от исследования до роста» с чертой
+   (.lede, 400). Кегли подобраны по ширине строк на референсе: 78 / 60 / 33 / 22u, трекинг нулевой. Положение — в hill-ui.css */
 .headline {
   position: absolute; z-index: 4; left: calc(46 * var(--u)); top: calc(202 * var(--u));
-  font-size: calc(63 * var(--u)); line-height: calc(65 * var(--u)); font-weight: 500; letter-spacing: calc(-0.4 * var(--u));
+  font-size: calc(78 * var(--u)); line-height: 1; font-weight: 600;
 }
-.headline span { display: block; padding-bottom: 0.04em; }
+/* у «N» и «P» в Ugol поле слева ~0,06 кегля — без сдвига имя стояло на 5u правее серых строк */
+.headline span { display: block; margin-left: -0.06em; }
 .headline span i { display: inline-block; font-style: normal; }
-body.lang-ru .headline {
-  font-weight: 500;   /* Ugol, средний: в тонком штрихе дуга в «и» почти не видна (28.09) */
-  letter-spacing: calc(-0.7 * var(--u));
+/* роль в 0,77 имени; межстрочный меньше кегля — строки стоят вплотную, как на референсе */
+.headline .role { font-size: 0.77em; line-height: 0.78; font-weight: 400; }
+.focus {
+  position: absolute; z-index: 4; left: calc(46 * var(--u)); top: calc(351 * var(--u));
+  font-family: var(--accent-font); font-size: calc(33 * var(--u)); line-height: 1.24; font-weight: 600;
 }
+/* у «И» в Ugol дуга вместо диагонали, и сдвоенное «ИИ» в «ИИ-продукты» читалось как «UU» — строку набираем Onest */
+body.lang-ru .focus { font-family: var(--font); }
 .lede {
-  position: absolute; z-index: 4; left: calc(520 * var(--u)); top: calc(196 * var(--u)); width: calc(208 * var(--u));
-  font-size: calc(16.5 * var(--u)); line-height: calc(22 * var(--u)); font-weight: 300;
+  position: absolute; z-index: 4; left: calc(46 * var(--u)); top: calc(398 * var(--u));
+  padding-left: calc(45 * var(--u)); white-space: nowrap;
+  font-family: var(--accent-font); font-size: calc(22 * var(--u)); line-height: 1.4; font-weight: 400; letter-spacing: 0.005em;
+}
+/* черта перед строкой — на середине строчных букв */
+.lede::before {
+  content: ""; position: absolute; left: 0; top: 0.82em; width: calc(27 * var(--u)); height: max(1px, calc(1.5 * var(--u)));
+  background: currentColor;
 }
 
 /* ── стеклянные кнопки (v37, было «металл» v30) ───────────────────────────────
