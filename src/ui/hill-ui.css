@@ -964,6 +964,13 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   visibility: hidden;
 }
 .site-footer.is-on { visibility: visible; }
+.site-footer.is-portal-preview { visibility: visible; }
+.site-footer.is-portal-preview .sf-kicker,
+.site-footer.is-portal-preview .sf-title > span,
+.site-footer.is-portal-preview .sf-contacts,
+.site-footer.is-portal-preview .sf-bar {
+  opacity: var(--portal-copy, 0); translate: 0 calc(12px * (1 - var(--portal-copy, 0))); transition: none;
+}
 .site-footer.is-on .sf-contacts, .site-footer.is-on .sf-nav { pointer-events: auto; }
 .sf-kicker, .sf-title > span, .sf-contacts, .sf-bar {
   opacity: 0; translate: 0 18px;

@@ -1265,8 +1265,14 @@ export class HillScene {
 
   private updateStory(dt: number) {
     const target = this.focusOn ? 0 : this.storyTarget;
-    /* v43: та же постоянная, что у мягкого колеса на страницах кейсов (ui/smoothScroll.ts) */
-    this.storyS += (target - this.storyS) * (1 - Math.exp(-dt * SCROLL_LAMBDA));
+    /* The portal has a softer response, blended in/out with its chapter. Keep
+       navigation jumps responsive and the reduced-motion fallback unchanged. */
+    const footerProgress = chapters(this.storyS).f;
+    const portalDamping = !this.reduced && this.walkReady && !this.walkOff && Math.abs(target - this.storyS) < 0.12
+      ? THREE.MathUtils.smoothstep(footerProgress, 0, 0.12) * (1 - THREE.MathUtils.smoothstep(footerProgress, 0.74, 0.86))
+      : 0;
+    const scrollLambda = THREE.MathUtils.lerp(SCROLL_LAMBDA, 3.6, portalDamping);
+    this.storyS += (target - this.storyS) * (1 - Math.exp(-dt * scrollLambda));
     if (Math.abs(target - this.storyS) < 1e-5) this.storyS = target;
     /* главы: s — холм → About, c — «Кейсы» (story.ts, CHAPTER) */
     const { s, c, f } = chapters(this.storyS);
@@ -1316,16 +1322,26 @@ export class HillScene {
        в футере под размытием смешивается обратно с холмом */
     this.ensureWalk();
     const wo = ramp(f, ...MEADOW_OUT);
-    /* v76: из «Кейсов» в футер — через портал (postfx.ts, shaders.ts): луг остаётся снаружи двери, пока камера
+    /* Из «Кейсов» в футер — через объёмный портал (meadow/MeadowPortal.ts): луг остаётся снаружи двери, пока камера
        не пройдёт сквозь неё. Цвет луга сменяется цветом холма по мере того, как дверь закрывает экран.
        Без луга (?walk=0) — прежнее смешивание под размытием */
     const pk = ramp(f, ...FOOTER.portal);
-    const viaPortal = this.walkReady && !this.walkOff && f > 0;
+    const viaPortal = walkOn && !this.reduced && f > 0;
     const alt = c > 0 && this.walkReady
       ? viaPortal ? (pk < 0.999 ? Math.max(0.002, 1 - THREE.MathUtils.smoothstep(pk, 0.6, 0.95)) : 0) : 1 - wo * wo * (3 - 2 * wo)
       : 0;
     fx.alt = alt;
     fx.portal = viaPortal ? pk : 0;
+    this.walk?.setPortal(viaPortal ? pk : 0);
+    // Establish the chair/hill inside the small opening, then settle into the
+    // wider footer composition. Both position and framing meet the final view.
+    if (viaPortal) {
+      this.storyCamPos.copy(this.cameraRest());
+      this.storyCamLook.copy(CAMERA_TARGET);
+      const discover = 1 - THREE.MathUtils.smoothstep(pk, 0.28, 0.76);
+      this.storyCamLook.x += (0.2 - CAMERA_TARGET.x) * discover;
+      this.storyCamLook.y += (2.35 - CAMERA_TARGET.y) * discover;
+    }
     if (viaPortal) fx.bgBlur = 0;
     /* v74.1: в «Кейсах» луг за стеклянной рамкой — в окне рамки он резкий (размыто только стекло вокруг,
        ui/cases-card.css). На телефоне остаётся размытым: резкий луг рисуется в полном разрешении каждый кадр,
@@ -1387,10 +1403,11 @@ export class HillScene {
     if (overlay !== this.pcOverlay) {
       this.pcOverlay = overlay;
       this.pc.traverse((o) => { o.layers.set(overlay ? PC_LAYER : 0); if (!overlay) o.layers.enable(SHIELD_LAYER); });
-      /* ушёл за верх кадра вместе со страницей — в главе «Кейсы» не рисуется и в сцене; в футере снова на столике */
-      this.pc.visible = this.storyTear < 1.18 || f > 0;
       fx.overlay = overlay;
     }
+    /* ушёл за верх кадра вместе со страницей — в главе «Кейсы» не рисуется и в сцене; в футере снова на столике.
+       Каждый кадр, а не только при смене слоя: из «Кейсов» в футер слой не меняется, и компьютер оставался невидимым */
+    this.pc.visible = this.storyTear < 1.18 || f > 0;
     this.screen.setPhoto(ramp(s, ...STORY.photo), Math.max(bell(s, 0.24, 0.32, 0.42) * 0.55, bell(s, ...STORY.static)));
 
     /* футер: компьютер снова на столике — под размытием, пока камера возвращается */
@@ -2082,7 +2099,6 @@ export class HillScene {
       this.syncOverlayCam();
       this.fx.params.overlayCamera = this.overlayCam;
       this.updateStudio();
-      this.onStoryFrame?.();
     }
     if (hillShown) {
       this.updateCursor(dt);
@@ -2095,6 +2111,7 @@ export class HillScene {
       this.walk.setPointer(this.ndc.x < 2 && !this.reduced ? this.ndc : null);
       this.walk.update(dt);
     }
+    if (this.storyS > 0) this.onStoryFrame?.();
     const gov = this.governor;
     gov?.begin();
     this.fx.render();
@@ -2224,6 +2241,10 @@ export class HillScene {
   /* v32: луг Meadow Walk — фон главы «Кейсы» (scene/meadow). Создаётся заранее, пока читают About, в простое;
      шейдеры прогреваются в его буфер. Не готов вовремя или ?walk=0 — в кейсах, как раньше, холм */
   private walk?: Meadow;
+  get footerPortalClip() {
+    if (this.fx.params.portal >= 0.999) return "inset(0)";
+    return this.fx.params.portal > 0 ? this.walk?.portal.clip(this.walk.camera) ?? null : null;
+  }
   private walkReady = false;
   private walkStarted = false;
   private readonly walkOff = new URLSearchParams(location.search).get("walk") === "0";
@@ -2249,7 +2270,10 @@ export class HillScene {
       const w = this.canvas.clientWidth || window.innerWidth, h = this.canvas.clientHeight || window.innerHeight;
       this.walk.setSize(w, h, this.dpr);
       this.walk.update(0);
-      this.fx.params.altRender = (target) => this.walk?.render(target);
+      this.fx.params.altRender = (target, destination) => {
+        if (destination) this.walk?.portal.setDestination(destination);
+        this.walk?.render(target);
+      };
       void this.walk.compile(this.fx.altTarget).then(() => { if (!this.disposed) this.walkReady = true; }).catch(() => { this.walkReady = false; });
     }, { timeout: 1500 });
   }

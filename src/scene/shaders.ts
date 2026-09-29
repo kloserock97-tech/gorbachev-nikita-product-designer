@@ -1334,9 +1334,6 @@ uniform float uBgBlur;     /* v19: размытие сцены-фона в гл�
 uniform sampler2D tShadow; /* v22.1: мягкая тень компьютера, посчитанная на четверти разрешения */
 uniform sampler2D tAlt;    /* v32: второй фон (луг) — для смешивания с холмом на выходе из кейсов */
 uniform float uAlt;        /* 0 — только tScene, 0…1 — доля tAlt */
-uniform sampler2D tPortal; /* v76: луг снаружи портала (резкий, altRT) */
-uniform vec4 uPortal;      /* центр портала (UV), полувысота (доли высоты кадра), проявление содержимого 0…1 */
-uniform vec3 uPortal2;     /* яркость кромки 0…1, доля скругления от полуширины, проявление всей двери 0…1 */
 varying vec2 vUv;
 
 const vec3 LUMA = vec3(0.2126, 0.7152, 0.0722);
@@ -1489,50 +1486,11 @@ void main(){
   /* v32: луг ↔ холм под размытием — оба фона уже размыты в четверти, просто смешиваем */
   if (uAlt > 0.001) e = mix(e, texture2D(tAlt, uv).rgb, uAlt);
 
-  /* v76: портал из «Кейсов» в футер — стеклянная дверь посреди луга, за ней закатный холм (референс Никиты:
-     прямоугольник со скруглением и светящейся кромкой). tScene — холм (внутри), tPortal — луг (снаружи).
-     Форма — скруглённый прямоугольник в единицах высоты кадра (SDF). У кромки изнутри — преломление, как в
-     толстом стекле: картинка за ним сдвигается к центру и расслаивается по цвету; сама кромка — тонкая
-     светящаяся линия и тёплый ореол, из двери на луг льётся свет */
-  /* доля холма в пикселе: 1 — только холм, 0 — луг снаружи портала. Эффекты, которые берут пиксели холма
-     (размытие переднего плана, лучи его солнца), работают только в двери — иначе холм проступал поверх луга */
-  float hillIn = 1.0;
-  if (uPortal.z > 0.0) {
-    float asp = uTexel.y / uTexel.x;
-    vec2 pp = (uv - uPortal.xy) * vec2(asp, 1.0);
-    vec2 hs = vec2(uPortal.z * 0.62, uPortal.z);
-    float rr = hs.x * uPortal2.y;
-    vec2 qq = abs(pp) - hs + rr;
-    float dd = length(max(qq, 0.0)) + min(max(qq.x, qq.y), 0.0) - rr;
-    float aa = uTexel.y * 1.5;
-    float inside = 1.0 - smoothstep(-aa, aa, dd);
-    vec3 outside = texture2D(tPortal, uv).rgb;
-    /* преломление у внутренней кромки: полоса в 4 % высоты кадра */
-    float band = 1.0 - smoothstep(0.0, 0.04, -dd);
-    vec2 nrm = normalize(pp + 1e-5) / vec2(asp, 1.0);
-    vec2 off = -nrm * band * band * 0.018;
-    vec3 inner = vec3(texture2D(tScene, uv + off * 1.25).r, texture2D(tScene, uv + off).g, texture2D(tScene, uv + off * 0.75).b);
-    /* пока дверь только проявляется, в ней матовое стекло с лугом, потом открывается холм */
-    vec3 glass = outside * 1.12 + vec3(0.06, 0.05, 0.035);
-    inner = mix(glass, inner, uPortal.w);
-    /* блик по стеклу: косая мягкая засветка сверху слева */
-    vec2 lp = (pp + hs) / (2.0 * hs);
-    inner += vec3(1.0, 0.95, 0.85) * 0.07 * smoothstep(0.55, 0.0, lp.x + (1.0 - lp.y) * 0.6) * uPortal2.x;
-    vec3 door = mix(outside, inner, inside);
-    /* кромка и свет */
-    float rim = exp(-abs(dd) / (uTexel.y * 2.2)) * 1.6 + exp(-max(dd, 0.0) * 14.0) * 0.22 * step(0.0, dd);
-    float spill = exp(-max(dd, 0.0) * 3.5) * 0.12 * uPortal.w * step(0.0, dd);
-    door += vec3(1.0, 0.9, 0.72) * (rim * uPortal2.x + spill);
-    /* дверь проявляется из прозрачности, а не выскакивает */
-    e = mix(outside, door, uPortal2.z);
-    hillIn = inside * uPortal2.z;
-  }
-
   /* Фокус на кресле: нижние ~20% кадра мягко расфокусированы, как у длинного
      объектива (кинематографичные планы GoT). Размытие дешёвое — 8 выборок по
      кругу из готового HDR-кадра, до тонмаппинга и цветокоррекции, поэтому цвет
      не отличается; заодно прячет зазоры переднего плана. */
-  float fore = smoothstep(0.2, 0.0, vUv.y) * uFocus * hillIn;
+  float fore = smoothstep(0.2, 0.0, vUv.y) * uFocus;
   if (fore > 0.01) {
     vec3 acc = vec3(0.0);
     float r = fore * 3.2;
@@ -1569,7 +1527,7 @@ void main(){
   }
   /* глава «Кейсы»: tScene уже размытый задник из четвертного прохода (quarterFragment) */
   /* контраст до тонмаппинга — в лог-пространстве вокруг средне-серого (см. grade) */
-  vec3 c = grade((e + rays * hillIn) * uExposure * uWhiteBalance);
+  vec3 c = grade((e + rays) * uExposure * uWhiteBalance);
   vec2 q = vUv - 0.5;
   c *= 1.0 - dot(q, q) * uVignette;
   /* заливка поднимается снизу: наклон и два слоя шума рвут край, как облако (igloo);

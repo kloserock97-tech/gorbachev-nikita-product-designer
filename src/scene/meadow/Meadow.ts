@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { heightGLSL, noiseGLSL, terrainHeight } from "./noise";
+import { MeadowPortal } from "./MeadowPortal";
 
 /* v32: луг Meadow Walk — фон главы «Кейсы». Порт github.com/kloserock97-tech/meadow-walk (код Никиты, MIT)
    на «голый» three без React, пресет dusk зашит константами.
@@ -103,6 +104,8 @@ export class Meadow {
   private static readonly ZERO = new THREE.Vector2();
   readonly scene = new THREE.Scene();
   readonly camera = new THREE.PerspectiveCamera(40, 1, 0.3, 400);
+  readonly portal = new MeadowPortal(this.scene);
+  private portalProgress = 0;
   private readonly worldSize = 220;
   private readonly heightRT: THREE.WebGLRenderTarget;
   private readonly heightScene = new THREE.Scene();
@@ -611,6 +614,7 @@ export class Meadow {
     this.camera.aspect = w / Math.max(1, h);
     this.camera.updateProjectionMatrix();
     this.U.uDpr.value = dpr;
+    this.portal.setSize(h, dpr);
   }
 
   /** доля травы 0…1 (ступень качества холма) */
@@ -625,10 +629,14 @@ export class Meadow {
     if (ndc) this.pointer.copy(ndc);
   }
 
+  setPortal(progress: number) { this.portalProgress = progress; }
+
   update(dt: number) {
     dt = Math.min(dt, 1 / 20);
     const U = this.U;
-    this.t += dt;
+    // Hold the route and terrain during the scroll-controlled approach; wind stays alive.
+    const routeDt = this.portalProgress > 0 ? 0 : dt;
+    this.t += routeDt;
     const t = this.t;
     U.uTime.value = t;
     U.uWindTime.value += dt;
@@ -642,10 +650,10 @@ export class Meadow {
     /* v73.2: сверху и подальше (владелец): 7–11 м над лугом, взгляд вниз под 30–42°. Трава при этом читается —
        с тех пор как её шейдер снова собирается, и размытие главы вдвое слабее */
     let height = THREE.MathUtils.lerp(7, 11, smooth(breath)) + Math.sin(t * 0.105) * 0.8;
-    this.walked += dt * 2.1;
-    this.mouse.lerp(this.hover ? this.pointer : Meadow.ZERO, 1 - Math.exp(-dt * 2.4));
-    const x = pathX(t) + this.mouse.x * 0.6;
-    const z = -this.walked;
+    this.walked += routeDt * 2.1;
+    this.mouse.lerp(this.hover ? this.pointer : Meadow.ZERO, 1 - Math.exp(-routeDt * 2.4));
+    let x = pathX(t) + this.mouse.x * 0.6;
+    let z = -this.walked;
     const heading = Math.atan2(pathX(t + 0.5) - pathX(t - 0.5), 2.1);
     let ground = sea;
     for (const ahead of [0, 4, 9]) ground = Math.max(ground, terrainHeight(x + Math.sin(heading) * ahead, z - Math.cos(heading) * ahead, t));
@@ -663,6 +671,14 @@ export class Meadow {
     this.look.copy(this.camera.position).addScaledVector(this.dir, dist);
     this.camera.lookAt(this.look);
     this.camera.updateMatrixWorld();
+
+    this.portal.update(this.camera, this.portalProgress, t, sea, U.uWindTime.value);
+    if (this.portalProgress > 0) {
+      x = this.camera.position.x;
+      z = this.camera.position.z;
+      this.camera.getWorldDirection(this.dir);
+      this.look.copy(this.camera.position).addScaledVector(this.dir, 12);
+    }
 
     const tx = this.texel;
     const ahead = new THREE.Vector2(this.dir.x, this.dir.z).normalize().multiplyScalar(this.worldSize * 0.28);
@@ -769,13 +785,18 @@ export class Meadow {
     r.setRenderTarget(this.heightRT);
     const a = r.compileAsync(this.heightScene, this.heightCam);
     r.setRenderTarget(target);
+    // Include hidden doorway programs in the warm-up, before the user reaches it.
+    const portalVisible = this.portal.group.visible;
+    this.portal.group.visible = true;
     const b = r.compileAsync(this.scene, this.camera);
+    this.portal.group.visible = portalVisible;
     r.setRenderTarget(prev);
     r.initRenderTarget(this.heightRT);
     return Promise.all([a, b]).then(() => undefined);
   }
 
   dispose() {
+    this.portal.dispose();
     this.heightRT.dispose();
     for (const m of this.materials) m.dispose();
     for (const g of this.geometries) g.dispose();

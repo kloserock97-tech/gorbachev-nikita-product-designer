@@ -27,6 +27,7 @@ type Scene = {
   setKineticTarget?(t: { left: number; baseline: number; font: number } | null): void;
   setStorySlot?(slot: { top: number; bottom: number } | null): void;
   storyProgress: number;
+  readonly footerPortalClip?: string | null;
   storyFlight: number;
   storyTear: number;
   kellyClientPoint?(): { x: number; y: number; w: number } | null;
@@ -199,15 +200,29 @@ export function initStory(scene: Scene) {
   if (footer) {
     const links = [...footer.querySelectorAll<HTMLElement>("a, button")];
     let footOn = false;
-    const prevStory = scene.onStory;
-    scene.onStory = (p) => {
-      prevStory?.(p);
-      const next = chapters(p).f > FOOTER.content;
-      if (next === footOn) return;
-      footOn = next;
-      footer.classList.toggle("is-on", footOn);
-      footer.setAttribute("aria-hidden", String(!footOn));
-      links.forEach((el) => (el.tabIndex = footOn ? 0 : -1));
+    footer.inert = true;
+    links.forEach((el) => (el.tabIndex = -1));
+    const prevFrame = scene.onStoryFrame;
+    scene.onStoryFrame = () => {
+      prevFrame?.();
+      const f = chapters(scene.storyProgress).f;
+      const clip = scene.footerPortalClip;
+      const next = clip ? clip === "inset(0)" : f > FOOTER.content;
+      const preview = !!clip && !next;
+      footer.classList.toggle("is-portal-preview", preview);
+      footer.style.clipPath = preview ? clip! : "";
+      // First reveal the landscape; copy becomes readable as the doorway opens up.
+      if (preview) {
+        const reveal = ramp(ramp(f, ...FOOTER.portal), 0.5, 0.72);
+        footer.style.setProperty("--portal-copy", String(reveal * reveal * (3 - 2 * reveal)));
+      }
+      if (next !== footOn) {
+        footOn = next;
+        footer.classList.toggle("is-on", footOn);
+        footer.setAttribute("aria-hidden", String(!footOn));
+        footer.inert = !footOn;
+        links.forEach((el) => (el.tabIndex = footOn ? 0 : -1));
+      }
     };
   }
 

@@ -29,7 +29,7 @@ export type PostFx = {
   altTarget: THREE.WebGLRenderTarget;
   dispose: () => void;
   params: { rays: number; raysEnabled: boolean;
-    /* v76: портал из «Кейсов» в футер, 0…1 (0 — нет): растёт посреди луга, за ним холм */
+    /* Scroll progress of the world-space doorway in Meadow, 0…1. */
     portal: number;
     bgCheap: boolean; exposure: number; vignette: number; vibrance: number; contrast: number; focus: number; whiteBalance: THREE.Vector3; glitch: number; glitchSeed: number; black: number; radial: number; aberration: number; fill: number; overlay: boolean;
     /* v17, светлая страница с глубиной (как oryzo): studio 0…1 — сила студийного фона,
@@ -43,7 +43,7 @@ export type PostFx = {
        bgBlur 0…1 — размытие сцены-фона, overlayCamera — камера страницы для прохода компьютера */
     tear: number; bgBlur: number; overlayCamera: THREE.Camera | null;
     /* v32: второй фон главы «Кейсы» (луг Meadow Walk). alt 0…1 — его доля; altRender рисует его в переданный буфер */
-    alt: number; altRender: ((target: THREE.WebGLRenderTarget) => void) | null;
+    alt: number; altRender: ((target: THREE.WebGLRenderTarget, destination?: THREE.Texture) => void) | null;
     /* до и после прохода компьютера — сцена подменяет ему свет и окружение */
     onOverlay?: (before: boolean) => void };
 };
@@ -160,7 +160,7 @@ export function createPostFx(
     tear: -1,
     bgBlur: 0,
     alt: 0,
-    altRender: null as ((target: THREE.WebGLRenderTarget) => void) | null,
+    altRender: null as ((target: THREE.WebGLRenderTarget, destination?: THREE.Texture) => void) | null,
     overlayCamera: null as THREE.Camera | null,
     onOverlay: undefined as ((before: boolean) => void) | undefined,
   };
@@ -207,9 +207,6 @@ export function createPostFx(
       uBgBlur: { value: 0 },
       tShadow: { value: shadowRT.texture },
       tAlt: { value: altBlurRT.texture },
-      tPortal: { value: altRT.texture },
-      uPortal: { value: new THREE.Vector4(0.5, 0.52, 0, 0) },
-      uPortal2: { value: new THREE.Vector3(0, 0.14, 0) },
       uAlt: { value: 0 },
     },
   });
@@ -273,7 +270,7 @@ export function createPostFx(
       const covered = params.fill >= 0.999 && params.tear <= -0.2;
       /* размытый задник кейсов: сцена в половинном буфере, размытие — в четвертном, финал берёт готовое.
          Переход прячется под бумагой: размытие включается, пока рваный край у самого низа кадра */
-      /* v76: портал — холм в полном буфере сцены, луг в своём, финал вырезает дверь. Размытия в это время нет */
+      /* Portal: destination in sceneRT, meadow and its doorway in altRT. */
       const portalOn = params.portal > 0.001 && params.portal < 0.999 && !!params.altRender && !covered;
       const low = params.bgBlur > 0.001 && !portalOn;
       const src = low ? bgRT : sceneRT;
@@ -297,7 +294,9 @@ export function createPostFx(
         renderer.setRenderTarget(src);
         renderer.render(scene, camera);
       }
-      if (portalOn) params.altRender!(altRT);
+      // Render destination first, then sample it on the doorway in meadow world space.
+      // Separate targets are essential: never sample the active framebuffer.
+      if (portalOn) params.altRender!(altRT, sceneRT.texture);
       if (altOn && !covered && !portalOn) {
         const target = altFull ? (low ? bgRT : altRT) : altBgRT;
         params.altRender!(target);
@@ -314,28 +313,13 @@ export function createPostFx(
           draw(quarter, altBlurRT);
         }
       }
-      final.uniforms.tScene.value = low ? bgBlurRT.texture : altFull ? altRT.texture : sceneRT.texture;
+      final.uniforms.tScene.value = low ? bgBlurRT.texture : altFull || portalOn ? altRT.texture : sceneRT.texture;
       final.uniforms.uAlt.value = altMix ? params.alt : 0;
-      /* геометрия портала по прогрессу k: появляется (0–0,3), чуть подрастает, пока в него смотрят (0,3–0,55),
-         и камера проходит сквозь него (0,55–0,92): дверь растёт быстрее и быстрее, пока не закроет весь экран */
-      if (portalOn) {
-        const k = params.portal;
-        const sm = (a: number, b: number, x: number) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-        /* v76.1: плавно. Дверь не вырастает из точки, а проявляется из прозрачности, уже почти своего размера
-           (0,7 → 1), и медленно подрастает, пока в неё смотрят. Проход — экспоненциальный наезд: дверь растёт
-           в одно и то же число раз за равный отрезок прокрутки, это читается как ровное движение камеры
-           вперёд, без рывка в конце */
-        const appear = sm(0.0, 0.34, k);
-        const dive = sm(0.46, 0.97, k);
-        const h = (0.22 + 0.08 * appear + 0.04 * sm(0.2, 0.5, k)) * Math.exp(2.2 * dive);
-        final.uniforms.uPortal.value.set(0.5, 0.52 - 0.02 * dive, h, sm(0.16, 0.46, k));
-        final.uniforms.uPortal2.value.set(appear * (1 - sm(0.78, 0.97, k)), 0.14, sm(0.0, 0.26, k));
-      } else final.uniforms.uPortal.value.z = 0;
       /* резкость CAS считает соседей полноразмерным текселем — на половинном буфере она ни к чему */
-      final.uniforms.uSharp.value = low || altFull ? 0 : sharp;
+      final.uniforms.uSharp.value = low || altFull || portalOn ? 0 : sharp;
       /* v44: без MSAA края сглаживает финальный проход целиком, с MSAA 2× — наполовину (две ступени покрытия
          всё ещё дают лесенку на DPR 1); с MSAA 4× не нужен. Размытому заднику он тоже не нужен. ?edgeaa=0|1 — для сравнения */
-      final.uniforms.uEdgeAA.value = low || altFull ? 0 : edgeAA ?? (sceneRT.samples === 0 ? 1 : sceneRT.samples <= 2 ? 0.5 : 0);
+      final.uniforms.uEdgeAA.value = low || altFull ? 0 : portalOn ? 1 : edgeAA ?? (sceneRT.samples === 0 ? 1 : sceneRT.samples <= 2 ? 0.5 : 0);
       if (params.overlay) {
         const mask = camera.layers.mask;
         const alpha = renderer.getClearAlpha();
@@ -396,7 +380,7 @@ export function createPostFx(
       final.uniforms.uVignette.value = params.vignette;
       final.uniforms.uVibrance.value = params.vibrance;
       final.uniforms.uContrast.value = params.contrast;
-      final.uniforms.uFocus.value = params.focus;
+      final.uniforms.uFocus.value = params.focus * (portalOn ? THREE.MathUtils.smoothstep(params.portal, 0.8, 1) : 1);
       final.uniforms.uGlitch.value = params.glitch;
       final.uniforms.uGlitchSeed.value = params.glitchSeed;
       final.uniforms.uBlack.value = params.black;
