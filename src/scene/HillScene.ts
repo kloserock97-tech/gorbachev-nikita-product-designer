@@ -1218,6 +1218,23 @@ export class HillScene {
     this.polaroid = card;
   }
   private polaroidTmp = new THREE.Vector3();
+  /** v85.3: верх кроны дерева по вертикали, px окна, при камере в покое — как на первом экране. По нему телефон
+      ставит середину кнопки «Смотреть кейсы» (ui/hero/mobileCopy.ts). Считается по запросу (resize), не в кадре */
+  treeTopClient(): number | null {
+    if (!this.tree) return null;
+    const p = this.tree.crownTopWorld(new THREE.Vector3());
+    /* видимая верхушка — между центром верхнего пучка и краем его карточек: над пучком торчат листья, но самые
+       крайние тонут в дымке. 0,37 пути к верху рамки дерева — по замеру кадров на четырёх телефонах (±3 px) */
+    const box = new THREE.Box3().setFromObject(this.tree.group);
+    if (!box.isEmpty()) p.y += (box.max.y - p.y) * 0.37;
+    const cam = this.camera.clone();
+    cam.position.copy(this.cameraRest());
+    cam.lookAt(CAMERA_TARGET);
+    cam.updateMatrixWorld();
+    p.project(cam);
+    const c = this.canvasRect;
+    return c.top + (-p.y * 0.5 + 0.5) * c.height;
+  }
   /** голова спящей Келли в координатах окна — для «z z z» в футере */
   kellySleepPoint(): { x: number; y: number } | null {
     if (!this.dog?.isSleeping) return null;

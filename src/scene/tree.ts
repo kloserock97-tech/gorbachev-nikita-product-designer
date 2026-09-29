@@ -202,6 +202,9 @@ export function createTree(uniforms: Record<string, THREE.IUniform>, o: TreeOpti
   crown.divideScalar(Math.max(1, clusters.length));
   let crownR = 0;
   clusters.forEach((c) => (crownR = Math.max(crownR, c.p.distanceTo(crown))));
+  /* v85.3: верхний пучок — видимая верхушка кроны (края карточек выше, но тонут в дымке); по ней телефон ставит
+     кнопку «Смотреть кейсы». rng не трогаем — от его порядка зависит форма кроны */
+  const crownTop = clusters.reduce((a, c) => (c.p.y > a.y ? c.p : a), clusters[0]?.p ?? new THREE.Vector3()).clone();
   /* подбивка: часть пучков повторяется ближе к центру кроны — иначе сквозь неё просвечивало небо целыми
      окнами и крона читалась ворохом веток, а не массой листвы */
   for (const c of clusters.slice()) if (rng() < 0.6) clusters.push({ p: c.p.clone().lerp(crown, 0.3 + rng() * 0.35), d: c.d.clone() });
@@ -266,6 +269,11 @@ export function createTree(uniforms: Record<string, THREE.IUniform>, o: TreeOpti
       group.position.set(x, y, z);
       group.scale.setScalar(s);
       (shared.uTreeBase.value as THREE.Vector3).set(x, y, z);
+    },
+    /** верхушка кроны в мировых координатах */
+    crownTopWorld(out: THREE.Vector3) {
+      group.updateMatrixWorld();
+      return group.localToWorld(out.copy(crownTop));
     },
     /** MSAA на ступени качества: без него край листа — альфа-тест, с ним — покрытие */
     setMsaa(on: boolean) { leafMat.uniforms.uA2C.value = on ? 1 : 0; },

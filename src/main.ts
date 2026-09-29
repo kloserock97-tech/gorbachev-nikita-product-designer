@@ -10,6 +10,7 @@ import { initWorkMenu } from "./ui/workMenu";
 import { initStory } from "./ui/storyHero";
 import { initCases, renderCases } from "./ui/cases";
 import { initFieldNote } from "./ui/fieldNote";
+import { initMobileCopy } from "./ui/hero/mobileCopy";
 import { initWalkChapter, renderShelf } from "./ui/walkChapter";
 import { initSound } from "./ui/soundToggle";
 import { initFooter } from "./ui/footer";
@@ -164,6 +165,7 @@ function start3d(caseView?: CaseView) {
 
   /* скролл-история: компьютер взлетает со стола и встаёт перед зрителем (About), затем — «Кейсы» и футер */
   const story = initStory(scene);
+  initMobileCopy(scene);
   initCases(scene);
   initWalkChapter(scene);
   initFieldNote();

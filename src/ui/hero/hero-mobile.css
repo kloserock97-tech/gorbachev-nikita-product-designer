@@ -21,7 +21,8 @@
     column-gap: max(12px, calc(28 * var(--u)));
     box-sizing: border-box;
     /* док сверху: 30u отступа + 56px высоты — заголовок начинается ниже него */
-    padding: max(calc(128 * var(--u)), calc(30 * var(--u) + 74px)) calc(34 * var(--u)) 0;
+    /* v85.3: на вертикальном экране блок опускается так, что середина кнопки — у верхушки кроны (ui/hero/mobileCopy.ts) */
+    padding: max(calc(128 * var(--u)), calc(30 * var(--u) + 74px), var(--m-copy-top, 0px)) calc(34 * var(--u)) 0;
     height: calc(1357 * var(--u) + var(--m-card) + var(--m-stats));
   }
   .stage:has(.card--stove.is-open) { height: calc(1357 * var(--u) + var(--m-card) + var(--m-open) + var(--m-stats)); }
