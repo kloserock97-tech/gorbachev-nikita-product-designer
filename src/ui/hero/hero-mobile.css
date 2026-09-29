@@ -38,6 +38,8 @@
   .focus {
     grid-column: 1 / -1; margin: max(10px, calc(18 * var(--u))) 0 0;
     font-size: max(17px, calc(32 * var(--u)));
+    /* v85.2: русская строка длиннее и на узком экране переносилась одним словом «системы» — строки поровну */
+    text-wrap: balance;
   }
   .lede {
     grid-column: 1 / -1; width: auto; max-width: 34em; margin: max(6px, calc(10 * var(--u))) 0 0;

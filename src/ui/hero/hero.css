@@ -125,13 +125,14 @@ body {
   position: absolute; z-index: 4; left: calc(46 * var(--u)); top: calc(351 * var(--u));
   font-family: var(--accent-font); font-size: calc(33 * var(--u)); line-height: 1.24; font-weight: 600;
 }
-/* у «И» в Ugol дуга вместо диагонали, и сдвоенное «ИИ» в «ИИ-продукты» читалось как «UU» — строку набираем Onest;
-   Onest в 600 плотнее Ugol, поэтому 500 — по плотности как английская строка */
-body.lang-ru .focus { font-family: var(--font); font-weight: 500; }
-/* v85.1: «Продуктовый дизайнер» на треть длиннее «Product designer» и в том же кегле выходил шире имени (105 %) —
-   блок тяжелел книзу, а в английском строки сужаются: имя, роль ~0,75, дальше серые строки. В 0,62 кегля имени
-   роль ~0,84 его ширины; межстрочный 0,8 держит тот же зазор от имени до роли (12u), что в английском */
-body.lang-ru .headline .role { font-size: 0.62em; line-height: 0.8; }
+/* v85.2: русский блок — по русскому референсу Никиты (29.09). Имя, роль и серая строка кончаются на одной правой
+   линии: роль в 0,742 кегля имени, серая строка — 32u (hill-ui.css). Роль ниже имени на 59u по базовым линиям:
+   у «Горбачёв» хвост «р» (0,24 кегля имени), и при 47u он почти касался «дизайнер» (просвет 1,6u, замер по чернилам).
+   Путь «от исследований до роста» — в две строки, текст дальше от черты. «AI» латиницей: «ИИ» в Ugol читалось как «UU» */
+body.lang-ru .headline .role { font-size: 0.742em; line-height: 0.966; }
+body.lang-ru .focus { font-weight: 500; }
+body.lang-ru .lede { padding-left: calc(69 * var(--u)); line-height: 1.436; }
+body.lang-ru .lede::before { top: 0.84em; }
 .lede {
   position: absolute; z-index: 4; left: calc(46 * var(--u)); top: calc(398 * var(--u));
   padding-left: calc(45 * var(--u)); white-space: nowrap;
