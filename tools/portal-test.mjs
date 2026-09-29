@@ -59,7 +59,7 @@ try {
     assert(await evaluate("__hill.walkReady"), "Meadow shaders did not become ready");
   }
   const frames = [];
-  for (const f of [0.08, 0.16, 0.26, 0.38, 0.49, 0.60, 0.72, 1, 0.38, 0.12, -1]) {
+  for (const f of [0.08, 0.16, 0.26, 0.38, 0.5, 0.60, 0.72, 1, 0.38, 0.12, -1]) {
     await scroll(f);
     const state = await evaluate(`(() => { const s = __hill; const footer = document.querySelector('.site-footer');
       return { f: s.storyCh3, portal: s.fx.params.portal, clip: s.footerPortalClip, pos: s.walk?.camera.position.toArray(),
@@ -67,7 +67,8 @@ try {
         gl: s.renderer.getContext().getError(), rendered: s.renderedFrames }; })()`);
     frames.push(state);
     assert.equal(state.gl, 0, `WebGL error at ${f}`);
-    if (!live && f === 0.26 && !reduced && !noWalk) assert(state.clip?.startsWith("polygon"), "Missing world-space portal");
+    // v84: footer ends at the threshold, so the doorway preview sits mid-chapter (portal ≈0.28 desktop, ≈0.23 phone)
+    if (!live && f === 0.5 && !reduced && !noWalk) assert(state.clip?.startsWith("polygon"), "Missing world-space portal");
     if (reduced || noWalk) assert.equal(state.portal, 0, "Fallback unexpectedly enables portal motion");
     if (state.clip === "inset(0)") assert(!state.inert, "Contacts stay inert after entering the portal");
     if (f === 1) assert(!state.inert && state.footer.includes("is-on"), "Footer is not interactive");

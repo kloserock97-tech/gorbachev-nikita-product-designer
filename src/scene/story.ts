@@ -84,14 +84,35 @@ export const aberrationAt = (t: number) => {
 type Span = readonly [number, number];
 export let CHAPTER = 0.3208;
 export let CHAPTER2 = 0.8485;
-export const FOOTER = {
-  leave: [0.0, 0.14] as const, // лента кейсов уходит
-  camera: [0.04, 0.62] as const, // камера возвращается к холму
-  unblur: [0.3, 0.58] as const, // размытие уходит
-  portal: [0.04, 0.74] as const, // время рассмотреть проём, медленно приблизиться и пройти внутрь
+type FooterKeys = { leave: Span; camera: Span; unblur: Span; portal: Span; settle: Span; dusk: number; content: number };
+/* доли короткого футера (без пролёта через портал); с пролётом layoutTimeline() пересчитывает leave, portal,
+   settle, dusk и content от длин в экранах */
+const FOOTER_BASE: FooterKeys = {
+  leave: [0.0, 0.14], // лента кейсов уходит
+  camera: [0.04, 0.62], // камера возвращается к холму
+  unblur: [0.3, 0.58], // размытие уходит
+  portal: [0.04, 0.74], // время рассмотреть проём, медленно приблизиться и пройти внутрь
+  settle: [0.5, 0.7], // кадр футера устоялся: возвращается параллакс за курсором
   dusk: 0.08, // погода — закат, светлячки
   content: 0.66, // тексты и контакты футера
 };
+export const FOOTER: FooterKeys = { ...FOOTER_BASE };
+
+/* v84: проход через портал кончается там, где проём закрыл экран.
+   Раньше ход портала был ровным по всей его доле, а проём закрывает кадр задолго до конца хода — на 41–58 %
+   в зависимости от пропорций окна (замер: 390×844 — 0.41, 1024×768 — 0.51, 1440×900 — 0.53, 1348×684 — 0.58).
+   За порогом оставалось ~3,3 экрана прокрутки: доезжало кадрирование, цвет луга сменялся цветом холма,
+   включался расфокус, а последние полтора экрана не менялось ничего. Теперь до порога (knee) ход прежний,
+   с той же скоростью, а всё, что за порогом, укладывается в PORTAL_SETTLE экрана — и страница там кончается.
+   split — доля хода портала, отданная подходу к порогу; считает layoutTimeline(). */
+const PORTAL_SETTLE = 0.35;
+export const PORTAL = { knee: 0.53, split: 0.86 };
+/** прогресс портала 0…1 по прогрессу футера f: до порога — ровно, за ним — быстро */
+export function portalAt(f: number) {
+  const u = ramp(f, ...FOOTER.portal);
+  const { knee, split } = PORTAL;
+  return u <= split ? (u / split) * knee : knee + ((u - split) / (1 - split)) * (1 - knee);
+}
 export const CASES: Record<"tear" | "intro" | "blur" | "cardsIn" | "strip" | "stripOut" | "notes" | "notesIn" | "notesRun", Span> = {
   tear: [0.0, 0.083], // страница About отрывается снизу и уходит вверх — под ней луг (v32)
   intro: [0.06, 0.25], // заставка «сейчас будут кейсы» поверх резкого луга
@@ -111,6 +132,8 @@ export type TimelineInput = {
   notes: number;
   /** сколько экранов прокрутки приходится на один кейс или одну заметку */
   step: number;
+  /** ширина окна к высоте — от неё зависит, когда проём портала закроет экран */
+  aspect?: number;
 };
 /** длины глав в экранах после последнего расчёта */
 export const TIMELINE = { about: 5.29, cases: 8.7, footer: 2.5, total: 16.5, step: 0.68 };
@@ -120,9 +143,30 @@ export function layoutTimeline(input: TimelineInput) {
   const old = { a: CHAPTER, b: CHAPTER2 };
   const k = input.narrow ? 0.88 : 1;
   const about = input.narrow ? 4.66 : 5.29;
-  /* Почти вдвое больше дистанции для прохода. Без пролёта сохраняем короткий футер. */
+  /* Без пролёта через портал — короткий футер с долями FOOTER_BASE */
   const portalMotion = flags.get("walk") !== "0" && !matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const footer = portalMotion ? (input.narrow ? 5 : 5.6) : (input.narrow ? 3.1 : 3.4);
+  let footer = input.narrow ? 3.1 : 3.4;
+  Object.assign(FOOTER, FOOTER_BASE);
+  if (portalMotion) {
+    /* v84: с пролётом. Скорость подхода та же, что при прежних 5 / 5.6 экрана с порталом на 0.04…0.74,
+       но футер кончается сразу за порогом (PORTAL выше). Порог — по пропорциям окна, линия через замеры */
+    const was = input.narrow ? 5 : 5.6;
+    const lead = 0.04 * was, pass = 0.7 * was;
+    const aspect = input.aspect ?? (input.narrow ? 0.46 : 1.6);
+    const knee = Math.min(0.66, Math.max(0.38, 0.41 + 0.109 * (aspect - 0.46)));
+    const approach = pass * knee;
+    footer = lead + approach + PORTAL_SETTLE;
+    const at = (screens: number) => screens / footer;
+    Object.assign(PORTAL, { knee, split: approach / (approach + PORTAL_SETTLE) });
+    /* ключи, что жили в экранах от начала футера, остаются там же; всё, что ждало конца прохода, — на пороге */
+    Object.assign(FOOTER, {
+      leave: [0, at(FOOTER_BASE.leave[1] * was)],
+      dusk: at(FOOTER_BASE.dusk * was),
+      portal: [at(lead), 1],
+      settle: [at(lead + approach), 1],
+      content: at(lead + approach),
+    });
+  }
   const step = Math.min(0.9, Math.max(0.4, input.step));
   /* сцены главы «Кейсы» в экранах от её начала */
   /* v74.2: переход About → «Кейсы» длиннее (было 0.72 экрана): бумага не рвётся, а растворяется облаком,

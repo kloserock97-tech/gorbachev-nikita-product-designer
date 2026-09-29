@@ -87,7 +87,9 @@ export function applyTimeline(input: TimelineInput) {
   const el = story();
   if (!el) return;
   const lead = leadPx(el.offsetTop) / Math.max(1, viewH());
-  const key = `${input.narrow}|${input.cases}|${input.notes}|${input.step.toFixed(2)}|${lead.toFixed(2)}`;
+  /* v84: длина футера зависит от пропорций окна — там, где проём портала закрывает экран (story.ts, PORTAL) */
+  input = { ...input, aspect: innerWidth / Math.max(1, viewH()) };
+  const key = `${input.narrow}|${input.cases}|${input.notes}|${input.step.toFixed(2)}|${lead.toFixed(2)}|${input.aspect!.toFixed(2)}`;
   if (key === lastKey) return;
   lastKey = key;
   const before = progressNow();

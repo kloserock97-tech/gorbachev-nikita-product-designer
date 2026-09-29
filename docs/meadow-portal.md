@@ -19,11 +19,18 @@ adds parallax without tilting the horizon. The destination initially frames the
 chair and tree, then settles into the footer viewpoint. Subtle edge refraction
 disappears before the passage completes so the destination stays continuous.
 
-The approach spans about 3.9 desktop viewport heights (3.5 on mobile), roughly
-twice the original distance. Chapter-local damping uses 3.6/s instead of 6.5/s,
-with smooth transitions into and out of the slower response. The exponential
-dolly eases both departure and arrival. Other chapters and long navigation jumps
-retain their normal response; reduced motion and `?walk=0` retain the shorter footer.
+The footer ends at the threshold. The opening covers the viewport well before the
+dolly finishes: at about 41 % of the passage on a phone (390×844), 51 % at 1024×768,
+53 % at 1440×900 and 58 % at 1348×684. `layoutTimeline()` in `story.ts` estimates this
+knee from the viewport aspect. The approach up to the knee keeps the original speed
+(the full passage would span 3.9 desktop viewport heights, 3.5 on mobile). Everything
+past it (framing settle, meadow-to-hill grade, focus) is packed into 0.35 viewport
+height, and the page ends there. `portalAt(f)` maps footer progress to portal
+progress for both the scene and the footer DOM. Chapter-local damping uses 3.6/s
+instead of 6.5/s during the approach and returns to normal past the threshold
+(`FOOTER.settle`). The exponential dolly eases both departure and arrival. Other
+chapters and long navigation jumps retain their normal response; reduced motion and
+`?walk=0` retain the shorter footer.
 
 The real footer DOM is clipped to the projected rounded contour. Its copy
 fades in late in the approach, leaving the scenery visible first. Preview controls are inert and hidden from assistive

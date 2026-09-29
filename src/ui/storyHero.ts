@@ -1,4 +1,4 @@
-import { CASES, CHAPTER, CHAPTER2, FOOTER, STORY, STORY_FX, chapters, ramp, trap } from "../scene/story";
+import { CASES, CHAPTER, CHAPTER2, FOOTER, STORY, STORY_FX, chapters, portalAt, ramp, trap } from "../scene/story";
 import { onTimeline, storyBounds } from "./storyScroll";
 import { cue } from "../audio/bus";
 import { onLang, t as tr } from "../i18n";
@@ -213,7 +213,7 @@ export function initStory(scene: Scene) {
       footer.style.clipPath = preview ? clip! : "";
       // First reveal the landscape; copy becomes readable as the doorway opens up.
       if (preview) {
-        const reveal = ramp(ramp(f, ...FOOTER.portal), 0.5, 0.72);
+        const reveal = ramp(portalAt(f), 0.5, 0.72);
         footer.style.setProperty("--portal-copy", String(reveal * reveal * (3 - 2 * reveal)));
       }
       if (next !== footOn) {

@@ -7,7 +7,7 @@ import { createPostFx, type PostFx } from "./postfx";
 import { PortfolioScreen } from "./portfolioScreen";
 import { Dog } from "./dog";
 import { Weather, type WeatherKind } from "./weather";
-import { CASES, CHAPTER, FOOTER, MEADOW_OUT, STORY, STORY_FX, TRANSITION, aberrationAt, bell, casesCamera, chapters, flightPose, footerCamera, ramp, storyCamera, zoomBlur, type Pose } from "./story";
+import { CASES, CHAPTER, FOOTER, MEADOW_OUT, STORY, STORY_FX, TRANSITION, aberrationAt, bell, casesCamera, chapters, flightPose, footerCamera, portalAt, ramp, storyCamera, zoomBlur, type Pose } from "./story";
 import { Meadow } from "./meadow/Meadow";
 import { SCROLL_LAMBDA } from "../scrollFeel";
 import { KINETIC_BASE, KINETIC_FONT, createKinetic, type Kinetic } from "./kinetic";
@@ -1268,8 +1268,9 @@ export class HillScene {
     /* The portal has a softer response, blended in/out with its chapter. Keep
        navigation jumps responsive and the reduced-motion fallback unchanged. */
     const footerProgress = chapters(this.storyS).f;
+    /* v84: за порогом проёма (FOOTER.settle) отклик снова обычный — кадр футера доезжает сразу, а не тянется */
     const portalDamping = !this.reduced && this.walkReady && !this.walkOff && Math.abs(target - this.storyS) < 0.12
-      ? THREE.MathUtils.smoothstep(footerProgress, 0, 0.12) * (1 - THREE.MathUtils.smoothstep(footerProgress, 0.74, 0.86))
+      ? THREE.MathUtils.smoothstep(footerProgress, 0, FOOTER.leave[1]) * (1 - THREE.MathUtils.smoothstep(footerProgress, ...FOOTER.settle))
       : 0;
     const scrollLambda = THREE.MathUtils.lerp(SCROLL_LAMBDA, 3.6, portalDamping);
     this.storyS += (target - this.storyS) * (1 - Math.exp(-dt * scrollLambda));
@@ -1325,7 +1326,7 @@ export class HillScene {
     /* Из «Кейсов» в футер — через объёмный портал (meadow/MeadowPortal.ts): луг остаётся снаружи двери, пока камера
        не пройдёт сквозь неё. Цвет луга сменяется цветом холма по мере того, как дверь закрывает экран.
        Без луга (?walk=0) — прежнее смешивание под размытием */
-    const pk = ramp(f, ...FOOTER.portal);
+    const pk = portalAt(f);
     const viaPortal = walkOn && !this.reduced && f > 0;
     const alt = c > 0 && this.walkReady
       ? viaPortal ? (pk < 0.999 ? Math.max(0.002, 1 - THREE.MathUtils.smoothstep(pk, 0.6, 0.95)) : 0) : 1 - wo * wo * (3 - 2 * wo)
@@ -2082,7 +2083,7 @@ export class HillScene {
     } else {
       this.pointerSmooth.lerp(this.pointer, 1 - Math.exp(-dt * 2.5));
       /* параллакс гаснет в главе 1 и возвращается в «Кейсах» */
-      const par = (this.reduced ? 0 : 1) * Math.max(1 - ramp(this.storyCh1, 0, 0.1), ramp(this.storyCh2, 0.1, 0.3) * (1 - ramp(this.storyCh3, 0.02, 0.2)), ramp(this.storyCh3, 0.5, 0.7));
+      const par = (this.reduced ? 0 : 1) * Math.max(1 - ramp(this.storyCh1, 0, 0.1), ramp(this.storyCh2, 0.1, 0.3) * (1 - ramp(this.storyCh3, 0.02, 0.2)), ramp(this.storyCh3, ...FOOTER.settle));
       const rest = this.storyS > 0 ? this.cameraRest().copy(this.storyCamPos) : this.cameraRest();
       /* у экрана параллакс гаснет, иначе журнал «плавает» под курсором */
       const hold = 1 - this.focus;
