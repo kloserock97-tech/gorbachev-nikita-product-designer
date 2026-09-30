@@ -16,6 +16,7 @@ import { pad2 as pad } from "../lib/format";
 import notes from "../data/notes";
 import { cue } from "../audio/bus";
 import { onLang, t, type Key } from "../i18n";
+import { noteLogo } from "./noteLogo";
 
 const BASE = import.meta.env.BASE_URL;
 const key = (id: string, part: string) => `notes.${id}.${part}` as Key;
@@ -31,6 +32,9 @@ export function initFieldNote() {
   const titles = [...card.querySelectorAll<HTMLElement>("[data-note-title]")];
   const img = card.querySelector<HTMLImageElement>("[data-note-img]");
   const video = card.querySelector<HTMLVideoElement>("[data-note-video]");
+  /* v88: живой знак вместо ролика (ui/noteLogo.ts) — слой поверх картинки, пересобирается только при смене знака */
+  const logoSlot = img?.parentElement ? document.createElement("span") : null;
+  if (logoSlot && img?.parentElement) { logoSlot.className = "nlogo-slot"; logoSlot.hidden = true; img.parentElement.append(logoSlot); }
   const calm = matchMedia("(prefers-reduced-motion: reduce)").matches
     || !!(navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
   const kind = card.querySelector<HTMLElement>("[data-note-kind]");
@@ -130,6 +134,12 @@ export function initFieldNote() {
       const src = `${BASE}${current.image}`;
       if (!img.src.endsWith(current.image)) img.src = src;
       img.alt = t(key(id, "alt"));
+    }
+    if (logoSlot) {
+      const kind = current.logo;
+      if (kind && logoSlot.dataset.kind !== kind) { logoSlot.innerHTML = noteLogo(kind); logoSlot.dataset.kind = kind; }
+      else if (!kind && logoSlot.dataset.kind) { logoSlot.innerHTML = ""; delete logoSlot.dataset.kind; }
+      logoSlot.hidden = !kind;
     }
     if (video) {
       const clip = calm ? undefined : current.video;

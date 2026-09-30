@@ -12,6 +12,7 @@ import { onLang, t, type Key } from "../i18n";
 import { CASES, CHAPTER, CHAPTER2, FOOTER, chapters, dwell, ramp, stickyIndex } from "../scene/story";
 import { onViewport, topFor } from "./storyScroll";
 import { swipeStrip, type SwipeStrip } from "./swipeStrip";
+import { noteLogo } from "./noteLogo";
 
 type StoryScene = { onStory?: (p: number) => void };
 export type ShelfFormat = "stack" | "strip";
@@ -43,11 +44,13 @@ function body(note: Note) {
 
 function media(note: Note) {
   const poster = `${BASE}${note.image}`;
-  const video = note.video && !calm
+  /* v88: у заметки с живым знаком ролика нет — знак рисуется поверх картинки */
+  const logo = note.logo ? noteLogo(note.logo) : "";
+  const video = !logo && note.video && !calm
     ? `<video muted loop playsinline preload="none" poster="${poster}" aria-hidden="true" tabindex="-1">
         <source src="${BASE}${note.video.webm}" type="video/webm"><source src="${BASE}${note.video.mp4}" type="video/mp4"></video>`
     : "";
-  return `<span class="shelf-media"><img src="${poster}" alt="${t(key(note.id, "alt"))}" loading="lazy" decoding="async">${video}</span>`;
+  return `<span class="shelf-media"><img src="${poster}" alt="${t(key(note.id, "alt"))}" loading="lazy" decoding="async">${video}${logo}</span>`;
 }
 
 export function renderShelf() {

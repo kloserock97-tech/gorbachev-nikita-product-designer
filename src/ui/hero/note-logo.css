@@ -1,0 +1,105 @@
+/* v88: живые логотипы на обложках заметок (src/ui/noteLogo.ts). Слой на всю обложку поверх картинки-заглушки;
+   знак стоит чуть выше середины — низ обложки занимают название и подпись. Всё движение — transform, opacity и
+   stroke-dashoffset маленького SVG. Цикл 6 с, нулевой кадр — собранный знак. */
+.nlogo { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.nlogo::before {
+  content: ""; position: absolute; left: 50%; top: 48%; width: 52%; aspect-ratio: 1.6; translate: -50% -50%;
+  background: radial-gradient(closest-side, var(--nl-glow), transparent); pointer-events: none;
+}
+/* в свободной полосе между листалкой сверху (до ~32% высоты) и подписью снизу (от ~65%) */
+.nlogo__mark { position: absolute; left: 50%; top: 48%; height: 28%; width: auto; translate: -50% -50%; overflow: visible; }
+/* опорная рамка — сам элемент; только для того, что двигается: у группы колец свой поворот атрибутом */
+.nlogo--shelf .nlogo__mark rect, .nlogo--marathon .nlogo__check { transform-box: fill-box; }
+
+/* слот в карточке первого экрана: картинка-заглушка остаётся под ним */
+.nlogo-slot { position: absolute; inset: 0; }
+
+/* ── Shelf: графит, как тёмная тема полки, и точечная сетка её сцены ── */
+.nlogo--shelf {
+  --nl-glow: rgba(255, 255, 255, 0.09);
+  color: #f5f5f7;
+  background:
+    radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.3px) 0 0 / 14px 14px,
+    radial-gradient(120% 95% at 50% 22%, #34343a 0%, #1d1d20 55%, #111113 100%);
+}
+.nlogo--shelf .nlogo__mark { fill: currentColor; }
+.nlogo--shelf .nlogo__b, .nlogo--shelf .nlogo__c { fill-opacity: 0.72; }
+.nlogo--shelf .nlogo__a, .nlogo--shelf .nlogo__b { transform-origin: 50% 100%; }
+.nlogo--shelf .nlogo__plank { transform-origin: 50% 50%; }
+.nlogo--shelf .nlogo__a { animation: nl-shelf-a 6s cubic-bezier(0.25, 0.8, 0.25, 1) infinite; }
+.nlogo--shelf .nlogo__b { animation: nl-shelf-b 6s cubic-bezier(0.25, 0.8, 0.25, 1) infinite; }
+.nlogo--shelf .nlogo__c { animation: nl-shelf-c 6s cubic-bezier(0.25, 0.8, 0.25, 1) infinite; }
+.nlogo--shelf .nlogo__plank { animation: nl-shelf-plank 6s cubic-bezier(0.3, 0.7, 0.2, 1) infinite; }
+
+/* стоит, подпрыгивает; уходит вверх; падает на доску с лёгким приседанием; стоит */
+@keyframes nl-shelf-a {
+  0%, 17% { transform: none; opacity: 1; }
+  21% { transform: translateY(-1.8px); }
+  25%, 40% { transform: none; opacity: 1; }
+  46% { transform: translateY(-6px); opacity: 0; }
+  59% { transform: translateY(-9px); opacity: 0; }
+  64% { transform: translateY(0.3px) scale(1.06, 0.88); opacity: 1; }
+  68% { transform: translateY(-0.6px) scale(0.98, 1.03); }
+  71%, 100% { transform: none; opacity: 1; }
+}
+@keyframes nl-shelf-b {
+  0%, 42% { transform: none; opacity: 1; }
+  48% { transform: translateY(-6px); opacity: 0; }
+  63% { transform: translateY(-9px); opacity: 0; }
+  68% { transform: translateY(0.3px) scale(1.05, 0.86); opacity: 1; }
+  72% { transform: translateY(-0.4px) scale(0.99, 1.03); }
+  75%, 100% { transform: none; opacity: 1; }
+}
+@keyframes nl-shelf-c {
+  0%, 44% { transform: none; opacity: 1; }
+  50% { transform: translateX(-5px); opacity: 0; }
+  71% { transform: translateX(-5px); opacity: 0; }
+  78% { transform: translateX(0.3px); opacity: 1; }
+  81%, 100% { transform: none; opacity: 1; }
+}
+@keyframes nl-shelf-plank {
+  0%, 46% { transform: scaleX(1); }
+  53%, 56% { transform: scaleX(0); }
+  63% { transform: scaleX(1.03); }
+  66%, 100% { transform: scaleX(1); }
+}
+
+/* ── Marathon: цвета двух людей из самого трекера (PERSON_COLORS) на тёмно-синем ── */
+.nlogo--marathon {
+  --nl-glow: rgba(47, 163, 138, 0.14);
+  background:
+    radial-gradient(60% 50% at 70% 80%, rgba(214, 71, 123, 0.12), transparent),
+    radial-gradient(120% 95% at 50% 22%, #1d2733 0%, #10161d 55%, #0a0d11 100%);
+}
+.nlogo--marathon .nlogo__track, .nlogo--marathon .nlogo__ring { fill: none; stroke-width: 10; }
+.nlogo--marathon .nlogo__track--out { stroke: rgba(47, 163, 138, 0.2); }
+.nlogo--marathon .nlogo__track--in { stroke: rgba(214, 71, 123, 0.2); }
+.nlogo--marathon .nlogo__ring { stroke-linecap: round; stroke-dasharray: 100 100; }
+.nlogo--marathon .nlogo__ring--out { stroke: #2fa38a; animation: nl-ring-out 6s ease-in-out infinite; }
+.nlogo--marathon .nlogo__ring--in { stroke: #d6477b; animation: nl-ring-in 6s ease-in-out infinite; }
+.nlogo--marathon .nlogo__check {
+  fill: none; stroke: #f5f5f7; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round;
+  transform-origin: 50% 50%; animation: nl-check 6s cubic-bezier(0.3, 0.9, 0.3, 1.2) infinite;
+}
+/* неделя закрыта; кольца сматываются; двое набирают неделю каждый в своём темпе; галочка */
+@keyframes nl-ring-out {
+  0%, 30% { stroke-dashoffset: 0; }
+  38%, 46% { stroke-dashoffset: 100; }
+  78%, 100% { stroke-dashoffset: 0; }
+}
+@keyframes nl-ring-in {
+  0%, 32% { stroke-dashoffset: 0; }
+  40%, 50% { stroke-dashoffset: 100; }
+  84%, 100% { stroke-dashoffset: 0; }
+}
+@keyframes nl-check {
+  0%, 27% { opacity: 1; transform: none; }
+  31%, 85% { opacity: 0; transform: scale(0.6); }
+  90% { opacity: 1; transform: scale(1.1); }
+  94%, 100% { opacity: 1; transform: none; }
+}
+
+/* неподвижно: собранный знак, как на нулевом кадре */
+@media (prefers-reduced-motion: reduce) {
+  .nlogo * { animation: none !important; }
+}

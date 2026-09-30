@@ -1,13 +1,16 @@
-/* Заметки на первом экране (v28): одна карточка, три страницы. Первая — как вырос холм, дальше —
-   три своих графических проекта Никиты, у каждого живая демонстрация с панелью настроек и код.
+/* Заметки на первом экране (v28): одна карточка, листается по страницам. Свои проекты Никиты: четыре графических
+   демо с живой панелью настроек и код, а с v88 ещё полка UI-решений Shelf и трекер поиска работы Marathon.
    Тексты — в словарях (i18n/en.ts, ru.ts) под ключами notes.<id>.*; здесь только то, что от языка
    не зависит. Все проекты опубликованы: код на github.com/kloserock97-tech, демо на GitHub Pages. */
+import type { NoteLogo } from "../ui/noteLogo";
+
 type NoteLinks = { demo: string; repo: string };
 /** зацикленное превью: webm для Chrome и Firefox, mp4 для Safari; постер — первый кадр ролика */
 type NoteVideo = { webm: string; mp4: string };
 /** meta — стек и год строкой под заголовком описания (от языка не зависит);
     glyph — свой штриховой значок проекта: содержимое svg с viewBox 0 0 64 64 (v58) */
-export type Note = { id: "hill" | "drift" | "sail" | "meadow"; image: string; points: number; meta: string; glyph: string; links?: NoteLinks; video?: NoteVideo };
+/** logo — живой знак вместо ролика (v88, ui/noteLogo.ts); image тогда — неподвижный кадр того же знака */
+export type Note = { id: "hill" | "drift" | "sail" | "meadow" | "shelf" | "marathon"; image: string; points: number; meta: string; glyph: string; links?: NoteLinks; video?: NoteVideo; logo?: NoteLogo };
 
 const notes: Note[] = [
   {
@@ -50,6 +53,27 @@ const notes: Note[] = [
     video: { webm: "ui/card-meadow.webm", mp4: "ui/card-meadow.mp4" },
     points: 3,
     links: { demo: "https://kloserock97-tech.github.io/meadow-walk/", repo: "https://github.com/kloserock97-tech/meadow-walk" },
+  },
+  /* v88: не графика, а продукты для себя — полка UI-решений и трекер поиска работы. Обложка — живой знак */
+  {
+    id: "shelf",
+    meta: "Astro · TypeScript · 2026",
+    /* знак полки: два предмета на доске, один под ней */
+    glyph: '<rect x="12" y="10" width="14" height="20" rx="4"/><rect x="32" y="17" width="20" height="13" rx="4"/><path d="M8 37h48"/><rect x="14" y="44" width="24" height="9" rx="4.5"/>',
+    image: "ui/card-shelf.webp",
+    logo: "shelf",
+    points: 3,
+    links: { demo: "https://kloserock97-tech.github.io/shelf/", repo: "https://github.com/kloserock97-tech/shelf" },
+  },
+  {
+    id: "marathon",
+    meta: "Preact · Cloudflare · 2026",
+    /* два кольца недели и галочка */
+    glyph: '<circle cx="32" cy="32" r="22"/><circle cx="32" cy="32" r="12"/><path d="M27 32.5l3.5 3.5 7-7.5"/>',
+    image: "ui/card-marathon.webp",
+    logo: "marathon",
+    points: 3,
+    /* закрытый продукт на двоих: код в приватном репозитории, вход только для двух аккаунтов — ссылок нет */
   },
 ];
 
