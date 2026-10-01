@@ -63,7 +63,7 @@ const notes: Note[] = [
     image: "ui/card-shelf.webp",
     logo: "shelf",
     points: 3,
-    links: { demo: "https://kloserock97-tech.github.io/shelf/", repo: "https://github.com/kloserock97-tech/shelf" },
+    /* проект закрытый: ссылок на демо и код нет */
   },
   {
     id: "marathon",
