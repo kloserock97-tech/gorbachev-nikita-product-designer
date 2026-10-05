@@ -106,6 +106,34 @@ const flowBody = (flow: NonNullable<CaseStory["flow"]>) => `<div class="cs-flow"
   </div>
   <p class="cs-legend"><i></i>${t("cs.wait")}</p>`;
 
+/* v90: ролик интерфейса — тот же вид, что у живых демо (caseDemos), но внутри видео.
+   preload="none": файл не качается, пока блок не попал в кадр; запуск и пауза — в mountFilms. */
+const filmBlock = (f: NonNullable<CaseStory["decisions"]["film"]>) => `<figure class="dm-wrap cs-film" data-reveal>
+    <div class="dm-stage"><video class="cs-film-video" muted loop playsinline preload="none" width="${f.w}" height="${f.h}" poster="${esc(f.poster)}" aria-label="${esc(f.caption)}"><source src="${esc(f.src)}" type="video/mp4"></video></div>
+    <figcaption><span class="dm-live"><i></i>${t("cs.film")}</span><button type="button" class="dm-replay"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10a6 6 0 1 0 2-4.5"/><path d="M4 3.5V7h3.5"/></svg>${t("cs.replay")}</button></figcaption>
+  </figure>`;
+
+/** играет ролик, пока он виден; при «уменьшить движение» не стартует сам и показывает элементы управления */
+function mountFilms(root: HTMLElement, scroller: HTMLElement) {
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const wraps = [...root.querySelectorAll<HTMLElement>(".cs-film")];
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      const v = e.target.querySelector<HTMLVideoElement>("video")!;
+      if (e.isIntersecting && !reduce) v.play().catch(() => {});
+      else v.pause();
+      e.target.classList.toggle("is-playing", e.isIntersecting && !reduce);
+    }
+  }, { root: scroller, threshold: 0.4 });
+  for (const w of wraps) {
+    const v = w.querySelector<HTMLVideoElement>("video")!;
+    if (reduce) { v.controls = true; v.preload = "metadata"; }
+    w.querySelector(".dm-replay")?.addEventListener("click", () => { v.currentTime = 0; v.play().catch(() => {}); w.classList.add("is-playing"); });
+    io.observe(w);
+  }
+  return () => { io.disconnect(); wraps.forEach((w) => w.querySelector("video")?.pause()); };
+}
+
 const resultPoints =(points: string[]) => (points.length ? `<ul class="cs-points" data-reveal>${points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : "");
 
 const hypothesesBlock =(h: NonNullable<CaseStory["research"]["hypotheses"]>) => `<div class="cs-block" data-reveal>${mini(t("cs.hypotheses"))}${h.intro ? `<p class="cs-text">${esc(h.intro)}</p>` : ""}
@@ -362,6 +390,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
             <div class="cs-fold-body">${flowBody(s.flow)}</div>
           </details>` : ""}
           ${demoBlock(s.id)}
+          ${s.decisions.film ? filmBlock(s.decisions.film) : ""}
           <div class="cs-decisions">${s.decisions.items.map((d, k) => decision(d, k, s.deepDives)).join("")}</div>
           ${s.deepDives.length ? `<div class="cs-deeps">${mini(t("cs.deep"))}${s.deepDives.map(deepDive).join("")}</div>` : ""}
         </section>
@@ -700,6 +729,7 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
   stops.push(() => io.disconnect());
 
   stops.push(mountDemos(root, scroller));
+  stops.push(mountFilms(root, scroller));
   stops.push(mountHero(root, scroller));
 
   return {

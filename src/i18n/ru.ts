@@ -225,6 +225,8 @@ const ru: Record<keyof typeof en, string> = {
   "cs.funnel": "Воронка",
   "cs.flow": "Было и стало",
   "cs.wait": "работа ждёт человека",
+  "cs.film": "Фильм интерфейса",
+  "cs.replay": "Ещё раз",
   "cs.decisions": "Решения",
   "cs.found": "Что нашёл",
   "cs.did": "Что сделал",

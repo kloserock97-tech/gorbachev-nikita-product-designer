@@ -125,7 +125,8 @@ export type CaseStory = {
   };
   /** folded — схема не отдельной главой, а свёрнутым блоком в «Решениях»; title тогда подпись этого блока */
   flow?: { title: string; folded?: boolean; before:{ title: string; steps: FlowStep[]; summary: string }; after: { title: string; steps: FlowStep[]; summary: string } };
-  decisions: { lead: string; items: Decision[] };
+  /** film — ролик интерфейса (видео) после подводки к решениям: играет без звука, пока виден */
+  decisions: { lead: string; items: Decision[]; film?: { src: string; poster: string; w: number; h: number; caption: string } };
   /** разделение человек/агент (GRIF) */
   split?: { title: string; left: { name: string; items: string[] }; right: { name: string; items: string[] }; why: string };
   /** широкие картинки-разделители между главами: фото и фирменные материалы продукта */

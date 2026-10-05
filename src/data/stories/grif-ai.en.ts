@@ -104,10 +104,11 @@ export const en: CaseStory = {
       },
     ],
   },
-  /* [TO FILL] раздел «Решения»: пометки Никиты — в русской версии */
+  /* v90: the interface film from Claude Design, rendered frame by frame into a video (see the Russian version) */
   decisions: {
-    lead: "[TO FILL] Decisions: the main input and its border animation, a greeting that follows the context, prompt chips, how GRIF thinks and what artefacts remain, accessibility and WCAG.",
+    lead: "How the GRIF chat works, in one film: the main input with a live border, a greeting that follows the day's context, prompt chips, the thinking steps, the artefacts left after an answer, and accessibility.",
     items: [],
+    film: { src: G + "film.mp4", poster: G + "film-poster.webp", w: 1920, h: 1080, caption: "GRIF interface film: input, greeting, chips, thinking steps, artefacts and accessibility" },
   },
   /* ПРИМЕР: the numbers below are made up as an example at Nikita's request; replace with real ones before publishing */
   results: {
@@ -134,25 +135,6 @@ export const en: CaseStory = {
     "A design system, a precise prompt and a tuned pipeline do not replace a person's vision and control. People use the product, and only a person can tell what will hit the audience's pain.",
   ],
   gallery: [
-    {
-      kind: "spot",
-      title: "One answer, five decisions about trust",
-      image: img(G + "03.webp", 1024, 922, "An assistant answer with sources, a memory note and an action card"),
-      spots: [
-        { x: 56.5, y: 11.9, text: "\"Gathered context, 4 sources\": the reasoning steps are folded into one line", decision: "reasoning" },
-        { x: 27.5, y: 15.3, text: "The answer opens with the conclusion", decision: "conclusion" },
-        { x: 60.5, y: 28, text: "Source labels: Telegram, Gmail, Notion", decision: "conclusion" },
-        { x: 78, y: 33.3, text: "\"Don't remember\" sits right next to what was noted", decision: "memory" },
-        { x: 29.6, y: 62.7, text: "\"I won't send this without your OK\" is written on the card itself", decision: "confirm" },
-      ],
-    },
-    {
-      kind: "compare",
-      title: "Before and after sending: the action can be taken back",
-      before: img(G + "03.webp", 1024, 922, "Before sending: the card awaits a decision"),
-      after: img(G + "06.webp", 1024, 772, "After sending: \"Undo\" at the top and \"Recall\" in the conversation"),
-      labels: ["Awaiting your OK", "Sent · can be undone"],
-    },
     {
       kind: "bento",
       title: "More screens",

@@ -71,7 +71,7 @@ export function mountDemos(root: HTMLElement, scroller: HTMLElement) {
       if (!e.isIntersecting) { const r = runs.get(wrap); if (r) r.stopped = true; played.delete(wrap); }
     }
   }, { root: scroller, threshold: 0.45 });
-  root.querySelectorAll<HTMLElement>(".dm-wrap").forEach((w) => {
+  root.querySelectorAll<HTMLElement>(".dm-wrap[data-demo]").forEach((w) => {
     io.observe(w);
     w.querySelector(".dm-replay")?.addEventListener("click", () => start(w));
   });

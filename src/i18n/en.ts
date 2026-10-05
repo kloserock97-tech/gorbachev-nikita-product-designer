@@ -222,6 +222,8 @@ const en = {
   "cs.funnel": "Funnel",
   "cs.flow": "Before and after",
   "cs.wait": "work waits for a person",
+  "cs.film": "Interface film",
+  "cs.replay": "Play again",
   "cs.decisions": "Decisions",
   "cs.found": "What I found",
   "cs.did": "What I did",
