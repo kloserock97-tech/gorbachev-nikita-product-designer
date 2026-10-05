@@ -27,7 +27,8 @@ export type Gallery =
 export type Method = {
   /** метка метода: «Интервью», «Замеры», «Конкуренты»… */
   kind: string;
-  title: string;
+  /** подзаголовок карточки; без него карточку называет одна метка */
+  title?: string;
   /** на какой вопрос отвечали */
   question: string;
   /** кто и сколько: «два стейкхолдера, много заходов» */
@@ -95,7 +96,8 @@ export type CaseStory = {
     origin?: string;
     roles?: { who: string; needs: string }[];
     constraints?: { title: string; text: string }[];
-    myRole: string;
+    /** без него тёмной карточки «Моя роль» нет: роль бывает рассказана уже в «Коротко» */
+    myRole?: string;
     team?: { who: string; how: string }[];
   };
   approach?: {
@@ -113,21 +115,25 @@ export type CaseStory = {
   research: {
     lead: string;
     methods: Method[];
-    hypotheses?: { intro?: string; items: Hypothesis[]; measured?: string };
+    /** first — показать гипотезы до методов: сначала что проверяли, потом как */
+    hypotheses?: { intro?: string; items: Hypothesis[]; measured?: string; first?: boolean };
     noData?: { title: string; text: string; props: { title: string; text: string }[] };
     persona?: { name: string; age: string; pains: string[]; needs: string[]; note: string };
     competitors?: { title: string; columns: string[]; rows: { name: string; marks: (0 | 1 | 2)[] }[]; note: string };
     matrix?: { title: string; axes: [string, string]; items: { text: string; impact: number; cost: number; tier: string }[]; note: string };
     funnel?: { title: string; steps: { label: string; note: string; drop?: boolean }[]; note: string };
   };
-  flow?: { title: string; before: { title: string; steps: FlowStep[]; summary: string }; after: { title: string; steps: FlowStep[]; summary: string } };
+  /** folded — схема не отдельной главой, а свёрнутым блоком в «Решениях»; title тогда подпись этого блока */
+  flow?: { title: string; folded?: boolean; before:{ title: string; steps: FlowStep[]; summary: string }; after: { title: string; steps: FlowStep[]; summary: string } };
   decisions: { lead: string; items: Decision[] };
   /** разделение человек/агент (GRIF) */
   split?: { title: string; left: { name: string; items: string[] }; right: { name: string; items: string[] }; why: string };
   /** широкие картинки-разделители между главами: фото и фирменные материалы продукта */
   interludes?: Interlude[];
   mistakes?: { lead: string; intro?: string; items: Mistake[] };
-  results: { lead?: string; intro?: string; outcomes?: Outcome[]; points: string[]; contribution?: string; honesty?: string };
+  /** pointsFirst — сначала «что осталось» списком, потом цифры (outcomes) под меткой «Про цифры» */
+  /** без results раздела «Результат» нет: у концептов метрики не замерялись */
+  results?: { lead?: string; intro?: string; outcomes?: Outcome[]; points: string[]; pointsFirst?: boolean; contribution?: string; honesty?: string };
   roadmap?: { kicker: string; title: string; text: string }[];
   takeaways: string[];
   quote?: string;

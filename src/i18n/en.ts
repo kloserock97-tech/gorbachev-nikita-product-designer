@@ -211,7 +211,7 @@ const en = {
   "cs.research": "Research",
   "cs.question": "Question",
   "cs.sample": "Sample",
-  "cs.finding": "Finding",
+  "cs.finding": "Conclusion",
   "cs.hypotheses": "Hypotheses",
   "cs.measured": "What was measured",
   "cs.persona": "Persona",

@@ -214,7 +214,7 @@ const ru: Record<keyof typeof en, string> = {
   "cs.research": "Исследование",
   "cs.question": "Вопрос",
   "cs.sample": "Выборка",
-  "cs.finding": "Находка",
+  "cs.finding": "Вывод",
   "cs.hypotheses": "Гипотезы",
   "cs.measured": "Что мерили",
   "cs.persona": "Персона",

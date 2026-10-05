@@ -287,6 +287,13 @@ html[lang="en"] .cs-hyp q { quotes: "\201C" "\201D"; }
 .cs-deep-toggle i::after { rotate: 90deg; transition: rotate 0.45s var(--ease); }
 .cs-deep[open] .cs-deep-toggle i::after { rotate: 0deg; }
 .cs-deep summary:hover .cs-deep-toggle { rotate: 90deg; }
+/* v87: свёрнутая схема «было / стало» внутри «Решений» — тот же вид, что у разборов, но без своего адреса */
+.cs-fold { border-radius: 28px; background: var(--tile); }
+.cs-fold summary { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 18px; padding: 22px 26px; cursor: pointer; list-style: none; border-radius: 28px; }
+.cs-fold summary::-webkit-details-marker { display: none; }
+.cs-fold[open] .cs-deep-toggle i::after { rotate: 0deg; }
+.cs-fold summary:hover .cs-deep-toggle { rotate: 90deg; }
+.cs-fold-body { padding: 4px clamp(18px, 2.4vw, 32px) clamp(22px, 2.6vw, 34px); animation: cs-open 0.55s var(--ease); }
 .cs-deep-body { padding: 8px clamp(22px, 2.8vw, 40px) clamp(26px, 3vw, 40px); animation: cs-open 0.55s var(--ease); }
 @keyframes cs-open { from { opacity: 0; translate: 0 -8px; } }
 .cs-deep-head h3 { margin-top: 10px; max-width: 20em; font-size: clamp(26px, 2.5vw, 40px); line-height: 1.1; letter-spacing: -0.018em; text-wrap: balance; }

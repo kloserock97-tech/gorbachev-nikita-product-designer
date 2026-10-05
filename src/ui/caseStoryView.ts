@@ -96,10 +96,26 @@ const paras = (text: string, cls = "cs-text") => text.split(/\n{2,}/).map((x) =>
 
 const mini = (label: string) => `<p class="cs-mini">${esc(label)}</p>`;
 
+/** схема «было / стало»: отдельной главой или свёрнутой внутри «Решений» */
+const flowBody = (flow: NonNullable<CaseStory["flow"]>) => `<div class="cs-flow" data-reveal>
+    ${[flow.before, flow.after].map((f, side) => `<div class="cs-flow-col ${side ? "is-after" : "is-before"}">
+      <h3>${esc(f.title)}</h3>
+      <ol>${f.steps.map((st, k) => `<li class="${st.wait ? "is-wait" : ""}"><span class="cs-flow-n">${pad(k + 1)}</span><span class="cs-flow-who">${esc(st.who)}</span><b>${esc(st.step)}</b><p>${esc(st.note)}</p></li>`).join("")}</ol>
+      <p class="cs-flow-sum">${esc(f.summary)}</p>
+    </div>`).join("")}
+  </div>
+  <p class="cs-legend"><i></i>${t("cs.wait")}</p>`;
+
+const resultPoints =(points: string[]) => (points.length ? `<ul class="cs-points" data-reveal>${points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : "");
+
+const hypothesesBlock =(h: NonNullable<CaseStory["research"]["hypotheses"]>) => `<div class="cs-block" data-reveal>${mini(t("cs.hypotheses"))}${h.intro ? `<p class="cs-text">${esc(h.intro)}</p>` : ""}
+  <ol class="cs-hyp">${h.items.map((x, k) => `<li><span>${pad(k + 1)}</span><q>${esc(x.text)}</q><em class="${x.won ? "is-won" : ""}">${esc(x.verdict)}</em></li>`).join("")}</ol>
+  ${h.measured ? `<p class="cs-measured"><b>${t("cs.measured")}</b>${esc(h.measured)}</p>` : ""}</div>`;
+
 const methodCard = (m: Method, k: number) => `
   <article class="cs-method" data-reveal style="--rd:${k}">
     <p class="cs-method-kind"><span>${pad(k + 1)}</span>${esc(m.kind)}</p>
-    <h3>${esc(m.title)}</h3>
+    ${m.title ? `<h3>${esc(m.title)}</h3>` : ""}
     <dl>
       <div><dt>${t("cs.question")}</dt><dd>${esc(m.question)}</dd></div>
       ${m.sample ? `<div><dt>${t("cs.sample")}</dt><dd>${linkify(esc(m.sample))}</dd></div>` : ""}
@@ -221,11 +237,11 @@ export function sectionsOf(s: CaseStory): Section[] {
   const list: Section[] = [{ id: "brief", label: t("cs.brief") }, { id: "context", label: t("cs.context") }];
   if (s.approach) list.push({ id: "approach", label: t("cs.approach") });
   list.push({ id: "research", label: t("cs.research") });
-  if (s.flow) list.push({ id: "flow", label: t("cs.flow") });
+  if (s.flow && !s.flow.folded) list.push({ id: "flow", label: t("cs.flow") });
   list.push({ id: "decisions", label: t("cs.decisions"), children: s.deepDives.map((d) => ({ id: `dd-${d.id}`, label: d.chip })) });
   if (s.split) list.push({ id: "split", label: t("cs.split") });
   if (s.mistakes) list.push({ id: "mistakes", label: t("cs.mistakes") });
-  list.push({ id: "results", label: t("cs.results") });
+  if (s.results) list.push({ id: "results", label: t("cs.results") });
   if (s.gallery.length) list.push({ id: "screens", label: t("cs.screens") });
   if (s.roadmap) list.push({ id: "roadmap", label: t("cs.roadmap") });
   list.push({ id: "takeaways", label: t("cs.takeaways") });
@@ -293,7 +309,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           ${ctx.roles?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.roles"))}<ul class="cs-roles">${ctx.roles.map((x) => `<li><b>${esc(x.who)}</b><span>${esc(x.needs)}</span></li>`).join("")}</ul></div>` : ""}
           ${ctx.constraints?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.constraints"))}<ol class="cs-constraints">${ctx.constraints.map((x, k) => `<li><span>${pad(k + 1)}</span><b>${esc(x.title)}</b><p>${esc(x.text)}</p></li>`).join("")}</ol></div>` : ""}
           ${ctx.team?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.team"))}<ul class="cs-roles">${ctx.team.map((x) => `<li><b>${esc(x.who)}</b><span>${esc(x.how)}</span></li>`).join("")}</ul></div>` : ""}
-          <div class="cs-block cs-card cs-card--dark" data-reveal>${mini(t("cs.myrole"))}<p>${esc(ctx.myRole)}</p></div>
+          ${ctx.myRole ? `<div class="cs-block cs-card cs-card--dark" data-reveal>${mini(t("cs.myrole"))}<p>${esc(ctx.myRole)}</p></div>` : ""}
         </section>
         ${brk("context")}
 
@@ -310,10 +326,9 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
 
         <section class="cs-sec">
           ${head(++sec, "research", t("cs.research"), r.lead)}
+          ${r.hypotheses?.first ? hypothesesBlock(r.hypotheses) : ""}
           <div class="cs-methods">${r.methods.map(methodCard).join("")}</div>
-          ${r.hypotheses ? `<div class="cs-block" data-reveal>${mini(t("cs.hypotheses"))}${r.hypotheses.intro ? `<p class="cs-text">${esc(r.hypotheses.intro)}</p>` : ""}
-            <ol class="cs-hyp">${r.hypotheses.items.map((h, k) => `<li><span>${pad(k + 1)}</span><q>${esc(h.text)}</q><em class="${h.won ? "is-won" : ""}">${esc(h.verdict)}</em></li>`).join("")}</ol>
-            ${r.hypotheses.measured ? `<p class="cs-measured"><b>${t("cs.measured")}</b>${esc(r.hypotheses.measured)}</p>` : ""}</div>` : ""}
+          ${r.hypotheses && !r.hypotheses.first ? hypothesesBlock(r.hypotheses) : ""}
           ${r.persona ? `<div class="cs-block cs-persona" data-reveal>${mini(t("cs.persona"))}<div class="cs-persona-card"><div class="cs-persona-face" aria-hidden="true">${esc(r.persona.name.slice(0, 1))}</div><div><b>${esc(r.persona.name)}, ${esc(r.persona.age)}</b><p>${esc(r.persona.note)}</p></div>
             <div><p class="cs-mini">${t("cs.pains")}</p><ul>${r.persona.pains.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>
             <div><p class="cs-mini">${t("cs.needs")}</p><ul>${r.persona.needs.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div></div></div>` : ""}
@@ -334,21 +349,18 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
         </section>
         ${brk("research")}
 
-        ${s.flow ? `<section class="cs-sec">
+        ${s.flow && !s.flow.folded ? `<section class="cs-sec">
           ${head(++sec, "flow", t("cs.flow"), s.flow.title)}
-          <div class="cs-flow" data-reveal>
-            ${[s.flow.before, s.flow.after].map((f, side) => `<div class="cs-flow-col ${side ? "is-after" : "is-before"}">
-              <h3>${esc(f.title)}</h3>
-              <ol>${f.steps.map((st, k) => `<li class="${st.wait ? "is-wait" : ""}"><span class="cs-flow-n">${pad(k + 1)}</span><span class="cs-flow-who">${esc(st.who)}</span><b>${esc(st.step)}</b><p>${esc(st.note)}</p></li>`).join("")}</ol>
-              <p class="cs-flow-sum">${esc(f.summary)}</p>
-            </div>`).join("")}
-          </div>
-          <p class="cs-legend"><i></i>${t("cs.wait")}</p>
+          ${flowBody(s.flow)}
         </section>` : ""}
 
         <section class="cs-sec">
           ${head(++sec, "decisions", t("cs.decisions"))}
           <p class="cs-text cs-text--lead" data-reveal>${runIn(s.decisions.lead)}</p>
+          ${s.flow?.folded ? `<details class="cs-fold" data-reveal>
+            <summary><span class="cs-deep-title"><b>${esc(s.flow.title)}</b></span><span class="cs-deep-toggle" aria-hidden="true"><i></i></span></summary>
+            <div class="cs-fold-body">${flowBody(s.flow)}</div>
+          </details>` : ""}
           ${demoBlock(s.id)}
           <div class="cs-decisions">${s.decisions.items.map((d, k) => decision(d, k, s.deepDives)).join("")}</div>
           ${s.deepDives.length ? `<div class="cs-deeps">${mini(t("cs.deep"))}${s.deepDives.map(deepDive).join("")}</div>` : ""}
@@ -377,18 +389,19 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
             </div></article>`).join("")}</div>
         </section>` : ""}
 
-        <section class="cs-sec">
+        ${s.results ? `<section class="cs-sec">
           ${head(++sec, "results", t("cs.results"), s.results.lead)}
           ${s.results.intro ? paras(s.results.intro) : ""}
-          ${s.results.outcomes?.length ? `<ol class="cs-outcomes">${s.results.outcomes.map((o, k) => `<li data-reveal style="--rd:${k}">
+          ${s.results.pointsFirst ? resultPoints(s.results.points) : ""}
+          ${s.results.outcomes?.length ? `${s.results.pointsFirst ? `<div class="cs-block" data-reveal>${mini(t("cs.honesty"))}</div>` : ""}<ol class="cs-outcomes">${s.results.outcomes.map((o, k) => `<li data-reveal style="--rd:${k}">
             <p class="cs-num cs-num--s"><span>${pad(k + 1)}</span></p>
             <div><p class="cs-mini">X · ${t("cs.x")}</p><b>${esc(o.x)}</b></div>
             <div><p class="cs-mini">Y · ${t("cs.y")}</p><p>${esc(o.y)}</p></div>
             <div><p class="cs-mini">Z · ${t("cs.z")}</p><p>${esc(o.z)}</p></div></li>`).join("")}</ol>` : ""}
-          ${s.results.points.length ? `<ul class="cs-points" data-reveal>${s.results.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}
+          ${s.results.pointsFirst ? "" : resultPoints(s.results.points)}
           ${s.results.contribution ? `<div class="cs-block cs-card cs-card--dark" data-reveal>${mini(t("cs.contribution"))}<p>${esc(s.results.contribution)}</p></div>` : ""}
           ${s.results.honesty ? `<div class="cs-block cs-honesty" data-reveal>${mini(t("cs.honesty"))}<p>${esc(s.results.honesty)}</p></div>` : ""}
-        </section>
+        </section>` : ""}
 
         ${s.gallery.length ? `<section class="cs-sec cs-sec--screens">
           ${head(++sec, "screens", t("cs.screens"))}

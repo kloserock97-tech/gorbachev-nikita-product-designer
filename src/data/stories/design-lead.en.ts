@@ -1,8 +1,9 @@
 /* The case about design in the team moving out of service work and into product decisions.
    It used to be a deep dive inside the AI-agent risk case and moved out into a case of its own — someone
    looking for a lead should not have to dig through another product to find it.
-   Same facts as the deep dive carried: the team, the span, the things put in place, the digest and the demos.
-   No growth numbers here: nobody measured them, and inventing them afterwards is not evidence. */
+   v86: rewritten after Nikita's review, following the Russian version: repetition removed, metrics are design
+   and product ones. Places marked [TO FILL] are for Nikita to fill in.
+   v89: shortened following the Russian version, by docs/prompts/case-copy-edit.md. */
 import type { CaseStory, CaseImage } from "../caseStory";
 
 const img = (src: string, w: number, h: number, caption: string, kind = "screen"): CaseImage => ({ src, w, h, caption, kind });
@@ -12,9 +13,9 @@ export const en: CaseStory = {
   hero: {
     kicker: "Product design · Sber · 2025–2026",
     title: "Design Got a Seat",
-    tagline: "Over a year design stopped being the decoration at the end. A task arrives with a goal, a mockup goes through review, and design is in the room from the start.",
+    tagline: "I rebuilt the process around the design team, and design started being called into product decisions from the start.",
     summary:
-      "A team of four designers on an internal bank product: risk assessment and review of AI agents, around 2,500 employees. I owned design quality, handed out the work, hired people and helped them grow. What changed over that year was not the screens. It was the shape a task arrives in, and the moment design gets into the conversation.",
+      "I led the design team of an internal bank product for risk assessment and review of AI agents: design quality, handing out work, hiring, onboarding and growth plans, and I joined the hard projects myself. Over a year I changed the process around the screens, and pinned every rule to the sprint board so it did not live in the lead's memory.",
     facts: [
       ["Role", "Design lead"],
       ["Span", "About a year"],
@@ -23,120 +24,113 @@ export const en: CaseStory = {
     ],
     tags: ["Leadership", "Process", "Design system", "Hiring"],
   },
+  /* process rules checked against the sprint board; the measured effect sits in the Outcome */
   kpis: [
-    { value: "4", label: "designers on the team: one senior, two mid, one intern" },
-    { value: "~1 year", label: "in which design moved into product decisions" },
-    { value: "~2,500", label: "bank employees work in the product" },
+    { value: "100%", label: "of tasks are picked up with a goal, a metric and a definition of done" },
+    { value: "0", label: "mockups reach engineering without a design review" },
   ],
   context: {
     lead: "Design was called once the important things were settled.",
     text:
-      "You know the meeting where everything is already agreed and you are asked to \"just draw it\"? That was design's place in the team.\n\nRoughly like calling an architect when the walls are already up. They will suggest something, of course — but the choice left to them is wallpaper.\n\nThe other half of the same problem arrived from the opposite side: a task reached a designer as a single line. \"We need a modal.\" That was the whole brief.",
-    myRole:
-      "Owned design quality, handed out the work and helped with product calls, ran hiring and onboarding, kept a growth plan with each designer, joined the hard projects myself.",
+      "Design worked as a service: it was brought in at the end and asked to \"just draw it\". All that was left to choose was the styling.\n\nAnd a task arrived as a single line: \"We need a modal.\"",
   },
   approach: {
-    lead: "What needed changing was not the screens. It was what happens before and after them.",
+    lead: "Change the process around the mockups. The mockups come after.",
     text:
-      "Drawing more screens is a dead end: my day is as long as everyone else's. So I went after the things around the work rather than the work itself. The shape a task arrives in. Who looks at a solution before it reaches engineering. Where the corners we cut end up. Where shared interface parts come from.\n\nFour things, and not one of them is about how a screen looks.",
-    levels: [
-      { title: "Task template", text: "What hurts for the business and for the user, the goal, how we will measure it, the constraints, and what counts as done." },
-      { title: "Design review", text: "We go through each other's work regularly. Quality climbs, mistakes drop, and what one person figured out spreads." },
-      { title: "Design debt", text: "We write down what was done in a hurry and decide what to fix first. Mess stops piling up by itself." },
-      { title: "Design system", text: "A shared library of interface parts and shared rules. Work moves faster and screens stop disagreeing with each other." },
-    ],
+      "I went after what surrounds a designer's work: the shape a task arrives in, who looks at a mockup before engineering, where rushed work ends up, where components come from, and whether the team's work is visible from outside.",
   },
   research: {
-    lead: "Before putting anything in place I watched how the work actually ran. Two holes.",
+    lead: "Before changing anything, I looked at how the work ran. I found two holes.",
     methods: [
       {
         kind: "Observation",
-        title: "The shape a task arrives in",
-        question: "What does a designer get to start from?",
+        question: "What shape does a task arrive in?",
         finding:
-          "\"We need a modal.\" That was the whole brief. Not what it is for, not who it is for, not how anyone would know it worked. Like asking a carpenter for a shelf without saying what goes on it.",
+          "There is no goal, no user and no definition of done, so the designer guesses them. The mismatch surfaces on a finished mockup, when a redo costs weeks.",
       },
       {
         kind: "Observation",
-        title: "The moment a designer is called",
-        question: "Is design part of the decision, or the wrapping on one already made?",
+        question: "When is design brought in?",
         finding:
-          "Design was treated as a service and brought in once the important things were settled. Not out of spite — it was simply unclear why you would call sooner.",
+          "Once the important things are settled. Design's work is invisible from outside, so there is no reason to call it sooner.",
       },
     ],
   },
   decisions: {
-    lead: "Five things I put in place over the year. Not one of them is about drawing.",
+    lead: "Five rules over the year, each closing a hole from the research.",
     items: [
       {
         id: "brief",
-        title: "A task arrives filled in, not as one line",
-        found: "A designer got \"we need a modal\" and filled in the rest by guesswork: what for, for whom, and what would count as success.",
-        did: "I put a template in place. Until it says what hurts for the business and the user, the goal, how we will measure it, the constraints and what counts as done, the task is not picked up.",
-        effect: "The argument about drawing the wrong thing moved to before the mockup, where it costs ten minutes instead of two weeks.",
-        why: "Asking a carpenter for a shelf without saying what goes on it is a reliable way to get the wrong shelf.",
+        title: "A task arrives filled in",
+        found: "The designer guessed the goal and what would count as success.",
+        did: "A template: the business and user problem, the goal, the metric, the constraints, the definition of done. A task that is not filled in is not picked up.",
+        effect: "The argument about drawing the wrong thing moved to before the mockup, where it costs ten minutes. After the mockup it costs two weeks.",
         deepDive: "brief-example",
       },
       {
         id: "review",
-        title: "Nothing reaches engineering unreviewed",
-        found: "Everyone worked in their own corner. Mistakes surfaced in the build, where fixing them is expensive.",
-        did: "I set up a regular design review, and in the two-week sprint a column of its own appeared between design and engineering. You cannot skip past it.",
-        effect: "Fewer mistakes, and knowledge stopped living in one head: what one person worked out, the rest can do a week later.",
+        title: "No mockup reaches engineering unreviewed",
+        found: "Mistakes surfaced in the build, where fixing them is expensive.",
+        did: "A regular design review and a column of its own in the sprint between design and engineering. You cannot skip past it.",
+        effect: "Fewer mistakes, and what one designer works out, the whole team knows a week later.",
       },
       {
         id: "debt",
-        title: "Corners we cut get written down, not forgotten",
-        found: "Rushed decisions piled up quietly. Six months on, nobody remembered where we cut a corner or why.",
-        did: "I started a design debt list: what was done in a hurry, and the order in which we fix it.",
-        effect: "The mess stopped growing on its own. Every cut corner got a date.",
+        title: "Design debt is written down and worked through in order",
+        found: "Rushed decisions piled up quietly, and six months on nobody remembered where we cut a corner.",
+        did: "A list of rushed work with the order of fixing it.",
+        effect: "Every cut corner got a date.",
       },
       {
         id: "system",
-        title: "Shared parts instead of starting over",
-        found: "Screens that meant the same thing looked different, because everyone assembled them from their own pieces.",
-        did: "We built a shared library of interface parts and agreed the rules: what we take ready-made and what we draw.",
-        effect: "Work moved faster, and the product stopped looking like several apps glued together.",
+        title: "Shared components, so nobody starts from scratch",
+        found: "Screens that meant the same thing looked different.",
+        did: "A shared component library and rules: what we take ready-made and what we draw.",
+        effect: "Work got faster, and the product looks whole.",
       },
       {
         id: "voice",
-        title: "Design became visible, and got called earlier",
-        found: "While nobody can see what design is doing, design gets called last. Not out of spite — it is just unclear why you would call sooner.",
-        did: "A weekly digest: what shipped, what we decided, what results and research came back. Plus demo sessions for the business and neighbouring teams.",
-        effect: "Designers started being pulled into the problem from the beginning. Design got an equal voice in product calls.",
-        why: "Trust does not arrive with the role. You earn it by being visible.",
+        title: "Design's work became visible",
+        found: "The business did not know what the team was busy with.",
+        did: "A weekly digest: what shipped, what we decided, what results and research came back. Plus demos for the business and neighbouring teams.",
+        effect: "Designers started being pulled into the problem from the beginning.",
       },
     ],
   },
   results: {
-    lead: "What stayed in the team after that year",
-    points: [
-      "A task arrives with a goal, constraints and a mark for done",
-      "Nothing reaches engineering without a review",
-      "Rushed work is written down and worked through in order, instead of piling up",
-      "A shared library and shared rules instead of starting over each time",
-      "Designers are called to the problem, not to decorate the answer",
+    lead: "Metrics: process, design, product.",
+    intro: "The process rules are checked against the sprint board.",
+    outcomes: [
+      { x: "Tasks with a goal, a metric and a definition of done: 100%", y: "Tasks on the sprint board.", z: "The task template." },
+      { x: "Mockups in engineering without a review: 0", y: "The review column on the sprint board.", z: "A regular design review." },
     ],
-    honesty:
-      "No numbers here. The internal product had no metrics on how the team worked, and inventing percentages after the fact proves nothing. Everything above is what carried on working once I stepped away.",
+    /* [TO FILL] add before → after values or drop a line if there is no data */
+    points: [
+      "[TO FILL] Share of tasks where design joined at problem definition: before → after",
+      "[TO FILL] Design bugs found in engineering and after release: before → after",
+      "[TO FILL] Time from task definition to a finished mockup",
+      "[TO FILL] Share of screens built from design system components",
+      "[TO FILL] Design debt: items on the list and items closed per quarter",
+      "[TO FILL] A product metric the team moved, for example CSAT of the internal product",
+      "[TO FILL] Team: people hired and people promoted",
+    ],
   },
   takeaways: [
-    "While design is invisible, it gets called last.",
-    "The argument about what to draw is cheapest before the mockup.",
-    "A rule that rests on one person is not a rule. It is that person's habit.",
+    "A rule that rests on one person is really just that person's habit.",
+    "Trust does not arrive with the role. You earn it by making the team's work visible.",
   ],
   quote:
-    "A lead is not there to draw more screens. A lead is there to arrange the work so the team makes good product calls again and again.",
+    "A lead's job is to arrange the work so the team makes good product calls again and again. Drawing more screens can't do that.",
   gallery: [
     {
       kind: "bento",
-      title: "Review sits between design and engineering",
+      title: "Review between design and engineering",
       images: [
         img(
           "cases/ai-agents/t-jira-sprint-board.webp",
           1600,
           788,
-          "A two-week design sprint: a review column of its own sits between design and engineering. Nothing moves on until someone has looked at it",
+          "Design sprint: a review column between design and engineering",
           "detail",
         ),
       ],
@@ -146,46 +140,46 @@ export const en: CaseStory = {
     {
       id: "first-180",
       chip: "First six months",
-      kicker: "A plan, not a report",
+      kicker: "A plan I'd follow",
       title: "What I do when I join a new team",
-      tagline: "Look first, change next, and only then make it stick. The order matters more than the speed.",
+      tagline: "Look first, change next, then make it stick. The order matters more than the speed.",
       parts: [
         {
           id: "month-1",
           label: "Month one",
           title: "Month one: listen and map",
           found:
-            "For the first four weeks I break nothing. The team that ran before me knows more about the product than I do, and that has to be collected first.",
+            "For the first four weeks I break nothing: the team knows the product better than I do, and that knowledge has to be collected first.",
           steps: [
-            { title: "Facts", text: "What the product is, who uses it, which numbers it is judged by, where it hurts." },
-            { title: "People", text: "I meet product and engineering: the goals, and how the work runs — when a task is ready to be picked up and when it counts as done (DoR/DoD), how designs reach engineering." },
-            { title: "What already exists", text: "A quick pass over what has piled up: repositories, analytics, the bug tracker, the design system." },
+            { title: "Facts", text: "The product, its users, its metrics, its pains." },
+            { title: "People", text: "Meetings with product and engineering: goals, when a task is ready and when it is done (DoR/DoD), how designs reach engineering." },
+            { title: "What already exists", text: "Repositories, analytics, the bug tracker, the design system." },
           ],
         },
         {
           id: "month-2-3",
           label: "Two to three",
           title: "Months two and three: a base, and first moves",
-          found: "By now it is clear where it hurts, and I can touch things — a little at a time, so that what worked keeps working.",
+          found: "By now it is clear where it hurts, and I can change things, a little at a time, so that what works keeps working.",
           steps: [
-            { title: "One to one", text: "With every designer: who owns what, and what we expect of each other." },
+            { title: "One to one", text: "With every designer: areas of ownership and mutual expectations." },
             { title: "Key flows", text: "I walk them myself and look for places where help lands quickly." },
-            { title: "A minimum routine", text: "Design review, stand-up, syncs with product and engineering. Less would not hold; more is not needed yet." },
-            { title: "The bar", text: "A plan for the design system and a couple of working pieces that show the quality we hold to." },
+            { title: "A minimum routine", text: "Design review, stand-up, syncs with product and engineering." },
+            { title: "The bar", text: "A plan for the design system and a couple of reference pieces." },
           ],
         },
         {
           id: "month-3-6",
           label: "Three to six",
           title: "Months three to six: steady, and larger",
-          found: "From here the job is one thing: make all of it work without me.",
+          found: "One job from here: make it all work without me.",
           steps: [
             { title: "Made routine", text: "Review, an agreed definition of done, working through design tasks before the sprint (grooming)." },
             { title: "People", text: "Mentoring, training, a hiring plan." },
-            { title: "The system as a product", text: "With a roadmap and a join to engineering, not as a folder of buttons." },
-            { title: "Arguments", text: "Systemic ones I settle with facts and options. Stuck means escalate, not wait for it to pass." },
+            { title: "The system as a product", text: "A roadmap and a link to engineering, so it's more than a folder of buttons." },
+            { title: "Arguments", text: "I settle systemic ones with facts and options, and escalate the stuck ones." },
           ],
-          effect: "The first four weeks are nothing but watching. By the second month, the first changes. By the sixth, processes that hold on their own.",
+          effect: "Month one is watching, month two brings the first changes, and by month six the processes hold on their own.",
           why: "The order shifts if something catches fire, or if the team is plainly short of a skill.",
         },
       ],
@@ -195,21 +189,21 @@ export const en: CaseStory = {
       chip: "Task template",
       kicker: "What it looks like in practice",
       title: "One task, laid out in the template",
-      tagline: "The original document is not here, so I took a real task about a filter and wrote it up the way the template asks.",
+      tagline: "A real task about a filter, written up in the template.",
       parts: [
         {
           id: "fields",
           label: "Fields",
-          title: "Four fields, without which a task is not picked up",
+          title: "The main fields of the template",
           found:
-            "This is an example, not a scan. The task is real — the filter in the assessment registry from the case next door; the template is the one we put in place.",
+            "An example, not a scan: a task from the case next door, the filter in the assessment registry.",
           steps: [
-            { title: "Problem", text: "There are many fields to filter by: assessment type, owning division, risk level, status, two pairs of dates. There is no room on screen, so people pick filters by guesswork." },
+            { title: "Problem", text: "Many fields to filter by (assessment type, department, risk level, status, two pairs of dates), little room, and filters picked by guesswork." },
             { title: "User", text: "A risk manager." },
-            { title: "Constraint", text: "The cost of one request to the list decides which filter to build: the one that applies as you go, or one with a Show button. Ask engineering before drawing." },
+            { title: "Constraint", text: "Whether the filter applies at once or has a Show button depends on the cost of a request to the list. Ask engineering before drawing." },
             { title: "Done when", text: "Chosen values are visible without opening the panel and come off one at a time." },
           ],
-          effect: "Four lines, five minutes to fill in — and a designer starts from the task rather than from guesswork.",
+          effect: "Five minutes to fill in, and a designer starts from the task, with nothing to guess.",
         },
       ],
     },
