@@ -12,7 +12,7 @@
    крупной фигуры; у мобильных кейсов — экран приложения; у кейса без экранов — его предмет. */
 import type { CaseItem } from "../data/cases";
 import { shots2x } from "../data/shots2x";
-import { lookVars, objectPicture } from "./caseLook";
+import { caseThumb, lookVars, objectPicture } from "./caseLook";
 import "./caseArt.css";
 
 const BASE = import.meta.env.BASE_URL;
@@ -28,8 +28,9 @@ const hi = (src: string, sizes: string) => {
 };
 
 export type ArtOptions = {
-  /** "hero" — шапка кейса: фигура уходит за край сцены (глава «Кейсы» с v75 мокапы не показывает) */
-  mode: "hero";
+  /** "hero" — шапка кейса: фигура уходит за край сцены (глава «Кейсы» с v75 мокапы не показывает);
+      "thumb" — та же обложка на карточке меню «Кейсы» (v91): фигура по центру, экран — уменьшенная копия */
+  mode: "hero" | "thumb";
   /** подпись для чтения с экрана; пусто — картинка декоративная */
   label?: string;
   /** грузить снимок сразу (шапка) или по data-src, когда его вот-вот увидят (глава) */
@@ -42,7 +43,7 @@ export function caseArt(c: CaseItem, o: ArtOptions) {
   const kind = s ? s.device : "solo";
   const alt = o.label ? esc(o.label) : "";
   const src = (path: string) => (o.eager ? `src="${BASE}${path}"${hi(path, o.sizes ?? "60vw")}` : `data-src="${BASE}${path}"`);
-  const img = s ? `<img class="ya-shot" ${src(s.src)} width="${s.w}" height="${s.h}" alt="${alt}" decoding="async" draggable="false"${o.eager ? ` fetchpriority="high"` : ""}>` : "";
+  const img = s ? `<img class="ya-shot" ${src(o.mode === "thumb" ? caseThumb(c.id) : s.src)} width="${s.w}" height="${s.h}" alt="${alt}" decoding="async" draggable="false"${o.eager ? ` fetchpriority="high"` : ""}>` : "";
   const screen = !s
     ? `<span class="ya-solo">${objectPicture(c, "ya-obj", o.eager)}</span>`
     : s.device === "phone"
@@ -51,6 +52,6 @@ export function caseArt(c: CaseItem, o: ArtOptions) {
   return `<figure class="ya ya--${o.mode} ya--${kind}" style="${lookVars(c)}"${alt ? "" : ` aria-hidden="true"`}>
     <i class="ya-accent" aria-hidden="true"></i>
     <span class="ya-shape"><span class="ya-glow" aria-hidden="true"></span>${screen}</span>
-    <span class="ya-tag" aria-hidden="true">${arrow}</span>
+    ${o.mode === "thumb" ? "" : `<span class="ya-tag" aria-hidden="true">${arrow}</span>`}
   </figure>`;
 }

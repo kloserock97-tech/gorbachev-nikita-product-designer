@@ -2,7 +2,8 @@ import { getCases, type CaseItem } from "../data/cases";
 import { pad2 as pad } from "../lib/format";
 import { cue } from "../audio/bus";
 import { onLang, t, type Key } from "../i18n";
-import { lookVars, objectPicture, screenDevice, warmScreens } from "./caseLook";
+import { warmScreens } from "./caseLook";
+import { caseArt } from "./caseArt";
 
 /* Меню «Кейсы» в доке (v29): большая выпадашка по шаблону «Templates» — слева категории, справа сетка
    кейсов с превью, внизу строка с подписью и кнопками. Категория фильтрует сетку; число рядом с ней —
@@ -49,7 +50,7 @@ export function initWorkMenu(opts: { onOpenComputer?: () => void; onAllCases?: (
         ${all.map((c, i) => `
           <li style="--i:${i}" data-kinds="${kindOf(c).join(" ")}">
             <a class="work-menu__card" href="#/work/${c.id}">
-              <span class="work-menu__thumb" style="${lookVars(c)}">${screenDevice(c, "work-menu__dev")}${objectPicture(c, "work-menu__obj")}<span class="work-menu__go">${arrow}</span></span>
+              <span class="work-menu__thumb">${caseArt(c, { mode: "thumb" })}<span class="work-menu__go">${arrow}</span></span>
               <span class="work-menu__name"></span>
               <span class="work-menu__sub"></span>
             </a>

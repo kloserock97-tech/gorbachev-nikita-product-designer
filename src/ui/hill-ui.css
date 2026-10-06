@@ -406,42 +406,15 @@ body {
   /* в четыре колонки длинные названия («Дизайн получил голос») обрезались многоточием — переносятся на вторую строку */
   .work-menu__name { font-size: 16px; line-height: 1.2; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 }
+/* v91: обложка карточки — та же, что в шапке кейса (caseArt.ts, режим thumb): фигура цвета кейса с экраном
+   в перспективе на светлой сцене. Раньше здесь стояли старые предмет и экран в рамке, и меню показывало кейс
+   не так, как он выглядит внутри. Наведение разводит слои мокапа, как курсор в шапке */
 .work-menu__thumb {
-  position: relative; display: block; aspect-ratio: 16 / 10; margin-bottom: 8px;
-  border-radius: 14px; overflow: hidden; background: linear-gradient(180deg, var(--s1, #f1f1ee), var(--s2, #dcdcd6));
-}
-.work-menu__thumb { container-type: size; }
-/* v68: у кейса с фирменной обложкой она и стоит фоном карточки — вместо условного градиента виден сам
-   продукт. Обложка притушена и сдвинута вниз: её собственная иконка не должна спорить с предметом кейса */
-.work-menu__thumb {
-  background-image: var(--backdrop, none), linear-gradient(180deg, var(--s1, #f1f1ee), var(--s2, #dcdcd6));
-  background-size: cover; background-position: 50% 78%;
-  /* тёмная обложка на тёмной панели меню теряет края — тонкий кант возвращает карточке границу */
+  position: relative; display: block; aspect-ratio: 16 / 10; margin-bottom: 8px; container-type: size;
+  border-radius: 14px; overflow: hidden; isolation: isolate;
+  background: radial-gradient(60% 70% at 18% 8%, rgba(255, 255, 255, 0.75), transparent 70%), linear-gradient(180deg, #f0f0f3, #e2e2e7);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
-/* v68: экран продукта в рамке — по ней сразу видно, веб это или телефон. Та же композиция, что у героя
-   страницы кейса (caseHero.css): устройство уходит за правый край, предмет стоит перед ним слева. */
-.work-menu__dev {
-  position: absolute; left: 30%; top: 14%; width: 84%; display: block;
-  border-radius: 2.2cqw; overflow: hidden; background: #fff;
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink, #1d1d1f) 12%, transparent), 0 4cqw 7cqw color-mix(in srgb, var(--ink, #1d1d1f) 26%, transparent);
-  transform-origin: 0% 60%; transform: perspective(900px) rotateY(-14deg) rotateX(4deg) rotateZ(1deg);
-  transition: transform 0.5s var(--ease-menu);
-}
-.work-menu__dev-bar { display: block; height: 4.4cqw; background: color-mix(in srgb, var(--ink, #1d1d1f) 7%, #fff); border-bottom: 1px solid color-mix(in srgb, var(--ink, #1d1d1f) 9%, transparent); }
-.work-menu__dev img { display: block; width: 100%; height: auto; }
-/* телефон: стоит почти прямо и срезан низом карточки — силуэт читается с первого взгляда */
-.work-menu__dev--phone {
-  left: auto; right: 6%; top: 10%; width: auto; height: 108%; aspect-ratio: 402 / 874;
-  border-radius: 7cqw; border: 1.2cqw solid #12161c; background: #12161c; transform-origin: 50% 70%;
-  transform: perspective(900px) rotateY(-14deg) rotateX(5deg) rotateZ(4deg);
-}
-.work-menu__dev--phone img { width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: 6cqw; }
-
-.work-menu__obj { position: absolute; left: -12%; bottom: -10%; width: 62%; aspect-ratio: var(--oar, 1.2); display: block; transition: scale 0.5s var(--ease-menu); transform-origin: 50% 90%; }
-.work-menu__obj img { width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; display: block; filter: drop-shadow(0 10px 12px color-mix(in srgb, var(--ink, #1d1d1f) 24%, transparent)); }
-/* у кейса без открытых экранов предмет остаётся один и занимает всю сцену */
-.work-menu__thumb:not(:has(.work-menu__dev)) .work-menu__obj { inset: 7% 8% -8%; left: 8%; bottom: -8%; width: auto; aspect-ratio: auto; }
 .work-menu__go {
   position: absolute; right: 10px; bottom: 10px; width: 34px; height: 34px; border-radius: 50%;
   display: grid; place-items: center; background: var(--ink, #141613); color: #fff;
@@ -473,7 +446,7 @@ body {
 
 @media (hover: hover) and (pointer: fine) {
   .work-menu__filter:not(.is-on):hover { color: var(--wm-ink); background: rgba(255, 255, 255, 0.035); }
-  .work-menu__card:hover .work-menu__obj { scale: 1.06; }
+  .work-menu__card:hover .ya { --px: 0.7; --py: -0.4; }
   .work-menu__card:hover .work-menu__go { opacity: 1; scale: 1; }
 
   .work-menu__all:hover { background: #f3f2ec; color: #141613; }
