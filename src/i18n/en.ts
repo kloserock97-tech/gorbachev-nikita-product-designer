@@ -124,7 +124,7 @@ const en = {
   "notes.shelf.s3l": "languages",
   "notes.marathon.label": "Side project 06",
   "notes.marathon.title": "Marathon",
-  "notes.marathon.alt": "Two weekly rings filling up to the goal",
+  "notes.marathon.alt": "The Marathon mark: a ceramic track with an apricot ball on blue",
   "notes.marathon.p1": "Looking for a job abroad is a marathon, and it is easier to run as a pair. You can add a second person to Marathon: a shared list of companies, separate applications, and you see how the other one is doing. That keeps you both in the race.",
   "notes.marathon.p2": "The week shows as rings, like Activity on a watch. Applications sit on a drag-and-drop board, and results add up to a 12-week funnel.",
   "notes.marathon.p3": "A note can go to the Telegram bot, even by voice: it turns the phrase into a card by itself. The project is private, so there is no demo.",
