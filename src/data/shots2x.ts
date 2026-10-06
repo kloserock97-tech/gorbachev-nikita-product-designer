@@ -27,8 +27,6 @@ export const shots2x = new Map<string, number>([
   ["cases/figma/moderator-confirm.webp", 1440],
   ["cases/figma/moderator-profile.webp", 1440],
   ["cases/figma/moderator-queue.webp", 1440],
-  ["cases/figma/spam-sms-setup.webp", 804],
-  ["cases/figma/spam-welcome.webp", 804],
   ["cases/grif-ai/01.webp", 1440],
   ["cases/grif-ai/03.webp", 1436],
   ["cases/grif-ai/04.webp", 1440],

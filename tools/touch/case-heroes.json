@@ -27,13 +27,13 @@
   "shot": "h4-moderator"
  },
  {
-  "eval": "location.hash = '#/work/stop-spam'"
+  "eval": "location.hash = '#/work/plati-chastyami'"
  },
  {
   "wait": 3500
  },
  {
-  "shot": "h5-spam"
+  "shot": "h5-plati"
  },
  {
   "wait": 3500

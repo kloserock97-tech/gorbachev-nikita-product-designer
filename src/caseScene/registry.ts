@@ -10,6 +10,5 @@ export const SCENES = {
   "plati-chastyami": () => import("./plati").then((m) => m.createPlatiScene),
   "restaurant-guru": () => import("./guru").then((m) => m.createGuruScene),
   "design-lead": () => import("./lead").then((m) => m.createLeadScene),
-  "stop-spam": () => import("./spam").then((m) => m.createSpamScene),
 } satisfies Record<string, () => Promise<(h: SceneHost) => CaseScene>>;
 export type SceneId = keyof typeof SCENES;

@@ -12,7 +12,7 @@ import { launch, sleep } from "./lib/chrome.mjs";
 
 const arg = (k, d) => { const i = process.argv.indexOf(`--${k}`); return i < 0 ? d : +process.argv[i + 1]; };
 const PORT = arg("port", 10360), W = arg("w", 1440), H = arg("h", 900), DPR = arg("dpr", 2);
-const CASES = ["ai-agents", "community", "grif-ai", "moderator-dashboard", "plati-chastyami", "restaurant-guru", "stop-spam"];
+const CASES = ["ai-agents", "community", "grif-ai", "moderator-dashboard", "plati-chastyami", "restaurant-guru"];
 
 const { send, close } = await launch(PORT, [
   `--remote-debugging-port=${PORT}`, `--user-data-dir=${resolve(tmpdir(), "p3d-audit-" + PORT)}`,
