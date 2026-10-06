@@ -389,8 +389,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
             <summary><span class="cs-deep-title"><b>${esc(s.flow.title)}</b></span><span class="cs-deep-toggle" aria-hidden="true"><i></i></span></summary>
             <div class="cs-fold-body">${flowBody(s.flow)}</div>
           </details>` : ""}
-          ${demoBlock(s.id)}
-          ${s.decisions.film ? filmBlock(s.decisions.film) : ""}
+          ${s.decisions.film ? filmBlock(s.decisions.film) : demoBlock(s.id)}
           <div class="cs-decisions">${s.decisions.items.map((d, k) => decision(d, k, s.deepDives)).join("")}</div>
           ${s.deepDives.length ? `<div class="cs-deeps">${mini(t("cs.deep"))}${s.deepDives.map(deepDive).join("")}</div>` : ""}
         </section>

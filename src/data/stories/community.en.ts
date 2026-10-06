@@ -83,6 +83,8 @@ export const en: CaseStory = {
   },
   decisions: {
     lead: "Four decisions, each grown out of the research.",
+    /* v91: the interface film from Claude Design in place of the live demo */
+    film: { src: C + "film.mp4", poster: C + "film-poster.webp", w: 1920, h: 1080, caption: "Community interface film: feed, topics, audio, story map, profile, events and the story form" },
     items: [
       {
         id: "pattern",
@@ -150,11 +152,14 @@ export const en: CaseStory = {
     },
     {
       kind: "bento",
-      title: "First-version screens",
+      title: "Screens from the film",
       images: [
-        img(C + "02.webp", 1440, 860, "Story page"),
-        img(C + "04.webp", 1440, 880, "\"About\" page"),
-        img(C + "05.webp", 1440, 1230, "Feedback"),
+        img(C + "film-01.webp", 1600, 900, "The feed of living stories"),
+        img(C + "film-03.webp", 1600, 900, "Stories you can listen to"),
+        img(C + "film-04.webp", 1600, 900, "The map of linked stories"),
+        img(C + "film-05.webp", 1600, 900, "Profile and reputation"),
+        img(C + "film-06.webp", 1600, 900, "An event in the app"),
+        img(C + "film-07.webp", 1600, 900, "The story form"),
       ],
     },
   ],
