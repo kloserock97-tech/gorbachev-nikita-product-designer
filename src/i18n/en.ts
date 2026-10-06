@@ -246,6 +246,8 @@ const en = {
   "cs.roadmap": "Next steps",
   "cs.takeaways": "Takeaways",
   "cs.screens": "Screens",
+  "cs.mockups": "Mockups",
+  "cs.mockupsSub": "below",
   "cs.open": "Open full size",
   "cs.close": "Close",
   "cs.drag": "Drag to compare",

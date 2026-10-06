@@ -139,6 +139,8 @@ export type CaseStory = {
   takeaways: string[];
   quote?: string;
   gallery: Gallery[];
+  /** false — раздел «Экраны» без заставки «Макеты» (v91): у кейса там не макеты продукта, а снимки процесса */
+  mockups?: false;
   /** разборы в глубину — бывшие подзадачи, свой адрес #/work/<кейс>/<id> */
   deepDives: CaseTrack[];
 };

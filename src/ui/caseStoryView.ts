@@ -20,6 +20,7 @@ import { t } from "../i18n";
 import { heroStage, mountHero } from "./caseHero";
 import { brandMark, goArrow, lookVars, objectPicture } from "./caseLook";
 import { demoBlock, mountDemos } from "./caseDemos";
+import { mockupsHead, mountMockups } from "./mockupsTitle";
 import { icon, type IconName } from "./icons";
 import { smoothWheel } from "./smoothScroll";
 import { tidy } from "../lib/typograph";
@@ -223,6 +224,9 @@ const deepDive = (tr: CaseTrack, k: number) => `
       ${tr.quote ? `<blockquote class="cs-quote">${esc(tr.quote)}</blockquote>` : ""}
     </div>
   </details>`;
+
+/** сколько экранов в галерее — для подписи под заставкой «Макеты» */
+const shotCount = (list: Gallery[]) => list.reduce((n, g) => n + (g.kind === "compare" ? 2 : "images" in g ? g.images.length : 1), 0);
 
 const gallery = (g: Gallery, k: number) => {
   const title = g.title ? `<h3 class="cs-gal-title">${esc(g.title)}</h3>` : "";
@@ -433,7 +437,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
         </section>` : ""}
 
         ${s.gallery.length ? `<section class="cs-sec cs-sec--screens">
-          ${head(++sec, "screens", t("cs.screens"))}
+          ${s.mockups === false ? head(++sec, "screens", t("cs.screens")) : mockupsHead(icon("screens"), pad(++sec), shotCount(s.gallery))}
           <div class="cs-gallery">${s.gallery.map(gallery).join("")}</div>
         </section>` : ""}
 
@@ -730,6 +734,7 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
 
   stops.push(mountDemos(root, scroller));
   stops.push(mountFilms(root, scroller));
+  stops.push(mountMockups(root, scroller));
   stops.push(mountHero(root, scroller));
 
   return {

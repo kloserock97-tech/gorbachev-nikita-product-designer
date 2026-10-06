@@ -1,0 +1,49 @@
+/* v91: заставка раздела «Экраны» (mockupsTitle.ts). Слово по центру во всю ширину колонки, выделение — синее,
+   как рамка выбора в редакторе макетов: этот цвет читается как «выбрано» без подписи. */
+.mk { --sel: #0d8bff; text-align: center; padding: clamp(24px, 6vh, 72px) 0 clamp(40px, 10vh, 120px); }
+.mk .cs-num { justify-content: center; }
+.mk-stage { position: relative; display: inline-block; margin-top: clamp(18px, 4vh, 44px); }
+.mk-word {
+  margin: 0; font-size: clamp(64px, 15vw, 232px); font-weight: 600; line-height: 0.9; letter-spacing: -0.045em;
+  color: var(--ink); white-space: nowrap;
+}
+.mk-l { display: inline-block; transition: color 0.18s ease-out, -webkit-text-stroke-color 0.18s ease-out; }
+/* до прохода слово бледное: проход его «собирает» */
+.mk.is-run .mk-l { color: color-mix(in srgb, var(--ink) 16%, transparent); }
+.mk.is-run .mk-l.is-done { color: var(--ink); }
+/* буква в правке: контур вместо заливки, как вектор в режиме редактирования */
+.mk.is-run .mk-l.is-edit { color: transparent; -webkit-text-stroke: max(1px, 0.012em) var(--sel); }
+
+.mk-frame {
+  position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none;
+  border: 1px solid var(--sel); opacity: 0;
+  transition: translate 0.2s cubic-bezier(0.3, 0.7, 0.2, 1), width 0.2s cubic-bezier(0.3, 0.7, 0.2, 1), height 0.2s cubic-bezier(0.3, 0.7, 0.2, 1), opacity 0.25s ease-out;
+}
+.mk.is-run .mk-frame { opacity: 1; }
+.mk.is-whole .mk-frame { transition-duration: 0.45s; }
+/* ручки по углам */
+.mk-frame i { position: absolute; width: 7px; height: 7px; background: #fff; border: 1px solid var(--sel); }
+.mk-frame i:nth-child(1) { left: -4px; top: -4px; }
+.mk-frame i:nth-child(2) { right: -4px; top: -4px; }
+.mk-frame i:nth-child(3) { right: -4px; bottom: -4px; }
+.mk-frame i:nth-child(4) { left: -4px; bottom: -4px; }
+/* подпись размера — под рамкой по центру, как у Figma */
+.mk-size {
+  position: absolute; left: 50%; top: calc(100% + 8px); translate: -50% 0; padding: 2px 6px; border-radius: 4px;
+  background: var(--sel); color: #fff; font-size: 11px; font-weight: 500; line-height: 1.4; letter-spacing: 0;
+  white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.mk-cursor { position: absolute; right: -14px; bottom: -18px; width: 18px; height: 18px; fill: var(--ink); stroke: #fff; stroke-width: 1.2; stroke-linejoin: round; }
+.mk.is-whole .mk-cursor { opacity: 0; transition: opacity 0.2s ease-out; }
+
+.mk-sub { margin: clamp(28px, 5vh, 48px) 0 0; font-size: 15px; color: var(--soft); }
+
+@media (max-width: 640px) {
+  .mk-word { font-size: 21vw; }
+  .mk-size { font-size: 10px; }
+  .mk-frame i { width: 5px; height: 5px; }
+  .mk-frame i:nth-child(1), .mk-frame i:nth-child(4) { left: -3px; }
+  .mk-frame i:nth-child(2), .mk-frame i:nth-child(3) { right: -3px; }
+  .mk-frame i:nth-child(1), .mk-frame i:nth-child(2) { top: -3px; }
+  .mk-frame i:nth-child(3), .mk-frame i:nth-child(4) { bottom: -3px; }
+}

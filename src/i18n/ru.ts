@@ -249,6 +249,8 @@ const ru: Record<keyof typeof en, string> = {
   "cs.roadmap": "Что дальше",
   "cs.takeaways": "Что забрал с собой",
   "cs.screens": "Экраны",
+  "cs.mockups": "Макеты",
+  "cs.mockupsSub": "ниже",
   "cs.open": "Открыть во весь экран",
   "cs.close": "Закрыть",
   "cs.drag": "Тяните, чтобы сравнить",

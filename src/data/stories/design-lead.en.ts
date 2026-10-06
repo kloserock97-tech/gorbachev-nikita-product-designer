@@ -121,6 +121,7 @@ export const en: CaseStory = {
   ],
   quote:
     "A lead's job is to arrange the work so the team makes good product calls again and again. Drawing more screens can't do that.",
+  mockups: false,
   gallery: [
     {
       kind: "bento",
