@@ -156,7 +156,7 @@ export const ru: CaseStory = {
     },
     {
       kind: "bento",
-      title: "Экраны из фильма",
+      title: "Развитие проекта",
       images: [
         img(C + "film-01.webp", 1600, 900, "Лента живых историй"),
         img(C + "film-03.webp", 1600, 900, "Истории можно слушать"),

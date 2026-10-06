@@ -152,7 +152,7 @@ export const en: CaseStory = {
     },
     {
       kind: "bento",
-      title: "Screens from the film",
+      title: "How the project grew",
       images: [
         img(C + "film-01.webp", 1600, 900, "The feed of living stories"),
         img(C + "film-03.webp", 1600, 900, "Stories you can listen to"),
