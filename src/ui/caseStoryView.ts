@@ -116,7 +116,8 @@ const filmBlock = (f: NonNullable<CaseStory["decisions"]["film"]>) => `<figure c
 /** играет ролик, пока он виден; при «уменьшить движение» не стартует сам и показывает элементы управления */
 function mountFilms(root: HTMLElement, scroller: HTMLElement) {
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const wraps = [...root.querySelectorAll<HTMLElement>(".cs-film")];
+  /* только ролики: класс cs-film носит и галерея «длинный экран» (kind: "film"), а в ней видео нет */
+  const wraps = [...root.querySelectorAll<HTMLElement>(".dm-wrap.cs-film")];
   const io = new IntersectionObserver((entries) => {
     for (const e of entries) {
       const v = e.target.querySelector<HTMLVideoElement>("video")!;
