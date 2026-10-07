@@ -108,15 +108,27 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
   const toCase = (i: number) => {
     const k = clamp(i, 0, n - 1);
     const c = CASES.strip[0] + (CASES.strip[1] - CASES.strip[0]) * (k / Math.max(1, n - 1));
-    scrollTo({ top: topFor(CHAPTER + (CHAPTER2 - CHAPTER) * c), behavior: reduced ? ("instant" as ScrollBehavior) : "smooth" });
+    /* прыжок мгновенный: плавность даёт сама сцена, она догоняет прокрутку. Плавная прокрутка браузера на тяжёлой
+       странице стартовала с задержкой в пару секунд — клик выглядел так, будто не сработал */
+    scrollTo({ top: topFor(CHAPTER + (CHAPTER2 - CHAPTER) * c), behavior: "instant" as ScrollBehavior });
+    aim = k;
     cue("progress-step", 0.6);
   };
   let cur = 0;
+  /* куда едем после клика по названию; -1 — никуда. Пока глава проезжает мимо промежуточных кейсов, они по очереди
+     становятся текущими — клик в этот момент открыл бы не тот кейс. Поэтому «текущее» для клика — цель поездки */
+  let aim = -1;
+  /* человек сам взялся за прокрутку — цели больше нет, текущим снова считается то, что на экране */
+  const drop = () => { aim = -1; };
+  for (const ev of ["wheel", "touchstart", "keydown"]) addEventListener(ev, drop, { passive: true });
   /* v92 по просьбе Никиты: сначала посмотреть, потом провалиться. Неактивное название докручивает главу до своего
      кейса и ничего не открывает (отменённый клик caseView.ts пропускает); текущее — открывает кейс, как карточка.
      v91 открывал кейс по любому названию, а до v91 текущее название не делало ничего */
   items.forEach((a, i) => a.addEventListener("click", (e) => {
-    if (i !== cur) { e.preventDefault(); toCase(i); return; }
+    const target = aim >= 0 ? aim : cur;
+    if (i !== target) { e.preventDefault(); toCase(i); return; }
+    /* цель уже выбрана, но глава ещё в пути — подождать, а не открывать */
+    if (cur !== target) { e.preventDefault(); return; }
     cue("forward");
   }));
   cards.forEach((a) => a.addEventListener("click", () => cue("forward")));
@@ -293,6 +305,7 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
       el.setAttribute("aria-hidden", String(ad >= 0.5));
     });
     cur = clamp(Math.round(pos), 0, n - 1);
+    if (cur === aim) aim = -1; // доехали
     items.forEach((a, i) => { a.classList.toggle("is-on", i === cur); a.setAttribute("aria-current", i === cur ? "true" : "false"); });
     segs.forEach((s, i) => s.classList.toggle("is-on", i === cur));
   };
