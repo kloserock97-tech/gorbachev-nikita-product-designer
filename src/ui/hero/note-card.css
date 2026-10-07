@@ -279,9 +279,10 @@
 @media (min-width: 901px) {
   .card--stove, .card--stove.is-open {
     /* поля 12, шапка 96, снизу поле 12 при ширине 456 — те же числа в fieldNote.ts (расчёт подъёма) */
-    --nc-pad: calc(12 * var(--u)); --nc-fig: calc(96 * var(--u)); --nc-chev: var(--nc-pad); --nc-r: calc(14 * var(--u));
+    --nc-pad: calc(12 * var(--u)); --nc-fig: calc(96 * var(--u)); --nc-chev: 0px; --nc-r: calc(14 * var(--u));
     --nc-knob: calc(44 * var(--u)); --nc-knob-in: calc(6 * var(--u));
-    border-radius: calc(24 * var(--u));
+    /* шеврон стоит в шапке поверх и места снизу не занимает — нижнее поле той же толщины, что верхнее */
+    padding-bottom: var(--nc-pad); border-radius: calc(24 * var(--u));
   }
   .card--stove .portal-media { width: calc(168 * var(--u)); }
   .card--stove .note-cap { left: calc(190 * var(--u)); right: calc(56 * var(--u)); }
@@ -293,8 +294,13 @@
 }
 @media (max-width: 900px) {
   /* высоту кадра считает --m-card (hero-mobile.css): шеврон в шапке, снизу поле той же толщины, что сверху */
-  .hero { --m-fig: max(112px, calc(210 * var(--u))); --m-chev: var(--m-cpad); --m-card: calc(var(--m-cpad) + var(--m-fig) + var(--m-chev)); }
-  .card--stove { --nc-knob: 44px; --nc-knob-in: 0px; }
+  /* шапка не ниже 140px: под двухстрочной подписью должен поместиться шеврон */
+  .hero { --m-fig: max(140px, calc(210 * var(--u))); --m-chev: var(--m-cpad); --m-card: calc(var(--m-cpad) + var(--m-fig) + var(--m-chev)); }
+  .card--stove { --nc-knob: 44px; --nc-knob-in: 0px; --nc-chev: 0px; padding-bottom: var(--m-cpad); }
+  /* в правом нижнем углу экрана на телефоне висит кнопка звука и закрывала шеврон — он стоит под подписью, слева
+     в колонке текста; подпись прижата к верху, чтобы под ней было место */
+  .card--stove .knob--note { right: auto; left: calc(var(--m-cpad) + 44% + max(14px, calc(22 * var(--u)))); }
+  .card--stove .note-cap { align-items: flex-start; padding-top: 28px; }
   .note-pick { left: max(4px, calc(6 * var(--u))); bottom: calc(100% + max(8px, calc(12 * var(--u)))); font-size: max(10.5px, calc(13 * var(--u))); }
   .card--stove .portal-media { width: 44%; }
   .card--stove .note-cap { left: calc(44% + max(14px, calc(22 * var(--u)))); right: 48px; }
