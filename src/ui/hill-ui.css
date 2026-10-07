@@ -442,6 +442,9 @@ body {
 .hero-tags__ico svg, .hero-stats .mark svg, .scroll__ring svg, .about-facts__ico svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; filter: none; }
 .hero-tagline { position: absolute; z-index: 4; margin: 0; line-height: 1.35; color: #6d6858; }
 .hero-tagline::before { content: ""; position: absolute; left: 0; top: 0.68em; height: 1px; background: currentColor; }
+/* раскрытая карточка пет-проектов поднимается к подписи — подпись уступает место */
+.hero-tagline { transition: opacity 0.4s ease; }
+.stage:has(.card--stove.is-open) .hero-tagline { opacity: 0; }
 .hero-stats { position: absolute; z-index: 4; display: flex; align-items: center; color: #fff; text-shadow: 0 2px 12px rgba(10, 14, 8, 0.45); }
 .hero-stats .stat { position: relative; left: auto; top: auto; display: flex; align-items: center; }
 .hero-stats .stat > div { display: flex; flex-direction: column-reverse; }

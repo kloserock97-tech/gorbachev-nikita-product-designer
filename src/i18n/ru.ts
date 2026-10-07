@@ -54,7 +54,7 @@ const ru: Record<keyof typeof en, string> = {
   "notes.prev": "Предыдущая заметка",
   "notes.next": "Следующая заметка",
   "notes.open": "Открыть заметку: {title}",
-  "notes.pick": "Свой проект",
+  "notes.pick": "Пет-проекты",
   "notes.close": "Закрыть заметку",
   "notes.demo": "Открыть живое демо ↗",
   "notes.repo": "Код на GitHub ↗",

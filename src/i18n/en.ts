@@ -51,7 +51,7 @@ const en = {
   "notes.prev": "Previous note",
   "notes.next": "Next note",
   "notes.open": "Open note: {title}",
-  "notes.pick": "Side project",
+  "notes.pick": "Pet projects",
   "notes.close": "Close note",
   "notes.demo": "Open the live demo ↗",
   "notes.repo": "Source on GitHub ↗",

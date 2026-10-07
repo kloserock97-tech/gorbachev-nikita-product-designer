@@ -91,11 +91,11 @@ export function initFieldNote() {
        вычитаем его. По раскладке, а не по getBoundingClientRect: параллакс двигает карточку за курсором */
     const parent = (card.offsetParent as HTMLElement | null)?.getBoundingClientRect().top ?? 0;
     const restTop = parent + card.offsetTop - (parseFloat(getComputedStyle(card).marginTop) || 0);
-    /* высота закрытой карточки и картинки — из ширины (note-card.css: поля 12, картинка 246, шеврон 46 при ширине 352):
+    /* высота закрытой карточки и шапки — из ширины (note-card.css, v92: поля 12, шапка 96, шеврон 34 при ширине 456):
        посреди перехода offsetHeight врёт */
-    const unit = card.offsetWidth / 352;
-    const figure = 246 * unit;
-    const closed = (12 + 246 + 46) * unit;
+    const unit = card.offsetWidth / 456;
+    const figure = 96 * unit;
+    const closed = (12 + 96 + 34) * unit;
     const gap = 14;
     const fab = document.querySelector<HTMLElement>(".sound-fab")?.getBoundingClientRect();
     const dock = document.querySelector<HTMLElement>(".dock")?.getBoundingClientRect();

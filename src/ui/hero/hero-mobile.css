@@ -72,6 +72,8 @@
     background: linear-gradient(160deg, rgba(247, 240, 231, 0.62), rgba(218, 208, 196, 0.5));
     border: 1px solid rgba(255, 255, 255, 0.5);
   }
+  /* раскрытая карточка растёт вниз — ряд уезжает за ней */
+  .stage:has(.card--stove.is-open) .hero-stats { top: calc(1324 * var(--u) + var(--m-card) + var(--m-open) + max(18px, calc(28 * var(--u)))); }
   .hero-stats .stat { gap: max(8px, calc(10 * var(--u))); min-height: 44px; }
   .hero-stats .mark { width: max(22px, calc(34 * var(--u))); height: max(22px, calc(34 * var(--u))); color: #4f5347; filter: none; }
   .hero-stats dd { font-size: max(16px, calc(26 * var(--u))); line-height: 1.1; color: var(--card-ink); }
