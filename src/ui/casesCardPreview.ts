@@ -11,11 +11,14 @@
    стопкой и сменяются по дробному положению: уходящая уезжает влево и гаснет, приходящая выходит справа.
    Название собирается по буквам снизу вверх, строки фактов — лесенкой (принципы Emil Kowalski: ease-out, короткие
    длительности, задержка не больше пары десятков миллисекунд на элемент).
-   Кейс открывают и карточка (над ней курсор становится кругом «Открыть»), и пункт списка (v91). Дуга и текстовая колонка casesWheel.ts в этом виде не показываются и не обновляются. */
+   Кейс открывает карточка (над ней курсор становится кругом «Открыть») и пункт списка, если он уже текущий;
+   неактивный пункт только довозит прокрутку до своего кейса (v92). Дуга и текстовая колонка casesWheel.ts в этом виде не показываются и не обновляются. */
 import type { CaseItem } from "../data/cases";
 import { onLang, t } from "../i18n";
 import { pad2 } from "../lib/format";
 import { cue } from "../audio/bus";
+import { CASES, CHAPTER, CHAPTER2 } from "../scene/story";
+import { topFor } from "./storyScroll";
 import { bodyHas, onBodyState } from "../lib/bodyState";
 import { lookVars, objectPicture } from "./caseLook";
 import "./cases-card.css";
@@ -101,11 +104,21 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
   const title = q(".cx-title"), facts = q(".cx-facts"), stack = q(".cx-stack"), cursor = q(".cx-cursor");
   for (const img of box.querySelectorAll<HTMLImageElement>(".cx-shot")) img.addEventListener("error", () => img.remove());
 
+  /* переход к кейсу прокруткой — та же формула, что у casesWheel (положение кейса на ленте главы) */
+  const toCase = (i: number) => {
+    const k = clamp(i, 0, n - 1);
+    const c = CASES.strip[0] + (CASES.strip[1] - CASES.strip[0]) * (k / Math.max(1, n - 1));
+    scrollTo({ top: topFor(CHAPTER + (CHAPTER2 - CHAPTER) * c), behavior: reduced ? ("instant" as ScrollBehavior) : "smooth" });
+    cue("progress-step", 0.6);
+  };
   let cur = 0;
-  /* v91: пункт списка открывает кейс, как и карточка. Раньше он только довозил прокрутку до кейса, а по текущему
-     пункту клик не делал ничего — Никита жал на название и оставался на месте. Листать кейсы по-прежнему можно
-     прокруткой; переход по ссылке #/work/<id> ловит caseView.ts */
-  items.forEach((a) => a.addEventListener("click", () => cue("forward")));
+  /* v92 по просьбе Никиты: сначала посмотреть, потом провалиться. Неактивное название докручивает главу до своего
+     кейса и ничего не открывает (отменённый клик caseView.ts пропускает); текущее — открывает кейс, как карточка.
+     v91 открывал кейс по любому названию, а до v91 текущее название не делало ничего */
+  items.forEach((a, i) => a.addEventListener("click", (e) => {
+    if (i !== cur) { e.preventDefault(); toCase(i); return; }
+    cue("forward");
+  }));
   cards.forEach((a) => a.addEventListener("click", () => cue("forward")));
 
   /* курсор над карточкой — круг «Открыть», только там, где есть мышь */
