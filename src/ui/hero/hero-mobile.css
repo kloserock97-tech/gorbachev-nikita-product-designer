@@ -27,9 +27,8 @@
   }
   .stage:has(.card--stove.is-open) { height: calc(1357 * var(--u) + var(--m-card) + var(--m-open) + var(--m-stats)); }
   /* открытая карточка растёт вниз, статистика остаётся на месте */
-  .stage:has(.card--stove.is-open) .stat { top: calc(1324 * var(--u) + var(--m-card) + var(--m-open) + max(16px, calc(24 * var(--u)))); }
 
-  .headline, .focus, .lede, .cta-wrap { position: relative; left: auto; top: auto; }
+  .headline, .focus, .hero-tags, .cta-wrap, .hero-tagline { position: relative; left: auto; top: auto; }
   /* v85: те же четыре уровня, что на широком экране; пропорции имя : чем занимаюсь : путь мягче, иначе нижняя
      строка на телефоне выходила 10px */
   .headline {
@@ -42,12 +41,17 @@
     /* v85.2: русская строка длиннее и на узком экране переносилась одним словом «системы» — строки поровну */
     text-wrap: balance;
   }
-  .lede {
-    grid-column: 1 / -1; width: auto; max-width: 34em; margin: max(6px, calc(10 * var(--u))) 0 0;
-    white-space: normal; padding-left: max(30px, calc(45 * var(--u)));
-    font-size: max(14px, calc(21 * var(--u))); line-height: 1.45;
+  /* v92: ряд тем — переносится по строкам, без черт между пунктами */
+  .hero-tags {
+    grid-column: 1 / -1; flex-wrap: wrap; gap: max(8px, calc(12 * var(--u))) max(16px, calc(26 * var(--u)));
+    margin-top: max(14px, calc(24 * var(--u))); font-size: max(13.5px, calc(20 * var(--u))); line-height: 1.2;
   }
-  .lede::before { width: max(18px, calc(27 * var(--u))); top: 0.8em; }
+  /* подпись у дерева — под кнопкой, слева от кроны */
+  .hero-tagline {
+    grid-column: 1; margin-top: max(30px, calc(64 * var(--u))); padding-left: max(28px, calc(40 * var(--u)));
+    font-size: max(12.5px, calc(17 * var(--u)));
+  }
+  .hero-tagline::before { width: max(18px, calc(26 * var(--u))); }
 
   .cta-wrap { grid-column: 1 / -1; justify-self: start; width: auto; height: auto; margin-top: max(18px, calc(30 * var(--u))); }
   .cta {
@@ -58,21 +62,20 @@
   .cta:active { transform: scale(0.96); }
   .cta svg { width: max(18px, calc(22 * var(--u))); height: max(18px, calc(22 * var(--u))); }
 
-  /* статистика — под карточкой заметок, на траве. Кресло сцены держится около середины экрана:
-     наверху строка ложилась на него, над карточкой — тоже, стоило докрутить карточку до центра */
-  .stage .stat {
-    position: absolute; bottom: auto; top: calc(1324 * var(--u) + var(--m-card) + max(16px, calc(24 * var(--u))));
-    gap: max(8px, calc(11 * var(--u))); max-width: calc(50% - 40 * var(--u)); color: #f4f1ea;
+  /* v92: нижний ряд — под карточкой на тёплом стекле карточки: при прокрутке он уезжает с травы на светлое небо
+     (холст закреплён), и белый текст там пропадал */
+  .hero-stats {
+    position: absolute; left: calc(34 * var(--u)); right: calc(34 * var(--u));
+    top: calc(1324 * var(--u) + var(--m-card) + max(18px, calc(28 * var(--u))));
+    justify-content: space-between; padding: max(8px, calc(12 * var(--u))) max(14px, calc(22 * var(--u)));
+    border-radius: max(18px, calc(28 * var(--u))); color: var(--card-ink); text-shadow: none;
+    background: linear-gradient(160deg, rgba(247, 240, 231, 0.62), rgba(218, 208, 196, 0.5));
+    border: 1px solid rgba(255, 255, 255, 0.5);
   }
-  .stage .stat--a { left: calc(34 * var(--u)); }
-  .stage .stat--b { left: 50%; }
-  .stat dt, .stat dd { color: #f4f1ea; text-shadow: 0 1px 12px rgba(10, 14, 8, 0.7); }
-  .stat dt { opacity: 0.8; }
-  .stage .stat .mark { color: #f4f1ea; }
-  .stat .mark { width: max(26px, calc(36 * var(--u))); height: max(26px, calc(36 * var(--u))); }
-  .stat dt { font-size: max(12px, calc(16 * var(--u))); line-height: 1.35; }
-  .stat dd { font-size: max(12.5px, calc(16.5 * var(--u))); line-height: 1.4; }
-  .stat--b { min-height: 44px; }
+  .hero-stats .stat { gap: max(8px, calc(10 * var(--u))); min-height: 44px; }
+  .hero-stats .mark { width: max(22px, calc(34 * var(--u))); height: max(22px, calc(34 * var(--u))); color: #4f5347; filter: none; }
+  .hero-stats dd { font-size: max(16px, calc(26 * var(--u))); line-height: 1.1; color: var(--card-ink); }
+  .hero-stats dt { font-size: max(10px, calc(13 * var(--u))); margin-top: 3px; color: #4f5347; opacity: 1; }
 
   /* «Дальше» на телефоне лишнее: палец и так листает, а вертикальная подпись выходила 5px */
   .scroll { display: none; }
@@ -88,6 +91,8 @@
 }
 @media (max-width: 900px) and (min-aspect-ratio: 1 / 1) {
   .stage { grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr); }
-  .headline, .focus, .lede, .cta-wrap { grid-column: 1; }
-  .headline { font-size: clamp(26px, 4.4vw, 40px); }
+  .headline, .focus, .hero-tags, .cta-wrap, .hero-tagline { grid-column: 1; }
+  /* межстрочный — от кегля: общий для узкого экрана calc(66u) здесь считался от высоты окна и выходил меньше
+     кегля, роль ложилась на хвосты букв имени */
+  .headline { font-size: clamp(26px, 4.4vw, 40px); line-height: 1.05; }
 }

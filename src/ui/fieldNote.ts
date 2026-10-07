@@ -28,7 +28,8 @@ export function initFieldNote() {
   const inner = card?.querySelector<HTMLElement>(".card-note__in");
   if (!card || !knob || !note || !inner) return;
 
-  const labels = [...card.querySelectorAll<HTMLElement>("[data-note-label]")];
+  /* v92: под названием проекта — что это (раньше «Свой проект 01»: номер стоит в листалке, «свой проект» — над карточкой) */
+  const labels = [...card.querySelectorAll<HTMLElement>("[data-note-sub]")];
   const titles = [...card.querySelectorAll<HTMLElement>("[data-note-title]")];
   const img = card.querySelector<HTMLImageElement>("[data-note-img]");
   const video = card.querySelector<HTMLVideoElement>("[data-note-video]");
@@ -128,7 +129,7 @@ export function initFieldNote() {
     const current = notes[index];
     const id = current.id;
     card.dataset.note = id;
-    labels.forEach((el) => (el.textContent = t(key(id, "label"))));
+    labels.forEach((el) => (el.textContent = t(key(id, "kind"))));
     titles.forEach((el) => (el.textContent = t(key(id, "title"))));
     if (img) {
       const src = `${BASE}${current.image}`;

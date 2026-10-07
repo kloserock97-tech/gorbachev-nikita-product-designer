@@ -140,47 +140,46 @@
     </h1>
 
     <p class="focus rise" style="--d:440ms; --pd:15; --pr:1.1" data-i18n="hero.focus">AI products &amp; complex systems</p>
-    <p class="lede rise" style="--d:520ms; --pd:14; --pr:1" data-i18n="hero.lede">From research to final screens, systems and growth.</p>
+    <!-- v92: под серой строкой — ряд тем со значками (по варианту 2 стенда первого экрана, выбор Никиты 07.10) -->
+    <ul class="hero-tags rise" style="--d:520ms; --pd:13">
+      <li><span class="hero-tags__ico" aria-hidden="true"><svg viewBox="0 0 28 28"><circle cx="14" cy="14" r="11"/><path d="m18.6 9.4-2.8 6.4-6.4 2.8 2.8-6.4z"/></svg></span><span data-i18n="hero.tag.strategy">Product strategy</span></li>
+      <li><span class="hero-tags__ico" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M12 4.5c.7 4.6 2.4 6.3 7 7-4.6.7-6.3 2.4-7 7-.7-4.6-2.4-6.3-7-7 4.6-.7 6.3-2.4 7-7z"/><path d="M21 16.5c.3 2 1 2.7 3 3-2 .3-2.7 1-3 3-.3-2-1-2.7-3-3 2-.3 2.7-1 3-3z"/></svg></span><span data-i18n="hero.tag.ai">AI products</span></li>
+      <li><span class="hero-tags__ico" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M14 4 25 9.5 14 15 3 9.5z"/><path d="m3 14 11 5.5L25 14"/><path d="m3 18.5 11 5.5 11-5.5"/></svg></span><span data-i18n="hero.tag.systems">Complex B2B–B2C systems</span></li>
+    </ul>
 
-    <!-- «Смотреть кейсы»: металлическая кнопка, блик идёт за курсором -->
+    <!-- «Смотреть кейсы»: стеклянная кнопка под рядом тем, блик идёт за курсором -->
     <div class="cta-wrap rise" style="--d:600ms; --pd:15">
       <button class="cta metal" type="button" data-action="explore">
         <i class="metal-rim" aria-hidden="true"></i>
-        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 5.5h13"/><path d="M3.5 10h13"/><path d="M3.5 14.5h8"/></svg>
         <span class="lbl" data-i18n="hero.explore">See the work</span>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12"/><path d="M11 5l5 5-5 5"/></svg>
       </button>
     </div>
 
-    <!-- «Позвать ветер»: круглая металлическая кнопка в тонком кольце -->
-    <span class="play-wrap rise-round" style="--d:900ms; --pd:20">
-      <button class="gust metal" type="button" data-i18n-label="hero.gust" aria-label="Call the wind" data-action="gust">
-        <i class="metal-rim" aria-hidden="true"></i>
-        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6.4 4.9c0-.9 1-1.4 1.7-.9l7.1 4.9c.6.4.6 1.4 0 1.9l-7.1 4.9c-.7.5-1.7 0-1.7-.9z"/></svg>
-      </button>
-      <span class="gust-ring" aria-hidden="true"></span>
-    </span>
+    <!-- v92: подпись справа от кроны, с чертой -->
+    <p class="hero-tagline rise" style="--d:760ms; --pd:8" data-i18n-html="hero.tagline">Products<br>for a clear<br>tomorrow</p>
 
-    <dl class="stat stat--a rise" style="--d:700ms; --pd:12">
-      <span class="mark" aria-hidden="true">
-        <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M8 27q1-8 -3-15"/><path d="M13 27q-.5-11 4-19"/><path d="M19 27q.5-7 6-12"/><path d="M5 27h22"/>
-        </svg>
-      </span>
-      <div><dt data-i18n="stat.blades.label">Blades of grass</dt><dd data-stat="blades">520k, all real</dd></div>
-    </dl>
-
-    <dl class="stat stat--b rise" style="--d:770ms; --pd:13" role="button" tabindex="0" data-action="weather" data-i18n-label="stat.weather.aria" aria-label="Change the weather">
-      <span class="mark" aria-hidden="true">
-        <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 21a5 5 0 0 1 .6-10 7 7 0 0 1 13.2 1.6A4.2 4.2 0 0 1 22.5 21z"/><path d="M6 25.5h11"/><path d="M20 25.5h4"/>
-        </svg>
-      </span>
-      <div><dt><span data-i18n="stat.weather.label">Weather</span> <span class="stat-hint" data-i18n="stat.weather.hint" aria-hidden="true">· tap to change</span></dt><dd data-stat="wind">clear, gentle breeze</dd></div>
-    </dl>
+    <!-- v92: нижний ряд — травинки, погода (нажатие меняет её) и число кейсов; значения пишет main.ts -->
+    <div class="hero-stats rise" style="--d:700ms; --pd:12">
+      <dl class="stat stat--a">
+        <span class="mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 27V15"/><path d="M16 17c-1-5-5-7-9-6.5.5 4.5 4 7 9 6.5z"/><path d="M16 14c.6-4.5 4-6.8 8.5-6.5-.3 4.4-3.6 7-8.5 6.5z"/><path d="M9 27h14"/></svg></span>
+        <div><dt data-i18n="stat.blades.label">Blades of grass</dt><dd data-stat="blades">220K+</dd></div>
+      </dl>
+      <dl class="stat stat--b" role="button" tabindex="0" data-action="weather" data-i18n-label="stat.weather.aria" aria-label="Change the weather">
+        <span class="mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M9 23a5 5 0 0 1 .6-10 7 7 0 0 1 13.2 1.6A4.2 4.2 0 0 1 22.5 23z"/></svg></span>
+        <div><dt data-i18n="stat.weather.label">Weather</dt><dd data-stat="wind">Clear</dd></div>
+      </dl>
+      <dl class="stat stat--c">
+        <span class="mark" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="12" cy="11" r="4"/><path d="M4.5 25c.8-4.4 3.5-6.8 7.5-6.8s6.7 2.4 7.5 6.8"/><circle cx="21.5" cy="12" r="3.2"/><path d="M20.5 18.4c3.6-.2 6 1.9 6.9 6"/></svg></span>
+        <div><dt data-i18n="stat.cases.label">Case studies</dt><dd data-stat="cases">7</dd></div>
+      </dl>
+    </div>
 
     <!-- v58: заметки — одна карточка, четыре страницы. Картинка с названием и стеклянной кнопкой демо, под ней шеврон
          раскрывает описание. Тексты, картинку, цифры и значок подставляет src/ui/fieldNote.ts, стили — src/ui/hero/note-card.css -->
     <article class="card card--stove rise" style="--d:880ms; --pd:22; --pr:2.4" data-note="hill" aria-roledescription="carousel">
+      <!-- v92: подпись над карточкой; под названием проекта — что это (fieldNote.ts пишет в data-note-sub) -->
+      <span class="note-pick" data-i18n="notes.pick">Side project</span>
       <figure class="note-hero portal">
         <span class="portal-media"><img src="/ui/card-windcrest.webp" data-note-img alt="The crest of a hill under a grey sky, grass bent by a strong wind" loading="eager" decoding="async"><video data-note-video muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"></video></span>
         <div class="note-deck" role="group" aria-label="Notes">
@@ -198,7 +197,7 @@
         <figcaption class="note-cap">
           <span class="note-cap__text">
             <h2 class="note-cap__title"><a class="note-cap__link" data-note-demo href="https://kloserock97-tech.github.io/windcrest/" target="_blank" rel="noopener"><span data-note-title>Windcrest</span></a></h2>
-            <span class="note-cap__label" data-note-label>Side project 01</span>
+            <span class="note-cap__label" data-note-sub>A field of grass in the wind</span>
           </span>
           <span class="note-cap__go" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M3 9 9 3"/><path d="M4.2 3H9v4.8"/></svg></span>
         </figcaption>
@@ -230,7 +229,8 @@
       </button>
     </article>
 
-    <a class="scroll rise" style="--d:1040ms; --pd:9" href="#work"><span data-i18n="hero.scroll">Discover</span><span class="track"></span></a>
+    <!-- v92: «Дальше» — стрелка вниз в кольце и линия к нижнему краю -->
+    <a class="scroll rise" style="--d:1040ms; --pd:9" href="#work" data-i18n-label="hero.scroll" aria-label="Discover"><span class="scroll__ring" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m6 8 4 4 4-4"/></svg></span><span class="track"></span></a>
 
   </div>
 </main>
@@ -283,8 +283,14 @@
     <p class="story-p story-reveal story-reveal--r" style="--i:1" data-i18n="about.p1">My work mixes product design, systems thinking and AI</p>
     <p class="story-p story-reveal story-reveal--r" style="--i:2" data-i18n="about.p2">Research and product structure come first. Then launch, numbers and growing what works.</p>
     <a class="story-p story-lead story-reveal story-reveal--r" style="--i:3" href="#/work/design-lead" data-i18n="about.lead">How I lead a team, and what I do in my first six months somewhere new</a>
+    <!-- v92: плашка фактов — опыт, команды, типы продуктов -->
+    <ul class="about-facts story-reveal story-reveal--r" style="--i:4">
+      <li><span class="about-facts__ico" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M14 4 25 9.5 14 15 3 9.5z"/><path d="m3 14 11 5.5L25 14"/><path d="m3 18.5 11 5.5 11-5.5"/></svg></span><span><b data-i18n="about.fact.years">5+ years</b><small data-i18n="about.fact.years.sub">in product</small></span></li>
+      <li><span class="about-facts__ico" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="12" cy="11" r="4"/><path d="M4.5 25c.8-4.4 3.5-6.8 7.5-6.8s6.7 2.4 7.5 6.8"/><circle cx="21.5" cy="12" r="3.2"/><path d="M20.5 18.4c3.6-.2 6 1.9 6.9 6"/></svg></span><span><b data-i18n="about.fact.teams">Teams</b><small data-i18n="about.fact.teams.sub">from 3 to 50+</small></span></li>
+      <li><span class="about-facts__ico" aria-hidden="true"><svg viewBox="0 0 28 28"><path d="M16.5 4.5h7v7c0 4-4.5 8-9 9.5l-5.5-5.5C10.5 11 12.5 4.5 16.5 4.5z"/><circle cx="17.8" cy="10.2" r="1.8"/><path d="M9 15.5 5 16l3-4h4M12.5 19l-.5 4 4-3v-4"/><path d="M7.5 20.5 4.5 23.5"/></svg></span><span><b data-i18n="about.fact.kinds">B2B, B2C, AI</b><small data-i18n="about.fact.kinds.sub">from idea to launch</small></span></li>
+    </ul>
     <!-- логотипы — разметка и SVG из блока About на Tilda, стили .sf-logos перенесены в hill-ui.css -->
-      <div class="sf-logos story-reveal story-reveal--r" style="--i:4" role="list" data-i18n-label="about.logos" aria-label="Companies I've worked for">
+      <div class="sf-logos story-reveal story-reveal--r" style="--i:5" role="list" data-i18n-label="about.logos" aria-label="Companies I've worked for">
         <div class="sf-logos__item" role="listitem" tabindex="0" data-i18n-label="about.logo.ozon" aria-label="Ozon, 2022">
           <div class="sf-logos__disc">
           <svg class="sf-logos__svg" viewBox="0 0 1001 1001" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Ozon">

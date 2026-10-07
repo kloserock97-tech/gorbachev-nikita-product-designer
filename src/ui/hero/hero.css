@@ -135,18 +135,6 @@ body {
    Роль ниже имени на 54u по базовым линиям: хвост «р» в «Горбачев» не доходит до неё (замер по чернилам) */
 body.lang-ru .headline .role { font-size: 0.62em; line-height: 1.28; font-weight: 300; }
 body.lang-ru .focus { font-weight: 400; }
-body.lang-ru .lede { line-height: 1.5; }
-body.lang-ru .lede::before { top: 0.83em; }
-.lede {
-  position: absolute; z-index: 4; left: calc(46 * var(--u)); top: calc(398 * var(--u));
-  padding-left: calc(45 * var(--u)); white-space: nowrap;
-  font-family: var(--font); font-size: calc(22 * var(--u)); line-height: 1.4; font-weight: 400;
-}
-/* черта перед строкой — на середине строчных букв */
-.lede::before {
-  content: ""; position: absolute; left: 0; top: 0.78em; width: calc(27 * var(--u)); height: max(1px, calc(1.5 * var(--u)));
-  background: currentColor;
-}
 
 /* ── стеклянные кнопки (v37, было «металл» v30) ───────────────────────────────
    Дымчатое стекло в цвет дока: размытие сцены под кнопкой, светлая кромка градиентной рамкой,
@@ -241,12 +229,6 @@ body.lang-ru .lede::before { top: 0.83em; }
 .cta svg { width: calc(18 * var(--u)); height: calc(18 * var(--u)); fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
 .cta .lbl { translate: 0 calc(1 * var(--u)); }
 
-/* «Позвать ветер»: круглая кнопка в тонком кольце */
-.play-wrap { position: absolute; z-index: 4; left: calc(187 * var(--u)); top: calc(431 * var(--u)); width: calc(170 * var(--u)); height: calc(170 * var(--u)); }
-.gust { position: absolute; left: 50%; top: 50%; width: calc(88 * var(--u)); height: calc(88 * var(--u)); margin: calc(-44 * var(--u)) 0 0 calc(-44 * var(--u)); }
-.gust svg { width: calc(30 * var(--u)); height: calc(30 * var(--u)); margin-left: calc(4 * var(--u)); fill: currentColor; }
-.gust-ring { position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.18); pointer-events: none; transition: border-color 0.5s var(--ease), scale 0.8s var(--ease-out); }
-.gust:hover + .gust-ring, .gust:focus-visible + .gust-ring { border-color: rgba(255, 255, 255, 0.4); scale: 1.05; }
 
 /* ── статистика ───────────────────────────────────────────────────────────── */
 .stat { position: absolute; z-index: 4; display: flex; align-items: flex-start; gap: calc(9 * var(--u)); }
@@ -325,13 +307,11 @@ a:focus-visible, button:focus-visible { outline: 2px solid rgba(255, 255, 255, 0
   .dock-mark svg { width: 64%; height: 64%; }
 
   .headline { left: calc(34 * var(--u)); top: calc(128 * var(--u)); font-size: calc(62 * var(--u)); line-height: calc(66 * var(--u)); }
-  .lede { left: calc(34 * var(--u)); top: calc(288 * var(--u)); width: calc(400 * var(--u)); font-size: calc(19 * var(--u)); line-height: calc(27 * var(--u)); }
 
   .cta-wrap { left: calc(34 * var(--u)); top: calc(440 * var(--u)); }
   .cta { transform: translate(0, -50%); height: calc(74 * var(--u)); font-size: calc(20 * var(--u)); padding: 0 calc(34 * var(--u)) 0 calc(24 * var(--u)); gap: calc(14 * var(--u)); }
   .cta:active { transform: translate(0, -50%) scale(0.96); }
   .cta svg { width: calc(22 * var(--u)); height: calc(22 * var(--u)); }
-  .play-wrap { display: none; }
 
   .stat { gap: calc(11 * var(--u)); }
   .stat .mark { width: calc(36 * var(--u)); height: calc(36 * var(--u)); }

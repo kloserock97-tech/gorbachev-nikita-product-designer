@@ -19,6 +19,7 @@ import { initCaseView } from "./ui/caseView";
 import { liteReason, enterLite, rememberLite } from "./ui/lite";
 import { initLangToggle } from "./ui/langToggle";
 import { initI18n, onLang, t } from "./i18n";
+import { getCases } from "./data/cases";
 
 /* v74.2: ширина полосы прокрутки. Сетка первого экрана считается от 100vw (с полосой), а всё закреплённое
    (fixed) — от видимой ширины без неё: кнопка звука и кнопки «Кейсов» стояли левее правого поля карточки
@@ -180,6 +181,9 @@ function start3d(caseView?: CaseView) {
   const showBlades = () => { if (blades) blades.textContent = t("stat.blades.value", { n: Math.round(scene.blades / 1000) }); };
   showBlades();
   onLang(showBlades);
+  /* v92: третья цифра нижнего ряда — сколько кейсов в списке */
+  const casesStat = document.querySelector("[data-stat='cases']");
+  if (casesStat) casesStat.textContent = String(getCases().length);
 
   /* Порядок показа: сцена сразу в финальной позе (без отъезда камеры) — как только
      откалибровалось качество, канвас мягко проявляется целиком; через мгновение за
@@ -269,7 +273,7 @@ function start3d(caseView?: CaseView) {
   }, { passive: true });
   window.addEventListener("click", (e) => {
     if (scene.computerFocused || body.classList.contains("lite")) return;
-    if ((e.target as Element).closest("a, button, .card, .dock, .cta-wrap, .play-wrap")) return;
+    if ((e.target as Element).closest("a, button, .card, .dock, .cta-wrap, .hero-stats")) return;
     if (scene.hitComputer(e.clientX, e.clientY)) openPc();
   });
   /* «See the work» проматывает скролл-историю к главе «Кейсы» (v19; раньше открывала компьютер,
