@@ -131,11 +131,6 @@ export function initStory(scene: Scene) {
     b = bounds();
     scrollTo({ top: b.start + (b.end - b.start) * p, behavior: reduced ? "auto" : "smooth" });
   };
-  /* «Discover» внизу hero — к экрану About */
-  document.querySelector<HTMLAnchorElement>(".scroll")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    scrollToProgress(CHAPTER);
-  });
 
   /* CSS-переменная — в свой элемент и только при изменении */
   const written = new Map<string, string>();

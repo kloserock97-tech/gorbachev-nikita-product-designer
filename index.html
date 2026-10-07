@@ -73,6 +73,12 @@
   <div class="scene-cover" aria-hidden="true"></div>
   <!-- компьютер: подсказка у курсора и управление, пока камера у экрана -->
   <span class="pc-tip" data-i18n="pc.tip" aria-hidden="true">Read the magazine</span>
+  <!-- v94: точка на мониторе — компьютер открывается; положение пишет heroHints.ts по проекции экрана из сцены.
+       Рядом с мышью от точки тянется линия и подпись «Заглянуть внутрь» -->
+  <button class="pc-hint is-off" type="button" data-i18n-label="pc.look" aria-label="Look inside">
+    <span class="pc-hint__dot" aria-hidden="true"></span><span class="pc-hint__line" aria-hidden="true"></span>
+    <span class="pc-hint__pill" aria-hidden="true"><span data-i18n="pc.look">Look inside</span><svg viewBox="0 0 20 20"><path d="M4 10h12"/><path d="M11 5l5 5-5 5"/></svg></span>
+  </button>
   <div class="pc-hud">
     <button class="pc-back" type="button"><span aria-hidden="true">←</span> <span data-i18n="pc.back">Back to the hill</span></button>
     <p class="pc-hint" data-i18n-html="pc.hint">Scroll to read · <kbd>Esc</kbd> to leave</p>
@@ -167,7 +173,7 @@
       </dl>
       <dl class="stat stat--b" role="button" tabindex="0" data-action="weather" data-i18n-label="stat.weather.aria" aria-label="Change the weather">
         <span class="mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M9 23a5 5 0 0 1 .6-10 7 7 0 0 1 13.2 1.6A4.2 4.2 0 0 1 22.5 23z"/></svg></span>
-        <div><dt data-i18n="stat.weather.label">Weather</dt><dd data-stat="wind">Clear</dd></div>
+        <div><dt data-i18n="stat.weather.label">Weather</dt><dd data-stat="wind">Clear</dd><span class="weather-change" aria-hidden="true"><span data-i18n="hero.weather.change">Change</span><svg viewBox="0 0 20 20"><path d="M4 10h12"/><path d="M11 5l5 5-5 5"/></svg></span></div>
       </dl>
       <dl class="stat stat--c">
         <span class="mark" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="12" cy="11" r="4"/><path d="M4.5 25c.8-4.4 3.5-6.8 7.5-6.8s6.7 2.4 7.5 6.8"/><circle cx="21.5" cy="12" r="3.2"/><path d="M20.5 18.4c3.6-.2 6 1.9 6.9 6"/></svg></span>
@@ -228,8 +234,12 @@
       </button>
     </article>
 
-    <!-- v92: «Дальше» — стрелка вниз в кольце и линия к нижнему краю -->
-    <a class="scroll rise" style="--d:1040ms; --pd:9" href="#work" data-i18n-label="hero.scroll" aria-label="Discover"><span class="scroll__ring" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m6 8 4 4 4-4"/></svg></span><span class="track"></span></a>
+    <!-- v94: «Позвать ветер» — тонкое кольцо внизу по центру (на месте стрелки «Дальше»); подпись «Ветер» проявляется,
+         когда мышь рядом (ui/hero/heroHints.ts). Порыв запускает heroUi по data-action="gust" -->
+    <button class="wind rise" type="button" style="--d:1040ms; --pd:9" data-action="gust" data-i18n-label="hero.gust" aria-label="Call the wind">
+      <span class="wind__ring" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 9h11a3 3 0 1 0-3-3"/><path d="M3 13h15a3 3 0 1 1-3 3"/><path d="M3 17h7"/></svg><i class="wind__orbit"></i></span>
+      <span class="hint-label wind__label" aria-hidden="true" data-i18n="hero.wind">Wind</span>
+    </button>
 
   </div>
 </main>

@@ -24,6 +24,7 @@ const ru: Record<keyof typeof en, string> = {
 
   /* компьютер на столике */
   "pc.tip": "Почитать журнал",
+  "pc.look": "Заглянуть внутрь",
   "pc.back": "Назад на холм",
   "pc.hint": "Крутите, чтобы читать · <kbd>Esc</kbd> — выйти",
 
@@ -36,7 +37,9 @@ const ru: Record<keyof typeof en, string> = {
   "hero.tag.ai": "AI-продукты",
   "hero.tag.systems": "Сложные B2B–B2C системы",
   "hero.tagline": "Продукты<br>для ясного<br>завтра",
-  "hero.scroll": "Дальше",
+  "hero.wind": "Ветер",
+  "hero.gust": "Позвать ветер",
+  "hero.weather.change": "Сменить",
 
   "stat.blades.label": "Травинок",
   "stat.blades.value": "{n}K+",

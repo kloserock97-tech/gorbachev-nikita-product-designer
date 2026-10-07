@@ -79,8 +79,6 @@
   .hero-stats dd { font-size: max(16px, calc(26 * var(--u))); line-height: 1.1; color: var(--card-ink); }
   .hero-stats dt { font-size: max(10px, calc(13 * var(--u))); margin-top: 3px; color: #4f5347; opacity: 1; }
 
-  /* «Дальше» на телефоне лишнее: палец и так листает, а вертикальная подпись выходила 5px */
-  .scroll { display: none; }
 
 }
 

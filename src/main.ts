@@ -11,6 +11,7 @@ import { initStory } from "./ui/storyHero";
 import { initCases, renderCases } from "./ui/cases";
 import { initFieldNote } from "./ui/fieldNote";
 import { initMobileCopy } from "./ui/hero/mobileCopy";
+import { initHeroHints } from "./ui/hero/heroHints";
 import { initWalkChapter, renderShelf } from "./ui/walkChapter";
 import { initSound } from "./ui/soundToggle";
 import { initFooter } from "./ui/footer";
@@ -268,12 +269,14 @@ function start3d(caseView?: CaseView) {
     body.classList.remove("pc-focus");
   }
   scene.onComputerHover = (hover) => body.classList.toggle("pc-hover", hover);
+  /* v94: подсказки первого экрана — погода, ветер, компьютер (точка на мониторе тоже открывает его) */
+  initHeroHints(scene, openPc);
   window.addEventListener("pointermove", (e) => {
     if (tip) tip.style.transform = `translate(${e.clientX + 18}px, ${e.clientY + 14}px)`;
   }, { passive: true });
   window.addEventListener("click", (e) => {
     if (scene.computerFocused || body.classList.contains("lite")) return;
-    if ((e.target as Element).closest("a, button, .card, .dock, .cta-wrap, .hero-stats")) return;
+    if ((e.target as Element).closest("a, button, .card, .dock, .cta-wrap, .hero-stats, .wind")) return;
     if (scene.hitComputer(e.clientX, e.clientY)) openPc();
   });
   /* «See the work» проматывает скролл-историю к главе «Кейсы» (v19; раньше открывала компьютер,

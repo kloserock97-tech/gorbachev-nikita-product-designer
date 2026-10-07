@@ -1683,6 +1683,17 @@ export class HillScene {
   onComputerHover?: (hover: boolean) => void;
   private hovering = false;
 
+  /** v94: правый верхний угол монитора в координатах окна, пока компьютер на столике, — для точки-подсказки (heroHints.ts) */
+  pcClientPoint(): { x: number; y: number } | null {
+    if (!this.pc || !this.screenMesh || this.focusOn || this.storyCh1 > 0.02) return null;
+    const b = this.hintBox.setFromObject(this.screenMesh);
+    const p = this.polaroidTmp.set(b.max.x, b.max.y, (b.min.z + b.max.z) / 2).project(this.camera);
+    if (p.z > 1) return null;
+    const c = this.canvasRect;
+    return { x: c.left + (p.x * 0.5 + 0.5) * c.width, y: c.top + (-p.y * 0.5 + 0.5) * c.height };
+  }
+  private hintBox = new THREE.Box3();
+
   get computerFocused() {
     return this.focusOn;
   }
@@ -1694,7 +1705,8 @@ export class HillScene {
     this.hitNdc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
     this.raycaster.setFromCamera(this.hitNdc, this.camera);
     /* компьютер неподвижен — рамка считается один раз */
-    if (this.pcBox.isEmpty()) this.pcBox.setFromObject(this.pc).expandByScalar(0.03);
+    /* v94: рамка с запасом 12 см — по маленькому компьютеру на столике легко попасть */
+    if (this.pcBox.isEmpty()) this.pcBox.setFromObject(this.pc).expandByScalar(0.12);
     return this.raycaster.ray.intersectsBox(this.pcBox);
   }
 

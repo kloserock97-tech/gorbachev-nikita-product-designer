@@ -253,27 +253,6 @@ body.lang-ru .focus { font-weight: 400; }
 .portal-media img { display: block; width: 100%; height: 100%; object-fit: cover; scale: 1.06; transition: scale 1.2s var(--ease-out), filter 0.8s var(--ease); }
 .card:hover .portal-media img { scale: 1.11; }
 
-/* ── подсказка «Дальше» ───────────────────────────────────────────────────── */
-.scroll {
-  position: absolute; z-index: 4; left: calc(846 * var(--u)); top: calc(690 * var(--u));
-  display: flex; align-items: center; gap: calc(12 * var(--u));
-  writing-mode: vertical-rl; text-transform: uppercase; text-decoration: none;
-  font-size: calc(11 * var(--u)); font-weight: 400; letter-spacing: calc(4.4 * var(--u));
-}
-/* по линии вниз стекает светлая капля */
-.scroll .track { position: relative; width: 1px; height: calc(56 * var(--u)); background: rgba(255, 255, 255, 0.18); overflow: hidden; }
-.scroll .track::after {
-  content: ""; position: absolute; left: -1px; width: 3px; height: calc(10 * var(--u)); top: 0;
-  border-radius: 2px; background: currentColor; opacity: 0.8;
-  animation: scroll-drop 2.4s var(--ease) infinite;
-}
-@keyframes scroll-drop {
-  0% { translate: 0 calc(-12 * var(--u)); opacity: 0; }
-  25% { opacity: 0.85; }
-  80% { opacity: 0.85; }
-  100% { translate: 0 calc(62 * var(--u)); opacity: 0; }
-}
-
 /* ── параллакс за курсором ────────────────────────────────────────────────────
    heroUi.ts пишет --px, --py (-1…1) на .hero; каждый слой сдвигается на свою глубину --pd.
    Только сдвиг, без поворотов: плоский коллаж, у которого слои лежат на разной высоте. */
@@ -285,7 +264,6 @@ a:focus-visible, button:focus-visible { outline: 2px solid rgba(255, 255, 255, 0
 @media (prefers-reduced-motion: reduce) {
   .par, .portal-media { transform: none !important; }
   .portal-media img { scale: 1 !important; transition: none !important; }
-  .scroll .track::after { animation: none; }
   .dock-item { scale: 1 !important; translate: none !important; margin-inline: 0 !important; }
 }
 
@@ -322,5 +300,4 @@ a:focus-visible, button:focus-visible { outline: 2px solid rgba(255, 255, 255, 0
 
   .card { border-radius: calc(40 * var(--u)); }
 
-  .scroll { left: calc(702 * var(--u)); top: calc(470 * var(--u)); }
 }

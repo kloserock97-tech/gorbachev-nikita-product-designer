@@ -21,6 +21,7 @@ const en = {
 
   /* компьютер на столике */
   "pc.tip": "Read the magazine",
+  "pc.look": "Look inside",
   "pc.back": "Back to the hill",
   "pc.hint": "Scroll to read · <kbd>Esc</kbd> to leave",
 
@@ -33,7 +34,9 @@ const en = {
   "hero.tag.ai": "AI products",
   "hero.tag.systems": "Complex B2B–B2C systems",
   "hero.tagline": "Products<br>for a clear<br>tomorrow",
-  "hero.scroll": "Discover",
+  "hero.wind": "Wind",
+  "hero.gust": "Call the wind",
+  "hero.weather.change": "Change",
 
   "stat.blades.label": "Blades of grass",
   "stat.blades.value": "{n}K+",

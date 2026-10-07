@@ -1,0 +1,112 @@
+/* v94: подсказки первого экрана (heroHints.ts). Размеры — в единицах кадра (--u), с нижним пределом в px,
+   поэтому отступы масштабируются вместе с остальным первым экраном. */
+
+/* ── погода ─────────────────────────────────────────────────────────────────────────────────────────────────
+   Колонка подписи — сетка из двух строк: сверху «Ясно», снизу в одной ячейке лежат подпись «Погода» и кнопка
+   «Сменить →». Кнопка всегда занимает место в сетке (просто прозрачна), поэтому ширина и высота пункта при наведении
+   не меняются — соседи не сдвигаются. Зазор между «Ясно» и нижней строкой — тот же, что был у подписи (4u).
+   Стеклянная плашка облегает пункт с одинаковым полем 12u со всех сторон; до черт-разделителей остаётся 18u —
+   внутреннее поле меньше внешнего. */
+.hero-stats .stat--b > div {
+  display: grid; grid-template-areas: "v" "c"; row-gap: calc(4 * var(--u)); justify-items: start; align-items: center;
+}
+.hero-stats .stat--b dd { grid-area: v; }
+.hero-stats .stat--b dt { grid-area: c; margin: 0; transition: opacity 0.22s ease, translate 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.weather-change {
+  grid-area: c;
+  display: inline-flex; align-items: center; gap: calc(3 * var(--u)); white-space: nowrap;
+  padding: calc(3 * var(--u)) calc(6 * var(--u)) calc(3 * var(--u)) calc(7 * var(--u)); border-radius: 999px;
+  font-size: max(10px, calc(10 * var(--u))); line-height: 1; font-weight: 500; letter-spacing: 0; text-transform: none; text-shadow: none;
+  color: #2b2a24; background: rgba(255, 253, 248, 0.92); border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 calc(3 * var(--u)) calc(10 * var(--u)) rgba(40, 32, 14, 0.16);
+  opacity: 0; translate: 0 calc(5 * var(--u)); pointer-events: none;
+  transition: opacity 0.25s ease, translate 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.weather-change svg { width: max(9px, calc(9 * var(--u))); height: max(9px, calc(9 * var(--u))); flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: translate 0.3s ease; }
+.stat--b::before {
+  content: ""; position: absolute; z-index: -1; inset: calc(-12 * var(--u)) calc(18 * var(--u)); border-radius: calc(18 * var(--u));
+  background: rgba(255, 253, 248, 0.14); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.38);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  opacity: 0; scale: 0.96; pointer-events: none; transition: opacity 0.3s ease, scale 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.stat--b.is-near::before { opacity: 1; scale: 1; }
+.stat--b.is-near dt { opacity: 0; translate: 0 calc(-5 * var(--u)); }
+.stat--b.is-near .weather-change { opacity: 1; translate: 0 0; transition-delay: 0.06s; }
+.stat--b:hover .weather-change svg { translate: 2px 0; }
+
+/* без мыши: подпись остаётся, рядом со словом — маленький кружок со стрелкой (места под «Сменить» в ряду нет) */
+.hint-touch .hero-stats .stat--b > div { grid-template-columns: auto auto; grid-template-areas: "v x" "c x"; column-gap: 6px; }
+.hint-touch .stat--b dt { opacity: 1; translate: none; }
+.hint-touch .stat--b::before { display: none; }
+.hint-touch .weather-change { grid-area: x; opacity: 0.8; translate: none; padding: 5px; gap: 0; font-size: 0; background: rgba(255, 253, 248, 0.6); }
+.hint-touch .weather-change svg { width: 12px; height: 12px; }
+
+/* ── ветер: тонкое кольцо со значком внизу по центру; по кольцу медленно ходит светлая точка ───────────────── */
+.wind {
+  position: absolute; z-index: 4; left: calc(772 * var(--u)); top: calc(var(--stat-top) - 6 * var(--u));
+  width: calc(56 * var(--u)); height: calc(56 * var(--u)); padding: 0; border: 0; background: none; cursor: pointer; color: #fff;
+}
+.wind__ring {
+  position: absolute; inset: 0; display: grid; place-items: center; border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.55); background: rgba(255, 255, 255, 0.06);
+  transition: background 0.3s ease, border-color 0.3s ease, scale 0.3s ease;
+}
+.wind__ring svg { width: calc(22 * var(--u)); height: calc(22 * var(--u)); fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.wind__orbit { position: absolute; inset: calc(-1 * var(--u)); border-radius: 50%; animation: wind-orbit 9s linear infinite; }
+.wind__orbit::before { content: ""; position: absolute; left: 50%; top: -2px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px rgba(255, 255, 255, 0.9); }
+@keyframes wind-orbit { to { rotate: 360deg; } }
+.wind.is-near .wind__ring, .wind:focus-visible .wind__ring { background: rgba(255, 255, 255, 0.18); border-color: rgba(255, 255, 255, 0.85); }
+.wind:active .wind__ring { scale: 0.94; }
+.wind:focus-visible { outline: none; }
+.hint-label {
+  position: absolute; left: 50%; bottom: calc(100% + 18 * var(--u)); translate: -50% 4px; white-space: nowrap;
+  padding: 7px 12px; border-radius: 999px; font: 500 12px/1 var(--font); color: #2b2a24;
+  background: rgba(255, 253, 248, 0.88); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 8px 20px rgba(40, 32, 14, 0.18);
+  opacity: 0; pointer-events: none; transition: opacity 0.3s ease, translate 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.hint-label::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: calc(18 * var(--u)); background: rgba(255, 255, 255, 0.7); }
+.wind.is-near .hint-label, .wind:focus-visible .hint-label { opacity: 1; translate: -50% 0; }
+/* на телефоне внизу места нет — кольца нет, как не было и прежней кнопки ветра */
+@media (max-width: 900px) { .wind { display: none; } }
+
+/* ── компьютер: точка на мониторе; рядом с мышью — линия и «Заглянуть внутрь →» ─────────────────────────────── */
+.pc-hint {
+  position: fixed; left: 0; top: 0; z-index: 6; width: 0; height: 0; padding: 0; border: 0; background: none; cursor: pointer;
+  font: 500 13px/1 var(--font); color: #2b2a24; transition: opacity 0.35s ease;
+}
+.pc-hint.is-off, .no-ui .pc-hint, .lite .pc-hint, .lite .wind { opacity: 0; pointer-events: none; }
+.lite .pc-hint, .lite .wind { display: none; }
+.pc-hint:focus-visible { outline: none; }
+.pc-hint__dot {
+  position: absolute; left: -4.5px; top: -4.5px; width: 9px; height: 9px; border-radius: 50%;
+  background: #fff8e8; box-shadow: 0 0 0 3px rgba(255, 248, 232, 0.35), 0 0 14px rgba(255, 240, 200, 0.9);
+}
+.pc-hint__dot::after {
+  content: ""; position: absolute; inset: -3px; border-radius: 50%; border: 1.5px solid rgba(255, 248, 232, 0.9); opacity: 0.6;
+  animation: pc-hint-pulse 3.4s ease-out infinite;
+}
+@keyframes pc-hint-pulse { 0% { scale: 1; opacity: 0.6; } 70%, 100% { scale: 3.2; opacity: 0; } }
+.pc-hint__line {
+  position: absolute; left: 0; top: 0; width: 46px; height: 1px; transform-origin: 0 0; rotate: -36deg;
+  background: linear-gradient(90deg, rgba(255, 248, 232, 0.9), rgba(255, 248, 232, 0.4));
+  scale: 0 1; transition: scale 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.pc-hint__pill {
+  position: absolute; left: 34px; top: -50px; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+  padding: 10px 14px; border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.9), rgba(244, 239, 230, 0.82));
+  border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 10px 26px rgba(70, 56, 24, 0.18);
+  opacity: 0; translate: -8px 4px; pointer-events: none; transition: opacity 0.3s ease, translate 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.pc-hint__pill svg { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.pc-hint.is-near .pc-hint__line, .pc-hover .pc-hint__line { scale: 1 1; }
+.pc-hint.is-near .pc-hint__pill, .pc-hover .pc-hint__pill, .pc-hint:focus-visible .pc-hint__pill { opacity: 1; translate: 0 0; pointer-events: auto; transition-delay: 0.08s; }
+/* подпись у курсора при наведении на компьютер повторяла бы ту, что у монитора */
+.pc-tip { display: none; }
+/* без мыши: подпись видна сразу, приглушённо, над монитором (справа экран кончается, слева — подпись у дерева) */
+.hint-touch .pc-hint__line { scale: 1 1; rotate: -90deg; width: 40px; }
+.hint-touch .pc-hint__pill { opacity: 0.85; translate: -50% 0; pointer-events: auto; left: -6px; top: -78px; padding: 8px 11px; font-size: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pc-hint__dot::after, .wind__orbit { animation: none; }
+}
