@@ -434,6 +434,28 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .work-menu, .work-menu.is-open, .work-menu__grid li { scale: none; translate: none; }
 }
+/* v93: меню «Кейсы» — светлая тема, как док с v92 (просьба Никиты): тёплая светлая панель, тёмный текст,
+   выбранная категория — тёмная плитка, как текущий раздел в доке */
+.work-menu {
+  --wm-ink: #1f1d17;
+  --wm-soft: rgba(31, 29, 23, 0.58);
+  --wm-line: rgba(31, 29, 23, 0.1);
+  background: linear-gradient(180deg, #fbf9f4, #f3efe6);
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 30px 80px rgba(70, 56, 24, 0.22), 0 2px 10px rgba(70, 56, 24, 0.1);
+}
+.work-menu__filter-n { color: rgba(31, 29, 23, 0.36); }
+.work-menu__filter.is-on { background: #2b2a24; color: #f7f4ec; }
+.work-menu__filter.is-on .work-menu__filter-n { color: rgba(247, 244, 236, 0.6); }
+.work-menu__thumb { box-shadow: inset 0 0 0 1px rgba(31, 29, 23, 0.06); }
+.work-menu__rail:hover, .work-menu__pane.is-dragging .work-menu__rail { background: rgba(31, 29, 23, 0.05); }
+.work-menu__bar { background: rgba(31, 29, 23, 0.22); }
+.work-menu__rail:hover .work-menu__bar, .work-menu__pane.is-dragging .work-menu__bar { background: rgba(31, 29, 23, 0.4); }
+.work-menu__all { border-color: rgba(31, 29, 23, 0.14); background: rgba(255, 255, 255, 0.7); }
+@media (hover: hover) and (pointer: fine) {
+  .work-menu__filter:not(.is-on):hover { background: rgba(31, 29, 23, 0.05); }
+  .work-menu__all:hover { background: #2b2a24; color: #f7f4ec; border-color: #2b2a24; }
+}
 
 /* ── v92: ряд тем, подпись у дерева, нижний ряд цифр ────────────────────── */
 .hero-tags { position: absolute; z-index: 4; display: flex; align-items: center; margin: 0; padding: 0; list-style: none; line-height: 1; color: #5d594b; }
@@ -636,18 +658,25 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 
 /* v92: плашка фактов «Обо мне» — опыт, команды, типы продуктов; светлая, в одну строку */
 .about-facts {
-  list-style: none; margin: 0.2em 0 0; padding: clamp(10px, 1vw, 16px) clamp(14px, 1.3vw, 22px);
+  list-style: none; margin: 0.2em 0 0; padding: clamp(10px, 1vw, 16px) clamp(12px, 1.3vw, 22px);
   display: flex; gap: clamp(8px, 0.8vw, 14px); align-items: center; justify-content: space-between;
-  border-radius: clamp(14px, 1.3vw, 22px); color: #1f1d17; max-width: 30em;
+  border-radius: clamp(14px, 1.3vw, 22px); color: #1f1d17; max-width: 100%; box-sizing: border-box;
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.86), rgba(248, 244, 236, 0.72));
   border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 10px 30px rgba(80, 60, 20, 0.08);
 }
-.about-facts li { display: flex; align-items: center; gap: clamp(8px, 0.7vw, 12px); }
+.about-facts li { display: flex; align-items: center; gap: clamp(8px, 0.7vw, 12px); min-width: 0; flex: 1 1 0; }
+.about-facts li > span:last-child { min-width: 0; }
 .about-facts li + li { padding-left: clamp(8px, 0.8vw, 14px); border-left: 1px solid rgba(60, 54, 40, 0.14); }
-.about-facts b { display: block; font-size: clamp(12px, 0.82vw, 15px); font-weight: 600; line-height: 1.2; white-space: nowrap; }
-.about-facts small { display: block; font-size: clamp(10.5px, 0.68vw, 12.5px); line-height: 1.25; color: #6f6a5a; margin-top: 2px; white-space: nowrap; }
+/* v93: подписи переносятся по словам — в колонке шириной ~300px строка «от идеи до запуска» выходила за плашку */
+.about-facts b { display: block; font-size: clamp(12px, 0.82vw, 15px); font-weight: 600; line-height: 1.2; }
+.about-facts small { display: block; font-size: clamp(10.5px, 0.68vw, 12.5px); line-height: 1.25; color: #6f6a5a; margin-top: 2px; }
 .about-facts__ico { flex: none; width: clamp(22px, 1.8vw, 32px); height: clamp(22px, 1.8vw, 32px); color: #3a372e; }
-@media (max-width: 900px) { .about-facts small { white-space: normal; } }
+/* узкая плашка (по её ширине, а не окна: на ноутбуке колонка тоже узкая) — значки над текстом, три столбика
+   остаются в одну строку */
+.about-facts { container-type: inline-size; }
+@container (max-width: 360px) {
+  .about-facts li { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
 
 /* ===== логотипы компаний — стили .sf-logos с Tilda ===== */
 .sf-logos { display: flex; align-items: center; margin-top: 1.2em; }

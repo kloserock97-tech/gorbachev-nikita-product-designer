@@ -44,7 +44,6 @@ export function initFieldNote() {
   const glyph = card.querySelector<HTMLElement>("[data-note-glyph]");
   const points = card.querySelector<HTMLElement>("[data-note-points]");
   const links = card.querySelector<HTMLElement>("[data-note-links]");
-  const demo = card.querySelector<HTMLAnchorElement>("[data-note-demo]");
   const deck = card.querySelector<HTMLElement>(".note-deck");
   const count = card.querySelector<HTMLElement>(".note-deck__count");
   const steps = [...card.querySelectorAll<HTMLButtonElement>(".note-deck__btn")];
@@ -91,11 +90,11 @@ export function initFieldNote() {
        вычитаем его. По раскладке, а не по getBoundingClientRect: параллакс двигает карточку за курсором */
     const parent = (card.offsetParent as HTMLElement | null)?.getBoundingClientRect().top ?? 0;
     const restTop = parent + card.offsetTop - (parseFloat(getComputedStyle(card).marginTop) || 0);
-    /* высота закрытой карточки и шапки — из ширины (note-card.css, v92: поля 12, шапка 96, шеврон 34 при ширине 456):
-       посреди перехода offsetHeight врёт */
+    /* высота закрытой карточки и шапки — из ширины (note-card.css, v93: поля 12, шапка 96, снизу поле 12 при ширине 456;
+       шеврон стоит в шапке): посреди перехода offsetHeight врёт */
     const unit = card.offsetWidth / 456;
     const figure = 96 * unit;
-    const closed = (12 + 96 + 34) * unit;
+    const closed = (12 + 96 + 12) * unit;
     const gap = 14;
     const fab = document.querySelector<HTMLElement>(".sound-fab")?.getBoundingClientRect();
     const dock = document.querySelector<HTMLElement>(".dock")?.getBoundingClientRect();
@@ -183,17 +182,10 @@ export function initFieldNote() {
         points.appendChild(p);
       }
     }
-    if (demo) {
-      /* v68: ссылка живёт на названии, прятать её нельзя — у заметки без демо просто убираем адрес,
-         и картинка перестаёт быть кликабельной (см. обработчик ниже) */
-      const to = current.links?.demo;
-      card.classList.toggle("has-demo", !!to);
-      if (to) demo.href = to; else demo.removeAttribute("href");
-      demo.setAttribute("aria-label", `${t("notes.go")}: ${t(key(id, "title"))}`);
-    }
+    /* v93: демо и код — ссылками в раскрытом описании; нажатие на саму карточку её раскрывает */
     if (links) {
       links.hidden = !current.links;
-      links.innerHTML = current.links ? `<a href="${current.links.repo}" target="_blank" rel="noopener">${t("notes.repo")}</a>` : "";
+      links.innerHTML = current.links ? `<a href="${current.links.demo}" target="_blank" rel="noopener">${t("notes.demo")}</a><a href="${current.links.repo}" target="_blank" rel="noopener">${t("notes.repo")}</a>` : "";
       links.querySelectorAll("a").forEach((a) => (a.tabIndex = isOpen() ? 0 : -1));
     }
     if (count) count.innerHTML = `<b>${pad(index + 1)}</b>/${pad(notes.length)}`;
@@ -288,15 +280,14 @@ export function initFieldNote() {
   });
   card.addEventListener("pointercancel", drop);
 
-  /* v68: кликабельна вся картинка карточки. Кнопку «Открыть демо» убрали — она забирала угол подписи и
-     повторяла то, на что человек и так жмёт. Свайп при этом не ломается: если палец проехал вбок, это
-     было листание, а не нажатие, и демо не открывается. Листалку, чеврон и саму ссылку пропускаем — у них
-     своё дело. */
+  /* v93: главное действие карточки — раскрыть описание (просьба Никиты): нажатие на шапку делает то же, что шеврон.
+     Свайп при этом не ломается: если палец проехал вбок, это было листание. Листалку и шеврон пропускаем —
+     у них своё дело. Демо и код открываются ссылками внутри описания */
   const hero = card.querySelector<HTMLElement>(".note-hero");
   hero?.addEventListener("click", (e) => {
-    if (dragging || performance.now() - swipedAt < 400 || !demo?.getAttribute("href")) return;
+    if (dragging || performance.now() - swipedAt < 400) return;
     if ((e.target as Element).closest("a, button")) return;
-    demo.click();
+    set(!isOpen());
   });
 
   addEventListener("keydown", (e) => { if (e.key === "Escape") set(false); });

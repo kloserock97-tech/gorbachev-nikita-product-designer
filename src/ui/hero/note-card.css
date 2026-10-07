@@ -90,28 +90,10 @@
   margin: 0; font-size: max(10.5px, calc(11.5 * var(--u))); line-height: 1.2; font-weight: 300; color: rgba(255, 255, 255, 0.72);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-/* v68: кликабельна вся картинка карточки, поэтому стеклянной кнопки «Открыть демо» больше нет.
-   Настоящая ссылка осталась на названии — её видно по подчёркиванию при наведении и по фокусу с клавиатуры;
-   стрелка справа только подсказывает, что нажатие уводит наружу. */
-.note-cap__link { color: inherit; text-decoration: none; }
-.note-cap__link:hover { text-decoration: underline; text-underline-offset: 3px; }
-.note-cap__link:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 4px; }
-.note-cap__go {
-  flex: none; display: grid; place-items: center; width: max(34px, calc(38 * var(--u))); height: max(34px, calc(38 * var(--u)));
-  border-radius: 50%; color: #fff; background: rgba(255, 255, 255, 0.18); border: 1px solid rgba(255, 255, 255, 0.16);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
-  transition: background 0.25s ease, scale 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.note-cap__go svg { width: max(11px, calc(13 * var(--u))); height: max(11px, calc(13 * var(--u))); fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; transition: translate 0.3s ease; }
-.card--stove.has-demo .note-hero { cursor: pointer; }
-.card--stove.has-demo .note-hero:hover .note-cap__go { background: rgba(255, 255, 255, 0.32); }
-.card--stove.has-demo .note-hero:hover .note-cap__go svg { translate: 1.5px -1.5px; }
-.card--stove:not(.has-demo) .note-cap__go { display: none; }
 /* v72: на телефоне без размытия фона — те же причины, что у кнопок героя (hero.css) */
 @media (hover: none) and (pointer: coarse) {
-  .note-cap__go, .note-deck { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .note-deck { -webkit-backdrop-filter: none; backdrop-filter: none; }
   .note-deck { background: rgba(18, 22, 15, 0.5); }
-  .note-cap__go { background: rgba(20, 24, 18, 0.34); }
 }
 
 
@@ -229,7 +211,6 @@
   .note-cap { left: max(16px, calc(26 * var(--u))); right: max(14px, calc(22 * var(--u))); bottom: max(16px, calc(24 * var(--u))); gap: 10px; }
   .note-cap__title { font-size: max(16px, calc(26 * var(--u))); }
   .note-cap__label { font-size: max(11.5px, calc(17 * var(--u))); }
-  .note-cap__go { width: 44px; height: 44px; }
   .note-deck { top: max(10px, calc(16 * var(--u))); right: max(10px, calc(16 * var(--u))); padding: 0; }
   .note-deck__btn { width: 44px; height: 44px; }
   .note-deck__count { font-size: max(12px, calc(17 * var(--u))); min-width: 2.6em; }
@@ -259,8 +240,9 @@
 }
 
 /* ── v92: горизонтальная карточка (вариант 2 стенда, выбор Никиты 07.10) ──────────────────────────────────────
-   Картинка слева, справа название и что это, листалка текстом в углу, стрелка демо внизу справа. Стекло прежнее.
-   Под ними шеврон: раскрывает описание между шапкой и шевроном. Карточка стоит у нижнего края кадра, поэтому на
+   Картинка слева, справа название и что это, листалка текстом в углу. Стекло прежнее.
+   v93: внизу справа в шапке — шеврон (на месте стрелки демо): раскрывает описание под шапкой, нажатие на шапку
+   делает то же; демо и код — ссылками в описании. Карточка стоит у нижнего края кадра, поэтому на
    широком экране раскрытая поднимается вверх (fieldNote.ts, --note-lift), на телефоне растёт вниз. Над карточкой —
    подпись «Пет-проекты». */
 .card--stove { overflow: visible; }
@@ -278,33 +260,44 @@
 .card--stove .note-cap { top: 0; bottom: 0; align-items: center; }
 .card--stove .note-cap__title { color: var(--card-ink); }
 .card--stove .note-cap__label { line-height: 1.35; color: #4f5347; white-space: normal; }
-.card--stove .note-cap__go { align-self: flex-end; color: var(--card-ink); background: rgba(255, 255, 255, 0.5); border-color: rgba(255, 255, 255, 0.7); }
-.card--stove.has-demo .note-hero:hover .note-cap__go { background: rgba(255, 255, 255, 0.8); }
+.card--stove .note-hero { cursor: pointer; }
+/* шеврон — круглая кнопка в правом нижнем углу шапки */
+.card--stove .knob--note {
+  position: absolute; z-index: 3; order: 0; height: auto; align-self: auto; padding: 0; border-radius: 50%;
+  width: var(--nc-knob); height: var(--nc-knob);
+  right: calc(var(--nc-pad) + var(--nc-knob-in)); top: calc(var(--nc-pad) + var(--nc-fig) - var(--nc-knob) - var(--nc-knob-in));
+  color: var(--card-ink); background: rgba(255, 255, 255, 0.55); border: 1px solid rgba(255, 255, 255, 0.75);
+  transition: background 0.25s ease, scale 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.card--stove .knob--note:hover, .card--stove .note-hero:hover ~ .knob--note { background: rgba(255, 255, 255, 0.85); }
+.card--stove .knob--note:active { scale: 0.94; }
+.card--stove .knob--note:focus-visible { outline: 2px solid var(--card-ink); outline-offset: 2px; }
 .card--stove .note-deck { background: none; border: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
 .card--stove .note-deck__btn { color: var(--card-ink); opacity: 0.7; }
 .card--stove .note-deck__count { color: #4f5347; }
 .card--stove .note-deck__count b { color: var(--card-ink); }
 @media (min-width: 901px) {
   .card--stove, .card--stove.is-open {
-    /* поля 12, шапка 96, шеврон 34 при ширине 456 — те же числа в fieldNote.ts (расчёт подъёма) */
-    --nc-pad: calc(12 * var(--u)); --nc-fig: calc(96 * var(--u)); --nc-chev: calc(34 * var(--u)); --nc-r: calc(14 * var(--u));
+    /* поля 12, шапка 96, снизу поле 12 при ширине 456 — те же числа в fieldNote.ts (расчёт подъёма) */
+    --nc-pad: calc(12 * var(--u)); --nc-fig: calc(96 * var(--u)); --nc-chev: var(--nc-pad); --nc-r: calc(14 * var(--u));
+    --nc-knob: calc(44 * var(--u)); --nc-knob-in: calc(6 * var(--u));
     border-radius: calc(24 * var(--u));
   }
   .card--stove .portal-media { width: calc(168 * var(--u)); }
-  .card--stove .note-cap { left: calc(190 * var(--u)); right: calc(6 * var(--u)); }
+  .card--stove .note-cap { left: calc(190 * var(--u)); right: calc(56 * var(--u)); }
   .card--stove .note-cap__title { font-size: calc(19 * var(--u)); }
   .card--stove .note-cap__label { font-size: calc(13.5 * var(--u)); max-width: calc(170 * var(--u)); }
   .card--stove .note-cap__text { gap: calc(6 * var(--u)); }
-  .card--stove .note-cap__go { width: calc(44 * var(--u)); height: calc(44 * var(--u)); }
   .card--stove .note-deck { top: calc(-4 * var(--u)); right: 0; }
   .card--stove .note-deck__btn { width: calc(24 * var(--u)); height: calc(24 * var(--u)); }
 }
 @media (max-width: 900px) {
-  /* высоту кадра считает --m-card (hero-mobile.css): шапка ниже прежней картинки, шеврон прежний */
-  .hero { --m-fig: max(112px, calc(210 * var(--u))); --m-card: calc(var(--m-cpad) + var(--m-fig) + var(--m-chev)); }
+  /* высоту кадра считает --m-card (hero-mobile.css): шеврон в шапке, снизу поле той же толщины, что сверху */
+  .hero { --m-fig: max(112px, calc(210 * var(--u))); --m-chev: var(--m-cpad); --m-card: calc(var(--m-cpad) + var(--m-fig) + var(--m-chev)); }
+  .card--stove { --nc-knob: 44px; --nc-knob-in: 0px; }
   .note-pick { left: max(4px, calc(6 * var(--u))); bottom: calc(100% + max(8px, calc(12 * var(--u)))); font-size: max(10.5px, calc(13 * var(--u))); }
   .card--stove .portal-media { width: 44%; }
-  .card--stove .note-cap { left: calc(44% + max(14px, calc(22 * var(--u)))); right: 0; }
+  .card--stove .note-cap { left: calc(44% + max(14px, calc(22 * var(--u)))); right: 48px; }
   .card--stove .note-cap__text { gap: 4px; }
   .card--stove .note-cap__title { font-size: max(16px, calc(26 * var(--u))); }
   .card--stove .note-cap__label { font-size: max(12px, calc(17 * var(--u))); line-height: 1.3; }

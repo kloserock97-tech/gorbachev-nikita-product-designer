@@ -58,7 +58,6 @@ const ru: Record<keyof typeof en, string> = {
   "notes.close": "Закрыть заметку",
   "notes.demo": "Открыть живое демо ↗",
   "notes.repo": "Код на GitHub ↗",
-  "notes.go": "Открыть демо",
 
   "notes.hill.title": "Windcrest",
   "notes.hill.alt": "Гребень холма под серым небом, траву клонит сильный ветер",

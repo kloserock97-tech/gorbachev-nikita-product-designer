@@ -55,7 +55,6 @@ const en = {
   "notes.close": "Close note",
   "notes.demo": "Open the live demo ↗",
   "notes.repo": "Source on GitHub ↗",
-  "notes.go": "Open demo",
 
   "notes.hill.title": "Windcrest",
   "notes.hill.alt": "The crest of a hill under a grey sky, grass bent by a strong wind",
