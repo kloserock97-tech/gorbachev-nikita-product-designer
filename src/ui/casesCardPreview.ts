@@ -170,7 +170,7 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
     const phone = c.look.screen?.device === "phone";
     box.classList.toggle("has-scene", !!c.look.scene);
     const rows: [string, string][] = [
-      [t("cases.f.about"), headOf(c.subtitle)],
+      [t("cases.f.about"), c.about ?? headOf(c.subtitle)],
       [t("cases.f.where"), c.tag],
       [t("cases.f.platform"), t(phone ? "work.mobile" : "work.web")],
       [t("cases.f.result"), `${c.stat.value} — ${c.stat.label}`],

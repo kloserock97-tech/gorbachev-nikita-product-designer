@@ -12,8 +12,8 @@ export const en: CaseStory = {
   id: "design-lead",
   hero: {
     kicker: "Product design · Sber · 2025–2026",
-    title: "Design Got a Seat",
-    tagline: "I rebuilt the process around the design team, and design started being called into product decisions from the start.",
+    title: "Rebuilding the Design Process",
+    tagline: "After the rebuild, design was called into product decisions from the start, not at the end.",
     summary:
       "I led the design team of an internal bank product for risk assessment and review of AI agents: design quality, handing out work, hiring, onboarding and growth plans, and I joined the hard projects myself. Over a year I changed the process around the screens, and pinned every rule to the sprint board so it did not live in the lead's memory.",
     facts: [
