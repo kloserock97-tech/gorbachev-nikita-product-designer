@@ -1,5 +1,4 @@
 import { getCases } from "../data/cases";
-import { morphIn, morphOut, morphReset, noteSource } from "./caseMorph";
 import { getStory, hasStories, loadStories } from "../data/caseStory";
 import { pad2 as pad } from "../lib/format";
 import { cue } from "../audio/bus";
@@ -110,8 +109,6 @@ export function initCaseView(opts: Opts = {}) {
       lastFocus = document.activeElement as HTMLElement | null;
       root.hidden = false;
       document.body.classList.add("case-open");
-      /* v92: переход из карточки (caseMorph.ts); нет источника клика или «уменьшить движение» — обычное проявление */
-      morphIn(root, r.id);
       requestAnimationFrame(() => root.classList.add("is-on"));
       opts.onToggle?.(true);
       cue("open", 0.7);
@@ -133,13 +130,11 @@ export function initCaseView(opts: Opts = {}) {
     current = null;
     storyApi?.stop();
     storyApi = null;
-    /* обратный ход перехода, если кейс раскрывался из карточки: круг сжимается туда, откуда вырос */
-    const wait = morphOut(root) ?? 380;
     root.classList.remove("is-on");
     document.body.classList.remove("case-open");
     opts.onToggle?.(false);
     cue("close", 0.7);
-    window.setTimeout(() => { if (!current) { root.hidden = true; root.innerHTML = ""; morphReset(root); } }, wait);
+    window.setTimeout(() => { if (!current) { root.hidden = true; root.innerHTML = ""; } }, 380);
     lastFocus?.focus?.({ preventScroll: true });
   };
 
@@ -206,7 +201,6 @@ export function initCaseView(opts: Opts = {}) {
     e.preventDefault();
     const to = a.getAttribute("href")!;
     if (location.hash === to) return;
-    if (!current) noteSource(a, e);
     go(to);
   });
   /* заранее: в простое после старта и когда курсор или палец дошёл до ссылки на кейс */
