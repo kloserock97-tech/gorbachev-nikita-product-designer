@@ -88,6 +88,10 @@
 .cs-kicker { color: var(--faint); font-weight: 500; font-size: clamp(14px, 1.15vw, 17px); }
 .cs-hero h1 { margin-top: 16px; font-size: clamp(44px, 6vw, 96px); font-weight: 700; line-height: 1; letter-spacing: -0.035em; text-wrap: balance; }
 body.lang-ru .cs-hero h1 { line-height: 1.05; letter-spacing: -0.024em; }
+/* v92: длинное название ("Перестройка процесса дизайн-команды") в обычном кегле не влезало в колонку и наезжало на мокап */
+.cs-hero h1.is-long { font-size: clamp(38px, 4.4vw, 68px); }
+/* у длинного названия рядом со знаком остаётся только логотип: имя стоит крупно в заголовке под ним, а в строке над
+   заголовком оно переносилось на три-четыре строки и наезжало на подзаголовок (caseStoryView.ts) */
 .cs-tagline { margin-top: clamp(16px, 2.4vh, 26px) !important; max-width: 22em; font-size: clamp(18px, 1.6vw, 24px); font-weight: 500; line-height: 1.36; letter-spacing: -0.005em; color: var(--soft); text-wrap: pretty; }
 .cs-hero .ya { align-self: stretch; }
 
