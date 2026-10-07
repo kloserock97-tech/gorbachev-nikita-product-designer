@@ -171,3 +171,13 @@
 .cases.is-narrow[data-mode="wheel"][data-preview="card"] .cw-steps { bottom: calc(18px + env(safe-area-inset-bottom)); }
 /* кнопка звука на это время уходит в правый верхний угол, как в подвале: внизу её место занимает «вперёд» */
 body:has(.cases.is-narrow.is-on) .sound-fab { top: max(16px, env(safe-area-inset-top)); bottom: auto; }
+
+/* v92: сцена расступается, пока кейс раскрывается из карточки (caseMorph.ts): список уезжает влево, факты
+   опускаются, название гаснет, сама карточка уступает место своей копии в полёте. На закрытии — обратно.
+   Сдвиг через transform: translate у списка и центра занят центровкой. Переходы — только на время cv-anim,
+   чтобы не спорить с собственной анимацией смены кейса */
+.cv-anim .cx-list, .cv-anim .cx-facts, .cv-anim .cx-title, .cv-anim .cx-center { transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease; }
+.cv-leaving .cx-list { transform: translateX(-56px); opacity: 0; }
+.cv-leaving .cx-facts { transform: translateY(40px); opacity: 0; }
+.cv-leaving .cx-title { transform: translateY(24px); opacity: 0; }
+.cv-leaving .cx-center { opacity: 0; }
