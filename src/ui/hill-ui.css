@@ -1123,10 +1123,8 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 .case-view.is-on { opacity: 1; translate: 0 0; }
 /* v92: окно раскрывается переходом из карточки (caseMorph.ts) — своё проявление и подъём ему не нужны */
 .case-view.cv-morph { opacity: 1; translate: none; transition: none; }
-/* v93: слои переходов «чернила» и «плитки» (caseMorph.ts) — над сценой, пока окно кейса ещё прозрачное */
+/* v94: слой перехода «чернила» (caseMorph.ts) — над сценой, пока окно кейса ещё прозрачное */
 .cm-ink { position: fixed; inset: 0; z-index: 60; width: 100vw; height: 100vh; pointer-events: none; }
-.cm-tiles { position: fixed; inset: 0; z-index: 60; display: grid; overflow: hidden; pointer-events: none; }
-.cm-tiles i { display: block; aspect-ratio: 1; background: #f5f5f7; transform: scale(0); }
 .case-open { overflow: hidden; }
 .cv-scroll { height: 100%; overflow-x: clip; overflow-y: auto; overscroll-behavior: contain; padding: 0 clamp(16px, 4.4vw, 72px) 64px; }
 .cv-scroll > * { max-width: 1240px; margin-inline: auto; }
