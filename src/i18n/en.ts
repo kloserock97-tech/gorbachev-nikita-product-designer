@@ -10,7 +10,7 @@ const en = {
   "nav.home": "Nikita Gorbachev: back to the start",
   "nav.about": "About",
   "nav.work": "Work",
-  "nav.lab": "Experiments",
+  "nav.lab": "Pet projects",
   "nav.hi": "Say hi",
   "nav.lang": "Читать по-русски",
   "nav.lang.short": "RU",
@@ -113,7 +113,7 @@ const en = {
   "notes.shelf.title": "Shelf",
   "notes.shelf.alt": "The Shelf mark: two things standing on a plank and one below it",
   "notes.shelf.p1": "My own shelf of ready-made interface pieces. Every piece has a live preview and code in several flavours: HTML, React, Vue, three.js.",
-  "notes.shelf.p2": "Pieces are sorted by type and by task, with taste collections and a “goes well with” hint. Search lives behind ⌘K, and the filters work like Mobbin's.",
+  "notes.shelf.p2": "Pieces are sorted by type and by task, with taste collections and a “goes well with” hint.",
   "notes.shelf.p3": "I fill it together with Claude: an agent builds a piece from a brief. Two languages, light and dark themes. The project is private, so there is no demo.",
   "notes.shelf.kind": "A shelf of ready-made interface pieces",
   "notes.shelf.s1v": "90+",
@@ -178,7 +178,7 @@ const en = {
   "walk.kicker": "Case studies · 2024–2026",
   "walk.title": "Five products and two concepts",
   "walk.sub": "Internal tools, city services and AI products. Each case tells what was there, what I did and what came of it.",
-  "shelf.title": "Side projects",
+  "shelf.title": "Pet projects",
 
   /* меню Work в доке */
   "work.title": "Work",
