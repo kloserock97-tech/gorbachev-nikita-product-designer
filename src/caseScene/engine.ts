@@ -13,11 +13,19 @@ import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 
 const FRAME = { w: 1672, h: 941 };
 const FOV = 30;
-/** чистое сложение света: цвет прибавляется, альфа холста не растёт — свет ложится на луг под холстом */
+/** сложение света: цвет прибавляется, свет ложится на луг под холстом.
+    Альфа растёт на яркость света (самый яркий канал). Раньше свет писался с альфой 0 — пиксель «цвет больше
+    альфы», который композитор показывает сложением только по доброй воле. Где браузер перед смешиванием
+    делит цвет на альфу (CSS-фильтр, преобразование цвета под экран, программная композиция), такой свет
+    обнулялся, и горизонтали, пятна и огоньки оставались только внутри прямоугольников карточек, где ореол
+    записал альфу: свечение выглядело обрезанным. Теперь пиксель всегда допустимый: цвет не больше альфы */
 const addLight = (m: THREE.Material) => {
   m.blending = THREE.CustomBlending;
   m.blendSrc = THREE.OneFactor; m.blendDst = THREE.OneFactor;
-  m.blendSrcAlpha = THREE.ZeroFactor; m.blendDstAlpha = THREE.OneFactor;
+  m.blendSrcAlpha = THREE.OneFactor; m.blendDstAlpha = THREE.OneFactor;
+  m.onBeforeCompile = (s) => {
+    s.fragmentShader = s.fragmentShader.replace(/\}\s*$/, "  gl_FragColor.a = max(gl_FragColor.r, max(gl_FragColor.g, gl_FragColor.b));\n}");
+  };
   return m;
 };
 const DIST = FRAME.h / 2 / Math.tan(THREE.MathUtils.degToRad(FOV / 2));
