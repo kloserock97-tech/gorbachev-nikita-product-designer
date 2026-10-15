@@ -42,6 +42,9 @@ export type PostFx = {
     /* v19, глава «Кейсы»: tear — нижний край оторванной страницы в долях высоты кадра (≤0 — цела),
        bgBlur 0…1 — размытие сцены-фона, overlayCamera — камера страницы для прохода компьютера */
     tear: number; bgBlur: number; overlayCamera: THREE.Camera | null;
+    /* v95, заставка «Расфокус» (src/intro/focusLoader.ts): intro 0…1 — сила расфокуса всего кадра. Сцена рисуется
+       как обычно, в полном разрешении, размытие — два четвертных прохода, финал смешивает резкое с размытым */
+    intro: number;
     /* v32: второй фон главы «Кейсы» (луг Meadow Walk). alt 0…1 — его доля; altRender рисует его в переданный буфер */
     alt: number; altRender: ((target: THREE.WebGLRenderTarget, destination?: THREE.Texture) => void) | null;
     /* до и после прохода компьютера — сцена подменяет ему свет и окружение */
@@ -104,6 +107,8 @@ export function createPostFx(
   const altRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 0 });
   const altBgRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 0 });
   const altBlurRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
+  /* второй проход расфокуса заставки: шестнадцать выборок одного прохода на большом радиусе дают зерно, второй его сглаживает */
+  const introRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
   const clear = new THREE.Color();
 
   const sunUv = new THREE.Vector2(0.5, 0.5);
@@ -159,6 +164,7 @@ export function createPostFx(
     kineticKeep: new THREE.Vector3(0, 0.2, 0),
     tear: -1,
     bgBlur: 0,
+    intro: 0,
     alt: 0,
     altRender: null as ((target: THREE.WebGLRenderTarget, destination?: THREE.Texture) => void) | null,
     overlayCamera: null as THREE.Camera | null,
@@ -208,6 +214,8 @@ export function createPostFx(
       tShadow: { value: shadowRT.texture },
       tAlt: { value: altBlurRT.texture },
       uAlt: { value: 0 },
+      tIntro: { value: introRT.texture },
+      uIntro: { value: 0 },
     },
   });
   const blit = new THREE.ShaderMaterial({
@@ -245,6 +253,7 @@ export function createPostFx(
       altRT.setSize(Math.max(1, Math.round(W * 0.8)), Math.max(1, Math.round(H * 0.8)));
       altBgRT.setSize(Math.max(1, Math.ceil(W / 2)), Math.max(1, Math.ceil(H / 2)));
       altBlurRT.setSize(Math.max(1, Math.ceil(W / 4)), Math.max(1, Math.ceil(H / 4)));
+      introRT.setSize(Math.max(1, Math.ceil(W / 4)), Math.max(1, Math.ceil(H / 4)));
       shadowRT.setSize(Math.max(1, Math.ceil(W / 4)), Math.max(1, Math.ceil(H / 4)));
       quarter.uniforms.uAspect.value = w / h;
       pcRT.setSize(W, H);
@@ -313,6 +322,21 @@ export function createPostFx(
           draw(quarter, altBlurRT);
         }
       }
+      /* заставка «Расфокус»: резкий кадр уже в sceneRT; размытие берёт его же, поэтому возврат резкости — плавное
+         смешивание, а не переключение буферов. Радиус и доля размытого падают вместе */
+      const intro = !low && !covered && !portalOn && params.intro > 0.001 ? params.intro : 0;
+      if (intro > 0) {
+        quarter.uniforms.uMode.value = 0;
+        quarter.uniforms.tInput.value = sceneRT.texture;
+        quarter.uniforms.uR.value = 0.06 * intro;
+        draw(quarter, bgBlurRT);
+        quarter.uniforms.tInput.value = bgBlurRT.texture;
+        quarter.uniforms.uR.value = 0.03 * intro;
+        draw(quarter, introRT);
+      }
+      /* v95.2: мягкий фокус (выбор Никиты) — размытый кадр поверх резкого примерно наполовину: детали холма
+         видны сквозь свечение */
+      final.uniforms.uIntro.value = intro <= 0 ? 0 : 1 - (1 - intro) * (1 - intro);
       final.uniforms.tScene.value = low ? bgBlurRT.texture : altFull || portalOn ? altRT.texture : sceneRT.texture;
       final.uniforms.uAlt.value = altMix ? params.alt : 0;
       /* резкость CAS считает соседей полноразмерным текселем — на половинном буфере она ни к чему */
@@ -429,7 +453,7 @@ export function createPostFx(
     warm() {
       /* буферы и шейдер четвертного прохода — заранее: первый показ компьютера отдельным слоем
          и начало отрыва страницы давали кадр 36–145 мс на компиляции и выделении памяти */
-      for (const t of [pcRT, bgRT, bgBlurRT, shadowRT, halfRT, altRT, altBgRT, altBlurRT]) renderer.initRenderTarget(t);
+      for (const t of [pcRT, bgRT, bgBlurRT, shadowRT, halfRT, altRT, altBgRT, altBlurRT, introRT]) renderer.initRenderTarget(t);
       const prev = renderer.getRenderTarget();
       quarter.uniforms.tInput.value = sceneRT.texture;
       quarter.uniforms.uMode.value = 0;
@@ -439,7 +463,7 @@ export function createPostFx(
       renderer.setRenderTarget(prev);
     },
     dispose() {
-      [sceneRT, bgRT, bgBlurRT, shadowRT, pcRT, maskRT, blurA, blurB, shieldRT, halfRT, altRT, altBgRT, altBlurRT].forEach((t) => t.dispose());
+      [sceneRT, bgRT, bgBlurRT, shadowRT, pcRT, maskRT, blurA, blurB, shieldRT, halfRT, altRT, altBgRT, altBlurRT, introRT].forEach((t) => t.dispose());
       [mask, blur, quarter, final, blit, shieldMat].forEach((m) => m.dispose());
       quad.dispose();
     },

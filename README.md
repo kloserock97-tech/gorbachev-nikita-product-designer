@@ -43,7 +43,6 @@ npm run check     # type check, build, and a report of unused dictionary keys, C
 npm run bundle    # what each built script is made of, by source file
 npm run deadcode  # unused files and exports (knip, fetched on demand)
 npm run smoke     # walk through home, menu, story, cases and a case page in headless Chrome (needs preview on 5191)
-npm run audit:loader  # 17 checks of the loading screen (needs preview on 5191)
 npm run test:case-entry  # a link straight to a case must show its title within 3s on a mid laptop (needs preview on 5191)
 npm run test:gl   # loading the scene on a slow CPU must not produce a single WebGL error (needs preview on 5191)
 ```
@@ -53,7 +52,6 @@ Useful URL parameters while developing:
 | Parameter | Effect |
 | --- | --- |
 | `?intro=0` / `?intro=1` | skip or force the loading screen |
-| `?garden=0.5` / `?gardentier=0..4` | freeze the loading screen at a growth value; pin its quality step |
 | `?cases=wheel` / `wheel2d` / `wheel3d` / `ribbon` / `deck` | other views of the Work chapter: the wheel of titles on an arc (and the same without WebGL, or with it forced on phones), the old ribbon of cards, a stack. Any value shows a small switcher at the bottom |
 | `?story=0.62` | jump to a point of the scroll story (0 to 1) |
 | `?tblur=0.55` / `?taberr=0.03` | strength of the transition’s radial smear and chromatic aberration |
@@ -85,8 +83,8 @@ src/
     dog.ts           Kelly: poses, head tracking, sleep, umbrella hat
     weather.ts       clear / cloudy / rain / dusk
     ...
-  intro/             the loading screen: a slab of frosted glass that overgrows with moss while the hill loads
-    garden/          what lies on the slab: glass, ice, moss, flowers, water, post-processing
+  intro/             the loading screen: the hill itself in soft focus and graphite behind the name; Enter brings back
+                     sharpness and colour (the old moss-and-glass loader lives on as the Overgrowth demo)
   ui/                HTML/CSS interface: hero, story texts, case strip and case pages, footer, lite version
     fonts.css        self-hosted fonts and the serif accent class
     icons.ts         one icon set in the style of the dock icons
@@ -132,7 +130,6 @@ The `tools/` scripts drive a headless Chrome over the DevTools protocol:
 - `cdp-chapter-perf.mjs` measures each chapter of the scroll story (`--ps 0,0.2,0.5,0.97`): frame rate, main-thread time per frame split into script and style recalculation, and draw calls and instances per frame for every WebGL canvas (via `pre-draw-count.js`). It is how offscreen work was found: an endless CSS animation recalculating styles every frame, eight case-scene contexts where one draws.
 - `crop.ps1` crops and enlarges a screenshot region without smoothing, to inspect single pixels.
 - `site-study.mjs` studies somebody else's page for reference: screenshots while scrolling plus the numbers behind the look (the type scale actually used, tracking, line height, tile radii and backgrounds, button sizes). Nothing from the page is stored except numbers and frames for yourself.
-- `audit-nature-loader.mjs` checks the loading screen: growth phases, focus, clean-up, reduced motion, deep links, context loss, frame pace.
 - `case-entry-test.mjs` opens `#/work/<case>` on a cold profile and fails if the case title takes longer than the budget (3s on a mid laptop with CPU ×4, 1.5s on a fast desktop). A link to a case is the most common way in, and the case page must not wait for the hill.
 - `gl-errors-test.mjs` loads the scene with the CPU throttled and fails on any WebGL error, using `pre-gl-errors.js` to ask `getError()` after every draw call. A run where the scene barely rendered counts as void, not as a pass.
 - `unused.mjs` lists dictionary keys, CSS classes and `public/` files that nothing refers to. `bundle-report.mjs` splits every built script by source file through its source map.

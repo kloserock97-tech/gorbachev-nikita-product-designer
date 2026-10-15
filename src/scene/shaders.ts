@@ -1331,6 +1331,8 @@ uniform vec4 uKinetic2;    /* ширина/высота текстуры, сдв
 uniform vec3 uKinKeep;     /* v19: копия N, доля «Hi there!», сила — остальной текст гаснет при превращении в заголовок */
 uniform float uTear;       /* v19: нижний край оторванной страницы About (доли высоты кадра) */
 uniform float uBgBlur;     /* v19: размытие сцены-фона в главе «Кейсы» (само размытие — в четвертном проходе) */
+uniform sampler2D tIntro;  /* v95: расфокус заставки — кадр, размытый двумя четвертными проходами */
+uniform float uIntro;      /* доля размытого кадра, 0 — резко */
 uniform sampler2D tShadow; /* v22.1: мягкая тень компьютера, посчитанная на четверти разрешения */
 uniform sampler2D tAlt;    /* v32: второй фон (луг) — для смешивания с холмом на выходе из кейсов */
 uniform float uAlt;        /* 0 — только tScene, 0…1 — доля tAlt */
@@ -1465,6 +1467,7 @@ void main(){
     e = 0.25 * (texture2D(tScene, uv + vec2(-uDown.x, -uDown.y)).rgb + texture2D(tScene, uv + vec2(uDown.x, -uDown.y)).rgb
       + texture2D(tScene, uv + vec2(-uDown.x, uDown.y)).rgb + texture2D(tScene, uv + vec2(uDown.x, uDown.y)).rgb);
   }
+  if (uIntro > 0.0) e = mix(e, texture2D(tIntro, uv).rgb, uIntro);
   float shift = dot(chroma, chroma);
   if (shift > 0.0) {
     e.r = texture2D(tScene, uv + chroma).r;
@@ -1490,7 +1493,8 @@ void main(){
      объектива (кинематографичные планы GoT). Размытие дешёвое — 8 выборок по
      кругу из готового HDR-кадра, до тонмаппинга и цветокоррекции, поэтому цвет
      не отличается; заодно прячет зазоры переднего плана. */
-  float fore = smoothstep(0.2, 0.0, vUv.y) * uFocus;
+  /* v95: под расфокусом заставки свой проход не нужен — он брал бы резкий кадр поверх размытого */
+  float fore = smoothstep(0.2, 0.0, vUv.y) * uFocus * (1.0 - uIntro);
   if (fore > 0.01) {
     vec3 acc = vec3(0.0);
     float r = fore * 3.2;

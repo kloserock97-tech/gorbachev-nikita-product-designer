@@ -32,7 +32,7 @@ import { cue } from "./audio/bus";
 import { CASES, CHAPTER, CHAPTER2, TIMELINE, chapters } from "./scene/story";
 import { topFor } from "./ui/storyScroll";
 import { smoothWheel } from "./ui/smoothScroll";
-import { createNatureLoader } from "./intro/natureLoader";
+import { createFocusLoader } from "./intro/focusLoader";
 
 
 const params = new URLSearchParams(location.search);
@@ -118,13 +118,14 @@ function start3d(caseView?: CaseView) {
   if (cam?.length === 6 && cam.every(Number.isFinite)) opts.fixedCamera = cam as HillSceneOptions["fixedCamera"];
   if (params.get("ui") === "0") body.classList.add("no-ui");
 
-  /* Живой сад (docs/nature-loader.md): процедурная сцена растёт во время загрузки.
+  /* v95: заставка «Расфокус» (src/intro/focusLoader.ts): сам холм в мягком фокусе и графите за именем, «Enter»
+     возвращает резкость и цвет. Прежний «живой сад» стал отдельным демо (github.com/kloserock97-tech/overgrowth).
      Один раз за сессию; ?intro=1 — всегда, ?intro=0 — никогда, ?ui=0 — тоже без заставки. */
   const introParam = params.get("intro");
   let seen = false;
   try { seen = sessionStorage.getItem("hill-intro") === "1"; } catch { /* приватный режим */ }
   const withIntro = !location.hash.startsWith("#/work/") && (introParam === "1" || (introParam !== "0" && !seen && params.get("ui") !== "0" && !opts.fixedCamera));
-  const garden = withIntro ? createNatureLoader(() => {
+  const intro = withIntro ? createFocusLoader(() => {
     try { sessionStorage.setItem("hill-intro", "1"); } catch { /* private mode */ }
     scene.paused = body.classList.contains("case-open");
     ui.ready();
@@ -133,8 +134,9 @@ function start3d(caseView?: CaseView) {
   const canvas = document.getElementById("scene") as HTMLCanvasElement;
   let scene: HillScene;
   try { scene = new HillScene(canvas, opts); }
-  catch (error) { garden?.dispose(); throw error; }
+  catch (error) { intro?.dispose(); throw error; }
   scene3d = scene;
+  intro?.bind((v) => { scene.post.intro = v; });
 
   /* Погода: клик по «Weather» в углу перебирает ясно → облака → дождь → сумерки */
   const weatherLabel = (k: typeof scene.weatherKind) => t(`weather.${k}` as "weather.clear");
@@ -190,20 +192,19 @@ function start3d(caseView?: CaseView) {
      откалибровалось качество, канвас мягко проявляется целиком; через мгновение за
      ним входят надписи, док и карточки. Пока канвас скрыт, замер не мешает CSS. */
   // Real readiness milestones drive the loader; no simulated download percentage.
-  const gardenPoll = garden ? window.setInterval(() => garden.progress(scene.loadingProgress), 160) : 0;
+  const introPoll = intro ? window.setInterval(() => intro.progress(scene.loadingProgress), 160) : 0;
 
   let started = false;
   const start = () => {
     if (started || body.classList.contains("lite")) return;
     started = true;
     body.classList.add("scene-ready");
-    clearInterval(gardenPoll);
-    if (garden) {
+    clearInterval(introPoll);
+    if (intro) {
+      // The loading screen shows the hill itself behind the name, so the scene keeps running.
       scene.presentationReady.then(() => {
         if (body.classList.contains("lite")) return;
-        // The prepared hill is completely occluded. Keep its last frame until reveal.
-        scene.paused = true;
-        garden.ready();
+        intro.ready();
       });
     } else setTimeout(() => ui.ready(), 280);
   };
@@ -216,8 +217,8 @@ function start3d(caseView?: CaseView) {
   const degrade = (why: "slow" | "context" | "stall") => {
     if (body.classList.contains("lite")) return;
     if (why !== "context") rememberLite();
-    clearInterval(gardenPoll);
-    garden?.dispose();
+    clearInterval(introPoll);
+    intro?.dispose();
     closePc();
     scene.dispose();
     renderCases();
