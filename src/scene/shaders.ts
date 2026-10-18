@@ -1394,7 +1394,9 @@ vec3 toSrgb(vec3 c){
 float ign(vec2 p){ return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715)))); }
 
 float hash11(float n){ return fract(sin(n * 12.9898 + 4.1414) * 43758.5453); }
-float hash21(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+/* v96: зерно бумаги считалось синусным хэшем от координаты пикселя; на больших аргументах (до ~5·10⁵) sin теряет точность,
+   и шум сворачивался в блоки — на переходе About → Кейсы они читались прямоугольниками в полосе отрыва. Хэш без синуса */
+float hash21(vec2 p){ p = fract(p * vec2(0.3183099, 0.3678794)) + 0.1; p += dot(p, p.yx + 19.19); return fract(p.x * p.y * 95.4337); }
 float vnoise(vec2 p){
   vec2 i = floor(p), f = fract(p);
   vec2 u = f * f * (3.0 - 2.0 * f);
