@@ -69,6 +69,8 @@ uniform vec2 uScreenPx;
 /* скролл-история: фото на весь экран и помехи при переключении */
 uniform sampler2D uPhoto;
 uniform float uPhotoMix, uStatic;
+/* v96, ?next=1: отражение на стекле кинескопа — небо в верхней части и косой блик; uGlare — сдвиг блика за камерой */
+uniform float uGlass, uGlare;
 varying vec2 vUv;
 float hash21(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 
@@ -131,6 +133,12 @@ void main() {
   /* виньетка по эллипсу экрана, а не по кругу */
   float ell = length((w - 0.5) * vec2(1.0, 1.0 / max(uAspect, 0.01)) * 1.08);
   col *= 1.0 - smoothstep(uVignette - uVignetteSoft, uVignette + uVignetteSoft, ell);
+  if (uGlass > 0.001) {
+    vec2 g = vUv + vec2(uGlare, 0.0);
+    float sky = smoothstep(0.45, 1.05, g.y) * 0.13;
+    float streak = exp(-pow((g.x * 0.8 - g.y + 0.3) / 0.06, 2.0)) * 0.16 + exp(-pow((g.x * 0.8 - g.y + 0.47) / 0.025, 2.0)) * 0.06;
+    col = col * (1.0 - sky * 1.5 * uGlass) + vec3(1.0, 0.93, 0.8) * (sky + streak) * uGlass;
+  }
   col *= 1.0 - smoothstep(-0.004, 0.004, d);
 
   gl_FragColor = vec4(col, 1.0);
@@ -192,6 +200,8 @@ export class PortfolioScreen {
         uPhoto: { value: null as THREE.Texture | null },
         uPhotoMix: { value: 0 },
         uStatic: { value: 0 },
+        uGlass: { value: 0 },
+        uGlare: { value: 0 },
       },
     });
     this.drawChrome();
@@ -220,6 +230,12 @@ export class PortfolioScreen {
     tex.flipY = false; // UV экрана отсчитываются сверху, как у холстов
     tex.anisotropy = 8;
     u.uPhoto.value = tex;
+  }
+
+  /** v96: отражение на стекле (0 — нет) и сдвиг блика за камерой */
+  setGlass(k: number, shift: number) {
+    this.material.uniforms.uGlass.value = k;
+    this.material.uniforms.uGlare.value = shift;
   }
 
   setPhoto(mix: number, noise: number) {

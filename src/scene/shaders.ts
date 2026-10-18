@@ -763,16 +763,53 @@ vec3 skyBase(vec3 d){
 export const skyFragment = /* glsl */ `
 ${SKY_PARS}
 uniform float uSunDisc;
+/* v96, ?next=1: облака. uCloud — тот же сдвиг по ветру и покрытие, что у теней облаков на траве (weather.ts):
+   облако в небе и тень на лугу плывут вместе и сгущаются с погодой «облака». uClouds — сила слоя (0 — нет) */
+uniform vec3 uCloud;
+uniform float uClouds;
+uniform vec4 uCloudLook; /* x — тень тела облака, y — добавка к покрытию, z — сила каймы, w — масштаб узора */
 varying vec3 vDir;
+
+/* свой хэш решётки (без синуса и без известных констант) и шум значений по нему */
+float cloudHash(vec2 p){ p = fract(p * vec2(0.1731, 0.2417)) + 0.13; p += dot(p, p.yx + 23.71); return fract((p.x + p.y) * p.x * 61.817); }
+float cloudNoise(vec2 p){
+  vec2 i = floor(p), f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(cloudHash(i), cloudHash(i + vec2(1.0, 0.0)), u.x), mix(cloudHash(i + vec2(0.0, 1.0)), cloudHash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+float cloudFbm(vec2 p){
+  float s = 0.0, a = 0.5;
+  for (int k = 0; k < 4; k++){ s += a * cloudNoise(p); p = p * 2.03 + vec2(17.3, -9.1); a *= 0.5; }
+  return s / 0.9375;
+}
+/* слой облаков на «потолке»: направление делится на высоту — у горизонта узор сжимается перспективой и тает в
+   дымке. Тело облака чуть темнее и холоднее неба, тонкие края и всё, что против солнца, светятся. rgb — цвет, a — доля */
+vec4 skyClouds(vec3 d, vec3 sky){
+  if (uClouds < 0.001 || d.y < 0.004) return vec4(sky, 0.0);
+  vec2 p = d.xz / (d.y + 0.07);
+  p = p * vec2(0.42, 1.25) + uCloud.xy * 0.8;
+  /* сумма октав кучкуется около 0,5 (разброс ~±0,1) — растягиваем, иначе порог покрытия почти ничего не пропускает */
+  float n = clamp((cloudFbm(p * uCloudLook.w) - 0.5) * 2.6 + 0.5, 0.0, 1.0);
+  float cover = clamp(uCloud.z * 1.1 + uCloudLook.y, 0.0, 0.92);
+  float c = smoothstep(1.0 - cover, 1.0 - cover + 0.3, n);
+  c *= smoothstep(0.012, 0.11, d.y) * uClouds;
+  float thin = c * (1.0 - c) * 4.0;
+  float fwd = pow(max(dot(d, uSunDir), 0.0), 5.0);
+  vec3 body = sky * mix(vec3(1.0), vec3(0.86, 0.88, 0.95), uCloudLook.x);
+  vec3 lit = sky * 1.03 + uSunCol * (0.05 + 0.55 * fwd) * uCloudLook.z;
+  vec3 col = mix(body, lit, clamp(thin * 0.75 + fwd * 0.35, 0.0, 1.0));
+  return vec4(mix(sky, col, c * 0.85), c);
+}
 
 void main(){
   vec3 d = normalize(vDir);
-  vec3 c = skyBase(d);
+  vec4 cl = skyClouds(d, skyBase(d));
+  vec3 c = cl.rgb;
 
-  /* диск и ореол солнца */
+  /* диск и ореол солнца; облако закрывает диск */
   float cosA = max(dot(d, uSunDir), 0.0);
   float halo = pow(cosA, 900.0) * 2.2 + pow(cosA, 90.0) * 0.45 + pow(cosA, 12.0) * 0.06;
-  float disc = smoothstep(0.99965, 0.99985, cosA) * uSunDisc;
+  float disc = smoothstep(0.99965, 0.99985, cosA) * uSunDisc * (1.0 - cl.a);
   c += uSunCol * (halo + disc) + skyMie(d);
 
   /* дизеринг против полос в плавном градиенте */

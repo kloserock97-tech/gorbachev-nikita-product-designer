@@ -358,6 +358,8 @@ export class HillScene {
 
   /* ------------------------------------------------------------------ */
 
+  /* v96: новые эффекты (облака, дыхание камеры, блик кинескопа) — по ?next=1, пока Никита не выберет */
+  private readonly next = /[?&]next=1/.test(location.search);
   private sky!: THREE.ShaderMaterial;
 
   private buildSky() {
@@ -377,6 +379,10 @@ export class HillScene {
         uSunDisc: { value: 6 },
         /* v80: широкое свечение неба вокруг солнца (shaders.ts, skyMie); ?mie=0 — без него */
         uMie: { value: /[?&]mie=0/.test(location.search) ? 0 : 1 },
+        /* v96, ?next=1: облака в небе (shaders.ts, skyClouds) — тот же сдвиг и покрытие, что у теней облаков на траве */
+        uCloud: this.uniforms.uCloud,
+        uClouds: { value: this.next ? 1 : 0 },
+        uCloudLook: { value: new THREE.Vector4(...((new URLSearchParams(location.search).get("cl") ?? "1.6,-0.04,1.4,1").split(",").map(Number) as [number, number, number, number])) },
       },
     });
     const sky = new THREE.Mesh(new THREE.SphereGeometry(300, 48, 24), this.sky);
@@ -1438,6 +1444,7 @@ export class HillScene {
        Каждый кадр, а не только при смене слоя: из «Кейсов» в футер слой не меняется, и компьютер оставался невидимым */
     this.pc.visible = this.storyTear < 1.18 || f > 0;
     this.screen.setPhoto(ramp(s, ...STORY.photo), Math.max(bell(s, 0.24, 0.32, 0.42) * 0.55, bell(s, ...STORY.static)));
+    this.screen.setGlass(this.next ? 1 - this.focus : 0, this.camera.position.x * 0.04);
 
     /* футер: компьютер снова на столике — под размытием, пока камера возвращается */
     if (f > 0) {
@@ -2138,6 +2145,13 @@ export class HillScene {
       /* у экрана параллакс гаснет, иначе журнал «плавает» под курсором */
       const hold = 1 - this.focus;
       rest.set(rest.x - this.pointerSmooth.x * 0.5 * par * hold, rest.y + this.pointerSmooth.y * 0.2 * par * hold, rest.z);
+      /* v96, ?next=1: камера «дышит», как с рук — пара сантиметров на двух несоизмеримых частотах; гаснет вместе с
+         параллаксом и у экрана компьютера, при reduced motion её нет (par = 0) */
+      if (this.next) {
+        const t = this.uniforms.uTime.value, k = par * hold;
+        rest.x += (Math.sin(t * 0.37) * 0.6 + Math.sin(t * 0.83 + 1.3) * 0.4) * 0.035 * k;
+        rest.y += (Math.sin(t * 0.51 + 0.7) * 0.6 + Math.sin(t * 1.13) * 0.4) * 0.022 * k;
+      }
       this.updateComputer(dt, rest);
     }
 
