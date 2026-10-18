@@ -781,27 +781,35 @@ uniform vec4 uCloudLook; /* x — тень тела облака, y — доба
 varying vec3 vDir;
 
 /* свой хэш решётки (без синуса и без известных констант) и шум значений по нему */
-float cloudHash(vec2 p){ p = fract(p * vec2(0.1731, 0.2417)) + 0.13; p += dot(p, p.yx + 23.71); return fract((p.x + p.y) * p.x * 61.817); }
+/* v96.1: облака складывались в прямоугольные пласты — шум значений на квадратной сетке, растянутый вдоль горизонта,
+   с дробным хэшем, у которого соседние клетки похожи. Теперь: свой целочисленный хэш (Hash Kit с полки, как в
+   Overgrowth), гладкая интерполяция пятой степени, каждая октава повёрнута (сетки не совпадают по осям) и узор
+   искривлён медленным полем — края облаков рваные, без ступенек */
+uint cloudMix(uint x){ x ^= x >> 16; x *= 0x3f9c86cbu; x ^= x >> 14; x *= 0x1ae9dacfu; x ^= x >> 15; return x; }
+float cloudHash(vec2 c){ uvec2 v = uvec2(ivec2(c)); return float(cloudMix(v.x + cloudMix(v.y + 0xb31c96c9u)) >> 8) * (1.0 / 16777216.0); }
 float cloudNoise(vec2 p){
   vec2 i = floor(p), f = fract(p);
-  vec2 u = f * f * (3.0 - 2.0 * f);
+  vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
   return mix(mix(cloudHash(i), cloudHash(i + vec2(1.0, 0.0)), u.x), mix(cloudHash(i + vec2(0.0, 1.0)), cloudHash(i + vec2(1.0, 1.0)), u.x), u.y);
 }
+const mat2 CLOUD_ROT = mat2(0.80, -0.60, 0.60, 0.80);
 float cloudFbm(vec2 p){
   float s = 0.0, a = 0.5;
-  for (int k = 0; k < 4; k++){ s += a * cloudNoise(p); p = p * 2.03 + vec2(17.3, -9.1); a *= 0.5; }
-  return s / 0.9375;
+  for (int k = 0; k < 5; k++){ s += a * cloudNoise(p); p = CLOUD_ROT * p * 2.07 + vec2(17.3, -9.1); a *= 0.5; }
+  return s / 0.96875;
 }
 /* слой облаков на «потолке»: направление делится на высоту — у горизонта узор сжимается перспективой и тает в
    дымке. Тело облака чуть темнее и холоднее неба, тонкие края и всё, что против солнца, светятся. rgb — цвет, a — доля */
 vec4 skyClouds(vec3 d, vec3 sky){
   if (uClouds < 0.001 || d.y < 0.004) return vec4(sky, 0.0);
   vec2 p = d.xz / (d.y + 0.07);
-  p = p * vec2(0.42, 1.25) + uCloud.xy * 0.8;
-  /* сумма октав кучкуется около 0,5 (разброс ~±0,1) — растягиваем, иначе порог покрытия почти ничего не пропускает */
-  float n = clamp((cloudFbm(p * uCloudLook.w) - 0.5) * 2.6 + 0.5, 0.0, 1.0);
+  p = (p * vec2(0.55, 1.1) + uCloud.xy * 0.8) * uCloudLook.w;
+  /* искривление: медленное поле сдвигает узор — облака не тянутся ровными полосами */
+  vec2 warp = vec2(cloudNoise(p * 0.35 + vec2(3.1, 7.7)), cloudNoise(p * 0.35 + vec2(-5.3, 1.9))) - 0.5;
+  /* сумма октав кучкуется около 0,5 — растягиваем, иначе порог покрытия почти ничего не пропускает */
+  float n = clamp((cloudFbm(p + warp * 2.2) - 0.5) * 2.1 + 0.5, 0.0, 1.0);
   float cover = clamp(uCloud.z * 1.1 + uCloudLook.y, 0.0, 0.92);
-  float c = smoothstep(1.0 - cover, 1.0 - cover + 0.3, n);
+  float c = smoothstep(1.0 - cover - 0.06, 1.0 - cover + 0.38, n);
   c *= smoothstep(0.012, 0.11, d.y) * uClouds;
   float thin = c * (1.0 - c) * 4.0;
   float fwd = pow(max(dot(d, uSunDir), 0.0), 5.0);
