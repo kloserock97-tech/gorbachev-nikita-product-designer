@@ -45,7 +45,8 @@ export function initStory(scene: Scene) {
   const base = hero.querySelector<HTMLElement>(".story-base");
   const intro = hero.querySelector<HTMLElement>(".story-intro");
   /* логотипы с подсказками фокусируются с клавиатуры только когда тексты видны */
-  const focusables = [...hero.querySelectorAll<HTMLElement>("[tabindex]")];
+  /* v96: и обычные ссылки тоже — иначе ссылка в тексте «Обо мне» ловила Tab, пока блок скрыт (aria-hidden) */
+  const focusables = [...hero.querySelectorAll<HTMLElement>("[tabindex], a[href], button")];
   focusables.forEach((el) => (el.tabIndex = -1));
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const morph = STORY_FX.kinetic && !reduced;

@@ -23,15 +23,21 @@ export function initHeroHints(scene: Scene, openPc: () => void) {
   /* ── точка на мониторе ── */
   if (pc) {
     pc.addEventListener("click", (e) => { e.stopPropagation(); openPc(); });
+    /* v96: на телефоне пилюля привязана к компьютеру сцены и при прокрутке первого экрана висела поверх раскрытой
+       карточки пэт-проектов; прячем, как только страницу прокрутили или карточку открыли */
+    const stove = document.querySelector<HTMLElement>(".card--stove");
     let last = "";
     const frame = () => {
       requestAnimationFrame(frame);
-      const away = document.hidden || !bodyHas("is-ready") || bodyHas("story-away") || bodyHas("story-active") || bodyHas("pc-focus") || bodyHas("case-open") || bodyHas("lite");
+      const away = document.hidden || !bodyHas("is-ready") || bodyHas("story-away") || bodyHas("story-active") || bodyHas("pc-focus") || bodyHas("case-open") || bodyHas("lite")
+        || (!fine.matches && (scrollY > 8 || !!stove?.classList.contains("is-open")));
       const p = away ? null : scene.pcClientPoint();
       const key = p ? `${p.x.toFixed(1)},${p.y.toFixed(1)}` : "";
       if (key === last) return;
       last = key;
       pc.classList.toggle("is-off", !p);
+      /* скрытая кнопка не должна ловить Tab */
+      pc.tabIndex = p ? 0 : -1;
       if (p) pc.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
     };
     requestAnimationFrame(frame);

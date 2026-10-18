@@ -55,6 +55,18 @@ export function initCaseView(opts: Opts = {}) {
 
   let current: Route | null = null;
   let lastFocus: HTMLElement | null = null;
+  /* v96: пока открыт кейс, всё под ним — inert (как в заставке): Tab шёл по доку, кнопкам первого экрана и стрелкам
+     карточки и только потом попадал в кейс. Снимаем в hide до возврата фокуса */
+  let inerted: HTMLElement[] = [];
+  const inertOthers = (on: boolean) => {
+    if (on) {
+      inerted = [...document.body.children].filter((e): e is HTMLElement => e instanceof HTMLElement && e !== root && !e.inert && !["SCRIPT", "STYLE", "LINK"].includes(e.tagName));
+      inerted.forEach((e) => { e.inert = true; });
+    } else {
+      inerted.forEach((e) => { e.inert = false; });
+      inerted = [];
+    }
+  };
   let storyApi: ReturnType<Kit["mountStory"]> | null = null;
 
   const href = (id: string, track?: string | null) => `#/work/${id}${track ? `/${track}` : ""}`;
@@ -108,6 +120,7 @@ export function initCaseView(opts: Opts = {}) {
     if (!was) {
       lastFocus = document.activeElement as HTMLElement | null;
       root.hidden = false;
+      inertOthers(true);
       document.body.classList.add("case-open");
       requestAnimationFrame(() => root.classList.add("is-on"));
       opts.onToggle?.(true);
@@ -135,6 +148,7 @@ export function initCaseView(opts: Opts = {}) {
     opts.onToggle?.(false);
     cue("close", 0.7);
     window.setTimeout(() => { if (!current) { root.hidden = true; root.innerHTML = ""; } }, 380);
+    inertOthers(false);
     lastFocus?.focus?.({ preventScroll: true });
   };
 

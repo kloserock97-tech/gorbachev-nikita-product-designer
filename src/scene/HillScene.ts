@@ -1085,6 +1085,13 @@ export class HillScene {
         this.propBox = new THREE.Box3().setFromObject(props);
         this.resolveProps();
       });
+    }, undefined, (error) => {
+      /* v96: кресло не загрузилось (обрыв сети, 404) — холм без реквизита лучше вечной заставки: без этого
+         assetsReady не доходил до 2, presentationReady не наступал и заставка не отпускала человека */
+      if (this.disposed) return;
+      console.warn("props.glb не загрузился, холм без реквизита", error);
+      this.assetsReady++;
+      this.resolveProps();
     });
   }
 
@@ -2019,7 +2026,10 @@ export class HillScene {
     /* на узком экране отъезжаем назад, а не расширяем угол: так в кадр
        попадает весь склон, а не ближняя трава крупным планом */
     const aspect = w / h;
-    this.camDistance = aspect < 1 ? Math.min(1.5, 1 + (1 - aspect) * 0.9) : 1;
+    /* v96: предел отъезда 1,5 → 1,25. На iPhone камера уходила на весь предел, и кресло с компьютером были в полтора
+       раза мельче, чем на широком экране (экран компьютера ~45 px); при 1,25 склон по-прежнему в кадре, предметы на
+       четверть крупнее, а травинок в кадре меньше — кадр дешевле. Текстовый блок встаёт по кроне сам (mobileCopy) */
+    this.camDistance = aspect < 1 ? Math.min(1.25, 1 + (1 - aspect) * 0.9) : 1;
     /* v72: на вертикальном экране камера отъезжает на ~6 м, и дымка по расстоянию (airFog) густела на весь
        склон — цвет на телефоне был блёклым, серо-оливковым. Дымку сдвигаем на величину отъезда: склон в том же
        воздухе, что на широком экране, дальний план — по-прежнему в дымке */
@@ -2206,18 +2216,23 @@ export class HillScene {
      таймером на ПК: MSAA-буфер — половина всего кадра (2.0 мс против 1.1 без него). Поэтому нижние три ступени
      без MSAA, но в разрешении выше: сцена DPR 1.3–1.5 и сглаживание краёв в финальном проходе (edgeAA) вдвое
      дешевле, чем 1.25 с MSAA 2×, и резче — меньше растяжка на экран DPR 2 */
+  /* v96: по жалобе «на телефоне пиксельно и мало травы». Низ лестницы рисовал сцену в 0,65 родного разрешения (на
+     экранах DPR 3 — в половину: канвас ограничен 2,25) без MSAA, и iPhone 11 на нём и жил, потому что калибровка
+     целилась в 60 кадров, которых он не даёт. Теперь разрешение не опускается ниже 0,8, MSAA 4× держится до середины,
+     а бюджет телефона — 30 кадров в секунду (budgetMs): первый экран почти статичен, ему этого хватает */
   private static readonly PHONE_LADDER: [number, number, number, boolean][] = [
-    [1, 4, 1, true], [0.9, 4, 0.9, true], [0.82, 4, 0.8, true], [0.76, 4, 0.75, true],
-    [0.76, 2, 0.65, true], [0.7, 2, 0.62, false], [0.76, 0, 0.6, false], [0.7, 0, 0.55, false], [0.65, 0, 0.5, false],
+    [1, 4, 1, true], [0.92, 4, 0.9, true], [0.86, 4, 0.8, true], [0.8, 4, 0.75, true],
+    [0.8, 4, 0.65, false], [0.8, 2, 0.62, false], [0.8, 2, 0.55, false], [0.8, 0, 0.55, false], [0.8, 0, 0.5, false],
   ];
   /* телефон или планшет: основной указатель — палец, мыши нет */
   private readonly phone = matchMedia("(pointer: coarse)").matches && !matchMedia("(any-pointer: fine)").matches;
   private readonly ladder = this.phone ? HillScene.PHONE_LADDER : HillScene.LADDER;
-  /* полный кадр 60 Гц: бенчмарк ждёт всю очередь видеокарты, включая кнопки UI */
-  /* медиана интервала кадров; 18 мс — с запасом над 16.7 мс экрана 60 Гц,
-     где быстрее vsync интервал всё равно не станет */
-  private static readonly BUDGET_MS = 18;
-  private static readonly TOO_SLOW_MS = 45;
+  /* Бюджет — медиана интервала кадров; 18 мс — с запасом над 16.7 мс экрана 60 Гц, где быстрее vsync интервал всё равно
+     не станет; 45 мс (меньше 22 кадров) — порог «слишком медленно», такому устройству лучше лёгкая версия.
+     v96: у телефона бюджет 33 мс (30 к/с) и порог 70 (≈14 к/с): первый экран почти статичен, ему этого хватает, а
+     погоня за 60 кадрами сажала iPhone на нижнюю ступень */
+  private readonly budgetMs = this.phone ? 33 : 18;
+  private readonly tooSlowMs = this.phone ? 70 : 45;
   private tier = 0;
   private tierLocked = false;
   private retried = false;
@@ -2239,7 +2254,7 @@ export class HillScene {
     const ext = gl.getExtension("WEBGL_debug_renderer_info");
     const gpu = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : "gpu";
     /* v3 — версия рендер-пайплайна: при его изменении старые ступени недействительны */
-    return `hill-tier:v17:${gpu}:${screen.width}x${screen.height}@${window.devicePixelRatio}:${this.bladeTotal}`;
+    return `hill-tier:v18:${gpu}:${screen.width}x${screen.height}@${window.devicePixelRatio}:${this.bladeTotal}`;
   }
 
   private static readonly TIER_TTL = 14 * 24 * 3600 * 1000;
@@ -2360,13 +2375,13 @@ export class HillScene {
        Быстрейший из 20 интервалов ≈ период развёртки, если GPU успевает; бюджет — не меньше него + 10% */
     const vsync = sorted[1];
     const raw = sorted[sorted.length >> 1];
-    const budget = vsync > 12 && vsync < 19 ? Math.max(HillScene.BUDGET_MS, vsync * 1.1) : HillScene.BUDGET_MS;
-    const ms = raw * (HillScene.BUDGET_MS / budget);
+    const budget = vsync > 12 && vsync < 19 ? Math.max(this.budgetMs, vsync * 1.1) : this.budgetMs;
+    const ms = raw * (this.budgetMs / budget);
     this.calibFrames = [];
     this.calibSkip = 6;
     this.calibrationLog.push([+this.dpr.toFixed(2), +ms.toFixed(1), +this.uniforms.uTime.value.toFixed(1)]);
     /* чуть выше бюджета — возможно, случайная помеха (видеокарта общая); перемеряем один раз */
-    if (ms > HillScene.BUDGET_MS && ms < HillScene.BUDGET_MS * 1.15 && !this.retried) {
+    if (ms > this.budgetMs && ms < this.budgetMs * 1.15 && !this.retried) {
       this.retried = true;
       return;
     }
@@ -2375,25 +2390,25 @@ export class HillScene {
        (на Intel это ~4 с до показа сцены), а прогнозируем: вершинная часть
        травы от разрешения не зависит (~35%), пиксельная растёт как DPR² и
        чуть дешевле с MSAA 2×. Прыгаем на подходящую ступень и перемеряем. */
-    if (!this.predicted && ms > HillScene.BUDGET_MS) {
+    if (!this.predicted && ms > this.budgetMs) {
       this.predicted = true;
       const [s0, m0] = this.ladder[this.tier];
       /* вершинная часть ∝ доле травинок, пиксельная ∝ DPR² и числу сэмплов */
       const msaaFactor = (m: number) => (m === m0 ? 1 : m === 0 ? 0.6 : m < m0 ? 0.82 : 1.2);
       const cost = (s: number, m: number, b: number) => 0.35 * b + 0.65 * ((s * s) / (s0 * s0)) * msaaFactor(m);
       let t = this.tier;
-      while (t < this.ladder.length - 1 && ms * cost(this.ladder[t][0], this.ladder[t][1], this.ladder[t][2]) > HillScene.BUDGET_MS) t++;
+      while (t < this.ladder.length - 1 && ms * cost(this.ladder[t][0], this.ladder[t][1], this.ladder[t][2]) > this.budgetMs) t++;
       this.setTier(t);
       return;
     }
     /* проба ступенью выше не удалась — возвращаемся и больше не поднимаемся */
-    if (this.fallbackTier >= 0 && ms > HillScene.BUDGET_MS) {
+    if (this.fallbackTier >= 0 && ms > this.budgetMs) {
       this.climbFailed = true;
       this.setTier(this.fallbackTier);
       this.fallbackTier = -1;
       return;
     }
-    if (ms > HillScene.BUDGET_MS && this.tier < this.ladder.length - 1) {
+    if (ms > this.budgetMs && this.tier < this.ladder.length - 1) {
       this.setTier(this.tier + 1);
       return; // следующий кадр перемеряет на новой ступени
     }
@@ -2404,7 +2419,7 @@ export class HillScene {
        короткий кадр, либо кадры без пропусков: 85 % интервалов в пределах развёртки. Тогда пробуем ступень
        выше, до пяти раз; первая же проба с пропусками возвращает на прежнюю и калибровка заканчивается */
     const onTime = vsync > 12 && vsync < 19 && sorted[Math.floor(sorted.length * 0.85)] < vsync * 1.25;
-    const headroom = ms < HillScene.BUDGET_MS * 0.78 || onTime;
+    const headroom = ms < this.budgetMs * 0.78 || onTime;
     if (!this.climbFailed && this.climbs < 5 && this.tier > 0 && headroom) {
       this.climbs++;
       this.fallbackTier = this.tier;
@@ -2414,7 +2429,7 @@ export class HillScene {
     this.fallbackTier = -1;
     /* v24: даже нижняя ступень дольше 45 мс (меньше 22 кадров) — на скролле будет ~13 (бюджетный Android
        в нагрузочном прогоне); такому устройству лучше лёгкая версия */
-    if (this.tier === this.ladder.length - 1 && ms > HillScene.TOO_SLOW_MS && !/[?&]lite=0/.test(location.search)) {
+    if (this.tier === this.ladder.length - 1 && ms > this.tooSlowMs && !/[?&]lite=0/.test(location.search)) {
       this.lockTier(false);
       this.onDegrade?.("slow");
       return;
@@ -2426,7 +2441,7 @@ export class HillScene {
   private lockTier(save: boolean) {
     this.tierLocked = true;
     const manual = this.opts.fixedCamera || Number(new URLSearchParams(location.search).get("dpr")) > 0 || /[?&](governor=0|tier=d)/.test(location.search);
-    if (!manual && !this.governor) this.governor = new QualityGovernor(this.renderer.getContext() as WebGL2RenderingContext, this.ladder);
+    if (!manual && !this.governor) this.governor = new QualityGovernor(this.renderer.getContext() as WebGL2RenderingContext, this.ladder, this.phone ? 28 : 15, this.phone ? 36 : 22);
     if (save) try { localStorage.setItem(this.tierKey(), JSON.stringify({ tier: this.tier, at: Date.now() })); } catch { /* ничего */ }
     this.resolveCalibrated();
   }

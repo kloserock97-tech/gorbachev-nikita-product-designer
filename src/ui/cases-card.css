@@ -160,6 +160,8 @@
 .cases.is-narrow .cx-title { left: var(--side); right: var(--side); width: auto; bottom: calc(242px + env(safe-area-inset-bottom)); font-size: clamp(40px, 12.5vw, 72px); }
 /* v78: переключатель кейсов — у нижнего края, в зоне большого пальца; факты и название стоят над ним */
 .cases.is-narrow .cx-facts { left: var(--side); right: var(--side); width: auto; bottom: calc(84px + env(safe-area-inset-bottom)); }
+/* v96: на телефоне заголовок и факты открывают кейс тапом (casesCardPreview.ts) */
+.cases.is-narrow .cx-title, .cases.is-narrow .cx-facts { pointer-events: auto; cursor: pointer; }
 .cases.is-narrow .cx-facts div { grid-template-columns: 40% 1fr; padding: 8px 0; gap: 10px; }
 .cases.is-narrow .cx-facts div:nth-child(1), .cases.is-narrow .cx-facts div:nth-child(3) { display: none; }
 .cases.is-narrow .cx-facts div:nth-child(2) { border-top: 0; }

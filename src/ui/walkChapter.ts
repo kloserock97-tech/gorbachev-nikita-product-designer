@@ -37,7 +37,9 @@ function body(note: Note) {
         <a href="${note.links.repo}" target="_blank" rel="noopener">${t("notes.repo")}</a>
       </p>`
     : "";
-  return `<p class="shelf-label">${t(key(note.id, "label"))}</p>
+  /* v96: строка над названием — тот же «род» проекта, что и в карточке первого экрана (ключей notes.*.label нет,
+     и на сайте показывался сам ключ) */
+  return `<p class="shelf-label">${t(key(note.id, "kind"))}</p>
     <h3 class="shelf-name">${t(key(note.id, "title"))}</h3>
     <ul class="shelf-points">${points}</ul>${links}`;
 }

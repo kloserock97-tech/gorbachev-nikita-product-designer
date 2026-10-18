@@ -250,6 +250,9 @@ function start3d(caseView?: CaseView) {
     clearTimeout(pcAnimTimer);
     pcAnimTimer = window.setTimeout(() => body.classList.remove("pc-anim"), 700);
   };
+  /* v96: «Назад на холм» и подсказка у экрана скрыты прозрачностью и ловили Tab первыми на странице */
+  const hud = document.querySelector<HTMLElement>(".pc-hud");
+  if (hud) hud.inert = true;
   const openPc = () => {
     if (scene.computerFocused || body.classList.contains("lite")) return;
     workMenu?.close();
@@ -259,6 +262,7 @@ function start3d(caseView?: CaseView) {
     cue("open");
     body.classList.add("pc-focus");
     body.classList.remove("pc-hover");
+    if (hud) hud.inert = false;
     document.querySelector<HTMLElement>(".pc-back")?.focus({ preventScroll: true });
   };
   function closePc() {
@@ -268,6 +272,7 @@ function start3d(caseView?: CaseView) {
     cue("close");
     pcAnim();
     body.classList.remove("pc-focus");
+    if (hud) hud.inert = true;
   }
   scene.onComputerHover = (hover) => body.classList.toggle("pc-hover", hover);
   /* v94: подсказки первого экрана — погода, ветер, компьютер (точка на мониторе тоже открывает его) */

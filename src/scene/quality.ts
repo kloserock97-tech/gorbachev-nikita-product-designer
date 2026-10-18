@@ -27,7 +27,8 @@ export class QualityGovernor {
   private ceiling: number; // выше этой ступени (меньшего индекса) не поднимаемся — оттуда уже спускались
   asleep = false;
 
-  constructor(private gl: WebGL2RenderingContext, private ladder: Ladder, private budgetMs = 15) {
+  /* intervalMs — порог медианы интервалов кадров для запасного пути без таймера видеокарты (v96: у телефона 36 мс — 30 к/с) */
+  constructor(private gl: WebGL2RenderingContext, private ladder: Ladder, private budgetMs = 15, private intervalMs = 22) {
     this.ext = gl.getExtension("EXT_disjoint_timer_query_webgl2") as typeof this.ext;
     this.ceiling = 0;
   }
@@ -48,7 +49,7 @@ export class QualityGovernor {
     const sorted = this.intervals.slice().sort((a, b) => a - b);
     const med = sorted[sorted.length >> 1];
     this.intervals = [];
-    if (med > 22 && tier < this.ladder.length - 1 && this.changes < 4) {
+    if (med > this.intervalMs && tier < this.ladder.length - 1 && this.changes < 4) {
       this.changes++;
       this.calm = 0;
       this.intervalSkip = 60;

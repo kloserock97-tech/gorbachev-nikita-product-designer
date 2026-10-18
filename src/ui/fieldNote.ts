@@ -119,6 +119,9 @@ export function initFieldNote() {
     knob.setAttribute("aria-label", open ? t("notes.close") : t("notes.open", { title: t(key(notes[index].id, "title")) }));
     note.setAttribute("aria-hidden", String(!open));
     fit();
+    /* v96: на телефоне карточка растёт вниз, и всё описание уходило под сгиб экрана — человек видел только
+       перевернувшийся шеврон. Подводим страницу к карточке, когда она раскрылась */
+    if (open && narrow.matches) window.setTimeout(() => card.scrollIntoView({ block: "start", behavior: calm ? "auto" : "smooth" }), 80);
     /* ссылка в описании доступна с клавиатуры только когда оно раскрыто; кнопка демо на картинке — всегда */
     links?.querySelectorAll("a").forEach((a) => (a.tabIndex = open ? 0 : -1));
   };

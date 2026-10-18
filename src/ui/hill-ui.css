@@ -17,6 +17,8 @@
 html,
 body {
   background: #e8e3d3;
+  /* v96: свайп от левого края в главе «Кейсы» уводил страницу назад по истории (Android, Chrome) */
+  overscroll-behavior-x: none;
 }
 .hero {
   background: #e8e3d3;
@@ -907,7 +909,9 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 @keyframes sound-ring { 0% { opacity: 0.8; scale: 1; } 35%, 100% { opacity: 0; scale: 1.7; } }
 
 @media (max-width: 900px) {
-  .sound-fab { --h: 46px; top: auto; bottom: max(16px, env(safe-area-inset-bottom)); right: calc(34 * var(--u)); translate: 0 8px; }
+  /* v96: была внизу справа и ложилась на шеврон карточки пэт-проектов (второй тап по шеврону выключал звук), на
+     390/360 — ещё и на подпись карточки, в меню «Кейсы» — на «Все кейсы». Теперь под доком, справа: там небо */
+  .sound-fab { --h: 46px; top: calc(30 * var(--u) + 56px + 10px); bottom: auto; right: calc(34 * var(--u)); translate: 0 -8px; }
   /* счётчик и полоса ленты кейсов не заходят под кнопку */
   .cases[data-mode="swipe"] .cases-foot { padding-right: 76px; }
 }

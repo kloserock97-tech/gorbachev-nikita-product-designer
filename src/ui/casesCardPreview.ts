@@ -102,6 +102,10 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
   const items = [...box.querySelectorAll<HTMLAnchorElement>(".cx-li")];
   const segs = [...box.querySelectorAll<HTMLElement>(".cx-seg i")];
   const title = q(".cx-title"), facts = q(".cx-facts"), stack = q(".cx-stack"), cursor = q(".cx-cursor");
+  /* v96: на телефоне кейс открывался только тапом по диораме (верхняя треть экрана); заголовок и факты лежали под
+     pointer-events: none. Теперь в узком режиме тап по ним открывает текущий кейс (cases-card.css даёт им pointer-events) */
+  const openCurrent = () => stack.querySelector<HTMLAnchorElement>(".cx-card.is-cur")?.click();
+  for (const el of [title, facts]) el.addEventListener("click", (e) => { if (!box.closest(".is-narrow")) return; e.preventDefault(); openCurrent(); });
   for (const img of box.querySelectorAll<HTMLImageElement>(".cx-shot")) img.addEventListener("error", () => img.remove());
 
   /* переход к кейсу прокруткой — та же формула, что у casesWheel (положение кейса на ленте главы) */
