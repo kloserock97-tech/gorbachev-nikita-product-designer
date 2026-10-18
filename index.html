@@ -51,6 +51,11 @@
 <script>document.documentElement.className += " js";</script>
 <!-- v64: шрифты свои (public/fonts), Google Fonts не нужен. Латинский кусок Onest нужен обоим языкам: в нём цифры и знаки -->
 <link rel="preload" href="/fonts/onest-latin.woff2" as="font" type="font/woff2" crossorigin>
+<!-- v96: кресло, компьютер, небо и декодер моделей — с первых миллисекунд, а не по цепочке после скрипта -->
+<link rel="preload" href="/models/props.glb" as="fetch" crossorigin>
+<link rel="preload" href="/draco/draco_decoder.wasm" as="fetch" crossorigin>
+<link rel="preload" href="/models/computer.glb" as="fetch" crossorigin>
+<link rel="preload" href="/hdri/sky-256.hdr" as="fetch" crossorigin>
 </head>
 <body>
 

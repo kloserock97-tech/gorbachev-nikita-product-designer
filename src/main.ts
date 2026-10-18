@@ -70,7 +70,12 @@ function boot3d(caseView?: CaseView) {
    на среднем ноутбуке заголовок кейса появлялся через 17 секунд вместо двух. Теперь сцена стартует после того,
    как страница кейса оказалась на экране, — в первом же простое, чтобы не мешать чтению.
    Порог держит tools/case-entry-test.mjs. */
+/* v96: шрифты, которых нет на первом экране (Caveat, Playfair, Oswald — fonts-late.css), подключаются, когда холм
+   готов; на прямой ссылке в кейс и в лёгкой версии — сразу */
+function lateFonts() { void import("./ui/fonts-late.css"); } // объявление функцией: зовётся из startCaseFirst/startLite раньше этой строки
+
 function startCaseFirst() {
+  lateFonts();
   const view = initCaseView({ onToggle: pauseForCase });
   let booted = false;
   const boot = () => { if (!booted) { booted = true; boot3d(view); } };
@@ -87,6 +92,7 @@ function startCaseFirst() {
 }
 
 function startLite(reason: string) {
+  lateFonts();
   const ui = initHeroUi({});
   renderCases();
   renderShelf();
@@ -209,6 +215,7 @@ function start3d(caseView?: CaseView) {
     } else setTimeout(() => ui.ready(), 280);
   };
   scene.calibrated.then(start);
+  scene.presentationReady.then(lateFonts);
   setTimeout(() => { if (!started) scene.provisionalTier(); start(); }, 6000);
 
   /* v24: сцена не тянет (калибровка на нижней ступени всё равно дольше бюджета, WebGL-контекст пропал

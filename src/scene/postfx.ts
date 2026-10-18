@@ -99,6 +99,10 @@ export function createPostFx(
   const shieldOn = q.get("shield") !== "0";
   /* компьютер поверх заливки: свой MSAA-буфер с прозрачным фоном */
   const pcRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples });
+  /* v96: полноразмерный MSAA-буфер компьютера нужен только в About — до первого прохода остаётся 1×1 (на телефоне это
+     десятки мегабайт памяти видеокарты на первом экране) */
+  let pcUsed = false;
+  const pcSize = new THREE.Vector2(1, 1);
   /* v25: финал поверх полностью размытого фона кейсов — в половине разрешения экрана и растяжкой на экран.
      Финальный шейдер сам делает тонмаппинг и вывод sRGB, так что обычный 8-битный буфер ничего не меняет */
   const halfRT = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: false });
@@ -256,7 +260,8 @@ export function createPostFx(
       introRT.setSize(Math.max(1, Math.ceil(W / 4)), Math.max(1, Math.ceil(H / 4)));
       shadowRT.setSize(Math.max(1, Math.ceil(W / 4)), Math.max(1, Math.ceil(H / 4)));
       quarter.uniforms.uAspect.value = w / h;
-      pcRT.setSize(W, H);
+      pcSize.set(W, H);
+      if (pcUsed) pcRT.setSize(W, H);
       halfRT.setSize(Math.max(1, Math.ceil((w * canvasDpr) / 2)), Math.max(1, Math.ceil((h * canvasDpr) / 2)));
       final.uniforms.uTexel.value.set(1 / W, 1 / H);
       /* v72: сцена крупнее экрана (суперсэмплинг на DPR 1) — финал сжимает её четырьмя билинейными выборками
@@ -349,6 +354,7 @@ export function createPostFx(
         const alpha = renderer.getClearAlpha();
         renderer.getClearColor(clear);
         renderer.setClearColor(0x000000, 0);
+        if (!pcUsed) { pcUsed = true; pcRT.setSize(pcSize.x, pcSize.y); }
         renderer.setRenderTarget(pcRT);
         renderer.clear();
         params.onOverlay?.(true);

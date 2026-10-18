@@ -8,7 +8,7 @@ import { PortfolioScreen } from "./portfolioScreen";
 import { Dog } from "./dog";
 import { Weather, type WeatherKind } from "./weather";
 import { CASES, CHAPTER, FOOTER, MEADOW_OUT, STORY, STORY_FX, TRANSITION, aberrationAt, bell, casesCamera, chapters, flightPose, footerCamera, portalAt, ramp, storyCamera, zoomBlur, type Pose } from "./story";
-import { Meadow } from "./meadow/Meadow";
+import type { Meadow } from "./meadow/Meadow";
 import { SCROLL_LAMBDA } from "../scrollFeel";
 import { KINETIC_BASE, KINETIC_FONT, createKinetic, type Kinetic } from "./kinetic";
 import { Studio, projectBox, type HillLights } from "./studio";
@@ -111,7 +111,10 @@ export class HillScene {
   private dog?: Dog;
   /* один загрузчик на кресло, компьютер и собаку: все три GLB сжаты Draco, декодер
      берётся из three (DRACOLoader сам ссылается на свои файлы) и грузится один раз */
-  private draco = new DRACOLoader();
+  /* v96: декодер лежит в public/draco (wasm + обёртка из three) и грузится сразу, а не после прихода props.glb:
+     цепочка «модель → декодер → вторая модель» стоила ~1,2 с до кресла. Заодно сборка перестала тащить три лишних
+     файла Draco (~1 МБ) через import.meta.url */
+  private draco = new DRACOLoader().setDecoderPath(`${BASE}draco/`).setDecoderConfig({ type: "wasm" }).preload();
   private gltfLoader = new GLTFLoader().setDRACOLoader(this.draco);
   private dpr = 1;
   private qualityScale = 1;
@@ -243,7 +246,7 @@ export class HillScene {
       void this.dog.load(this.gltfLoader).then(() => this.compileLate(this.dog!.group));
     }
 
-    window.addEventListener("resize", this.resize);
+    window.addEventListener("resize", this.onWindowResize);
     window.addEventListener("pointermove", this.onPointer, { passive: true });
     window.addEventListener("pointerdown", this.onPointer, { passive: true });
     document.documentElement.addEventListener("pointerleave", this.onLeave);
@@ -1995,6 +1998,13 @@ export class HillScene {
     }
   }
 
+  /* v96: окно тянут десятки раз в секунду, а каждый resize пересоздаёт 14 буферов постобработки — ждём паузу 120 мс.
+     Смена ступени качества зовёт resize напрямую */
+  private resizeTimer = 0;
+  private onWindowResize = () => {
+    clearTimeout(this.resizeTimer);
+    this.resizeTimer = window.setTimeout(this.resize, 120);
+  };
   private resize = () => {
     this.readCanvasRect();
     const w = this.canvas.clientWidth || window.innerWidth;
@@ -2298,7 +2308,8 @@ export class HillScene {
     if (this.walkStarted || this.walkOff || !this.tierLocked || this.storyS < CHAPTER - 0.12) return;
     this.walkStarted = true;
     const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 0));
-    idle(() => {
+    /* v96: луг и портал — отдельный чанк, грузится здесь, а не с первым экраном */
+    idle(() => void import("./meadow/Meadow").then(({ Meadow }) => {
       if (this.disposed) return;
       const small = Math.min(window.innerWidth, window.innerHeight) < 700 || matchMedia("(pointer: coarse)").matches;
       /* травы столько же, сколько у холма (220k/110k), — в кейсах луг рисуется вместо холма, а не вместе */
@@ -2320,7 +2331,7 @@ export class HillScene {
         this.walk?.render(target);
       };
       void this.walk.compile(this.fx.altTarget).then(() => { if (!this.disposed) this.walkReady = true; }).catch(() => { this.walkReady = false; });
-    }, { timeout: 1500 });
+    }), { timeout: 1500 });
   }
   private applyDensity() {
     const [, , frac, rays] = this.ladder[this.tier];
@@ -2373,7 +2384,9 @@ export class HillScene {
     /* v22.2: кадр, упёршийся в развёртку экрана, укладывается в бюджет. На 55 Гц медиана 18.2 мс —
        чуть выше прежнего бюджета 18, и ступень падала до DPR 1.35 без лучей («качество упало»).
        Быстрейший из 20 интервалов ≈ период развёртки, если GPU успевает; бюджет — не меньше него + 10% */
-    const vsync = sorted[1];
+    /* v96: не второй по скорости кадр, а нижняя четверть: один случайно короткий интервал (6 мс в журнале) выключал
+       поправку на развёртку, и ступень скакала 0→5→8→6 девять секунд */
+    const vsync = sorted[Math.floor(sorted.length * 0.25)];
     const raw = sorted[sorted.length >> 1];
     const budget = vsync > 12 && vsync < 19 ? Math.max(this.budgetMs, vsync * 1.1) : this.budgetMs;
     const ms = raw * (this.budgetMs / budget);
@@ -2476,7 +2489,8 @@ export class HillScene {
     this.kinetic?.dispose();
     this.studio?.dispose();
     cancelAnimationFrame(this.raf);
-    window.removeEventListener("resize", this.resize);
+    window.removeEventListener("resize", this.onWindowResize);
+    clearTimeout(this.resizeTimer);
     window.removeEventListener("pointermove", this.onPointer);
     window.removeEventListener("pointerdown", this.onPointer);
     document.documentElement.removeEventListener("pointerleave", this.onLeave);
