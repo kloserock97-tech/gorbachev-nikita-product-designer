@@ -14,6 +14,9 @@
   --on-grass-soft: rgba(255, 255, 255, 0.78);
 }
 
+/* v96: прыжок под бумагой (storyHero.ts veiledJump): «Смотреть кейсы» больше не пролетает главы на глазах */
+body.page-jump::before { content: ""; position: fixed; inset: 0; z-index: 2500; background: #f2f2f2; pointer-events: none; animation: page-jump 1.4s ease both; }
+@keyframes page-jump { 0% { opacity: 0; } 18% { opacity: 1; } 72% { opacity: 1; } 100% { opacity: 0; } }
 html,
 body {
   background: #e8e3d3;

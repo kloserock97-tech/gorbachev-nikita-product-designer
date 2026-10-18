@@ -496,7 +496,9 @@ export class Meadow {
       vec2 origin = uPebbleCenter - 0.5 * T;
       vec2 wxz = origin + mod(aSeed.xy * T - origin, T);
       vec2 fromC = abs(wxz - uPebbleCenter) / (0.5 * T);
-      float edge = 1.0 - smoothstep(0.8, 1.0, max(fromC.x, fromC.y));
+      /* v96: край участка камешков гас только в последних 20 % — с высокой камеры перехода About → Кейсы его граница
+         читалась прямоугольником в верхней трети кадра */
+      float edge = 1.0 - smoothstep(0.45, 1.0, max(fromC.x, fromC.y));
       float h = hfHeight(wxz);
       float sea = uSea;
       /* r1 — снова равномерно в [0; 1) для поворота и оттенка; порог видимости — сырое aSeed.z (см. R1MAX) */

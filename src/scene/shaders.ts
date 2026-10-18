@@ -1449,7 +1449,8 @@ void main(){
     float rows = mix(14.0, 60.0, hash11(floor(uGlitchSeed) * 3.1));
     float band = floor(vUv.y * rows);
     float on = step(1.0 - uGlitch * 0.75, hash11(band + floor(uGlitchSeed) * 7.7));
-    uv.x = fract(uv.x + (hash11(band * 1.37 + uGlitchSeed) - 0.5) * 0.18 * uGlitch * on);
+    /* v96: clamp, не fract — заворот показывал в полосах противоположный край кадра (белые ломтики слева) */
+    uv.x = clamp(uv.x + (hash11(band * 1.37 + uGlitchSeed) - 0.5) * 0.18 * uGlitch * on, 0.0, 1.0);
     /* блоки: крупная пикселизация в части полос */
     float px = mix(1.0, 90.0, on * step(0.6, hash11(band * 5.3 + uGlitchSeed)));
     uv = px > 1.0 ? (floor(uv * vec2(px * 1.6, px)) + 0.5) / vec2(px * 1.6, px) : uv;

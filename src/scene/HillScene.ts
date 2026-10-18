@@ -57,8 +57,9 @@ const FOOTPRINTS: [number, number, number, number][] = [
 function groundOccluders() {
   const c = Math.cos(PROPS_YAW), s = Math.sin(PROPS_YAW);
   const noRocks = /[?&]rocks=0/.test(location.search);
-  const rocks = rockFootprints().map((r) => new THREE.Vector4(r.x, r.z, Math.max(r.rx, r.rz) * 1.05, noRocks ? 0 : 0.6));
-  const props = FOOTPRINTS.map(([x, z, rx, rz], i) => new THREE.Vector4(x * c + z * s, -x * s + z * c, Math.max(rx, rz), i === 0 ? 0.5 : 0.4));
+  /* v96: пятна плотнее и чуть уже (0.6/0.5/0.4 → 0.7/0.7/0.55, радиус реквизита ×0.9): кресло и столик «висели» над травой */
+  const rocks = rockFootprints().map((r) => new THREE.Vector4(r.x, r.z, Math.max(r.rx, r.rz) * 1.05, noRocks ? 0 : 0.7));
+  const props = FOOTPRINTS.map(([x, z, rx, rz], i) => new THREE.Vector4(x * c + z * s, -x * s + z * c, Math.max(rx, rz) * 0.9, i === 0 ? 0.7 : 0.55));
   const all = [...rocks, ...props];
   while (all.length < 6) all.push(new THREE.Vector4());
   return all.slice(0, 6);

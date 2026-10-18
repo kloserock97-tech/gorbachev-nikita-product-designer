@@ -132,6 +132,17 @@ export function initStory(scene: Scene) {
     b = bounds();
     scrollTo({ top: b.start + (b.end - b.start) * p, behavior: reduced ? "auto" : "smooth" });
   };
+  /* v96: «Смотреть кейсы» и «Все кейсы» плавной прокруткой за долю секунды пролетали обе главы — смаз, белая
+     страница, растворение, размытый холм, и только потом лента. Теперь кадр закрывает бумага (hill-ui.css .page-jump),
+     под ней мгновенный прыжок, и лента проявляется. При reduced motion — просто прыжок */
+  const veiledJump = (p: number) => {
+    b = bounds();
+    const target = b.start + (b.end - b.start) * p;
+    if (reduced) { scrollTo({ top: target, behavior: "auto" }); return; }
+    body.classList.add("page-jump");
+    window.setTimeout(() => scrollTo({ top: target, behavior: "instant" as ScrollBehavior }), 240);
+    window.setTimeout(() => body.classList.remove("page-jump"), 1450);
+  };
 
   /* CSS-переменная — в свой элемент и только при изменении */
   const written = new Map<string, string>();
@@ -261,7 +272,7 @@ export function initStory(scene: Scene) {
 
   return {
     /** к главе «Кейсы»: лента уже поднялась */
-    toCases: () => scrollToProgress(CHAPTER + (CHAPTER2 - CHAPTER) * CASES.strip[0]),
+    toCases: () => veiledJump(CHAPTER + (CHAPTER2 - CHAPTER) * CASES.strip[0]),
     toAbout: () => scrollToProgress(CHAPTER),
     /** к своим проектам: первая заметка уже встала */
     toNotes: () => jumpTo(CHAPTER + (CHAPTER2 - CHAPTER) * CASES.notesRun[0]),
