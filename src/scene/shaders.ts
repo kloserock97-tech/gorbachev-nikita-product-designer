@@ -79,10 +79,20 @@ uniform vec2 uDogDir;
 
 /* Воздух: дальняя дымка плюс высотный туман у подножия холма (как height fog
    в Ghost of Tsushima) — низины и дальние склоны тонут в тёплом свете заката */
+/* v96: низовой туман неравномерный — плотность плывёт по ветру пятнами (сдвиг uCloud.xy, тот же, что у облаков и
+   их теней). Раньше неравномерность давали четыре полупрозрачные «простыни» поперёк склона, и их прямоугольные
+   края было видно, особенно когда погода их сгущала. Здесь туман — свойство воздуха в каждой точке поверхности,
+   как height fog в three.js и Unreal: края нет нигде. Пятна — сумма трёх косых синусоид в мировых координатах:
+   у них нет сетки, а значит, и ступенек */
+float mistDrift(vec3 w){
+  vec2 q = w.xz * 0.34 + uCloud.xy * 2.6;
+  return 0.5 + 0.26 * sin(q.x * 0.9 + q.y * 0.43) + 0.15 * sin(-q.x * 0.52 + q.y * 1.13 + 1.7) + 0.09 * sin(q.x * 1.71 - q.y * 1.29 + 4.2);
+}
 float airFog(vec3 w, float dist){
   dist = max(dist - uFogShift, 0.0);
   float distant = smoothstep(9.0, 30.0, dist) * 0.55;
-  float low = (1.0 - exp(-dist * 0.035)) * exp(-max(w.y - 0.2, 0.0) * 1.15) * 0.55;
+  float low = (1.0 - exp(-dist * 0.035)) * exp(-max(w.y - 0.2, 0.0) * 1.15) * 0.62;
+  low *= mix(0.5, 1.5, mistDrift(w));
   return clamp(distant + low * uHaze, 0.0, 0.8);
 }
 
@@ -622,54 +632,6 @@ void main(){
 }
 `;
 
-/* ---- дымка: несколько больших полупрозрачных «простыней» тумана у склона ----
-   Прозрачность — из прокручиваемого по ветру шума, у земли мягко гаснет
-   (высота холма посчитана той же аналитической формулой, что в terrain.ts,
-   без мелких кочек) — вместо soft particles по буферу глубины, которого нет. */
-export const mistVertex = /* glsl */ `
-varying vec2 vUv;
-varying vec3 vW;
-void main(){
-  vUv = uv;
-  vec4 wp = modelMatrix * vec4(position, 1.0);
-  vW = wp.xyz;
-  gl_Position = projectionMatrix * viewMatrix * wp;
-}
-`;
-export const mistFragment = /* glsl */ `
-uniform float uTime;
-uniform vec2 uWindDir;
-uniform vec3 uColor;
-uniform float uOpacity;
-uniform float uSeed;
-varying vec2 vUv;
-varying vec3 vW;
-
-/* Hash without Sine — Copyright (c) 2014 David Hoskins, MIT */
-float h21(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
-float vn(vec2 p){ vec2 i = floor(p), f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
-  return mix(mix(h21(i), h21(i + vec2(1, 0)), u.x), mix(h21(i + vec2(0, 1)), h21(i + vec2(1, 1)), u.x), u.y); }
-float fbm3(vec2 p){ float s = 0.0, a = 0.5; for (int i = 0; i < 3; i++){ s += a * vn(p); p = p * 2.03 + 7.1; a *= 0.5; } return s / 0.875; }
-float hillAt(vec2 p){ return 2.3 * exp(-(p.x * p.x / 46.24 + p.y * p.y / 19.36)); }
-
-void main(){
-  /* v14: сначала дешёвые маски — края простыни и земля; шум считаем только там, где туман
-     вообще может быть. Искажение — две октавы вместо четырёх, основной шум — три
-     (было 4 + 4 октавы, 32 хеша на пиксель на четырёх плоскостях в четверть экрана) */
-  float edge = smoothstep(0.0, 0.25, vUv.x) * smoothstep(1.0, 0.75, vUv.x) * smoothstep(1.0, 0.35, vUv.y);
-  float ground = smoothstep(-0.05, 0.45, vW.y - hillAt(vW.xz));
-  float mask = edge * ground * uOpacity;
-  if (mask < 0.003) discard;
-  vec2 flow = uWindDir * uTime * 0.18;
-  vec2 q = vec2(vW.x * 0.22, vW.y * 0.9) - vec2(flow.x, 0.0) + uSeed;
-  vec2 wq = q * 1.7 + uTime * 0.03;
-  float warp = vn(wq) * 0.667 + vn(wq * 2.03 + 7.1) * 0.333;
-  float n = fbm3(q + warp * 0.8);
-  float a = smoothstep(0.35, 0.85, n) * mask;
-  if (a < 0.003) discard;
-  gl_FragColor = vec4(uColor, a);
-}
-`;
 
 /* ---- струи ветра: тонкие почти прозрачные ленты над травой ----
    Лента из N сегментов летит по ветру, изгибается шумом и за время жизни

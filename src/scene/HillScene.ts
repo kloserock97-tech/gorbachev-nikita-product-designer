@@ -23,8 +23,6 @@ import {
   ghostVertex,
   plantFragment,
   plantVertex,
-  mistFragment,
-  mistVertex,
   wispFragment,
   wispVertex,
   grassFragment,
@@ -108,7 +106,6 @@ export class HillScene {
   private camDistance = 1;
   private screen?: PortfolioScreen;
   private weather!: Weather;
-  private mistMats: THREE.ShaderMaterial[] = [];
   private dog?: Dog;
   /* один загрузчик на кресло, компьютер и собаку: все три GLB сжаты Draco, декодер
      берётся из three (DRACOLoader сам ссылается на свои файлы) и грузится один раз */
@@ -223,7 +220,6 @@ export class HillScene {
     this.buildGround();
     this.buildGrass();
     this.buildPollen();
-    this.buildMist();
     this.buildWisps();
     this.buildLights();
     /* Кресло, компьютер и собака — стандартные материалы, airFog из шейдеров травы до них не
@@ -236,7 +232,6 @@ export class HillScene {
       sky: this.sky.uniforms as never,
       fx: this.fx,
       lights: () => this.lights,
-      mist: this.mistMats,
       flowers: () => this.meadow.drifts,
       reduced: this.reduced,
     });
@@ -809,38 +804,6 @@ export class HillScene {
     this.meadowGroup.add(mesh);
   }  /* ---------------- атмосфера ---------------- */
 
-  /* Дымка: вертикальные «простыни» тумана поперёк склона, от гребня к камере.
-     Шум плывёт по ветру; низ мягко уходит в землю. Полупрозрачные, без записи
-     глубины — стоят копейки, но склон перестаёт быть стерильным. */
-  private buildMist() {
-    if (/[?&]haze=0/.test(location.search)) return;
-    const rows = [
-      { z: -2.6, w: 26, h: 2.2, o: 0.2 },
-      { z: -0.6, w: 22, h: 1.6, o: 0.12 },
-      { z: 1.8, w: 22, h: 1.3, o: 0.1 },
-      { z: 4.2, w: 24, h: 1.1, o: 0.07 },
-    ];
-    rows.forEach((r, i) => {
-      const mat = new THREE.ShaderMaterial({
-        vertexShader: mistVertex,
-        fragmentShader: mistFragment,
-        transparent: true,
-        depthWrite: false,
-        uniforms: {
-          uTime: this.uniforms.uTime,
-          uWindDir: this.uniforms.uWindDir,
-          uColor: { value: new THREE.Color(1.05, 0.93, 0.76) },
-          uOpacity: { value: r.o },
-          uSeed: { value: i * 17.3 },
-        },
-      });
-      const plane = new THREE.Mesh(new THREE.PlaneGeometry(r.w, r.h), mat);
-      plane.position.set(0, heightAt(0, r.z) + r.h * 0.3, r.z);
-      plane.renderOrder = 3;
-      this.mistMats.push(mat);
-      this.scene.add(plane);
-    });
-  }
 
   /* Струи ветра: 12 тонких лент над травой, каждая раз в несколько секунд
      пролетает по склону по ветру. Видны едва-едва — как дрожание воздуха. */

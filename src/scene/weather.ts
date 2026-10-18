@@ -59,7 +59,6 @@ export type WeatherDeps = {
   sky: SkyUniforms;
   fx: PostFx;
   lights: () => { key: THREE.DirectionalLight; rim: THREE.DirectionalLight; hemi: THREE.HemisphereLight } | null;
-  mist: THREE.ShaderMaterial[];
   flowers: () => { x: number; z: number; r: number; color: THREE.Color }[];
   reduced: boolean;
 };
@@ -76,7 +75,7 @@ export class Weather {
      солнце и подсветка обновляются после HDRI, грейд — после интро */
   private base: {
     sun: THREE.Color; ambient: number; haze: number; fog: THREE.Color; exposure: number; rays: number; vibrance: number;
-    sky: Palette; skySun: THREE.Color; disc: number; key: number; rim: number; hemi: number; mist: number[];
+    sky: Palette; skySun: THREE.Color; disc: number; key: number; rim: number; hemi: number;
   } | null = null;
 
   private petals: Particles;
@@ -140,7 +139,7 @@ export class Weather {
   }
 
   private capture() {
-    const { uniforms: u, sky, mist } = this.d;
+    const { uniforms: u, sky } = this.d;
     const l = this.d.lights();
     this.base = {
       sun: u.uSunCol.value.clone(),
@@ -156,7 +155,6 @@ export class Weather {
       key: l?.key.intensity ?? 2.1,
       rim: l?.rim.intensity ?? 2.6,
       hemi: l?.hemi.intensity ?? 0.38,
-      mist: mist.map((m) => m.uniforms.uOpacity.value as number),
     };
   }
 
@@ -218,7 +216,6 @@ export class Weather {
       l.rim.intensity = b.rim * sunK * shade;
       l.hemi.intensity = b.hemi * (1 - du * 0.35);
     }
-    this.d.mist.forEach((m, i) => (m.uniforms.uOpacity.value = b.mist[i] * (1 + o * 0.6 + r * 0.6)));
 
     /* атмосфера */
     (this.rainLines.material as THREE.ShaderMaterial).uniforms.uAmount.value = r;
