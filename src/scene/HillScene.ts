@@ -537,9 +537,21 @@ export class HillScene {
       guard++;
       let x = X0 + (X1 - X0) * rng();
       let z = Z0 + (Z1 - Z0) * rng();
+      /* v96: точная высота (пять октав шума) считалась для каждого кандидата, а отбрасывается их большинство — 0,65 с
+         главного потока. Сначала расстояние по гладкому куполу: кочки меняют высоту не больше чем на BUMP, поэтому
+         по нему можно наверняка отбросить кандидата и наверняка пройти проверку «не у самой камеры». Случайные числа
+         берутся в том же порядке, что и раньше, — луг тот же до бита */
+      const nearCut = this.opts.fixedCamera ? 0.05 : 1.2;
+      const da = Math.hypot(x - cam.x, domeAt(x, z) - cam.y, z - cam.z);
+      if (da < nearCut - BUMP) continue;
+      let r = -1;
+      if (da > nearCut + BUMP) {
+        r = rng();
+        if (r > Math.min(1, Math.pow(5.2 / Math.max(da - BUMP, 1e-3), 1.8))) continue;
+      }
       const h0 = heightAt(x, z);
       const d0 = Math.hypot(x - cam.x, h0 - cam.y, z - cam.z);
-      if (d0 < (this.opts.fixedCamera ? 0.05 : 1.2)) continue;
+      if (d0 < nearCut) continue;
       /* Плотность ∝ ~1/d²: так на экран приходится примерно одинаково травинок
          на пиксель по всей глубине. Раньше до 8.5 м плотность на метр была
          постоянной, и низ кадра (ближняя трава) получал меньше травинок на
@@ -549,7 +561,7 @@ export class HillScene {
       /* v44: посадка — 0,5 с главного потока на загрузке. Случайное число берём до шума прогалин: bare ≤ 1, поэтому
          при r > density кандидат отброшен при любом шуме, и три октавы fbm для него не считаем (дальние кандидаты
          отсеиваются почти все). Высота для проверки видимости — уже посчитанная. Порядок rng() и результат те же. */
-      const r = rng();
+      if (r < 0) r = rng();
       if (r > density) continue;
       const patch = fbm(x * 0.55 + 7.3, z * 0.55 - 2.1, 3);
       const bare = 0.72 + 0.28 * smooth(0.28, 0.52, patch);
@@ -855,8 +867,11 @@ export class HillScene {
 
   /* Семена и пух, которые ветер несёт над лугом без участия курсора */
   private seedTimer = 0;
+  /* v96: флаги адреса — один раз, а не регулярным выражением в каждом кадре */
+  private readonly windOff = /[?&]wind=0/.test(location.search);
+  private readonly forcedDpr = Number(new URLSearchParams(location.search).get("dpr")) > 0;
   private driftSeeds(dt: number) {
-    if (this.reduced || /[?&]wind=0/.test(location.search)) return;
+    if (this.reduced || this.windOff) return;
     this.seedTimer += dt * (0.6 + this.uniforms.uWind.value * 0.8);
     const wd = this.uniforms.uWindDir.value;
     while (this.seedTimer > 0.12) {
@@ -2355,7 +2370,7 @@ export class HillScene {
   private calibrate(now: number) {
     if (this.tierLocked) return;
     if (this.opts.fixedCamera) { this.lockTier(false); return; }
-    if (Number(new URLSearchParams(location.search).get("dpr")) > 0) { this.lockTier(false); return; }
+    if (this.forcedDpr) { this.lockTier(false); return; }
     /* после смены ступени пропускаем кадры: пересоздание буферов и прогрев */
     if (this.calibSkip > 0) { this.calibSkip--; this.calibLast = now; return; }
     this.calibFrames.push(now - this.calibLast);
@@ -2565,6 +2580,9 @@ function hash01(id: number, salt: number) {
   n = Math.imul(n ^ (n >>> 15), 0x85ebca6b);
   return ((n ^ (n >>> 13)) >>> 0) / 4294967296;
 }
+
+/* насколько кочки (terrain.ts, heightAt) отклоняют высоту от купола: (fbm−0.5)·0.34 + (fbm−0.5)·0.06 ≤ 0.2, с запасом */
+const BUMP = 0.21;
 
 /* купол холма без мелких кочек — для дешёвого отсечения гребнем */
 function domeAt(x: number, z: number) {
