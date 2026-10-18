@@ -123,6 +123,8 @@ export class HillScene {
   private uniforms = {
     uTime: { value: 0 },
     uWind: { value: this.reduced ? 0.25 : 1 },
+    /* v96, ?next=1: фронты порывов по лугу (shaders.ts, gustFront); при reduced motion их нет */
+    uFront: { value: /[?&]next=1/.test(location.search) && !this.reduced ? 1 : 0 },
     uWindDir: { value: new THREE.Vector2(0.86, 0.5).normalize() },
     uTrail: { value: Array.from({ length: TRAIL_SLOTS }, () => new THREE.Vector4(0, 0, 0, 0)) },
     uPushR: { value: 0.55 },

@@ -190,12 +190,22 @@ float vnoise(vec2 p){
 }
 /* сила порыва в точке луга: крупные пятна плывут по ветру, мелкие — быстрее;
    бегущая волна оставлена слабой подложкой, чтобы по склону всё ещё «шло» */
+/* v96, ?next=1: фронт порыва — раз в 17 с по лугу по ветру пробегает полоса сильного ветра (≈7 м шириной, рваная
+   по шуму): трава, цветы и крона гнутся волной, сцена «дышит» без курсора. uFront — сила (0 — нет) */
+uniform float uFront;
+float gustFront(vec2 p){
+  if (uFront < 0.001) return 0.0;
+  float ph = fract(uTime / 17.0 + 0.35);
+  float along = dot(p, uWindDir) + (vnoise(p * 0.21 + 3.7) - 0.5) * 5.0;
+  float x = (along - mix(-28.0, 30.0, ph)) / 3.4;
+  return exp(-x * x) * smoothstep(0.0, 0.08, ph) * (1.0 - smoothstep(0.88, 1.0, ph)) * uFront;
+}
 float gustAt(vec2 p){
   vec2 scroll = uWindDir * uTime;
   float n = vnoise(p * 0.16 - scroll * 0.42) * 0.62 + vnoise(p * 0.52 - scroll * 1.1) * 0.38;
   float wave = sin(dot(p, uWindDir) * 0.85 - uTime * 1.55) * 0.5 + 0.5;
   float g = smoothstep(0.28, 0.82, n) * 0.8 + wave * 0.2;
-  return g * g;
+  return max(g * g, gustFront(p));
 }
 /* волна интро: кольцо бежит от кресла, xy — куда пригнуть (наружу), z — сила */
 uniform vec3 uWave; /* радиус, сила, полуширина кольца */
