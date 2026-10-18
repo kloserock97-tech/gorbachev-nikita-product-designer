@@ -399,7 +399,8 @@ export class HillScene {
   private buildVista() {
     const u = this.sky.uniforms;
     this.scene.add(createVista({
-      sky: { uZenith: u.uZenith, uHigh: u.uHigh, uMid: u.uMid, uHorizon: u.uHorizon, uGlow: u.uGlow, uSunDir: u.uSunDir, uSunCol: u.uSunCol, uMie: u.uMie },
+      /* v96: uCloud и uMistDrift — плывущий туман в низинах между грядами (?next=1) */
+      sky: { uZenith: u.uZenith, uHigh: u.uHigh, uMid: u.uMid, uHorizon: u.uHorizon, uGlow: u.uGlow, uSunDir: u.uSunDir, uSunCol: u.uSunCol, uMie: u.uMie, uCloud: this.uniforms.uCloud, uMistDrift: { value: this.next ? 1 : 0 } },
       sh: this.uniforms.uSH,
       ambient: this.uniforms.uAmbient,
       horizon: this.uniforms.uSkyHorizon,

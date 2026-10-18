@@ -901,6 +901,10 @@ uniform float uCrown;    /* ширина кроны, м */
 uniform float uMist;     /* туман в низине: высота слоя, м */
 uniform float uBase;     /* где у гряды подножие (мировой y) */
 uniform float uSeed;
+/* v96, ?next=1: туман в низинах плывёт рваными банками — подъёмы и разрывы вдоль гряды, сдвиг по ветру (uCloud.xy,
+   тот же, что у облаков). uMistDrift — сила (0 — прежний ровный туман) */
+uniform vec3 uCloud;
+uniform float uMistDrift;
 varying vec3 vW;
 varying vec2 vArc;
 
@@ -956,6 +960,11 @@ void main(){
   sky += uSunCol * (pow(cosA, 90.0) * 0.3 + pow(cosA, 12.0) * 0.06) + skyMie(d);
   /* воздух: доля неба растёт к подножию — там в низинах туман */
   float mist = uMist > 0.0 ? exp(-max(vW.y - uBase, 0.0) / uMist) : 0.0;
+  if (uMistDrift > 0.001 && uMist > 0.0) {
+    float m = vn1(vArc.x / (uCrown * 16.0) + uCloud.x * 4.0) * 0.6 + vn1(vArc.x / (uCrown * 6.0) - uCloud.y * 7.0 + 13.0) * 0.4;
+    float bank = exp(-max(vW.y - uBase - uMist * 1.1, 0.0) / (uMist * 0.8));
+    mist = max(mist, bank * smoothstep(0.38, 0.78, m) * 0.8 * uMistDrift);
+  }
   /* v80: у самого подножия гряда целиком тонет в дымке — там она сходится с равниной (plainFragment) одним цветом,
      без ровной границы; выше темнеет плавно, на высоту слоя тумана */
   float air = clamp(uAerial + (1.0 - uAerial) * mist, 0.0, 1.0);

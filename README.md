@@ -52,7 +52,7 @@ Useful URL parameters while developing:
 | Parameter | Effect |
 | --- | --- |
 | `?intro=0` / `?intro=1` | skip or force the loading screen |
-| `?next=1` | effects on trial: clouds in the sky (they share drift and cover with the cloud shadows on the grass), a camera that breathes like a handheld one, a reflection on the CRT glass, a gust front that sweeps the meadow every 17 s |
+| `?next=1` | effects on trial: clouds in the sky (they share drift and cover with the cloud shadows on the grass), a camera that breathes like a handheld one, a reflection on the CRT glass, a gust front that sweeps the meadow every 17 s, valley mist between the far ridges that drifts in torn banks |
 | `?cl=1.6,-0.04,1.4,1` | with `?next=1`: cloud body shade, extra cover, rim strength, pattern scale |
 | `?cases=wheel` / `wheel2d` / `wheel3d` / `ribbon` / `deck` | other views of the Work chapter: the wheel of titles on an arc (and the same without WebGL, or with it forced on phones), the old ribbon of cards, a stack. Any value shows a small switcher at the bottom |
 | `?story=0.62` | jump to a point of the scroll story (0 to 1) |
