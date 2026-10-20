@@ -19,7 +19,7 @@ import { shots2x } from "../data/shots2x";
 import { t } from "../i18n";
 import { heroStage, mountHero } from "./caseHero";
 import { brandMark, goArrow, lookVars, objectPicture } from "./caseLook";
-import { demoBlock, mountDemos } from "./caseDemos";
+import { demoBlock, hasDemo, mountDemos } from "./caseDemos";
 import { mockupsHead, mountMockups } from "./mockupsTitle";
 import { icon, type IconName } from "./icons";
 import { smoothWheel } from "./smoothScroll";
@@ -85,7 +85,7 @@ const interlude = (g: CaseImage, focus = "50% 47%") =>
   `<div class="cs-interlude cs-interlude--${esc(g.kind)}" data-reveal aria-hidden="true" style="--focus:${esc(focus)}"><img src="${BASE}${g.src}" alt="" width="${g.w}" height="${g.h}" loading="lazy" decoding="async"${hi(g, "100vw")} draggable="false"></div>`;
 
 /* ── куски ─────────────────────────────────────────────────────────────────── */
-const SEC_ICON: Record<string, IconName> = { brief: "brief", context: "context", approach: "approach", research: "research", flow: "flow", decisions: "decisions", split: "split", mistakes: "mistakes", results: "results", screens: "screens", roadmap: "roadmap", takeaways: "takeaways", steps: "decisions", more: "list" };
+const SEC_ICON: Record<string, IconName> = { brief: "brief", context: "context", approach: "approach", research: "research", flow: "flow", decisions: "decisions", split: "split", mistakes: "mistakes", results: "results", screens: "screens", roadmap: "roadmap", takeaways: "takeaways", steps: "decisions", more: "list", interface: "screens" };
 const head = (n: number, id: string, label: string, lead?: string) => `
   <header class="cs-head" id="cs-${id}">
     <p class="cs-num">${icon(SEC_ICON[id] ?? "brief")}<span>${pad(n)}</span>${esc(label)}</p>
@@ -324,15 +324,18 @@ export function sectionsOf(s: CaseStory): Section[] {
     if (s.more?.length) list.push({ id: "more", label: t("cs.more") });
     return list;
   }
-  const list: Section[] = [{ id: "brief", label: t("cs.brief") }, { id: "context", label: t("cs.context") }];
+  /* v99: сначала готовый интерфейс и результат, потом процесс */
+  const list: Section[] = [{ id: "brief", label: t("cs.brief") }];
+  if (s.decisions.film || hasDemo(s.id)) list.push({ id: "interface", label: t("cs.interface") });
+  if (s.gallery.length) list.push({ id: "screens", label: t("cs.screens") });
+  if (s.results) list.push({ id: "results", label: t("cs.results") });
+  list.push({ id: "context", label: t("cs.context") });
   if (s.approach) list.push({ id: "approach", label: t("cs.approach") });
   list.push({ id: "research", label: t("cs.research") });
   if (s.flow && !s.flow.folded) list.push({ id: "flow", label: t("cs.flow") });
   list.push({ id: "decisions", label: t("cs.decisions"), children: s.deepDives.map((d) => ({ id: `dd-${d.id}`, label: d.chip })) });
   if (s.split) list.push({ id: "split", label: t("cs.split") });
   if (s.mistakes) list.push({ id: "mistakes", label: t("cs.mistakes") });
-  if (s.results) list.push({ id: "results", label: t("cs.results") });
-  if (s.gallery.length) list.push({ id: "screens", label: t("cs.screens") });
   if (s.roadmap) list.push({ id: "roadmap", label: t("cs.roadmap") });
   list.push({ id: "takeaways", label: t("cs.takeaways") });
   return list;
@@ -391,7 +394,33 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           <p class="cs-summary" data-reveal>${runIn(s.hero.summary)}</p>
         </section>
 
+        ${s.decisions.film || hasDemo(s.id) ? `<section class="cs-sec cs-sec--interface">
+          ${head(++sec, "interface", t("cs.interface"))}
+          ${s.decisions.film ? filmBlock(s.decisions.film) : demoBlock(s.id)}
+        </section>` : ""}
+
+        ${s.gallery.length ? `<section class="cs-sec cs-sec--screens">
+          ${s.mockups === false ? head(++sec, "screens", t("cs.screens")) : mockupsHead(icon("screens"), pad(++sec), shotCount(s.gallery))}
+          <div class="cs-gallery">${s.gallery.map(gallery).join("")}</div>
+        </section>` : ""}
+
+        ${s.results ? `<section class="cs-sec">
+          ${head(++sec, "results", t("cs.results"), s.results.lead)}
+          ${s.results.intro ? paras(s.results.intro) : ""}
+          ${s.results.pointsFirst ? resultPoints(s.results.points) : ""}
+          ${s.results.outcomes?.length ? `${s.results.pointsFirst ? `<div class="cs-block" data-reveal>${mini(t("cs.honesty"))}</div>` : ""}<ol class="cs-outcomes">${s.results.outcomes.map((o, k) => `<li data-reveal style="--rd:${k}">
+            <p class="cs-num cs-num--s"><span>${pad(k + 1)}</span></p>
+            <div><p class="cs-mini">X · ${t("cs.x")}</p><b>${esc(o.x)}</b></div>
+            <div><p class="cs-mini">Y · ${t("cs.y")}</p><p>${esc(o.y)}</p></div>
+            <div><p class="cs-mini">Z · ${t("cs.z")}</p><p>${esc(o.z)}</p></div></li>`).join("")}</ol>` : ""}
+          ${s.results.pointsFirst ? "" : resultPoints(s.results.points)}
+          ${s.results.contribution ? `<div class="cs-block cs-card cs-card--dark" data-reveal>${mini(t("cs.contribution"))}<p>${esc(s.results.contribution)}</p></div>` : ""}
+          ${s.results.honesty ? `<div class="cs-block cs-honesty" data-reveal>${mini(t("cs.honesty"))}<p>${esc(s.results.honesty)}</p></div>` : ""}
+        </section>` : ""}
+
         ${brk("brief")}
+
+        <p class="cs-break" data-reveal><span>${t("cs.steps")}</span></p>
 
         <section class="cs-sec">
           ${head(++sec, "context", t("cs.context"), ctx.lead)}
@@ -452,7 +481,6 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
             <summary><span class="cs-deep-title"><b>${esc(s.flow.title)}</b></span><span class="cs-deep-toggle" aria-hidden="true"><i></i></span></summary>
             <div class="cs-fold-body">${flowBody(s.flow)}</div>
           </details>` : ""}
-          ${s.decisions.film ? filmBlock(s.decisions.film) : demoBlock(s.id)}
           <div class="cs-decisions">${s.decisions.items.map((d, k) => decision(d, k, s.deepDives)).join("")}</div>
           ${s.deepDives.length ? `<div class="cs-deeps">${mini(t("cs.deep"))}${s.deepDives.map(deepDive).join("")}</div>` : ""}
         </section>
@@ -480,24 +508,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
             </div></article>`).join("")}</div>
         </section>` : ""}
 
-        ${s.results ? `<section class="cs-sec">
-          ${head(++sec, "results", t("cs.results"), s.results.lead)}
-          ${s.results.intro ? paras(s.results.intro) : ""}
-          ${s.results.pointsFirst ? resultPoints(s.results.points) : ""}
-          ${s.results.outcomes?.length ? `${s.results.pointsFirst ? `<div class="cs-block" data-reveal>${mini(t("cs.honesty"))}</div>` : ""}<ol class="cs-outcomes">${s.results.outcomes.map((o, k) => `<li data-reveal style="--rd:${k}">
-            <p class="cs-num cs-num--s"><span>${pad(k + 1)}</span></p>
-            <div><p class="cs-mini">X · ${t("cs.x")}</p><b>${esc(o.x)}</b></div>
-            <div><p class="cs-mini">Y · ${t("cs.y")}</p><p>${esc(o.y)}</p></div>
-            <div><p class="cs-mini">Z · ${t("cs.z")}</p><p>${esc(o.z)}</p></div></li>`).join("")}</ol>` : ""}
-          ${s.results.pointsFirst ? "" : resultPoints(s.results.points)}
-          ${s.results.contribution ? `<div class="cs-block cs-card cs-card--dark" data-reveal>${mini(t("cs.contribution"))}<p>${esc(s.results.contribution)}</p></div>` : ""}
-          ${s.results.honesty ? `<div class="cs-block cs-honesty" data-reveal>${mini(t("cs.honesty"))}<p>${esc(s.results.honesty)}</p></div>` : ""}
-        </section>` : ""}
 
-        ${s.gallery.length ? `<section class="cs-sec cs-sec--screens">
-          ${s.mockups === false ? head(++sec, "screens", t("cs.screens")) : mockupsHead(icon("screens"), pad(++sec), shotCount(s.gallery))}
-          <div class="cs-gallery">${s.gallery.map(gallery).join("")}</div>
-        </section>` : ""}
 
         ${s.roadmap ? `<section class="cs-sec">
           ${head(++sec, "roadmap", t("cs.roadmap"))}

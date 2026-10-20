@@ -36,6 +36,9 @@ const DEMOS: Record<string, { markup: () => string; play: (root: HTMLElement, ru
 };
 
 /** разметка блока с демо для кейса (или пустая строка) */
+/** есть ли у кейса живое демо */
+export const hasDemo = (id: string) => !!DEMOS[id];
+
 export function demoBlock(id: string) {
   const d = DEMOS[id];
   if (!d) return "";
