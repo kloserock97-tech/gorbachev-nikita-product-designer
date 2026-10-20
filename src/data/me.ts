@@ -9,6 +9,9 @@ import ruMe from "./me.ru";
    v21 (правка Никиты): без локации, хэндла, опыта работы и плиток кейсов — кейсы живут в главе
    «Кейсы» и в меню Work; контакты — рабочие.
    v27: русский двойник — me.ru.ts; экран перерисовывается при смене языка (portfolioScreen.ts). */
+/** значки хобби — рисуются в portfolioScreen.ts (icon) */
+export type HobbyIcon = "music" | "game" | "cube" | "spark";
+
 const me = {
   windowTitle: "Nikita Gorbachev | Home Page",
   address: "http://www.nikita-gorbachev.com/about.htm",
@@ -16,7 +19,7 @@ const me = {
   tagline: "Product Designer",
   nav: ["About me", "Now", "Hobbies", "Contact"],
   /* заголовки разделов на самой странице (полоски-плашки) */
-  sections: ["About me", "What I'm doing now", "Hobbies", "Contact"],
+  sections: ["About me", "What I'm doing now", "Three principles", "Hobbies", "Contact"],
   photo: "ui/portrait.jpg",
 
   profile: [
@@ -25,18 +28,32 @@ const me = {
     ["Languages", "Russian — native, English — professional working proficiency"],
   ],
 
-  hello:
-    "Hi! I'm Nikita, a product designer. I make products for regular people, sometimes with AI inside. And yes, I build them in code myself.",
+  /* v101: история — массив абзацев: wrap() не понимает переносов строк */
+  story: [
+    "Hi! I'm Nikita, a product designer. Like most designers, I started with drawing. Back in school I made my first concepts in Blender and Illustrator. Yes, I made the famous Blender donut too. And a shaman's hut, which I was a bit prouder of.",
+    "Then I went to study at the Moscow University of the Ministry of Internal Affairs and even managed to work in criminal investigation. But design didn't let go. I kept drawing and making my own things, sure it was just a hobby. That you could earn a living designing interfaces and grow in it never even crossed my mind.",
+    "Then, little by little, I got my first order on a freelance marketplace. Then a second, then a third. Project by project I built up experience, all the way to my first job at an agency.",
+    "From there I made it all the way to big companies, in big tech and fintech. I'm genuinely proud of that.",
+  ],
 
   now: [
-    "I look at the whole product. A screen is just one piece. What's interesting is everything around it: why someone came, what stops them, and whether they'll come back tomorrow.",
+    "Today I'm a product designer. I make products for regular people, sometimes with AI inside, and I build them in code myself. I look at the whole product: a screen is just one piece, and what's interesting is why someone came and whether they'll come back tomorrow.",
     "Last stop: GRIF AI. Open to product design roles.",
   ],
 
+  /* v101: «Три принципа» — между «Чем занят сейчас» и жёлтой заметкой; в меню nav и в кнопки первого экрана не входят */
+  principlesIntro: "Over five-plus years in product I've settled on three principles. They keep me from getting bored and from shipping nonsense.",
+  principles: [
+    { title: "Always experiment.", text: "Experiments are how I learn. Unreal Engine, three.js, AI agents: when something new comes out, I want to get my hands on it. Some of these experiments live in my pet projects." },
+    { title: "Check, don't guess.", text: "A good-looking screen is half the job. I want to know it worked: people got to the end, came back, did it faster. The fun part starts after release." },
+    { title: "Design as a life's work.", text: "It started as a hobby, became a dream and turned into a job. I truly care about where design is going." },
+  ],
 
   hobbies: [
-    { icon: "cube", text: "3D in Blender and Unreal Engine. This hill is one of those builds." },
-    { icon: "spark", text: "Working out what keeps a person interested, beyond where a button goes. Fine, that one is my actual job." },
+    { icon: "music" as HobbyIcon, text: "I take drum lessons and play electric guitar. Loudly." },
+    { icon: "game" as HobbyIcon, text: "I love Unreal Engine: I try to make my own games and I've worked on games released on Steam." },
+    { icon: "cube" as HobbyIcon, text: "3D in Blender, ever since school. This hill is one of those builds." },
+    { icon: "spark" as HobbyIcon, text: "Working out what keeps a person interested, beyond where a button goes. Fine, that one is my actual job." },
   ],
 
   quote: "A designer without numbers is an illustrator.",

@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { getMe } from "../data/me";
+import { getMe, type HobbyIcon } from "../data/me";
 import { getLang, onLang } from "../i18n";
 
 /* v27: тексты экрана берутся на текущем языке; при переключении страница перерисовывается */
@@ -144,7 +144,7 @@ void main() {
   gl_FragColor = vec4(col, 1.0);
 }`;
 
-type Icon = "game" | "cube" | "spark";
+type Icon = HobbyIcon;
 
 export class PortfolioScreen {
   readonly material: THREE.ShaderMaterial;
@@ -452,20 +452,39 @@ export class PortfolioScreen {
         g.strokeStyle = "#aca899"; g.lineWidth = 1; g.strokeRect(tx + 0.5, ty + 0.5, tw - 1, rowH);
         g.fillStyle = "#aca899"; g.fillRect(tx + labelW, ty, 1, rowH);
         g.font = `bold 15px ${BODY}`; g.fillStyle = "#333"; g.fillText(k, tx + 12, ty + 28);
-        g.font = `16px ${BODY}`; g.fillStyle = TEXT; g.fillText(v, tx + labelW + 12, ty + 28);
+        /* v101: длинное значение («русский — родной, английский — …») вылезало за рамку таблицы — шрифт ужимается по ширине */
+        g.font = `16px ${BODY}`;
+        const room = tw - labelW - 24, vw = g.measureText(v).width;
+        if (vw > room) g.font = `${(16 * room / vw).toFixed(1)}px ${BODY}`;
+        g.fillStyle = TEXT; g.fillText(v, tx + labelW + 12, ty + 28);
       }
       ty += rowH;
     }
     ty += 18;
     g.font = `16px ${BODY}`;
-    ty = this.wrap(g, ME().hello, tx, ty + 6, tw, 26, paint, TEXT);
-    y = ty + 22;
+    /* v101: история — четыре абзаца, между ними 13 px */
+    ty += 12;
+    for (const p of ME().story) ty = this.wrap(g, p, tx, ty, tw, 26, paint, TEXT) + 13;
+    y = ty + 9;
 
     this.anchors[1] = y - 46;
     y = this.sectionBar(g, ME().sections[1], M, y, inner, paint);
     g.font = `17px ${BODY}`;
     for (const p of ME().now) y = this.wrap(g, p, M, y + 4, inner, 28, paint, TEXT) + 12;
     y += 16;
+
+    /* v101: три принципа — вводная фраза и три пункта: номер в синем кружке (как полоски-заголовки), жирный заголовок, текст */
+    y = this.sectionBar(g, ME().sections[2], M, y, inner, paint);
+    g.font = `17px ${BODY}`;
+    y = this.wrap(g, ME().principlesIntro, M, y + 4, inner, 28, paint, TEXT) + 18;
+    ME().principles.forEach((p, k) => {
+      if (paint) this.numBadge(g, k + 1, M + 18, y - 6);
+      g.font = `bold 17px ${BODY}`;
+      y = this.wrap(g, p.title, M + 50, y, inner - 50, 26, paint, "#1f2f6b");
+      g.font = `16px ${BODY}`;
+      y = this.wrap(g, p.text, M + 50, y + 2, inner - 50, 25, paint, TEXT) + 18;
+    });
+    y += 14;
 
     /* цитата — жёлтая заметка */
     const noteH = 96;
@@ -474,12 +493,17 @@ export class PortfolioScreen {
       g.fillStyle = "rgba(0,0,0,0.14)"; g.fillRect(-inner / 2 + 90 + 5, -noteH / 2 + 6, inner - 180, noteH);
       g.fillStyle = "#fff6a8"; g.fillRect(-inner / 2 + 90, -noteH / 2, inner - 180, noteH);
       g.textAlign = "center"; g.font = `bold 14px ${BODY}`; g.fillStyle = "#8a7a12"; g.fillText("WORDS TO LIVE BY", 0, -18);
-      g.font = `italic bold 24px ${DISPLAY}`; g.fillStyle = "#3a3208"; g.fillText(`“${ME().quote}”`, 0, 20);
+      /* v101: английская цитата шире заметки — кегль ужимается, чтобы она не вылезала за жёлтый лист */
+      const quote = `“${ME().quote}”`, qRoom = inner - 180 - 40;
+      g.font = `italic bold 24px ${DISPLAY}`;
+      const qw = g.measureText(quote).width;
+      if (qw > qRoom) g.font = `italic bold ${(24 * qRoom / qw).toFixed(1)}px ${DISPLAY}`;
+      g.fillStyle = "#3a3208"; g.fillText(quote, 0, 20);
       g.restore(); g.textAlign = "left";
     }
     y += noteH + 40;
 
-    y = this.sectionBar(g, ME().sections[2], M, y, inner, paint);
+    y = this.sectionBar(g, ME().sections[3], M, y, inner, paint);
     for (const h of ME().hobbies) {
       if (paint) this.icon(g, h.icon as Icon, M + 18, y - 8);
       g.font = `16px ${BODY}`;
@@ -488,7 +512,7 @@ export class PortfolioScreen {
     y += 12;
 
     this.anchors[2] = y - 46;
-    y = this.sectionBar(g, ME().sections[3], M, y, inner, paint);
+    y = this.sectionBar(g, ME().sections[4], M, y, inner, paint);
     for (const [k, v] of ME().contacts) {
       g.font = `bold 16px ${BODY}`;
       if (paint) { g.fillStyle = "#333"; g.fillText(`${k}:`, M, y); }
@@ -520,7 +544,7 @@ export class PortfolioScreen {
     g.font = `13px ${BODY}`;
     if (paint) {
       g.textAlign = "center"; g.fillStyle = "#666";
-      g.fillText("Best viewed at 1024×768 · Last updated: September 2026 · © Nikita Gorbachev", PWL / 2, y);
+      g.fillText("Best viewed at 1024×768 · Last updated: October 2026 · © Nikita Gorbachev", PWL / 2, y);
       g.fillText("Made with a lot of grass", PWL / 2, y + 22);
       g.textAlign = "left";
     }
@@ -756,8 +780,26 @@ export class PortfolioScreen {
     g.fill();
   }
 
+  /** номер принципа — синий кружок с белой цифрой, тот же градиент, что у полосок-заголовков */
+  private numBadge(g: CanvasRenderingContext2D, n: number, cx: number, cy: number) {
+    const r = 14;
+    const grad = g.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+    grad.addColorStop(0, "#6d9bf0"); grad.addColorStop(1, "#1f4fbf");
+    g.fillStyle = grad; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = "#163a8f"; g.lineWidth = 1; g.stroke();
+    g.font = `bold 15px ${UI}`; g.fillStyle = "#fff"; g.textAlign = "center"; g.fillText(String(n), cx, cy + 5); g.textAlign = "left";
+  }
+
   private icon(g: CanvasRenderingContext2D, kind: Icon, cx: number, cy: number) {
-    if (kind === "game") {
+    if (kind === "music") {
+      /* две ноты под общим ребром — в одну краску, как джойстик и кубик */
+      g.fillStyle = "#c2185b";
+      g.beginPath(); g.ellipse(cx - 8, cy + 9, 6, 4.5, -0.4, 0, Math.PI * 2); g.fill();
+      g.beginPath(); g.ellipse(cx + 9, cy + 6, 6, 4.5, -0.4, 0, Math.PI * 2); g.fill();
+      g.fillRect(cx - 3.5, cy - 12, 2.6, 21);
+      g.fillRect(cx + 13.4, cy - 15, 2.6, 21);
+      g.beginPath(); g.moveTo(cx - 3.5, cy - 12); g.lineTo(cx + 16, cy - 15); g.lineTo(cx + 16, cy - 10); g.lineTo(cx - 3.5, cy - 7); g.closePath(); g.fill();
+    } else if (kind === "game") {
       g.fillStyle = "#555"; this.round(g, cx - 16, cy - 9, 32, 18, 8); g.fill();
       g.fillStyle = "#fff"; g.fillRect(cx - 11, cy - 1.5, 8, 3); g.fillRect(cx - 8.5, cy - 4, 3, 8);
       g.fillStyle = "#e33"; g.beginPath(); g.arc(cx + 7, cy - 2, 2.5, 0, 7); g.fill();
