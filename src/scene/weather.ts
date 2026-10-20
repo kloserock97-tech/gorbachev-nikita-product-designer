@@ -68,6 +68,8 @@ export class Weather {
   private overcast = 0;
   private rain = 0;
   private dusk = 0;
+  /** v96: доля облаков в небе — 0 в ясную погоду, 1 в облачную, дождь и сумерки; плавно, как остальная погода */
+  get cloudShare() { return Math.min(1, this.overcast + this.dusk); }
   private wet = 0;
   private cloudOffset = new THREE.Vector2(3.1, -1.7);
 

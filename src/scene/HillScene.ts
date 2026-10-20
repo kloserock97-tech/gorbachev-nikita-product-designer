@@ -121,7 +121,7 @@ export class HillScene {
     uTime: { value: 0 },
     uWind: { value: this.reduced ? 0.25 : 1 },
     /* v96, ?next=1: фронты порывов по лугу (shaders.ts, gustFront); при reduced motion их нет */
-    uFront: { value: /[?&]next=1/.test(location.search) && !this.reduced ? 1 : 0 },
+    uFront: { value: !/[?&]next=0/.test(location.search) && !this.reduced ? 1 : 0 },
     uWindDir: { value: new THREE.Vector2(0.86, 0.5).normalize() },
     uTrail: { value: Array.from({ length: TRAIL_SLOTS }, () => new THREE.Vector4(0, 0, 0, 0)) },
     uPushR: { value: 0.55 },
@@ -355,8 +355,9 @@ export class HillScene {
 
   /* ------------------------------------------------------------------ */
 
-  /* v96: новые эффекты (облака, дыхание камеры, блик кинескопа) — по ?next=1, пока Никита не выберет */
-  private readonly next = /[?&]next=1/.test(location.search);
+  /* v96: эффекты пакета 5 — порыв-фронт, туман в низинах, дыхание камеры, блик кинескопа, облака в сменяемой погоде.
+     Включены (выбор Никиты 20.10); ?next=0 — прежний вид для сравнения */
+  private readonly next = !/[?&]next=0/.test(location.search);
   private sky!: THREE.ShaderMaterial;
 
   private buildSky() {
@@ -378,7 +379,9 @@ export class HillScene {
         uMie: { value: /[?&]mie=0/.test(location.search) ? 0 : 1 },
         /* v96, ?next=1: облака в небе (shaders.ts, skyClouds) — тот же сдвиг и покрытие, что у теней облаков на траве */
         uCloud: this.uniforms.uCloud,
-        uClouds: { value: this.next ? 1 : 0 },
+        /* облака — только в сменяемой погоде (облака, дождь, сумерки), в ясную на первом экране их нет (Никита 20.10);
+           долю пишет кадр из погоды (cloudShare) */
+        uClouds: { value: 0 },
         uCloudLook: { value: new THREE.Vector4(...((new URLSearchParams(location.search).get("cl") ?? "1.6,-0.04,1.4,1").split(",").map(Number) as [number, number, number, number])) },
       },
     });
@@ -2112,6 +2115,7 @@ export class HillScene {
     this.uniforms.uWind.value = (this.reduced ? 0.25 : 1) * this.weather.windScale + this.gustAmount(this.uniforms.uTime.value);
     /* пока играет интро, экспозицией и цветом постобработки управляет оно */
     this.weather.update(dt, true);
+    this.sky.uniforms.uClouds.value = this.next ? this.weather.cloudShare : 0;
     this.updateStory(dt);
 
     const fixed = this.opts.fixedCamera;
