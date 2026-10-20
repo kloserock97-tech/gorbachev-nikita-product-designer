@@ -438,8 +438,9 @@ html[lang="en"] .cs-hyp q { quotes: "\201C" "\201D"; }
 .cs-compare-box:has(.cs-compare-range:focus-visible) { outline: 2px solid var(--ink); outline-offset: 3px; }
 
 /* stack: веер телефонов на той же сцене */
-.cs-stack-fan { --ar: 1.9; display: flex; justify-content: center; align-items: flex-end; padding-top: var(--stage-pad); }
-.cs-stack-fan .cs-stack-phone { --mid: calc((var(--n) - 1) / 2); --o: calc(var(--i) - var(--mid)); position: relative; min-width: 0; flex: none; height: 92%; aspect-ratio: 402 / 874; width: auto; margin: 0 clamp(-36px, -2.4cqw, -12px); padding: 0; border: 6px solid #15181d; border-radius: 30px; overflow: hidden; background: #15181d; cursor: zoom-in; rotate: calc(var(--o) * 7deg); translate: 0 calc(var(--o) * var(--o) * 4% + 9%); box-shadow: 0 26px 50px color-mix(in srgb, var(--ink) 34%, transparent); transition: translate 0.5s var(--ease), rotate 0.5s var(--ease), scale 0.5s var(--ease); }
+/* v100: телефоны целиком — раньше они выходили из-за нижнего края (92% высоты и сдвиг вниз) и обрезались посередине экрана */
+.cs-stack-fan { --ar: 1.9; display: flex; justify-content: center; align-items: center; padding-block: var(--stage-pad); }
+.cs-stack-fan .cs-stack-phone { --mid: calc((var(--n) - 1) / 2); --o: calc(var(--i) - var(--mid)); position: relative; min-width: 0; flex: none; height: 84%; aspect-ratio: 402 / 874; width: auto; margin: 0 clamp(-36px, -2.4cqw, -12px); padding: 0; border: 6px solid #15181d; border-radius: 30px; overflow: hidden; background: #15181d; cursor: zoom-in; rotate: calc(var(--o) * 7deg); translate: 0 calc(var(--o) * var(--o) * 4%); box-shadow: 0 26px 50px color-mix(in srgb, var(--ink) 34%, transparent); transition: translate 0.5s var(--ease), rotate 0.5s var(--ease), scale 0.5s var(--ease); }
 .cs-stack-fan .cs-stack-phone:hover, .cs-stack-fan .cs-stack-phone:focus-visible { rotate: 0deg; translate: 0 4%; scale: 1.03; z-index: 2; }
 .cs-stack-phone img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
 .cs-stack-fan .cs-stack-phone.is-device { border: 0; border-radius: 0; background: none; overflow: visible; box-shadow: none; aspect-ratio: 1300 / 2642; filter: drop-shadow(0 26px 36px color-mix(in srgb, var(--ink) 34%, transparent)); }
@@ -449,7 +450,8 @@ html[lang="en"] .cs-hyp q { quotes: "\201C" "\201D"; }
 .cs-stage-zoom:hover { background: var(--ink); scale: 1.06; }
 .cs-stage-zoom svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 /* в узкой колонке веер телефонов получает сцену повыше, иначе телефоны выходят с ноготь */
-@container (max-width: 640px) { .cs-stack-fan { --ar: 0.95; } }
+/* v100: три телефона веера должны целиком влезать и в узкую колонку — сцена ниже и шире */
+@container (max-width: 640px) { .cs-stack-fan { --ar: 1.25; } }
 
 /* сетка остальных экранов: те же сцены, только меньше */
 .cs-bento { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: clamp(16px, 2vw, 28px); align-items: start; }

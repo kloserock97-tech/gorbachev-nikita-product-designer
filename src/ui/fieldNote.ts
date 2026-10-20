@@ -35,7 +35,15 @@ const CASE_CLIP: Record<string, { image: string; video: NonNullable<Note["video"
   "grif-ai": { image: "ui/card-grif-ai.webp", video: { webm: "ui/card-grif-ai.webm", mp4: "ui/card-grif-ai.mp4" } },
   community: { image: "ui/card-community.webp", video: { webm: "ui/card-community.webm", mp4: "ui/card-community.mp4" } },
 };
-const itemImage = (it: Item) => (it.kind === "case" ? CASE_CLIP[it.c.id]?.image ?? it.c.look.screen?.src ?? caseObject(it.c.id, "webp") : it.n.image);
+/* v100: у мобильных концептов экран телефона высокий, а окно карточки широкое — cover увеличивал его и оставлял
+   одну верхушку. Вместо экрана им показывается их диорама (телефон в сцене, кадр горизонтальный) целиком, на фоне
+   цветов кейса: лёгкие копии cases/<id>/diorama.webp на 560 px с прозрачностью */
+const CASE_FIT: Record<string, string> = {
+  "plati-chastyami": "ui/card-plati-chastyami.webp",
+  "restaurant-guru": "ui/card-restaurant-guru.webp",
+};
+const itemFit = (it: Item) => (it.kind === "case" ? CASE_FIT[it.c.id] : undefined);
+const itemImage = (it: Item) => (it.kind === "case" ? CASE_CLIP[it.c.id]?.image ?? CASE_FIT[it.c.id] ?? it.c.look.screen?.src ?? caseObject(it.c.id, "webp") : it.n.image);
 const itemVideo = (it: Item) => (it.kind === "case" ? CASE_CLIP[it.c.id]?.video : it.n.video);
 
 export function initFieldNote() {
@@ -152,6 +160,10 @@ export function initFieldNote() {
     const id = itemId(it);
     const isCase = it.kind === "case";
     card.dataset.note = id;
+    const fitImg = itemFit(it);
+    card.toggleAttribute("data-fit", !!fitImg);
+    if (fitImg && it.kind === "case") card.style.setProperty("--fit-bg", `linear-gradient(150deg, ${it.c.look.stage[0]}, ${it.c.look.stage[1]})`);
+    else card.style.removeProperty("--fit-bg");
     if (pick) pick.textContent = t(isCase ? "notes.pick.case" : "notes.pick");
     const sub = isCase ? it.c.about ?? it.c.subtitle : t(key(it.n.id, "kind"));
     labels.forEach((el) => (el.textContent = sub));

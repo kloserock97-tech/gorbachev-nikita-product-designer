@@ -311,3 +311,8 @@
   .card--stove .note-deck__btn { width: 36px; height: 36px; }
   .card--stove .note-deck__count { font-size: max(12px, calc(15 * var(--u))); }
 }
+
+/* v100: мобильный концепт в карточке — диорама целиком, без увеличения, на фоне цветов кейса (fieldNote.ts, CASE_FIT) */
+.card--stove[data-fit] .portal-media { background: var(--fit-bg, #f1f1f3); }
+.card--stove[data-fit] .portal-media img { object-fit: contain; scale: 0.96; }
+.card--stove[data-fit]:hover .portal-media img { scale: 1; }
