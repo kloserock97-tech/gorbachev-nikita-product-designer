@@ -188,7 +188,7 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
     const rows: [string, string][] = [
       [t("cases.f.about"), c.about ?? headOf(c.subtitle)],
       [t("cases.f.where"), c.tag],
-      [t("cases.f.platform"), t(phone ? "work.mobile" : "work.web")],
+      [t("cases.f.platform"), t(phone ? "cases.f.mobile" : "cases.f.web")],
       [t("cases.f.result"), `${c.stat.value} — ${c.stat.label}`],
     ];
     facts.innerHTML = rows.map(([a, b], k) => `<div style="--k:${k}"><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join("");

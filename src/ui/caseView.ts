@@ -42,6 +42,7 @@ const arrow = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/
 type Opts = { onToggle?: (open: boolean) => void };
 /* missing — адрес вида #/work/<id>, которого нет: старая ссылка или опечатка */
 type Route = { id: string; track: string | null; missing?: string };
+const MERGED: Record<string, string> = { "design-lead": "ai-agents", "moderator-dashboard": "community" };
 
 export function initCaseView(opts: Opts = {}) {
   const order = getCases().map((c) => c.id);
@@ -167,6 +168,12 @@ export function initCaseView(opts: Opts = {}) {
   const parse = (): Route | null => {
     const m = location.hash.match(/^#\/work\/([\w-]+)(?:\/([\w-]+))?/);
     if (!m) return null;
+    /* v97: «Перестройка процесса» влита в кейс Сбера, «Кабинет модератора» — в Mos.ru Stories: старые ссылки ведут туда */
+    const to = MERGED[m[1]];
+    if (to) {
+      history.replaceState(history.state, "", `${location.pathname}${location.search}#/work/${to}`);
+      return { id: to, track: null };
+    }
     const story = kit!.getStory(m[1]);
     if (!story) return { id: "", track: null, missing: m[1] };
     const track = m[2] && story.deepDives.some((x) => x.id === m[2]) ? m[2] : null;

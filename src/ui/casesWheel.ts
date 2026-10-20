@@ -109,7 +109,7 @@ export function initCasesWheel(scene: Scene, root: HTMLElement, opts: { gl?: boo
       a.setAttribute("aria-label", `${list[i].title}. ${list[i].subtitle}`);
     });
   };
-  /** цифры подряд, без разделителей: «−38 %» и «−38%» должны считаться одним и тем же */
+  /** цифры подряд, без разделителей: «−12 %» и «−12%» должны считаться одним и тем же */
 const digitsOf = (s: string) => s.replace(/[^\d]/g, "");
 /** первые слова подписи к цифре — по ним видно, что хвост подзаголовка пересказывает её же */
 const headWords = (s: string, n: number) => s.toLowerCase().split(/[\s,;:]+/).filter(Boolean).slice(0, n).join(" ");

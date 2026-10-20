@@ -77,4 +77,7 @@ const notes: Note[] = [
   },
 ];
 
-export default notes;
+/* v97: порядок показа — Marathon, Shelf, затем четыре графических демо (в главе «Пэт-проекты» и в карточке холма,
+   где перед ними стоят три кейса — fieldNote.ts) */
+const ORDER: Note["id"][] = ["marathon", "shelf", "hill", "drift", "sail", "meadow"];
+export default ORDER.map((id) => notes.find((n) => n.id === id)!);

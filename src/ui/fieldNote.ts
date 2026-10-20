@@ -13,13 +13,22 @@
 import "./hero/note-card.css";
 import { bodyHas, onBodyState } from "../lib/bodyState";
 import { pad2 as pad } from "../lib/format";
-import notes from "../data/notes";
+import notes, { type Note } from "../data/notes";
+import { caseObject, getCases, type CaseItem } from "../data/cases";
 import { cue } from "../audio/bus";
 import { onLang, t, type Key } from "../i18n";
 import { noteLogo } from "./noteLogo";
 
 const BASE = import.meta.env.BASE_URL;
 const key = (id: string, part: string) => `notes.${id}.${part}` as Key;
+
+/* v97: колода карточки — сначала три кейса (как в ленте), потом пэт-проекты. Кейс показывает экран продукта, строку
+   «о проекте», тег, главную цифру и ссылку на страницу кейса; пэт-проект — как раньше */
+type Item = { kind: "case"; c: CaseItem } | { kind: "note"; n: Note };
+const deckItems = (): Item[] => [...getCases().map((c) => ({ kind: "case" as const, c })), ...notes.map((n) => ({ kind: "note" as const, n }))];
+const itemId = (it: Item) => (it.kind === "case" ? `case-${it.c.id}` : it.n.id);
+const itemTitle = (it: Item) => (it.kind === "case" ? it.c.title : t(key(it.n.id, "title")));
+const itemImage = (it: Item) => (it.kind === "case" ? it.c.look.screen?.src ?? caseObject(it.c.id, "webp") : it.n.image);
 
 export function initFieldNote() {
   const card = document.querySelector<HTMLElement>(".card--stove");
@@ -47,7 +56,9 @@ export function initFieldNote() {
   const deck = card.querySelector<HTMLElement>(".note-deck");
   const count = card.querySelector<HTMLElement>(".note-deck__count");
   const steps = [...card.querySelectorAll<HTMLButtonElement>(".note-deck__btn")];
+  const pick = card.querySelector<HTMLElement>(".note-pick");
 
+  let items = deckItems();
   let index = 0;
   let swapTimer = 0;
   let inView = true;
@@ -116,7 +127,7 @@ export function initFieldNote() {
     if (open !== isOpen()) cue(open ? "expand" : "collapse");
     card.classList.toggle("is-open", open);
     knob.setAttribute("aria-expanded", String(open));
-    knob.setAttribute("aria-label", open ? t("notes.close") : t("notes.open", { title: t(key(notes[index].id, "title")) }));
+    knob.setAttribute("aria-label", open ? t("notes.close") : t("notes.open", { title: itemTitle(items[index]) }));
     note.setAttribute("aria-hidden", String(!open));
     fit();
     /* v96: на телефоне карточка растёт вниз, и всё описание уходило под сгиб экрана — человек видел только
@@ -128,28 +139,32 @@ export function initFieldNote() {
 
   /* Тексты — из словаря текущего языка, картинка, стек и значок — из данных */
   const paint = () => {
-    const current = notes[index];
-    const id = current.id;
+    items = deckItems();
+    const it = items[index];
+    const id = itemId(it);
+    const isCase = it.kind === "case";
     card.dataset.note = id;
-    labels.forEach((el) => (el.textContent = t(key(id, "kind"))));
-    titles.forEach((el) => (el.textContent = t(key(id, "title"))));
+    if (pick) pick.textContent = t(isCase ? "notes.pick.case" : "notes.pick");
+    const sub = isCase ? it.c.about ?? it.c.subtitle : t(key(it.n.id, "kind"));
+    labels.forEach((el) => (el.textContent = sub));
+    titles.forEach((el) => (el.textContent = itemTitle(it)));
+    const image = itemImage(it);
     if (img) {
-      const src = `${BASE}${current.image}`;
-      if (!img.src.endsWith(current.image)) img.src = src;
-      img.alt = t(key(id, "alt"));
+      if (!img.src.endsWith(image)) img.src = `${BASE}${image}`;
+      img.alt = isCase ? it.c.title : t(key(it.n.id, "alt"));
     }
     if (logoSlot) {
-      const kind = current.logo;
+      const kind = isCase ? undefined : it.n.logo;
       if (kind && logoSlot.dataset.kind !== kind) { logoSlot.innerHTML = noteLogo(kind); logoSlot.dataset.kind = kind; }
       else if (!kind && logoSlot.dataset.kind) { logoSlot.innerHTML = ""; delete logoSlot.dataset.kind; }
       logoSlot.hidden = !kind;
     }
     if (video) {
-      const clip = calm ? undefined : current.video;
+      const clip = calm || isCase ? undefined : it.n.video;
       if (clip && video.dataset.note !== id) {
         card.classList.remove("is-playing");
         video.dataset.note = id;
-        video.poster = `${BASE}${current.image}`;
+        video.poster = `${BASE}${image}`;
         video.innerHTML = `<source src="${BASE}${clip.webm}" type="video/webm"><source src="${BASE}${clip.mp4}" type="video/mp4">`;
         video.load();
       } else if (!clip && video.dataset.note) {
@@ -162,40 +177,45 @@ export function initFieldNote() {
       }
       syncVideo();
     }
-    if (kind) kind.textContent = t(key(id, "kind"));
-    if (meta) meta.textContent = current.meta;
+    if (kind) kind.textContent = sub;
+    if (meta) meta.textContent = isCase ? it.c.tag : it.n.meta;
     if (stats) {
       stats.innerHTML = "";
-      for (let i = 1; i <= 3; i++) {
+      const cells: [string, string][] = isCase ? [[it.c.stat.value, it.c.stat.label]] : [1, 2, 3].map((i) => [t(key(it.n.id, `s${i}v`)), t(key(it.n.id, `s${i}l`))]);
+      for (const [v, l] of cells) {
         const cell = document.createElement("div");
         const dd = document.createElement("dd");
         const dt = document.createElement("dt");
-        dd.textContent = t(key(id, `s${i}v`));
-        dt.textContent = t(key(id, `s${i}l`));
+        dd.textContent = v;
+        dt.textContent = l;
         cell.append(dd, dt);
         stats.appendChild(cell);
       }
     }
-    if (glyph) glyph.innerHTML = `<svg viewBox="0 0 64 64" aria-hidden="true">${current.glyph}</svg>`;
+    if (glyph) glyph.innerHTML = isCase ? "" : `<svg viewBox="0 0 64 64" aria-hidden="true">${it.n.glyph}</svg>`;
     if (points) {
       points.innerHTML = "";
-      for (let i = 1; i <= current.points; i++) {
+      const texts = isCase ? [it.c.subtitle] : Array.from({ length: it.n.points }, (_, i) => t(key(it.n.id, `p${i + 1}`)));
+      for (const text of texts) {
         const p = document.createElement("p");
-        p.textContent = t(key(id, `p${i}`));
+        p.textContent = text;
         points.appendChild(p);
       }
     }
-    /* v93: демо и код — ссылками в раскрытом описании; нажатие на саму карточку её раскрывает */
+    /* v93: демо и код — ссылками в раскрытом описании; нажатие на саму карточку её раскрывает. У кейса — ссылка на его страницу */
     if (links) {
-      links.hidden = !current.links;
-      links.innerHTML = current.links ? `<a href="${current.links.demo}" target="_blank" rel="noopener">${t("notes.demo")}</a><a href="${current.links.repo}" target="_blank" rel="noopener">${t("notes.repo")}</a>` : "";
+      const html = isCase
+        ? `<a href="#/work/${it.c.id}">${t("notes.case.open")}</a>`
+        : it.n.links ? `<a href="${it.n.links.demo}" target="_blank" rel="noopener">${t("notes.demo")}</a><a href="${it.n.links.repo}" target="_blank" rel="noopener">${t("notes.repo")}</a>` : "";
+      links.hidden = !html;
+      links.innerHTML = html;
       links.querySelectorAll("a").forEach((a) => (a.tabIndex = isOpen() ? 0 : -1));
     }
-    if (count) count.innerHTML = `<b>${pad(index + 1)}</b>/${pad(notes.length)}`;
+    if (count) count.innerHTML = `<b>${pad(index + 1)}</b>/${pad(items.length)}`;
     deck?.setAttribute("aria-label", t("notes.deck"));
     steps[0]?.setAttribute("aria-label", t("notes.prev"));
     steps[1]?.setAttribute("aria-label", t("notes.next"));
-    knob.setAttribute("aria-label", isOpen() ? t("notes.close") : t("notes.open", { title: t(key(id, "title")) }));
+    knob.setAttribute("aria-label", isOpen() ? t("notes.close") : t("notes.open", { title: itemTitle(it) }));
     fit();
   };
 
@@ -204,7 +224,7 @@ export function initFieldNote() {
      раскрытой (так попросил Никита): листают, чтобы читать соседний проект, а не чтобы закрыть описание.
      Высота под новое описание пересчитывается в paint → fit, пока карточка погашена. */
   const go = (step: number) => {
-    const next = (index + step + notes.length) % notes.length;
+    const next = (index + step + items.length) % items.length;
     if (next === index) return;
     const wasOpen = isOpen();
     cue("progress-step", 0.6);
@@ -233,7 +253,7 @@ export function initFieldNote() {
 
   /* соседние картинки грузим заранее, в простое, — переключение не ждёт сети */
   const idle = (window as Window & { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1500));
-  idle(() => notes.slice(1).forEach((n) => { const pre = new Image(); pre.src = `${BASE}${n.image}`; }));
+  idle(() => items.slice(1).forEach((it) => { const pre = new Image(); pre.src = `${BASE}${itemImage(it)}`; }));
 
   steps.forEach((btn) => btn.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -295,7 +315,7 @@ export function initFieldNote() {
 
   addEventListener("keydown", (e) => { if (e.key === "Escape") set(false); });
   addEventListener("click", (e) => { if (!card.contains(e.target as Node)) set(false); });
-  video?.addEventListener("playing", () => { if (video.dataset.note === notes[index].id) card.classList.add("is-playing"); });
+  video?.addEventListener("playing", () => { if (video.dataset.note === itemId(items[index])) card.classList.add("is-playing"); });
   new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; syncVideo(); }).observe(card);
   document.addEventListener("visibilitychange", syncVideo);
   onBodyState(syncVideo);

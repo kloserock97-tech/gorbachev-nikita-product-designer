@@ -11,10 +11,10 @@
    живёт в плавающей капсуле внизу и на широком экране (она же показывает текущий раздел); у разделов иконки
    (icons.ts); первое предложение лида и подписи набрано чернилами, продолжение серым (runIn) — так Apple ведёт
    глаз по длинному абзацу; экраны стоят на светлой сцене в цвет кейса. Стили — case-story.css. */
-import type { CaseStory, Gallery, Decision, CaseImage, Method } from "../data/caseStory";
+import type { CaseStory, Gallery, Decision, CaseImage, Method, CaseStep } from "../data/caseStory";
 import { pad2 as pad } from "../lib/format";
 import type { CaseTrack, TrackPart } from "../data/caseTracks";
-import { getCases } from "../data/cases";
+import { getCase } from "../data/cases";
 import { shots2x } from "../data/shots2x";
 import { t } from "../i18n";
 import { heroStage, mountHero } from "./caseHero";
@@ -85,7 +85,7 @@ const interlude = (g: CaseImage, focus = "50% 47%") =>
   `<div class="cs-interlude cs-interlude--${esc(g.kind)}" data-reveal aria-hidden="true" style="--focus:${esc(focus)}"><img src="${BASE}${g.src}" alt="" width="${g.w}" height="${g.h}" loading="lazy" decoding="async"${hi(g, "100vw")} draggable="false"></div>`;
 
 /* ── куски ─────────────────────────────────────────────────────────────────── */
-const SEC_ICON: Record<string, IconName> = { brief: "brief", context: "context", approach: "approach", research: "research", flow: "flow", decisions: "decisions", split: "split", mistakes: "mistakes", results: "results", screens: "screens", roadmap: "roadmap", takeaways: "takeaways" };
+const SEC_ICON: Record<string, IconName> = { brief: "brief", context: "context", approach: "approach", research: "research", flow: "flow", decisions: "decisions", split: "split", mistakes: "mistakes", results: "results", screens: "screens", roadmap: "roadmap", takeaways: "takeaways", steps: "decisions", more: "list" };
 const head = (n: number, id: string, label: string, lead?: string) => `
   <header class="cs-head" id="cs-${id}">
     <p class="cs-num">${icon(SEC_ICON[id] ?? "brief")}<span>${pad(n)}</span>${esc(label)}</p>
@@ -265,8 +265,65 @@ const gallery = (g: Gallery, k: number) => {
   }
 };
 
+/* ── v97: компактная страница ─────────────────────────────────────────────────
+   Порядок: итог (абзац и главный экран или ролик) → четыре плитки, строка под ними и роль → пять шагов «как я к этому
+   пришёл» → вывод → «Подробнее» (свёрнуто). Шаг — вёрстка решения (текст рядом с экраном), но без подписей «нашёл/сделал»:
+   подписи к экранам на странице не показываются, они остаются в alt */
+const galleryBare = (g: Gallery) => gallery(g, 0).replace(/<figcaption>(?:(?!<figcaption>)[\s\S])*?<\/figcaption><\/figure>\s*$/, "</figure>");
+const stepMedia = (st: CaseStep, s: CaseStory) =>
+  st.flow && s.flow ? `<div class="cs-step-flow">${flowBody(s.flow)}</div>`
+  : st.gallery ? galleryBare(st.gallery)
+  : st.image ? `<figure class="cs-fig cs-fig--inline cs-decision-img">${stage(st.image)}</figure>` : "";
+const stepBlock = (st: CaseStep, k: number, s: CaseStory) => {
+  const media = stepMedia(st, s);
+  return `
+  <article class="cs-decision cs-step${st.flow ? " cs-step--wide" : ""}${media ? "" : " cs-step--text"}" data-reveal>
+    <div class="cs-decision-text">
+      <p class="cs-num cs-num--s"><span>${pad(k + 1)}</span></p>
+      <h3>${esc(st.title)}</h3>
+      <p class="cs-step-text">${esc(st.text)}</p>
+    </div>
+    ${media}
+  </article>`;
+};
+function compactBody(s: CaseStory) {
+  let sec = 0;
+  const main = s.main?.film ? filmBlock(s.main.film) : s.main?.gallery ? `<div class="cs-gallery cs-main">${galleryBare(s.main.gallery)}</div>` : "";
+  return `
+        <section class="cs-sec">
+          ${head(++sec, "brief", t("cs.outcome"))}
+          <p class="cs-summary" data-reveal>${runIn(s.hero.summary)}</p>
+          ${main}
+        </section>
+
+        ${s.kpis.length ? `<section class="cs-kpis" aria-label="${t("cs.results")}">${s.kpis.map((m, k) => `<div class="cs-kpi${m.value.length > 7 ? " cs-kpi--long" : ""}" data-reveal style="--rd:${k}"><b data-count="${esc(m.value)}">${esc(m.value)}</b><span>${esc(m.label)}</span></div>`).join("")}</section>` : ""}
+        ${s.kpiNote || s.role ? `<div class="cs-kpi-after" data-reveal>${s.kpiNote ? `<p class="cs-note">${esc(s.kpiNote)}</p>` : ""}${s.role ? `<p class="cs-role">${esc(s.role)}</p>` : ""}</div>` : ""}
+
+        <section class="cs-sec">
+          ${head(++sec, "steps", t("cs.steps"))}
+          <div class="cs-decisions cs-steps-list">${(s.steps ?? []).map((st, k) => stepBlock(st, k, s)).join("")}</div>
+        </section>
+
+        <section class="cs-sec">
+          ${head(++sec, "takeaways", t("cs.takeaway"))}
+          <p class="cs-takeaway" data-reveal>${esc(s.takeaways[0] ?? "")}</p>
+        </section>
+
+        ${s.more?.length ? `<section class="cs-sec cs-sec--more">
+          <details class="cs-fold cs-more" id="cs-more" data-reveal>
+            <summary><span class="cs-deep-title"><b>${t("cs.more")}</b></span><span class="cs-deep-toggle" aria-hidden="true"><i></i></span></summary>
+            <div class="cs-fold-body">${resultPoints(s.more)}</div>
+          </details>
+        </section>` : ""}`;
+}
+
 /* ── оглавление ───────────────────────────────────────────────────────────── */
 export function sectionsOf(s: CaseStory): Section[] {
+  if (s.steps?.length) {
+    const list: Section[] = [{ id: "brief", label: t("cs.outcome") }, { id: "steps", label: t("cs.steps") }, { id: "takeaways", label: t("cs.takeaway") }];
+    if (s.more?.length) list.push({ id: "more", label: t("cs.more") });
+    return list;
+  }
   const list: Section[] = [{ id: "brief", label: t("cs.brief") }, { id: "context", label: t("cs.context") }];
   if (s.approach) list.push({ id: "approach", label: t("cs.approach") });
   list.push({ id: "research", label: t("cs.research") });
@@ -289,10 +346,10 @@ const toc = (sections: Section[], cls: string) => `
 
 /* ── страница ─────────────────────────────────────────────────────────────── */
 export function renderStory(s: CaseStory, i: number, n: number, nextId: string, prevId: string) {
-  const card = getCases().find((c) => c.id === s.id)!;
+  const card = getCase(s.id)!;
   const sections = sectionsOf(s);
   let sec = 0;
-  const next = getCases().find((c) => c.id === nextId)!;
+  const next = getCase(nextId)!;
   const ctx = s.context;
   const ap = s.approach;
   const r = s.research;
@@ -322,10 +379,11 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
             </div>
             ${heroStage(card, card.title)}
           </div>
-          <dl class="cs-facts cs-facts--hero" data-reveal style="--rd:3">${s.hero.facts.map(([a, b], k) => `<div>${icon((["role", "company", "time", "platform"] as const)[k] ?? "brief")}<dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join("")}</dl>
-          <p class="cs-tags" data-reveal style="--rd:4">${s.hero.tags.map((x) => `<span>${esc(x)}</span>`).join("")}</p>
+          ${s.hero.facts.length ? `<dl class="cs-facts cs-facts--hero" data-reveal style="--rd:3">${s.hero.facts.map(([a, b], k) => `<div>${icon((["role", "company", "time", "platform"] as const)[k] ?? "brief")}<dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join("")}</dl>` : ""}
+          ${s.hero.tags.length ? `<p class="cs-tags" data-reveal style="--rd:4">${s.hero.tags.map((x) => `<span>${esc(x)}</span>`).join("")}</p>` : ""}
         </header>
 
+        ${s.steps?.length ? compactBody(s) : `
         ${s.kpis.length ? `<section class="cs-kpis" aria-label="${t("cs.results")}">${s.kpis.map((m, k) => `<div class="cs-kpi${m.value.length > 7 ? " cs-kpi--long" : ""}" data-reveal style="--rd:${k}"><b data-count="${esc(m.value)}">${esc(m.value)}</b><span>${esc(m.label)}</span></div>`).join("")}</section>` : ""}
 
         <section class="cs-sec">
@@ -452,6 +510,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           ${s.takeaways.length > 1 ? `<ul class="cs-learn" data-reveal style="--rd:1">${s.takeaways.slice(1).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
           ${s.quote ? `<blockquote class="cs-quote cs-quote--big" data-reveal style="--rd:2">${esc(s.quote)}</blockquote>` : ""}
         </section>
+`}
 
         <a class="cs-next" href="#/work/${esc(next.id)}" style="${lookVars(next, "mono")}" data-reveal>
           <span class="cs-next-text"><span class="cs-mini">${t("cs.nextcase")}</span><b>${esc(next.title)}</b><span class="cs-next-sub">${esc(next.subtitle)}</span></span>
@@ -752,7 +811,8 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
 function countUp(el: HTMLElement) {
   const raw = el.dataset.count ?? "";
   const m = raw.match(/^([+−-]?~?)(\d+)(.*)$/);
-  if (!m || /→/.test(raw) || reduced()) return;
+  /* v97: диапазоны («12–15%»), числа с разрядами («~2,500») и годы не досчитываются — по ходу счёта они читались бы бредом */
+  if (!m || /→|–/.test(raw) || /\d[,\s\u00a0]\d/.test(raw) || /^(19|20)\d\d$/.test(raw) || reduced()) return;
   const [, pre, num, post] = m;
   const target = Number(num);
   const t0 = performance.now();

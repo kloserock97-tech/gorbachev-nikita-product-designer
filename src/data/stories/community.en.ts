@@ -1,8 +1,7 @@
-/* v41: рассказ кейса «Сообщество» на двух языках. Источник — Main cases/Community.html и EN/Community.en.html.
-   Таблицу конкурентов даём картинкой из кейса: отметок по ячейкам в тексте нет, и досочинять их нельзя.
-   v56: тексты переписаны простым языком. Факты и цифры те же; термин остаётся в скобках после объяснения.
-   v86: вслед за русской версией по ревью Никиты: акцент на участии жителей и дизайн-метриках, повторы вычищены.
-   v89: сокращён вслед за русской версией по docs/prompts/case-copy-edit.md. */
+/* v97 (portfolio-update-for-claude-code.md): "Community" and "Moderator workspace" are merged into one case, Mos.ru Stories,
+   on the compact structure — the result, four numbers, five steps, a takeaway and "More details". Texts are verbatim
+   from Nikita's brief. Screens: the feed film frame, the first-version feed with its dots, the story page, the profile
+   and the moderator queue. Image captions are alt text only. */
 import type { CaseStory, CaseImage } from "../caseStory";
 
 const img = (src: string, w: number, h: number, caption: string, kind = "screen"): CaseImage => ({ src, w, h, caption, kind });
@@ -11,157 +10,72 @@ const C = "cases/community/";
 export const en: CaseStory = {
   id: "community",
   hero: {
-    kicker: "Web platform · Mos.ru · 2024",
-    title: "Community",
-    tagline: "I designed and launched stories.mos.ru, a platform where Muscovites tell stories about their city.",
+    kicker: "Consumer Product Design · Mos.ru · 2023–2025",
+    title: "A place where Muscovites tell stories about their city",
+    tagline: "From zero to MVP in nine months, then retention and a moderator workspace",
     summary:
-      "I designed from scratch a platform where the editorial team and residents write about the city, and every piece goes through moderation before it is published. Research, information architecture, a clickable prototype, the design system, the MVP and the launch took nine months.",
-    facts: [
-      ["Role", "Product/UX designer"],
-      ["Company", "Moscow Department of Information Technology (Mos.ru)"],
-      ["Timeline", "2024, nine months to MVP"],
-      ["Platform", "Web"],
-    ],
-    tags: ["GovTech", "B2C", "Design system", "MVP launch"],
+      "stories.mos.ru is a place where both the editors and the residents write about the city. We built it from scratch: from first hypotheses to MVP in nine months. There were two designers. I did the research, the structure, the prototypes and the design system. When the stories came in faster than one person could check them, I also designed a moderator workspace.",
+    facts: [],
+    tags: [],
   },
-  /* residents taking part is the product's goal; first-try success and CSI are the design metrics */
+  main: { film: { src: C + "film.mp4", poster: C + "film-poster.webp", w: 1920, h: 1080, caption: "Community interface film: feed, topics, audio, story map, profile, events and the story form" } },
   kpis: [
-    { value: "250+", label: "residents' stories passed moderation in the first three months" },
-    { value: "~3K", label: "comments under the pieces" },
-    { value: "9 of 10", label: "followed and unfollowed on the first try in usability testing" },
-    { value: "78.9%", label: "are happy with the site in the survey (CSI)" },
+    { value: "250+", label: "resident stories in the first three months" },
+    { value: "12–15%", label: "of readers come back within a week" },
+    { value: "78.9%", label: "satisfied with the site (CSI)" },
+    { value: "−25%", label: "moderation time after launch" },
   ],
-  context: {
-    lead: "Residents had nowhere left to talk about their city.",
-    text:
-      "In two years almost every outlet about city life in Moscow shut down. The news was left with politics and economics, and there was no place to tell a story or discuss a neighbourhood.\n\nSo I framed the job as making people want to take part in city life again. The hard part: texts come from two sides, the editorial team and the residents, and each has to be checked before it goes live.",
-    team: [
-      { who: "Clients and managers", how: "Before the first mock-up we agreed to build a place where residents take part, and we did not need a news shop window. The first version got a feed, stories and comments, while groups and events had to wait." },
-      { who: "Editorial and moderation", how: "One publishing path for two sources: an editorial piece and a resident's story land in the same review queue. Every text shows its status, and a rejected author gets the reason. That queue later grew into the Moderator Dashboard case." },
-      { who: "Engineering", how: "I built our own design system, separate from the one Mos.ru used: buttons, fields and cards in every state. I handed off mock-ups in parts, one release at a time." },
-    ],
-  },
-  research: {
-    lead: "First I found out what services like this must have and where all of them are weak.",
-    methods: [
-      {
-        kind: "Competitor analysis",
-        question: "What does a site like this need to make sense at all, and where can it stand out?",
-        sample: "A handful of key competitors, eleven features",
-        finding:
-          "Everyone lets you write a post and discuss it. That is the required minimum, and those actions have to lead the screen.",
-        image: img(C + "07.webp", 1820, 1010, "Competitors compared on eleven features", "detail"),
-      },
-      {
-        kind: "Heuristic review",
-        question: "Where do similar services confuse people, and what should we not repeat?",
-        sample: "Goals, competitors, reference info, heuristics and feedback on one board",
-        finding:
-          "Everyone makes the same mistake: one action looks different in different places. Follow and unfollow are scattered across screens, and people get lost.",
-      },
-      {
-        kind: "User portrait",
-        question: "Who will read and write, and what gets in their way?",
-        sample: "Two target groups: 24 to 35 and 55+",
-        finding:
-          "Most people are tired of the news stream and want things to find them.",
-      },
-      {
-        kind: "Usability testing",
-        question: "Do people manage the main things on the first try?",
-        sample: "Ten participants, a clickable prototype",
-        finding: "Nine out of ten people managed to follow and unfollow on the first try.",
-      },
-    ],
-    persona: {
-      name: "Oleg",
-      age: "30",
-      note: "A composite of most people in the research.",
-      pains: ["The news is politics and economics, with almost nothing about the city", "Complex filters and crowded screens"],
-      needs: ["Navigation where you find what you need on the first click", "A place where you can write as well as read"],
+  kpiNote: "Plus 169K views, about 3,000 comments and a 26% bounce rate: three out of four visitors stayed to read.",
+  role: "Senior Product Designer · Responsive web · 2023–2025",
+  steps: [
+    {
+      title: "The city had nowhere to talk about itself.",
+      text: "In a couple of years Moscow lost almost all of its city-life media. Plenty of news, but nowhere to tell a story about your street or argue about your neighbourhood. And mos.ru is mostly people 55+. The job was to bring in 25–35 without losing the people already there.",
+      image: img(C + "film-01.webp", 1600, 900, "The city had nowhere to talk about itself"),
     },
-  },
-  decisions: {
-    lead: "Four decisions, each grown out of the research.",
-    /* v91: the interface film from Claude Design in place of the live demo */
-    film: { src: C + "film.mp4", poster: C + "film-poster.webp", w: 1920, h: 1080, caption: "Community interface film: feed, topics, audio, story map, profile, events and the story form" },
-    items: [
-      {
-        id: "pattern",
-        title: "One action looks the same everywhere",
-        found: "At competitors you have to look for follow and unfollow again on every screen.",
-        did: "Follow, unfollow and reactions sit in the same place on every page and work the same way.",
-        why: "Consistency, after Nielsen: one action keeps one place and one look.",
+    {
+      title: "Write and discuss.",
+      text: "Every competitor had the same problem: the Follow button lived in a different spot on every screen. Like a light switch at a different height in every room. So on our site one action always looks the same and sits in the same place. And two actions got the main spot: write a story and reply to one.",
+      gallery: {
+        kind: "spot",
+        image: img(C + "01.webp", 1440, 788, "Write and discuss"),
+        spots: [
+          { x: 46.3, y: 15.5, text: "Topics in one row" },
+          { x: 10.4, y: 54.4, text: "Comments and share" },
+          { x: 46.3, y: 76.4, text: "Consistent actions" },
+        ],
       },
-      {
-        id: "posts",
-        title: "The centre of the screen: write and discuss",
-        found: "Without writing and discussing a service like this does not work, and the rest is secondary.",
-        did: "The interface is built around two actions: write a story and reply to one. The form has a title, text and up to ten images, and then the story goes to review.",
-        effect: "The first residents' stories arrived in week one.",
-        why: "An action people have to hunt for is an action they skip.",
-        image: img(C + "03.webp", 876, 862, "The \"Tell your story\" form"),
-      },
-      {
-        id: "older",
-        title: "Easy for people over 55 too",
-        found: "City stories are more often told by older people, and they get lost in complex filters and on crowded screens.",
-        did: "I removed the extras, put topics in one row in place of a filter panel, added hints, wrote the texts in plain words and kept only familiar gestures.",
-        effect: "In the survey older readers rated navigation as easy as younger ones did.",
-        why: "Hick's law: the more options, the longer the choice.",
-      },
-      {
-        id: "ds",
-        title: "A look made for long reading",
-        found: "People read for ten minutes at a stretch, including people over 55.",
-        did: "Golos Text, a screen typeface that stays legible even when small. Calm contrast following WCAG, black for trust and a soft pink #FFECF9 for lightness.",
-        effect: "Eyes do not tire, and the interface stays out of the story's way.",
-        image: img(C + "06.webp", 1600, 1598, "The type scale", "detail"),
-      },
-    ],
-  },
-  results: {
-    lead: "The first three months after launch.",
-    outcomes: [
-      { x: "Residents take part: 250+ stories and about 3K comments", y: "Stories after moderation and comments over three months.", z: "An interface built around writing and discussing, and one publishing path." },
-      { x: "The main action on the first try: 9 of 10", y: "Usability test of the prototype, ten participants.", z: "Every action keeps one place and one look." },
-      { x: "Happy with the site: 78.9% (CSI), older readers no lower than younger ones", y: "A survey on the live stories.mos.ru.", z: "Simple navigation and a look made for long reading." },
-    ],
-    points: [
-      "Roughly one reader in four comes back within a week",
-      "169.4K views from zero",
-      "Bounce rate 26.25%: three out of four stay to read",
-      "3 min 20 s per visit on average, enough to finish one or two pieces",
-      "Both target groups use the site: 24 to 35 and 55+",
-    ],
-  },
+    },
+    {
+      title: "Two audiences, one screen.",
+      text: "Younger people want a lively feed. Older people want nothing to get lost. Instead of a filter panel, topics in one line. Plain words. A typeface that stays readable even small. People read these stories for a while, so the interface shouldn't push in front of the text.",
+      image: img(C + "06.webp", 1600, 1598, "Two audiences, one screen"),
+    },
+    {
+      title: "Reading is only half of it.",
+      text: "After launch the question was whether people come back. We added follows, reactions, achievements, karma and communities.",
+      image: img(C + "film-05.webp", 1600, 900, "Reading is only half of it"),
+    },
+    {
+      title: "Moderators are users too.",
+      text: "Every story is checked before it goes live, and soon one admin in a shared admin panel couldn't keep up. I built two prototypes with opposite ideas: decide right in the list, or open a detailed page. We tested them with eight moderators. Both won: obvious cases get decided in the list, tricky ones open in full. The task got 32% faster in testing and 25% faster in production.",
+      image: img("cases/figma/moderator-queue.webp", 1440, 1156, "Moderators are users too"),
+    },
+  ],
   takeaways: [
-    "Agree on the goal before the first mock-up. The phrase \"a place where residents take part\" gave us both the contents of the first version and the success metrics.",
-    "An MVP is a decision about what to put off. Smart search and podcasts went to the roadmap, and the first version shipped sooner.",
+    "Agree on the goal before the first mockup. One phrase, \"a place where residents take part\", shaped everything: the MVP scope, the screens, the metrics. And think about the moderator before the queue grows.",
   ],
-  gallery: [
-    {
-      kind: "spot",
-      title: "The feed: editorial and residents in one stream",
-      image: img(C + "01.webp", 1440, 788, "The first-version feed", "hero"),
-      spots: [
-        { x: 46.3, y: 15.5, text: "Topics in one row", decision: "older" },
-        { x: 10.4, y: 54.4, text: "Comments and share", decision: "posts" },
-        { x: 46.3, y: 76.4, text: "Consistent actions", decision: "pattern" },
-      ],
-    },
-    {
-      kind: "bento",
-      title: "How the project grew",
-      images: [
-        img(C + "film-01.webp", 1600, 900, "The feed of living stories"),
-        img(C + "film-03.webp", 1600, 900, "Stories you can listen to"),
-        img(C + "film-04.webp", 1600, 900, "The map of linked stories"),
-        img(C + "film-05.webp", 1600, 900, "Profile and reputation"),
-        img(C + "film-06.webp", 1600, 900, "An event in the app"),
-        img(C + "film-07.webp", 1600, 900, "The story form"),
-      ],
-    },
+  more: [
+    "Research: competitive analysis across eleven features, heuristic review, a composite persona \"Oleg, 30\".",
+    "Left out of the MVP: groups, events, smart search, podcasts. The first version shipped sooner.",
+    "Design system: its own, separate from mos.ru. Golos Text, WCAG contrast, components in every state.",
+    "Moderator workspace: admin panel audit, 10 hypotheses, tabs by status, one logic for five object types.",
+    "Mobile app: screens designed, the app didn't reach release.",
   ],
+  /* старых глав у компактного кейса нет */
+  context: { lead: "" },
+  research: { lead: "", methods: [] },
+  decisions: { lead: "", items: [] },
+  gallery: [],
   deepDives: [],
 };

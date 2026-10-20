@@ -77,6 +77,12 @@ export type Interlude = {
 
 export type Outcome = { x: string; y: string; z: string };
 
+/* v97 (portfolio-update-for-claude-code.md): компактная страница кейса — «сначала готовый интерфейс и результат, потом
+   как к этому пришли», на виду около 400 слов. Шаг — заголовок, абзац и один экран: картинка, галерея с точками или
+   схема «было / стало» из flow (развёрнутая) */
+export type CaseStep = { title: string; text: string; image?: CaseImage; gallery?: Gallery; flow?: true };
+export type CaseFilm = { src: string; poster: string; w: number; h: number; caption: string };
+
 export type CaseStory = {
   id: string;
   hero: {
@@ -143,6 +149,14 @@ export type CaseStory = {
   mockups?: false;
   /** разборы в глубину — бывшие подзадачи, свой адрес #/work/<кейс>/<id> */
   deepDives: CaseTrack[];
+  /* v97: поля компактной страницы. Есть steps — страница собирается по ней (caseStoryView.ts, compactBody):
+     шапка → итог (hero.summary и main) → цифры (kpis, kpiNote, role) → шаги → вывод (takeaways[0]) → «Подробнее» (more).
+     Старые главы у такого кейса не показываются. У трёх кейсов ленты заполнены все */
+  main?: { film?: CaseFilm; gallery?: Gallery };
+  kpiNote?: string;
+  role?: string;
+  steps?: CaseStep[];
+  more?: string[];
 };
 
 export type StorySet = Record<string, CaseStory>;

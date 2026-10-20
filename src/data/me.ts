@@ -26,16 +26,15 @@ const me = {
   ],
 
   hello:
-    "Hi there! I'm Nikita, a product designer. I make complex services feel simple: public ones used by millions of people and internal tools that tens of thousands of employees open every morning. I also lead a team of designers.",
+    "Hi! I'm Nikita, a product designer. I make products for regular people, sometimes with AI inside. And yes, I build them in code myself.",
 
   now: [
-    "I design products, often with AI inside. I look at the whole product, and a single screen is only one part of it. I cover the whole path: research, product structure, launch, numbers and growth.",
-    "Last role: Head of Product Design at Grif AI. I joined as the first designer and set up all the design work from scratch. I'm open to product design roles and ready to relocate or work remotely.",
+    "I look at the whole product. A screen is just one piece. What's interesting is everything around it: why someone came, what stops them, and whether they'll come back tomorrow.",
+    "Last stop: GRIF AI. Open to product design roles.",
   ],
 
 
   hobbies: [
-    { icon: "game", text: "Game design. I have a game out on Steam." },
     { icon: "cube", text: "3D in Blender and Unreal Engine. This hill is one of those builds." },
     { icon: "spark", text: "Working out what keeps a person interested, beyond where a button goes. Fine, that one is my actual job." },
   ],

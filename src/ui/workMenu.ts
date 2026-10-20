@@ -1,27 +1,15 @@
-import { getCases, type CaseItem } from "../data/cases";
-import { pad2 as pad } from "../lib/format";
+import { getCases } from "../data/cases";
 import { cue } from "../audio/bus";
-import { onLang, t, type Key } from "../i18n";
+import { onLang, t } from "../i18n";
 import { warmScreens } from "./caseLook";
 import { caseArt } from "./caseArt";
 
-/* Меню «Кейсы» в доке (v29): большая выпадашка по шаблону «Templates» — слева категории, справа сетка
-   кейсов с превью, внизу строка с подписью и кнопками. Категория фильтрует сетку; число рядом с ней —
-   сколько кейсов останется.
-
-   Категории выводятся из данных, а не пишутся руками: у каждого кейса в cases.ts есть поле kind
-   («Веб» или «Мобайл»). Добавится кейс — фильтр подхватит его сам.
+/* Меню «Кейсы» в доке (v29): большая выпадашка по шаблону «Templates» — сетка кейсов с превью, внизу строка
+   с подписью и кнопками. v96: фильтра по платформе слева больше нет — при трёх кейсах он не нужен.
 
    Поведение прежнее: открывается наведением (мышь) и кликом (палец, клавиатура), закрывается, когда
    курсор ушёл и с пункта, и с панели, по Esc и кликом мимо. Анимация по Emil Kowalski: ease-out с резким
-   стартом, масштаб от 0.97 от пункта дока, короткий каскад карточек; закрытие быстрее открытия.
-   Категорию переключает только клик: при наведении она менялась бы под курсором, пока его ведут
-   по диагонали к карточкам. */
-
-type Filter = "all" | "web" | "mobile";
-const FILTERS: Filter[] = ["all", "web", "mobile"];
-
-const kindOf = (c: CaseItem): Filter[] => c.kind;
+   стартом, масштаб от 0.97 от пункта дока, короткий каскад карточек; закрытие быстрее открытия. */
 
 const arrow = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8.5 7H17v8.5"/></svg>`;
 
@@ -31,8 +19,6 @@ export function initWorkMenu(opts: { onOpenComputer?: () => void; onAllCases?: (
   if (!trigger || !wrap) return;
 
   const all = getCases();
-  const counts = Object.fromEntries(FILTERS.map((f) => [f, f === "all" ? all.length : all.filter((c) => kindOf(c).includes(f)).length])) as Record<Filter, number>;
-  let filter: Filter = "all";
 
   const panel = document.createElement("div");
   panel.className = "work-menu";
@@ -40,15 +26,10 @@ export function initWorkMenu(opts: { onOpenComputer?: () => void; onAllCases?: (
   panel.setAttribute("role", "dialog");
   panel.innerHTML = `
     <div class="work-menu__body">
-      <div class="work-menu__filters" role="group">
-        ${FILTERS.map((f) => `<button type="button" class="work-menu__filter${f === filter ? " is-on" : ""}" data-filter="${f}" aria-pressed="${f === filter}">
-          <span class="work-menu__filter-l"></span><span class="work-menu__filter-n">${pad(counts[f])}</span>
-        </button>`).join("")}
-      </div>
       <div class="work-menu__pane">
       <ul class="work-menu__grid">
         ${all.map((c, i) => `
-          <li style="--i:${i}" data-kinds="${kindOf(c).join(" ")}">
+          <li style="--i:${i}">
             <a class="work-menu__card" href="#/work/${c.id}">
               <span class="work-menu__thumb">${caseArt(c, { mode: "thumb" })}<span class="work-menu__go">${arrow}</span></span>
               <span class="work-menu__name"></span>
@@ -128,17 +109,11 @@ export function initWorkMenu(opts: { onOpenComputer?: () => void; onAllCases?: (
     const below = e.clientY > bar.getBoundingClientRect().top;
     grid.scrollBy({ top: (below ? 1 : -1) * grid.clientHeight * 0.85, behavior: "smooth" });
   });
-  const filterButtons = [...panel.querySelectorAll<HTMLButtonElement>(".work-menu__filter")];
 
   /* все подписи — из словаря текущего языка; вызывается и при смене языка */
   const paint = () => {
     const list = getCases();
     panel.setAttribute("aria-label", t("work.title"));
-    panel.querySelector(".work-menu__filters")?.setAttribute("aria-label", t("work.filters"));
-    filterButtons.forEach((b) => {
-      const l = b.querySelector(".work-menu__filter-l");
-      if (l) l.textContent = t(`work.${b.dataset.filter}` as Key);
-    });
     items.forEach((li, i) => {
       const c = list[i];
       li.querySelector(".work-menu__name")!.textContent = c.title;
@@ -150,36 +125,6 @@ export function initWorkMenu(opts: { onOpenComputer?: () => void; onAllCases?: (
   paint();
   onLang(paint);
 
-  /* Фильтр: сетка гаснет на мгновение, меняет состав и проявляется каскадом — без прыжков раскладки
-     посреди видимого кадра */
-  let filterTimer = 0;
-  const setFilter = (next: Filter) => {
-    if (next === filter) return;
-    filter = next;
-    cue("toggle-on", 0.5);
-    filterButtons.forEach((b) => {
-      const on = b.dataset.filter === next;
-      b.classList.toggle("is-on", on);
-      b.setAttribute("aria-pressed", String(on));
-    });
-    panel.classList.add("is-filtering");
-    clearTimeout(filterTimer);
-    filterTimer = window.setTimeout(() => {
-      let k = 0;
-      items.forEach((li) => {
-        const show = next === "all" || (li.dataset.kinds ?? "").split(" ").includes(next);
-        li.hidden = !show;
-        if (show) li.style.setProperty("--i", String(k++));
-      });
-      grid.scrollTop = 0;
-      syncRail();
-      requestAnimationFrame(() => panel.classList.remove("is-filtering"));
-    }, 120);
-  };
-  filterButtons.forEach((b) => b.addEventListener("click", (e) => {
-    e.stopPropagation();
-    setFilter(b.dataset.filter as Filter);
-  }));
 
   let open = false;
   let openedAt = 0;
@@ -247,7 +192,7 @@ export function initWorkMenu(opts: { onOpenComputer?: () => void; onAllCases?: (
     /* клик сразу после открытия наведением не должен его захлопнуть */
     if (open && performance.now() - openedAt < 450) return;
     setOpen(!open);
-    if (open && e.detail === 0) filterButtons[0]?.focus();
+    if (open && e.detail === 0) panel.querySelector<HTMLElement>(".work-menu__card")?.focus();
   });
   /* карточки открывают страницу кейса внутри сайта (caseView.ts) — меню закрываем сразу */
   panel.querySelectorAll(".work-menu__card").forEach((a) => {
