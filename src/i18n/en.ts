@@ -55,11 +55,9 @@ const en = {
   "notes.next": "Next note",
   "notes.open": "Open note: {title}",
   "notes.pick": "Pet projects",
-  "notes.pick.case": "Case study",
   "notes.close": "Close note",
   "notes.demo": "Open the live demo ↗",
   "notes.repo": "Source on GitHub ↗",
-  "notes.case.open": "Open the case →",
 
   "notes.hill.title": "Windcrest",
   "notes.hill.alt": "The crest of a hill under a grey sky, grass bent by a strong wind",
@@ -136,6 +134,8 @@ const en = {
   "notes.marathon.s2l": "screens",
   "notes.marathon.s3v": "12",
   "notes.marathon.s3l": "weeks in the results funnel",
+  "notes.pick.case": "Case study",
+  "notes.case.open": "Open the case →",
 
   /* рамка видоискателя, пока компьютер летит */
   "vf.obj": "OBJ_01 / CRT·2000",
@@ -146,37 +146,37 @@ const en = {
   /* экран About */
   "about.hi": "Hi there!",
   "about.marquee": "I’m Nikita, a product designer",
-  "about.intro": "Hi, I'm Nikita, a product designer. My favourite part of the job comes after release, when you see how people actually use what you made. Often it's not how you planned it. That's the fun part.",
-  "about.p1": "Once we launched a platform where people tell stories about their city. The bounce rate came out around 26%, so three out of four visitors stayed to read. Small thing, but it still makes me smile.",
-  "about.p2": "For fun I build stuff in code with AI agents: a job-search tracker for two, a shelf of ready-made interface pieces, 3D scenes. The hill you just scrolled past is one of them. The grass is real, by the way. Every blade.",
+  "about.intro": "I'm Nikita, a product designer. I make complex services feel simple, both the ones millions of people use and the internal tools tens of thousands of employees open every morning. Most recently Head of Product Design at Grif AI, and design lead on Sber's internal risk products.",
+  "about.p1": "My work mixes product design, systems thinking and AI",
+  "about.lead": "How I lead a team, and what I do in my first six months somewhere new",
+  "about.p2": "Research and product structure come first. Then launch, numbers and growing what works.",
   "about.fact.years": "5+ years",
   "about.fact.years.sub": "in product",
-  "about.fact.teams": "3 of 4",
-  "about.fact.teams.sub": "stayed to read",
-  "about.fact.kinds": "4",
-  "about.fact.kinds.sub": "3D scenes to get lost in",
+  "about.fact.teams": "Teams",
+  "about.fact.teams.sub": "from 3 to 50+",
+  "about.fact.kinds": "B2B, B2C, AI",
+  "about.fact.kinds.sub": "from idea to launch",
   "about.logos": "Companies I've worked for",
   "about.logo.ozon": "Ozon, 2022",
   "about.logo.mos": "Mos.ru, 2023 to 2025",
   "about.logo.sber": "Sber, 2025 to 2026",
-  "about.logo.grif": "Grif AI, 2025–2026",
-  "about.logo.justdev": "JustDev, 2021–2023",
+  "about.logo.grif": "Grif AI, 2026",
 
   /* глава «Кейсы» */
   /* the number comes from the case list itself (ui/cases.ts): in the dictionary it drifted from the data */
   "cases.kicker": 'Case studies<sup class="cases-sup"></sup>',
-  "cases.meta": "Consumer and AI products · 2023–2026",
+  "cases.meta": "Web, mobile and AI · 2024–2026",
   "cases.cta": "View case",
   "cases.open": "Open",
   "cases.f.about": "Project:",
   "cases.f.where": "Where and when:",
   "cases.f.platform": "Platform:",
-  "cases.f.web": "Web",
-  "cases.f.mobile": "Mobile",
   "cases.f.result": "Result:",
   "cases.prev": "Previous case",
   "cases.next": "Next case",
   "cases.swipe": "Swipe sideways",
+  "cases.f.web": "Web",
+  "cases.f.mobile": "Mobile",
 
   /* v32: заставка главы «Кейсы» над лугом и заметки после ленты */
   "walk.kicker": "Case studies · 2024–2026",
@@ -186,7 +186,11 @@ const en = {
 
   /* меню Work в доке */
   "work.title": "Work",
-  "work.note": "Three stories: an AI assistant, a city platform launch and a big internal tool at a bank",
+  "work.filters": "Filter by platform",
+  "work.all": "All",
+  "work.web": "Web",
+  "work.mobile": "Mobile",
+  "work.note": "Six case studies, 2024 to 2026: web, mobile, AI products and leading a team",
   "work.allCases": "All case studies",
 
   /* страница кейса */
@@ -202,10 +206,6 @@ const en = {
   /* v41: страница кейса как один рассказ */
   "cs.contents": "Contents",
   "cs.brief": "In brief",
-  "cs.more": "More details",
-  "cs.takeaway": "Takeaway",
-  "cs.steps": "How I got there",
-  "cs.outcome": "The result",
   "cs.context": "Context",
   "cs.origin": "Where the brief came from",
   "cs.roles": "Who is involved",
@@ -265,6 +265,10 @@ const en = {
   "cs.back": "All work",
   "cs.spot": "Point",
   "cs.chosen": "Chosen",
+  "cs.more": "More details",
+  "cs.takeaway": "Takeaway",
+  "cs.steps": "How I got there",
+  "cs.outcome": "The result",
 
   /* футер */
   "footer.kicker": "Open to new projects",

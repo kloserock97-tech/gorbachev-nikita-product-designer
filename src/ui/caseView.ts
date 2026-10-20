@@ -42,7 +42,7 @@ const arrow = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/
 type Opts = { onToggle?: (open: boolean) => void };
 /* missing — адрес вида #/work/<id>, которого нет: старая ссылка или опечатка */
 type Route = { id: string; track: string | null; missing?: string };
-const MERGED: Record<string, string> = { "design-lead": "ai-agents", "moderator-dashboard": "community" };
+const MERGED: Record<string, string> = { "design-lead": "ai-agents" };
 
 export function initCaseView(opts: Opts = {}) {
   const order = getCases().map((c) => c.id);

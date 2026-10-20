@@ -7,15 +7,19 @@ import type { StorySet } from "./caseStory";
 import { ru as agents } from "./stories/ai-agents.ru";
 import { ru as grif } from "./stories/grif-ai.ru";
 import { ru as community } from "./stories/community.ru";
+import { ru as moderator } from "./stories/moderator-dashboard.ru";
 import { ru as plati } from "./stories/plati-chastyami.ru";
 import { ru as guru } from "./stories/restaurant-guru.ru";
+import { ru as lead } from "./stories/design-lead.ru";
 
 const stories: StorySet = {
   "ai-agents": agents,
   "grif-ai": grif,
   community,
+  "moderator-dashboard": moderator,
   "plati-chastyami": plati,
   "restaurant-guru": guru,
+  "design-lead": lead,
 };
 
 export default stories;

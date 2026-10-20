@@ -28,7 +28,15 @@ type Item = { kind: "case"; c: CaseItem } | { kind: "note"; n: Note };
 const deckItems = (): Item[] => [...getCases().map((c) => ({ kind: "case" as const, c })), ...notes.map((n) => ({ kind: "note" as const, n }))];
 const itemId = (it: Item) => (it.kind === "case" ? `case-${it.c.id}` : it.n.id);
 const itemTitle = (it: Item) => (it.kind === "case" ? it.c.title : t(key(it.n.id, "title")));
-const itemImage = (it: Item) => (it.kind === "case" ? it.c.look.screen?.src ?? caseObject(it.c.id, "webp") : it.n.image);
+/* v98 по просьбе Никиты: у кейса с роликом интерфейса в карточке играет ролик, а не картинка. Это лёгкие копии
+   cases/<id>/film.mp4 (640 px, без звука, webm + mp4); постер — уменьшенный film-poster.webp, чтобы картинка до старта
+   совпадала с первым кадром. У остальных кейсов роликов нет — у них по-прежнему экран продукта */
+const CASE_CLIP: Record<string, { image: string; video: NonNullable<Note["video"]> }> = {
+  "grif-ai": { image: "ui/card-grif-ai.webp", video: { webm: "ui/card-grif-ai.webm", mp4: "ui/card-grif-ai.mp4" } },
+  community: { image: "ui/card-community.webp", video: { webm: "ui/card-community.webm", mp4: "ui/card-community.mp4" } },
+};
+const itemImage = (it: Item) => (it.kind === "case" ? CASE_CLIP[it.c.id]?.image ?? it.c.look.screen?.src ?? caseObject(it.c.id, "webp") : it.n.image);
+const itemVideo = (it: Item) => (it.kind === "case" ? CASE_CLIP[it.c.id]?.video : it.n.video);
 
 export function initFieldNote() {
   const card = document.querySelector<HTMLElement>(".card--stove");
@@ -160,7 +168,7 @@ export function initFieldNote() {
       logoSlot.hidden = !kind;
     }
     if (video) {
-      const clip = calm || isCase ? undefined : it.n.video;
+      const clip = calm ? undefined : itemVideo(it);
       if (clip && video.dataset.note !== id) {
         card.classList.remove("is-playing");
         video.dataset.note = id;
