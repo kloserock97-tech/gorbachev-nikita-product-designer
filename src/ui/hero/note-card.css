@@ -176,14 +176,22 @@
 
 .note-body { display: grid; gap: calc(9 * var(--u)); margin-top: calc(18 * var(--u)); }
 .note-body p { margin: 0; font-size: max(11.5px, calc(12.2 * var(--u))); line-height: 1.45; font-weight: 300; color: #4a4f44; }
-.note-links { display: flex; flex-wrap: wrap; gap: calc(8 * var(--u)) calc(14 * var(--u)); margin: calc(14 * var(--u)) 0 0; }
+/* v102: ссылки — полупрозрачные кнопки-пилюли из той же семьи, что круглый шеврон шапки (белое стекло, светлая
+   кромка). Подчёркнутый текст «Открыть кейс →» терялся под абзацами и не читался как действие */
+.note-links { display: flex; flex-wrap: wrap; gap: calc(8 * var(--u)); margin: calc(16 * var(--u)) 0 0; }
 .note-links[hidden] { display: none; }
 .note-links a {
-  font-size: max(12px, calc(12.5 * var(--u))); font-weight: 500; color: var(--card-ink);
-  text-decoration: underline; text-decoration-color: rgba(35, 38, 31, 0.3); text-underline-offset: 3px;
-  transition: text-decoration-color 0.2s ease;
+  display: inline-flex; align-items: center; min-height: max(34px, calc(36 * var(--u))); padding: 0 calc(16 * var(--u));
+  border-radius: 999px; font-size: max(12px, calc(12.5 * var(--u))); font-weight: 500; color: var(--card-ink); text-decoration: none;
+  background: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 calc(4 * var(--u)) calc(14 * var(--u)) rgba(40, 34, 18, 0.08);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  transition: background 0.25s ease, scale 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.note-links a:hover { text-decoration-color: currentColor; }
+.note-links a:hover { background: rgba(255, 255, 255, 0.82); }
+.note-links a:active { scale: 0.96; }
+.note-links a:focus-visible { outline: 2px solid var(--card-ink); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .note-links a { transition: background 0.25s ease; } }
 
 /* ── смена страницы: картинка, подпись и описание гаснут и чуть съезжают в сторону листания ── */
 .note-hero .portal-media, .note-cap, .card-note__in > * {
@@ -226,8 +234,8 @@
   .note-hero { transition: none; }
   .note-body { gap: 10px; margin-top: 18px; }
   .note-body p { font-size: max(13.5px, calc(19 * var(--u))); line-height: 1.5; }
-  .note-links { margin-top: 14px; }
-  .note-links a { font-size: max(13px, calc(19 * var(--u))); padding: 6px 0; }
+  .note-links { margin-top: 16px; gap: 8px; }
+  .note-links a { font-size: max(13px, calc(19 * var(--u))); min-height: 44px; padding: 0 18px; }
 
   /* палец тянет карточку вбок — картинка с подписью едут за ним */
   .card--stove.is-dragging .portal-media, .card--stove.is-dragging .note-cap { translate: calc(var(--drag, 0) * 1px) 0; transition: none; }
