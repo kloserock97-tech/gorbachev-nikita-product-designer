@@ -12,35 +12,23 @@
 <body>
 <a class="ll-skip" href="#work" data-ll="skip"></a>
 
+<!-- шапка как в 3D-версии (ui/hero/notch.css): чёлка со знаком и разделами; язык и переход в 3D — отдельно слева -->
 <header class="ll-top">
-  <nav class="ll-bar" aria-label="Разделы" data-ll-label="nav.label">
-    <a class="ll-bar__brand" href="#top"><img src="ui/portrait.jpg" alt="" width="28" height="28"><span data-ll="hero.name"></span></a>
-    <div class="ll-bar__links">
-      <a href="#about" data-ll="nav.about"></a>
-      <a href="#work" data-ll="nav.work"></a>
-      <a href="#lab" data-ll="nav.lab"></a>
-      <a href="#contact" data-ll="nav.contacts"></a>
-    </div>
-    <div class="ll-bar__end">
-      <div class="ll-lang" role="group" data-ll-label="nav.langs">
-        <button type="button" data-lang-set="ru" lang="ru">RU</button>
-        <button type="button" data-lang-set="en" lang="en">EN</button>
-      </div>
-      <a class="ll-3d" href="./?lite=0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span data-ll="nav.3d"></span></a>
-      <a class="ll-bar__hi" href="#contact" data-ll="nav.hi"></a>
-      <button class="ll-bar__menu" type="button" aria-expanded="false" aria-controls="ll-sheet" data-ll-label="nav.menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="ll-bar__l1" d="M5 9h14"/><path class="ll-bar__l2" d="M5 15h14"/></svg></button>
-    </div>
+  <nav class="ll-notch" aria-label="Разделы" data-ll-label="nav.label" data-section="home">
+    <a class="ll-notch__item ll-notch__mark" href="#top" data-ll-label="nav.home">
+      <svg viewBox="-35 -25 150 150" aria-hidden="true"><path d="M0 100H20V74.538C30.615 90.372 44.633 100 60 100H80V0H60V82.704C40.662 82.704 24.437 55.963 20 19.897V0H0Z"/></svg>
+    </a>
+    <a class="ll-notch__item" href="#about" data-nav="about"><svg class="ll-glyph" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="5.4" r="2.7"/><path d="M2.8 13.8c.7-2.7 2.5-4.1 5.2-4.1s4.5 1.4 5.2 4.1"/></svg><span data-ll="nav.about"></span></a>
+    <a class="ll-notch__item" href="#work" data-nav="work"><svg class="ll-glyph" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.2" y="2.6" width="11.6" height="8.4" rx="1.4"/><path d="M5.6 13.6h4.8"/></svg><span data-ll="nav.work"></span></a>
+    <a class="ll-notch__item" href="#lab" data-nav="lab"><svg class="ll-glyph" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.2 2.3h3.6M6.9 2.3v3.9l-3.5 5.9a1.3 1.3 0 0 0 1.1 2h7a1.3 1.3 0 0 0 1.1-2L9.1 6.2V2.3"/><path d="M5 10.4h6"/></svg><span data-ll="nav.lab"></span></a>
+    <a class="ll-notch__item ll-notch__hi" href="#contact" data-nav="contact"><svg class="ll-glyph" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.4 4.2h11.2v7.6H2.4z"/><path d="m2.6 4.5 5.4 4.2 5.4-4.2"/></svg><span data-ll="nav.hi"></span></a>
   </nav>
-  <!-- на телефоне разделы и кнопки — в шторке под панелью -->
-  <div class="ll-sheet" id="ll-sheet" hidden>
-    <a href="#about" data-ll="nav.about"></a>
-    <a href="#work" data-ll="nav.work"></a>
-    <a href="#lab" data-ll="nav.lab"></a>
-    <a href="#contact" data-ll="nav.contacts"></a>
-    <div class="ll-sheet__row">
-      <a class="ll-3d" href="./?lite=0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span data-ll="nav.3d"></span></a>
-      <a class="ll-bar__hi" href="#contact" data-ll="nav.hi"></a>
+  <div class="ll-tools">
+    <div class="ll-lang" role="group" data-ll-label="nav.langs">
+      <button type="button" data-lang-set="ru" lang="ru">RU</button>
+      <button type="button" data-lang-set="en" lang="en">EN</button>
     </div>
+    <a class="ll-3d" href="./?lite=0" data-ll-label="nav.3d.label"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span data-ll="nav.3d"></span></a>
   </div>
 </header>
 

@@ -18,6 +18,7 @@ const OWN: Record<"ru" | "en", Record<string, string>> = {
     "nav.label": "Разделы",
     "nav.langs": "Язык страницы",
     "nav.3d": "Версия с 3D",
+    "nav.3d.label": "Открыть версию с 3D",
     "nav.menu": "Меню",
     "hero.alt": "Холм на закате: кресло, ретро-компьютер, собака и дерево над долиной в тумане",
     "brand.sber": "Сбер",
@@ -49,6 +50,7 @@ const OWN: Record<"ru" | "en", Record<string, string>> = {
     "nav.label": "Sections",
     "nav.langs": "Page language",
     "nav.3d": "3D version",
+    "nav.3d.label": "Open the 3D version",
     "nav.menu": "Menu",
     "hero.alt": "A hill at sunset: an armchair, a retro computer, a dog and a tree above a misty valley",
     "brand.sber": "Sber",
@@ -187,30 +189,24 @@ document.querySelector(".ll-chips")?.addEventListener("click", (e) => {
 });
 document.querySelectorAll<HTMLButtonElement>("[data-lang-set]").forEach((b) => b.addEventListener("click", () => setLang(b.dataset.langSet as "ru" | "en")));
 
-/* меню на телефоне: шторка под панелью; закрывается выбором раздела и клавишей Esc */
-const menu = document.querySelector<HTMLButtonElement>(".ll-bar__menu");
-const sheet = document.getElementById("ll-sheet");
-const setMenu = (open: boolean) => {
-  if (!menu || !sheet) return;
-  menu.setAttribute("aria-expanded", String(open));
-  sheet.hidden = !open;
+/* чёлка, как в 3D-версии: текущий раздел — светлая плашка; на первом экране подписи видны, в разделах чёлка сжимается
+   до значков и подписи текущего (стили — lite-lab.css, .ll-notch) */
+const notch = document.querySelector<HTMLElement>(".ll-notch");
+const items = [...document.querySelectorAll<HTMLAnchorElement>(".ll-notch [data-nav]")];
+const mark = (section: string) => {
+  if (!notch || notch.dataset.section === section) return;
+  notch.dataset.section = section;
+  items.forEach((a) => {
+    const on = a.dataset.nav === section;
+    a.classList.toggle("is-active", on);
+    a.toggleAttribute("aria-current", on);
+  });
 };
-menu?.addEventListener("click", () => setMenu(menu.getAttribute("aria-expanded") !== "true"));
-sheet?.addEventListener("click", (e) => { if ((e.target as Element).closest("a")) setMenu(false); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") setMenu(false); });
-
-/* текущий раздел — точка у пункта меню: раздел, который занимает середину экрана */
-const links = [...document.querySelectorAll<HTMLAnchorElement>(".ll-bar__links a")];
 const spy = new IntersectionObserver((es) => es.forEach((e) => {
-  if (e.isIntersecting) links.forEach((a) => a.toggleAttribute("aria-current", a.hash === `#${e.target.id}`));
+  if (e.isIntersecting) mark(e.target.classList.contains("hero") ? "home" : e.target.id);
 }), { rootMargin: "-45% 0px -50% 0px" });
-["about", "work", "lab", "contact"].forEach((id) => { const el = document.getElementById(id); if (el) spy.observe(el); });
+document.querySelectorAll(".hero, #about, #work, #lab, #contact").forEach((el) => spy.observe(el));
 initI18n();
 onLang(render);
 render();
 
-/* шапка: прокрутили — у неё появляется подложка, чтобы текст страницы не просвечивал */
-const top = document.querySelector<HTMLElement>(".ll-top");
-const onScroll = () => top?.classList.toggle("is-stuck", window.scrollY > 8);
-window.addEventListener("scroll", onScroll, { passive: true });
-onScroll();
