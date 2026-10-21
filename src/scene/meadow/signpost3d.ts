@@ -251,6 +251,8 @@ export function createSignpost3d(o: { shadows: boolean; heightGLSL: string; U: H
 
   return {
     root,
+    /** хоть один столб над землёй — есть чему светиться */
+    get shown() { return slots.some((s) => s.k > 0.001); },
     /** поза камеры у столба (во время полёта и после); false — столба ещё нет */
     cameraPose(now: number, aspect: number, ground: Ground, pos: THREE.Vector3, look: THREE.Vector3) {
       if (!active || !travel.on) return false;

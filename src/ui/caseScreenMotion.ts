@@ -38,7 +38,7 @@ export function screenMarkup(id: string) {
   const list = scenes[id];
   const alt = id === 'ai-agents' ? 'Реестр рисков ИИ-агентов' : id === 'community' ? 'Сообщество — карточка публикации' : 'Кабинет модератора';
   return `<div class="dm sm sm--${id}" data-focus="${list[0].focus}">
-    <div class="sm-viewport"><div class="sm-camera">${[...new Set(list.map(s => s.file))].map((file, i) => `<img class="sm-screen${i === 0 ? ' is-current' : ''}" data-file="${file}" src="${import.meta.env.BASE_URL}cases/figma/${file}" alt="${alt}" decoding="async"${hi(file)}>`).join('')}</div></div>
+    <div class="sm-viewport"><div class="sm-camera">${[...new Set(list.map(s => s.file))].map((file, i) => `<img class="sm-screen${i === 0 ? ' is-current' : ''}" data-file="${file}" src="${import.meta.env.BASE_URL}cases/figma/${file}" alt="${alt}" loading="lazy" decoding="async"${hi(file)}>`).join('')}</div></div>
     <div class="sm-director"><p class="sm-caption">${label(list[0])}</p><div class="sm-controls" role="group" aria-label="${getLang() === 'ru' ? 'Состояния интерфейса' : 'Interface states'}">${list.map((s, i) => `<button type="button" data-shot="${i}" aria-label="${label(s)}" aria-pressed="${i === 0}"><span>0${i + 1}</span><i></i></button>`).join('')}</div></div>
   </div>`;
 }

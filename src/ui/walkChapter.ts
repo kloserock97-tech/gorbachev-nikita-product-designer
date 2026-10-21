@@ -87,6 +87,7 @@ export function initWalkChapter(scene: StoryScene) {
 
   let introOn = false;
   let shelfOn = false;
+  const shelfVars = { enter: "", leave: "" };
   let current = -1;
   let lastP = 0;
   const last: string[] = [];
@@ -271,9 +272,11 @@ export function initWalkChapter(scene: StoryScene) {
       if (!sv) playOnly(-1);
     }
     if (!sv) return;
+    /* v103: только изменившееся — функция идёт каждый кадр, а заметки стоят, пока их не листают */
     const enter = ease(ramp(c, ...CASES.notesIn));
-    shelf.style.setProperty("--enter", enter.toFixed(3));
-    shelf.style.setProperty("--leave", leave.toFixed(3));
+    const en = enter.toFixed(3), lv = leave.toFixed(3);
+    if (en !== shelfVars.enter) { shelfVars.enter = en; shelf.style.setProperty("--enter", en); }
+    if (lv !== shelfVars.leave) { shelfVars.leave = lv; shelf.style.setProperty("--leave", lv); }
     /* v43: тот же шаг на заметку, что и на кейс, с той же мягкой остановкой у каждой (story.ts: layoutTimeline, dwell).
        Раньше вся лента шла по одной кривой: первая и последняя заметки листались медленно, средние быстро */
     const run = ramp(c, ...CASES.notesRun) * (cards.length - 1);

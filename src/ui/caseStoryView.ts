@@ -592,14 +592,17 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
   /* текущий раздел — последний, чей заголовок уже поднялся к панели. Считаем по прокрутке, а не через
      IntersectionObserver: после прыжка по оглавлению заголовок встаёт у самой панели и в полосу наблюдателя не попадает */
   let lastSec = "";
-  const markSection = () => {
-    const edge = scroller.getBoundingClientRect().top + 150;
+  /* v103: чтение (где заголовки) отделено от записи (подсветка оглавления) — см. onScroll */
+  const sectionAt = (edge: number) => {
     let sec = "";
     for (const el of targets) {
       if (el.getBoundingClientRect().top > edge) break;
       if (el.classList.contains("cs-deep")) { if ((el as HTMLDetailsElement).open) sec = `dd-${el.dataset.dive}`; }
       else sec = el.id.replace("cs-", "");
     }
+    return sec;
+  };
+  const markSection = (sec: string) => {
     if (sec === lastSec) return;
     lastSec = sec;
     links.forEach((a) => a.classList.toggle("is-on", a.dataset.sec === sec));
@@ -616,30 +619,43 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
   const hero = root.querySelector<HTMLElement>(".cs-hero")!;
   const films = [...root.querySelectorAll<HTMLElement>(".cs-film-pin")].map((pin) => ({ pin, over: 0 }));
   const heroStageEl = root.querySelector<HTMLElement>(".cs-hero-stage");
-  let lastHs = -1;
+  let lastHs = -1, lastP = "", lastRing = "";
   const stageTop = 92;
   let raf = 0;
+  /* v103: сначала все чтения раскладки, потом все записи. Раньше они чередовались (записали --p и --hs, прочитали
+     размеры героя, прямоугольники заголовков, затем у каждого фильма запись --shift и чтение следующего), и каждое
+     чтение после записи заставляло браузер пересчитать стили и раскладку заново — несколько раз за кадр прокрутки */
   const onScroll = () => {
     if (raf) return;
     raf = requestAnimationFrame(() => {
       raf = 0;
+      /* чтения */
+      const st = scroller.scrollTop;
       const max = scroller.scrollHeight - scroller.clientHeight;
-      const read = max > 0 ? scroller.scrollTop / max : 0;
-      progress.style.setProperty("--p", String(read));
-      tocBtn?.style.setProperty("--p", read.toFixed(4));
+      const heroH = hero.offsetHeight, heroTop = hero.offsetTop;
+      const box = scroller.getBoundingClientRect().top;
+      const sec = sectionAt(box + 150);
+      const pins = films.map((f) => f.pin.getBoundingClientRect().top);
+      /* записи */
+      const read = max > 0 ? st / max : 0;
+      const p = read.toFixed(4);
+      if (p !== lastP) { lastP = p; progress.style.setProperty("--p", p); }
+      /* кольцо капсулы перерисовывается целиком (conic-gradient) — менять его только на заметный шаг */
+      const ring = read.toFixed(3);
+      if (ring !== lastRing) { lastRing = ring; tocBtn?.style.setProperty("--p", ring); }
       /* герой: устройство выпрямляется, пока сцену прокручивают (caseHero.css, --hs) */
-      const hs = Math.min(1, Math.max(0, scroller.scrollTop / Math.max(1, hero.offsetHeight * 0.8)));
+      const hs = Math.min(1, Math.max(0, st / Math.max(1, heroH * 0.8)));
       if (hs !== lastHs) { lastHs = hs; heroStageEl?.style.setProperty("--hs", hs.toFixed(3)); }
-      top.classList.toggle("is-scrolled", scroller.scrollTop > 8);
-      top.classList.toggle("is-past", scroller.scrollTop > hero.offsetTop + hero.offsetHeight - 120);
-      markSection();
+      top.classList.toggle("is-scrolled", st > 8);
+      top.classList.toggle("is-past", st > heroTop + heroH - 120);
+      markSection(sec);
       /* film: сцена закреплена под панелью, экран внутри проезжает ровно на столько, на сколько прокрутили страницу */
-      const edge = scroller.getBoundingClientRect().top + stageTop;
-      for (const f of films) {
-        const shift = Math.min(f.over, Math.max(0, edge - f.pin.getBoundingClientRect().top));
+      const edge = box + stageTop;
+      films.forEach((f, i) => {
+        const shift = Math.min(f.over, Math.max(0, edge - pins[i]));
         f.pin.style.setProperty("--shift", `${shift}px`);
         f.pin.classList.toggle("is-end", f.over === 0 || shift >= f.over - 1);
-      }
+      });
     });
   };
   /* сколько экрана не помещается в сцену — на столько же удлиняется закреплённый участок */

@@ -1,5 +1,6 @@
 import { getCases, type CaseItem } from "../data/cases";
 import { onLang } from "../i18n";
+import { bodyHas, onBodyState } from "../lib/bodyState";
 
 /* v103: глава «Кейсы» с указателем. Кейс показывает световой столб на живом лугу (scene/meadow/signpost3d.ts), а
    интерфейс собран вокруг него:
@@ -23,7 +24,9 @@ function preview(c: CaseItem) {
     const poster = `${BASE}${film}-poster.webp`;
     return calm
       ? `<img class="pl-img pl-img--browser" src="${poster}" alt="" decoding="async">`
-      : `<video class="pl-img pl-img--browser" muted loop playsinline autoplay preload="metadata" poster="${poster}" aria-hidden="true" tabindex="-1"><source src="${BASE}${film}.mp4" type="video/mp4"></video>`;
+      /* v103: без autoplay и с preload="none". Список собирается при загрузке, и autoplay скачивал фильм первого кейса
+         (2,8 МБ — больше половины веса страницы) на первом экране, когда до главы ещё далеко. Играет его sync() */
+      : `<video class="pl-img pl-img--browser" muted loop playsinline preload="none" poster="${poster}" aria-hidden="true" tabindex="-1"><source src="${BASE}${film}.mp4" type="video/mp4"></video>`;
   }
   const s = c.look.screen;
   if (s) return `<img class="pl-img pl-img--${s.device}" src="${BASE}${s.src}" width="${s.w}" height="${s.h}" alt="" decoding="async">`;
@@ -46,6 +49,14 @@ export function initCasesSignpost(onCase: (i: number) => void) {
   box.appendChild(right);
   right.append(title, shot, facts);
 
+  /* фильм играет, только пока глава на экране: не под страницей кейса и не в скрытой вкладке */
+  const sync = () => {
+    const v = shot.querySelector("video");
+    if (!v) return;
+    if (box.classList.contains("is-live") && !bodyHas("case-open") && !document.hidden) void v.play().catch(() => {});
+    else v.pause();
+  };
+
   let cur = -1;
   const show = (i: number, force = false) => {
     if (i < 0 || (i === cur && !force)) return;
@@ -56,21 +67,17 @@ export function initCasesSignpost(onCase: (i: number) => void) {
     shot.setAttribute("aria-label", c.title);
     shot.dataset.device = FILMS[c.id] ? "browser" : c.look.screen?.device ?? "obj";
     shot.innerHTML = preview(c);
-    /* фильм играет, только пока глава на экране */
-    const v = shot.querySelector("video");
-    if (v && !box.classList.contains("is-live")) v.pause();
+    sync();
   };
   const read = () => {
     const on = list.querySelector<HTMLElement>(".cx-li.is-on");
     show(on ? Number(on.dataset.i) : 0);
   };
   new MutationObserver(read).observe(list, { subtree: true, attributes: true, attributeFilter: ["class"] });
-  /* глава показалась или ушла — фильм играет или стоит */
-  new MutationObserver(() => {
-    const v = shot.querySelector("video");
-    if (!v) return;
-    if (box.classList.contains("is-live")) void v.play().catch(() => {}); else v.pause();
-  }).observe(box, { attributes: true, attributeFilter: ["class"] });
+  /* глава показалась или ушла, открылся кейс, вкладку спрятали — фильм играет или стоит */
+  new MutationObserver(sync).observe(box, { attributes: true, attributeFilter: ["class"] });
   read();
+  onBodyState(sync);
+  document.addEventListener("visibilitychange", sync);
   onLang(() => show(cur, true));
 }

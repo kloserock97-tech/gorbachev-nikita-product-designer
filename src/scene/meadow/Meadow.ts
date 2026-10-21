@@ -830,8 +830,9 @@ export class Meadow {
     if (this.q.shadows) r.shadowMap.needsUpdate = true;
     r.setRenderTarget(target);
     r.render(this.scene, this.camera);
-    /* v103: свечение указателя в воздухе (лицо столба вырезано трафаретом) */
-    this.bloom?.apply(target);
+    /* v103: свечение указателя в воздухе (лицо столба вырезано трафаретом). Без столба в кадре — ни одного прохода:
+       на заставке главы, в заметках и в портале к футеру блум работал вхолостую */
+    if (this.sign?.shown) this.bloom?.apply(target);
   }
 
   /** шейдеры луга — заранее, в ту же цель, что и кадр: первый показ без рывка */

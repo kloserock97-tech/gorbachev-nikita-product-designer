@@ -4,6 +4,7 @@
    · металлические кнопки — блик следует за курсором, по нажатию расходится кольцо;
    · вход интерфейса — классы is-ready и intro-done, сами переходы описаны в CSS.
    Всё считается в одном requestAnimationFrame; DOM пишется только когда значение изменилось. */
+import { bodyHas } from "../../lib/bodyState";
 
 type Hooks = {
   burstAt?: (x: number, y: number) => void;
@@ -26,6 +27,7 @@ export function initHeroUi(hooks: Hooks = {}) {
   const near = items.map(() => ({ value: 0, written: -1 }));
   let glint = 0;
   let glintWritten = -1;
+  const glintAt = { x: "", y: "" };
   let keyboardFocus = -1;
 
   addEventListener("pointermove", (e) => {
@@ -69,8 +71,13 @@ export function initHeroUi(hooks: Hooks = {}) {
       const t = Math.max(0, 1 - d);
       out[i] = t * t * (3 - 2 * t);
     });
-    dock.style.setProperty("--gx", `${(pointer.x - box.left).toFixed(0)}px`);
-    dock.style.setProperty("--gy", `${(pointer.y - box.top).toFixed(0)}px`);
+    /* курсор стоит — блик на месте, писать нечего */
+    const gx = `${(pointer.x - box.left).toFixed(0)}px`, gy = `${(pointer.y - box.top).toFixed(0)}px`;
+    if (gx !== glintAt.x || gy !== glintAt.y) {
+      glintAt.x = gx; glintAt.y = gy;
+      dock.style.setProperty("--gx", gx);
+      dock.style.setProperty("--gy", gy);
+    }
     return { out, glintTarget: 1 };
   };
 
@@ -107,6 +114,8 @@ export function initHeroUi(hooks: Hooks = {}) {
   document.querySelectorAll<HTMLElement>(".knob").forEach((b) => b.addEventListener("click", (e) => hooks.burstAt?.(e.clientX, e.clientY)));
 
   /* ── один кадр на всё ───────────────────────────────────────────────────── */
+  /* v103: под страницей кейса параллакс стоит — она закрывает всё, и док тоже; --px/--py наследуются всем первым
+     экраном, каждая запись пересчитывала стили поддерева. В главах истории параллакс идёт: на нём едет док */
   let last = 0;
   let running = false;
   const frame = (now: number) => {
@@ -114,7 +123,7 @@ export function initHeroUi(hooks: Hooks = {}) {
     const dt = last ? Math.min((now - last) / 1000, 0.05) : 1 / 60;
     last = now;
 
-    if (!REDUCED && hero) {
+    if (!REDUCED && hero && !bodyHas("case-open")) {
       tilt.x = approach(tilt.x, pointer.nx, 3.2, dt);
       tilt.y = approach(tilt.y, pointer.ny, 3.2, dt);
       const x = Math.round(tilt.x * 1000) / 1000;

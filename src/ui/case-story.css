@@ -392,9 +392,17 @@ html[lang="en"] .cs-hyp q { quotes: "\201C" "\201D"; }
   position: absolute; left: calc(var(--x) * 1%); top: calc(var(--y) * 1%);
   translate: -50% -50%; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%;
   background: var(--accent); color: #fff; font: 600 14px/1 var(--font); cursor: pointer;
-  box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent), 0 6px 18px rgba(0, 0, 0, 0.3); animation: cs-ping 2.6s ease-out infinite; transition: scale 0.25s var(--ease);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3); transition: scale 0.25s var(--ease); isolation: isolate;
 }
-.cs-spot-dot:hover, .cs-spot-dot:focus-visible { scale: 1.15; animation-play-state: paused; z-index: 2; }
+/* v103: пульс — круг под цифрой, растёт и гаснет (scale и opacity ведёт видеокарта). Был box-shadow в бесконечной
+   анимации: стили и перерисовка каждой точки в каждом кадре, пока открыт кейс. 2.0667 = (30 + 2·16) / 30 — та же
+   ширина кольца, что у тени 16 px */
+.cs-spot-dot::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 50%; pointer-events: none;
+  background: color-mix(in srgb, var(--accent) 55%, transparent); animation: cs-ping 2.6s ease-out infinite;
+}
+.cs-spot-dot:hover, .cs-spot-dot:focus-visible { scale: 1.15; z-index: 2; }
+.cs-spot-dot:hover::before, .cs-spot-dot:focus-visible::before { animation-play-state: paused; }
 .cs-spot-dot em {
   position: absolute; left: 50%; bottom: calc(100% + 12px); translate: -50% 6px; width: max-content; max-width: 260px; padding: 10px 14px; border-radius: 14px;
   background: var(--ink); color: #fff; font: 500 14px/1.4 var(--font); font-style: normal; text-align: left;
@@ -405,7 +413,7 @@ html[lang="en"] .cs-hyp q { quotes: "\201C" "\201D"; }
 .cs-spot-dot.is-right em { left: auto; right: -6px; translate: 0 6px; }
 .cs-spot-dot.is-left em { left: -6px; translate: 0 6px; }
 .cs-spot-dot.is-right:hover em, .cs-spot-dot.is-right:focus-visible em, .cs-spot-dot.is-left:hover em, .cs-spot-dot.is-left:focus-visible em { translate: 0 0; }
-@keyframes cs-ping { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent), 0 6px 18px rgba(0, 0, 0, 0.3); } 70%, 100% { box-shadow: 0 0 0 16px transparent, 0 6px 18px rgba(0, 0, 0, 0.3); } }
+@keyframes cs-ping { 0% { scale: 1; opacity: 1; } 70%, 100% { scale: 2.0667; opacity: 0; } }
 .cs-spot-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 10px 26px; margin-top: 18px !important; counter-reset: sp; }
 .cs-spot-list li { counter-increment: sp; display: grid; grid-template-columns: 26px 1fr; gap: 10px; font-size: 15px; line-height: 1.45; color: var(--soft); }
 .cs-spot-list li::before { content: counter(sp); display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 13px; font-weight: 600; }
@@ -621,7 +629,7 @@ body.case-open .lite-bar { opacity: 0; pointer-events: none; }
   .cs-sheet-panel { width: 100%; margin-bottom: 0; border-radius: 26px 26px 0 0; padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .cs-spot-dot { animation: none; }
+  .cs-spot-dot::before { animation: none; }
   .cs-deep-body, .cs-sheet, .cs-sheet-panel { animation: none; }
   .cs-stack-fan .cs-stack-phone, .cs-stage-media, .cs-method, .cs-top-title, .cs-next-obj, .cs-toc-btn { transition: none; }
 }

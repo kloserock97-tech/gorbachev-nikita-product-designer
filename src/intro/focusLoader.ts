@@ -102,6 +102,7 @@ export function createFocusLoader(onDone: () => void, onLite: () => void): Focus
   const easeOut = (x: number) => 1 - (1 - x) ** 3;
   const easeInOut = (x: number) => (x < .5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
 
+  let lastProgress = "", lastVeil = "";
   const frame = (now: number) => {
     if (disposed) return;
     raf = requestAnimationFrame(frame);
@@ -110,8 +111,14 @@ export function createFocusLoader(onDone: () => void, onLite: () => void): Focus
     /* progress line: real readiness, eased so a jump between phases does not snap */
     shown += (target - shown) * (1 - Math.exp(-dt * 5));
     if (ready && shown > .995) shown = 1;
-    root.style.setProperty("--fl-progress", shown.toFixed(4));
-    rule.setAttribute("aria-valuenow", String(Math.floor(shown * 100)));
+    /* v103: only when the value moved — the screen waits for Enter with the line full, and the per-frame writes kept
+       recalculating the loader's styles */
+    const p = shown.toFixed(4);
+    if (p !== lastProgress) {
+      lastProgress = p;
+      root.style.setProperty("--fl-progress", p);
+      rule.setAttribute("aria-valuenow", String(Math.floor(shown * 100)));
+    }
 
     if (ready && revealAt < 0 && shown === 1) {
       revealAt = clock;
@@ -120,7 +127,8 @@ export function createFocusLoader(onDone: () => void, onLite: () => void): Focus
     let blur = BLUR;
     if (revealAt >= 0) {
       const v = Math.min(1, (clock - revealAt) / VEIL);
-      root.style.setProperty("--fl-veil", (1 - easeOut(v)).toFixed(4));
+      const veil = (1 - easeOut(v)).toFixed(4);
+      if (veil !== lastVeil) { lastVeil = veil; root.style.setProperty("--fl-veil", veil); }
       if (clock - revealAt >= ENTER_AFTER && !root.classList.contains("is-ready")) {
         root.classList.add("is-ready");
         enter.focus({ preventScroll: true, focusVisible: false } as FocusOptions);

@@ -273,9 +273,15 @@ export function initFieldNote() {
     }, 200);
   };
 
-  /* соседние картинки грузим заранее, в простое, — переключение не ждёт сети */
+  /* соседние картинки грузим заранее, в простое, — переключение не ждёт сети. v103: только когда интерфейс вошёл
+     (is-ready): первый простой случался посреди загрузки, и ~0,5 МБ картинок делили канал с моделями и шейдерами */
   const idle = (window as Window & { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1500));
-  idle(() => items.slice(1).forEach((it) => { const pre = new Image(); pre.src = `${BASE}${itemImage(it)}`; }));
+  let prefetched = false;
+  onBodyState(() => {
+    if (prefetched || !bodyHas("is-ready")) return;
+    prefetched = true;
+    idle(() => items.slice(1).forEach((it) => { const pre = new Image(); pre.src = `${BASE}${itemImage(it)}`; }));
+  });
 
   steps.forEach((btn) => btn.addEventListener("click", (e) => {
     e.stopPropagation();

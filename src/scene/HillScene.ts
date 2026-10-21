@@ -201,6 +201,7 @@ export class HillScene {
     /* на холст рисуется только финальный полноэкранный проход — буфер глубины и трафарета ему не нужны */
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, depth: false, stencil: false, powerPreference: "high-performance" });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    void this.tierKey(); // имя видеокарты — пока очередь пуста
     /* Neutral (Khronos PBR Neutral) держит цвета неба как задуманы, ACES их гасил в серое */
     this.renderer.toneMapping = THREE.NeutralToneMapping;
     this.renderer.toneMappingExposure = 1.0;
@@ -494,6 +495,8 @@ export class HillScene {
   }
 
   private buildGrass() {
+    /* посадка под текущую позу: отложенная пересадка под неё же больше не нужна */
+    clearTimeout(this.replantTimer);
     this.scene.add(this.meadowGroup);
     this.plantedFor = { dist: this.camDistance, aspect: this.camera.aspect, pan: Math.min(1, Math.max(0, (this.camera.aspect - 0.6) / 0.7)) };
     const rng = makeRng();
@@ -2027,10 +2030,12 @@ export class HillScene {
     CAMERA_TARGET.x = 0.2 + (CAMERA_PAN.y - 0.2) * panK;
     /* отъезд первого экрана — композиция широкого кадра: на телефоне камера и так дальше, а текст встаёт по кроне */
     HERO_PULL_OFF.copy(HERO_PULL_DIR).multiplyScalar(HERO_PULL * panK);
-    const panMoved = Math.abs(panK - this.plantedFor.pan) > 0.04;
     /* Поворот телефона или сужение окна отодвигает камеру — передний склон, посаженный под
        прежнюю позу, остался бы голым. Шире 16:9 × 1.2 — не хватит травы по бокам. */
     const planted = this.plantedFor;
+    /* v103: до первой посадки (pan −1) сравнивать не с чем. Без этой проверки кадрирование в конструкторе ставило
+       таймер, и через 450 мс после загрузки луг сажался второй раз целиком (~1,2 с главного потока) */
+    const panMoved = planted.pan >= 0 && Math.abs(panK - planted.pan) > 0.04;
     const moved = planted.dist > 0 && Math.abs(this.camDistance - planted.dist) > 0.04;
     const wider = planted.aspect > 0 && aspect > Math.max(planted.aspect, (16 / 9) * 1.2) * 1.05;
     if ((moved || wider || panMoved) && !this.opts.fixedCamera) {
@@ -2247,10 +2252,16 @@ export class HillScene {
   readonly calibrated = new Promise<void>((r) => (this.resolveCalibrated = r));
   private dprMax = 1;
 
+  /* v103: имя видеокарты спрашиваем один раз, сразу после создания контекста. getParameter — синхронный запрос к
+     процессу видеокарты: в restoreTier он стоял в очереди за загрузкой буферов травы и ждал до 0,17 с */
+  private gpuName = "";
   private tierKey() {
-    const gl = this.renderer.getContext();
-    const ext = gl.getExtension("WEBGL_debug_renderer_info");
-    const gpu = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : "gpu";
+    if (!this.gpuName) {
+      const gl = this.renderer.getContext();
+      const ext = gl.getExtension("WEBGL_debug_renderer_info");
+      this.gpuName = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : "gpu";
+    }
+    const gpu = this.gpuName;
     /* v3 — версия рендер-пайплайна: при его изменении старые ступени недействительны */
     return `hill-tier:v18:${gpu}:${screen.width}x${screen.height}@${window.devicePixelRatio}:${this.bladeTotal}`;
   }

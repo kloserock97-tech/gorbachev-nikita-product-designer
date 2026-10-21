@@ -285,7 +285,10 @@ export function createCardPreview(stage: HTMLElement, getList: () => CaseItem[])
 
   let warmed = false;
   const warm = () => {
-    if (warmed) return;
+    /* v103: с указателем (casesSignpost) карточка и её сцена спрятаны (cases-signpost.css). Без этой проверки
+       поднимался второй WebGL-контекст: холст display:none брал размер окна и рисовал текущий кейс каждый кадр,
+       плюс качались картинки карточек, которых никто не видит */
+    if (warmed || bodyHas("has-signpost")) return;
     warmed = true;
     bootScenes();
     for (const img of box.querySelectorAll<HTMLImageElement>(".cx-card:not(.is-scene) img[data-src]")) { img.src = img.dataset.src!; delete img.dataset.src; }

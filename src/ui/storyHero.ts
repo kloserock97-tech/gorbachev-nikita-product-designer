@@ -206,7 +206,7 @@ export function initStory(scene: Scene) {
   const footer = document.querySelector<HTMLElement>(".site-footer");
   if (footer) {
     const links = [...footer.querySelectorAll<HTMLElement>("a, button")];
-    let footOn = false;
+    let footOn = false, lastClip = "", lastCopy = "";
     footer.inert = true;
     links.forEach((el) => (el.tabIndex = -1));
     const prevFrame = scene.onStoryFrame;
@@ -217,11 +217,14 @@ export function initStory(scene: Scene) {
       const next = clip ? clip === "inset(0)" : f > FOOTER.content;
       const preview = !!clip && !next;
       footer.classList.toggle("is-portal-preview", preview);
-      footer.style.clipPath = preview ? clip! : "";
+      /* v103: история зовёт это каждый кадр — пишем только изменившееся */
+      const clipNow = preview ? clip! : "";
+      if (clipNow !== lastClip) { lastClip = clipNow; footer.style.clipPath = clipNow; }
       // First reveal the landscape; copy becomes readable as the doorway opens up.
       if (preview) {
         const reveal = ramp(portalAt(f), 0.5, 0.72);
-        footer.style.setProperty("--portal-copy", String(reveal * reveal * (3 - 2 * reveal)));
+        const copy = (reveal * reveal * (3 - 2 * reveal)).toFixed(4);
+        if (copy !== lastCopy) { lastCopy = copy; footer.style.setProperty("--portal-copy", copy); }
       }
       if (next !== footOn) {
         footOn = next;

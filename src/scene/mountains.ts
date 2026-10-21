@@ -278,6 +278,17 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
      браузер разрешает. Пока не готово — гор нет, видно небо. */
   async function bake() {
     const STRIPS = 8;
+    /* v103: программы запекания собираются параллельно (KHR_parallel_shader_compile). Первый render() линковал
+       HEIGHT_FS синхронно — главный поток стоял до 2,5 с, и на это время приходилась калибровка ступени качества.
+       Цель та же, что у прохода: от неё зависит ключ программы (без тонмаппинга, линейный цвет) */
+    const prev = renderer.getRenderTarget();
+    const ready = ([[heightMat, heightRT], [normalMat, mapRT]] as const).map(([m, rt]) => {
+      quad.material = m;
+      renderer.setRenderTarget(rt);
+      return renderer.compileAsync(quadScene, cam).catch(() => {});
+    });
+    renderer.setRenderTarget(prev);
+    await Promise.all(ready);
     /* полосы дописываются в одну цель — без очистки; между кадрами сцена холма рендерится как обычно */
     const autoClear = renderer.autoClear;
     for (let s = 0; s < STRIPS; s++) {
