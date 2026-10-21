@@ -178,6 +178,8 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
       uReady: { value: 0 },
       /* высота хребта в седловине под солнцем, доля от полной; ?msad= */
       uSaddle: { value: Number(q.get("msad") ?? 0.1) },
+      /* высота предгорий под солнцем, м (до уменьшения в SCALE); ?mfoot= */
+      uFoot: { value: Number(q.get("mfoot") ?? 500) },
       /* x — доля неба вблизи (ближние склоны), y — плотность воздуха на километр; ?mhaze=0.32,0.095 */
       uHaze: { value: new THREE.Vector2(...((q.get("mhaze") ?? "0.32,0.095").split(",").map(Number) as [number, number])) },
       tMap: { value: mapRT.texture },
@@ -186,6 +188,7 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
       uniform float uOffset;
       uniform float uReady;
       uniform float uSaddle;
+      uniform float uFoot;
       uniform vec3 uSunDir;
       uniform sampler2D tMap;
       varying vec3 vReal;
@@ -200,6 +203,14 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
         vec3 w0 = (modelMatrix * vec4(position, 1.0)).xyz;
         float off = acos(clamp(dot(normalize(w0.xz - cameraPosition.xz), normalize(uSunDir.xz)), -1.0, 1.0));
         p.y *= mix(uSaddle, 1.0, smoothstep(0.03, 0.32, off));
+        /* v102: дальней гряды больше нет, и под солнцем осталась бы пустая дымка: ближние километры гор пологие.
+           Там поднимается гряда предгорий — пологие увалы в 4–8 км, край которых чуть ниже солнца (uFoot — высота
+           в «настоящих» метрах). Шире седловины, чтобы сойтись с горами без шва */
+        float d = -position.z;
+        float u = position.x + uOffset;
+        float foot = uFoot * (0.8 + 0.14 * sin(u * 0.0019 + 1.3) + 0.08 * sin(u * 0.0053 + 0.4) + 0.04 * sin(u * 0.013))
+          * smoothstep(3300.0, 5200.0, d) * (1.0 - smoothstep(6800.0, 9000.0, d));
+        p.y = max(p.y, foot * (1.0 - smoothstep(0.22, 0.5, off)));
         vReal = p;
         vWorld = (modelMatrix * vec4(p, 1.0)).xyz;
         gl_Position = uReady > 0.5 ? projectionMatrix * modelViewMatrix * vec4(p, 1.0) : vec4(2.0, 2.0, 2.0, 1.0);
