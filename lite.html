@@ -51,15 +51,6 @@
         <source srcset="lite/hero/hill.avif" type="image/avif">
         <img src="lite/hero/hill.webp" alt="" data-ll-alt="hero.alt" width="1672" height="941" fetchpriority="high">
       </picture>
-      <div class="hero__trust">
-        <p data-ll="hero.trust"></p>
-        <ul class="hero__logos">
-          <li><img src="lite/logos/ozon.svg" alt="" width="22" height="22">Ozon</li>
-          <li><img src="lite/logos/mos.svg" alt="" width="22" height="22">Mos.ru</li>
-          <li><img src="lite/logos/sber.svg" alt="" width="22" height="22"><span data-ll="brand.sber"></span></li>
-          <li><img src="lite/logos/grif.svg" alt="" width="22" height="22">Grif AI</li>
-        </ul>
-      </div>
       <!-- колода, как в карточке 3D-версии: кейсы, потом пэт-проекты (heroDeck.ts) -->
       <div class="hero__deck" role="group" tabindex="0" data-ll-label="deck.label">
         <div class="hero__deck-bar">
@@ -88,17 +79,13 @@
     <p class="ll-statement__text"><span data-statement="lead"></span> <span class="ll-statement__rest" data-statement="rest"></span></p>
   </section>
 
+  <!-- где работал: карточки по CV — знак, месяцы, должность, главный результат; наведённая и соседи приподнимаются -->
+  <section class="ll-exp" id="experience" aria-labelledby="ll-exp-title">
+    <p class="ll-label" id="ll-exp-title" data-ll="exp.title"></p>
+    <ul class="ll-exp__grid" data-exp></ul>
+  </section>
+
   <section class="ll-facts" data-ll-label="facts.label">
-    <article class="ll-fact ll-fact--logos">
-      <div class="ll-fact__logos">
-        <img src="lite/logos/ozon.svg" alt="Ozon" width="44" height="44">
-        <img src="lite/logos/mos.svg" alt="Mos.ru" width="44" height="44">
-        <img src="lite/logos/sber.svg" alt="" data-ll-alt="brand.sber" width="44" height="44">
-        <img src="lite/logos/grif.svg" alt="Grif AI" width="44" height="44">
-      </div>
-      <p class="ll-fact__label" data-ll="about.logos"></p>
-      <p class="ll-fact__num">4</p>
-    </article>
     <article class="ll-fact ll-fact--dark">
       <p class="ll-fact__label" data-ll="about.fact.years.sub"></p>
       <p class="ll-fact__text" data-ll="about.p2"></p>

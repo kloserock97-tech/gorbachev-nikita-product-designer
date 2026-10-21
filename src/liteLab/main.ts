@@ -38,6 +38,7 @@ const OWN: Record<"ru" | "en", Record<string, string>> = {
     "foot.nav": "Разделы",
     "foot.social": "Где ещё найти",
     "foot.word": "Designer",
+    "exp.title": "Где работал",
     "deck.label": "Кейсы и пэт-проекты",
     "deck.case": "Кейс",
     "deck.note": "Пэт-проект",
@@ -70,6 +71,7 @@ const OWN: Record<"ru" | "en", Record<string, string>> = {
     "foot.nav": "Sections",
     "foot.social": "Elsewhere",
     "foot.word": "Designer",
+    "exp.title": "Where I worked",
     "deck.label": "Case studies and pet projects",
     "deck.case": "Case study",
     "deck.note": "Pet project",
@@ -88,12 +90,36 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 
 let kind: "all" | "web" | "mobile" = "all";
 
+/* где работал — по CV (Никита, 21.10): должности, месяцы, главный результат. Знаки — те же, что в 3D-версии */
+type Job = { logo?: string; mark?: string; co: string; when: string; role: string; result: string };
+const JOBS: Record<"ru" | "en", Job[]> = {
+  ru: [
+    { logo: "grif", co: "GRIF AI", when: "авг 2025 – авг 2026", role: "Founding Product Designer", result: "От идеи до кода: 3 недели → 5 дней" },
+    { logo: "sber", co: "Сбер", when: "июл 2025 – май 2026", role: "Senior Product Designer", result: "Агент на оценку рисков: 2+ часа → 20–30 минут" },
+    { logo: "mos", co: "Цифровые сервисы Москвы", when: "янв 2023 – июл 2025", role: "Senior Product Designer", result: "«Сообщество»: от гипотез до MVP за 9 месяцев, 78,9% довольны" },
+    { mark: "JD", co: "JustDev", when: "авг 2021 – янв 2023", role: "Product Designer", result: "Приложения iOS и Android, сайты, B2B-кабинеты и CRM под ключ" },
+  ],
+  en: [
+    { logo: "grif", co: "GRIF AI", when: "Aug 2025 – Aug 2026", role: "Founding Product Designer", result: "Idea to code: 3 weeks → 5 days" },
+    { logo: "sber", co: "Sber", when: "Jul 2025 – May 2026", role: "Senior Product Designer", result: "Getting an agent risk-assessed: 2+ hours → 20–30 minutes" },
+    { logo: "mos", co: "Moscow Digital Services", when: "Jan 2023 – Jul 2025", role: "Senior Product Designer", result: "Community: from first hypotheses to MVP in 9 months, 78.9% satisfied" },
+    { mark: "JD", co: "JustDev", when: "Aug 2021 – Jan 2023", role: "Product Designer", result: "iOS and Android apps, sites, B2B dashboards and CRMs end to end" },
+  ],
+};
+const jobCard = (j: Job) => `<li class="ll-exp__card">
+    <div class="ll-exp__head">
+      <span class="ll-exp__logo" aria-hidden="true">${j.logo ? `<img src="${BASE}lite/logos/${j.logo}.svg" alt="" width="44" height="44" loading="lazy">` : esc(j.mark ?? "")}</span>
+      <span class="ll-exp__co"><b>${esc(j.co)}</b><span>${esc(j.when)}</span></span>
+    </div>
+    <p class="ll-exp__role">${esc(j.role)}</p>
+    <p class="ll-exp__result">${esc(j.result)}</p>
+  </li>`;
+
 /* плитка кейса: его диорама на фоне цветов кейса; ссылка ведёт на страницу кейса в облегчённой версии сайта */
 function caseTile(c: CaseItem) {
-  const art = c.look.diorama?.src ?? c.look.screen?.src ?? "";
   return `<li class="ll-tile" data-kind="${c.kind.join(" ")}" style="--st0:${c.look.stage[0]};--st1:${c.look.stage[1]}">
     <a href="./?lite=1#/work/${c.id}" aria-label="${esc(`${L("case.open")}: ${c.title}`)}">
-      <span class="ll-tile__art"><img src="${BASE}${art}" alt="" loading="lazy" decoding="async"></span>
+      <span class="ll-tile__art"><img class="is-cover" src="${BASE}lite/cards/${c.id}.webp" alt="" width="960" height="600" loading="lazy" decoding="async"></span>
       <span class="ll-tile__body">
         <span class="ll-tile__title">${esc(c.title)}</span>
         <span class="ll-tile__about">${esc(c.about ?? c.subtitle)}</span>
@@ -140,6 +166,8 @@ function render() {
   const cases = getCases();
   const count = document.querySelector("[data-facts-cases]");
   if (count) count.textContent = String(cases.length);
+  const exp = document.querySelector("[data-exp]");
+  if (exp) exp.innerHTML = JOBS[getLang()].map(jobCard).join("");
   const grid = document.querySelector("[data-cases]");
   if (grid) grid.innerHTML = cases.map(caseTile).join("");
   const list = document.querySelector("[data-notes]");
@@ -155,18 +183,13 @@ function applyFilter() {
   document.querySelectorAll<HTMLElement>(".ll-tile").forEach((li) => (li.hidden = kind !== "all" && !li.dataset.kind!.split(" ").includes(kind)));
 }
 
-/* превью пэт-проекта играет, пока на строку наведён курсор или она в фокусе; на телефоне — пока строка на экране */
+/* превью пэт-проекта играет, пока на строку наведён курсор или она в фокусе. v106: на телефоне роликов нет — только
+   обложки: строки с роликами по очереди качали 2,5 МБ, и лёгкая версия переставала быть лёгкой */
 function wireRows() {
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const touch = matchMedia("(hover: none)").matches;
-  const io = touch ? new IntersectionObserver((es) => es.forEach((e) => {
-    const v = e.target.querySelector("video");
-    if (v) (e.isIntersecting ? v.play().catch(() => {}) : v.pause());
-  }), { threshold: 0.6 }) : null;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches || matchMedia("(hover: none)").matches) return;
   document.querySelectorAll<HTMLElement>(".ll-row").forEach((row) => {
     const v = row.querySelector("video");
     if (!v) return;
-    if (io) return io.observe(row);
     const on = () => void v.play().catch(() => {});
     const off = () => v.pause();
     row.addEventListener("pointerenter", on);
@@ -211,3 +234,7 @@ initI18n();
 onLang(render);
 render();
 
+/* язык и переход в 3D — только у самого верха страницы: ушли вниз дальше 80 px — кнопки прячутся */
+const onScroll = () => document.body.classList.toggle("is-scrolled", window.scrollY > 80);
+window.addEventListener("scroll", onScroll, { passive: true });
+onScroll();
