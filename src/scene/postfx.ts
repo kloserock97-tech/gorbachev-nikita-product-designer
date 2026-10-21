@@ -221,8 +221,8 @@ export function createPostFx(
       uAlt: { value: 0 },
       tIntro: { value: introRT.texture },
       uIntro: { value: 0 },
-      /* v105: ?introfx=tilt|glass|prism|orton — эффект заставки, по умолчанию tilt-shift */
-      uIntroFx: { value: Math.max(0, ["tilt", "glass", "prism", "orton"].indexOf(new URLSearchParams(location.search).get("introfx") ?? "tilt")) },
+      /* v105: ?introfx=tilt|glass|prism|orton — эффект заставки. По умолчанию Ортон — выбор Никиты из четырёх (21.10) */
+      uIntroFx: { value: ((i) => (i < 0 ? 3 : i))(["tilt", "glass", "prism", "orton"].indexOf(new URLSearchParams(location.search).get("introfx") ?? "orton")) },
     },
   });
   const blit = new THREE.ShaderMaterial({

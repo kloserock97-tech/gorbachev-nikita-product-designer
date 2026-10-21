@@ -1348,7 +1348,7 @@ uniform float uTear;       /* v19: нижний край оторванной с
 uniform float uBgBlur;     /* v19: размытие сцены-фона в главе «Кейсы» (само размытие — в четвертном проходе) */
 uniform sampler2D tIntro;  /* v95: расфокус заставки — кадр, размытый двумя четвертными проходами */
 uniform float uIntro;      /* доля размытого кадра, 0 — резко */
-uniform float uIntroFx;    /* v105: эффект заставки — 0 tilt-shift, 1 матовое стекло, 2 призма, 3 Ортон */
+uniform float uIntroFx;    /* v105: эффект заставки — 0 tilt-shift, 1 матовое стекло, 2 призма, 3 Ортон (по умолчанию) */
 uniform sampler2D tShadow; /* v22.1: мягкая тень компьютера, посчитанная на четверти разрешения */
 uniform sampler2D tAlt;    /* v32: второй фон (луг) — для смешивания с холмом на выходе из кейсов */
 uniform float uAlt;        /* 0 — только tScene, 0…1 — доля tAlt */
@@ -1486,7 +1486,7 @@ void main(){
     e = 0.25 * (texture2D(tScene, uv + vec2(-uDown.x, -uDown.y)).rgb + texture2D(tScene, uv + vec2(uDown.x, -uDown.y)).rgb
       + texture2D(tScene, uv + vec2(-uDown.x, uDown.y)).rgb + texture2D(tScene, uv + vec2(uDown.x, uDown.y)).rgb);
   }
-  /* v105: эффект заставки (Никита попросил другой вместо Ортона). k — сила 0…1: заставка держит intro 0,3, «Enter»
+  /* v105: эффект заставки. Никита сравнил четыре и оставил Ортон (postfx.ts, ?introfx=). k — сила 0…1: заставка держит intro 0,3, «Enter»
      сводит его к нулю, и любой эффект уходит вместе с ним */
   if (uIntro > 0.0) {
     float k = clamp(uIntro / 0.51, 0.0, 1.0);
