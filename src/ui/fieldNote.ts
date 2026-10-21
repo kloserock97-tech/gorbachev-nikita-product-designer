@@ -15,6 +15,7 @@ import { bodyHas, onBodyState } from "../lib/bodyState";
 import { pad2 as pad } from "../lib/format";
 import notes, { type Note } from "../data/notes";
 import { caseObject, getCases, type CaseItem } from "../data/cases";
+import { caseCard } from "../data/caseCards";
 import { cue } from "../audio/bus";
 import { onLang, t, type Key } from "../i18n";
 import { noteLogo } from "./noteLogo";
@@ -201,7 +202,7 @@ export function initFieldNote() {
     if (meta) meta.textContent = isCase ? it.c.tag : it.n.meta;
     if (stats) {
       stats.innerHTML = "";
-      const cells: [string, string][] = isCase ? [[it.c.stat.value, it.c.stat.label]] : [1, 2, 3].map((i) => [t(key(it.n.id, `s${i}v`)), t(key(it.n.id, `s${i}l`))]);
+      const cells: [string, string][] = isCase ? (caseCard(it.c.id)?.stats ?? [it.c.stat]).map((s): [string, string] => [s.value, s.label]) : [1, 2, 3].map((i) => [t(key(it.n.id, `s${i}v`)), t(key(it.n.id, `s${i}l`))]);
       for (const [v, l] of cells) {
         const cell = document.createElement("div");
         const dd = document.createElement("dd");
@@ -212,10 +213,11 @@ export function initFieldNote() {
         stats.appendChild(cell);
       }
     }
-    if (glyph) glyph.innerHTML = isCase ? "" : `<svg viewBox="0 0 64 64" aria-hidden="true">${it.n.glyph}</svg>`;
+    const caseGlyph = isCase ? caseCard(it.c.id)?.glyph : undefined;
+    if (glyph) glyph.innerHTML = isCase ? (caseGlyph ? `<svg viewBox="0 0 64 64" aria-hidden="true">${caseGlyph}</svg>` : "") : `<svg viewBox="0 0 64 64" aria-hidden="true">${it.n.glyph}</svg>`;
     if (points) {
       points.innerHTML = "";
-      const texts = isCase ? [it.c.subtitle] : Array.from({ length: it.n.points }, (_, i) => t(key(it.n.id, `p${i + 1}`)));
+      const texts = isCase ? caseCard(it.c.id)?.points ?? [it.c.subtitle] : Array.from({ length: it.n.points }, (_, i) => t(key(it.n.id, `p${i + 1}`)));
       for (const text of texts) {
         const p = document.createElement("p");
         p.textContent = text;
