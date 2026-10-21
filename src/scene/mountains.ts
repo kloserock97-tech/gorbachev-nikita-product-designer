@@ -186,8 +186,8 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
       /* x — доля неба вблизи (ближние склоны), y — плотность воздуха на километр; ?mhaze=0.32,0.095 */
       uHaze: { value: new THREE.Vector2(...((q.get("mhaze") ?? "0.2,0.07").split(",").map(Number) as [number, number])) },
       /* v107 (пример Никиты 22.10): x — доля холодного серо-сиреневого тона в воздухе перед теневыми склонами (горы
-         стоят против солнца, к камере повёрнута тень), y — высота тумана в долинах, м; ?mcool=0.55,420 */
-      uCool: { value: new THREE.Vector2(...((q.get("mcool") ?? "0.55,420").split(",").map(Number) as [number, number])) },
+         стоят против солнца, к камере повёрнута тень), y — высота тумана в долинах, м; ?mcool=0.42,420 */
+      uCool: { value: new THREE.Vector2(...((q.get("mcool") ?? "0.42,420").split(",").map(Number) as [number, number])) },
       tMap: { value: mapRT.texture },
     },
     vertexShader: /* glsl */ `

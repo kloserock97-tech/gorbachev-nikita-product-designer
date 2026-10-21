@@ -735,7 +735,7 @@ vec3 skyBase(vec3 d){
    что у неба за ним, но почти без цвета, чуть тёплый */
 vec3 mistTone(vec3 sky){
   float l = dot(sky, vec3(0.3, 0.59, 0.11));
-  return mix(sky, vec3(l * 1.08) * vec3(1.0, 0.97, 0.93), 0.68);
+  return mix(sky, vec3(l * 1.08) * vec3(1.0, 0.97, 0.93), 0.55);
 }
 `;
 

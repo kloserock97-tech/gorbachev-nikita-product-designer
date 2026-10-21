@@ -140,7 +140,7 @@ export class HillScene {
     uAmbient: { value: 1.0 },
     /* v107 (пример Никиты 22.10): дымка, небо и солнце без персикового налёта — небо сверху холодное серо-голубое, к
        горизонту золотое, дымка светлая нейтральная, свет солнца жёлтый, а не красно-оранжевый */
-    uFogCol: { value: new THREE.Color("#e4ddc8") },
+    uFogCol: { value: new THREE.Color("#e8dcc0") },
     uShadowMap: { value: null as THREE.Texture | null },
     uShadowMatrix: { value: new THREE.Matrix4() },
     uShadowTexel: { value: 1 / 1024 },
@@ -150,7 +150,7 @@ export class HillScene {
     uGrassLook: { value: new THREE.Vector4(...(["gtr", "gsky", "gao"] as const).map((k, i) => { const v = new URLSearchParams(location.search).get(k); return v === null ? [1.4, 0.92, 0.5][i] : Number(v); }).concat(0) as [number, number, number, number]) },
     uHaze: { value: /[?&]haze=0/.test(location.search) ? 0 : 1 },
     /* v80: дымка теплее к солнцу и прохладнее в стороне (shaders.ts, fogTint); ?aerial=0 — прежняя ровная */
-    uSkyHorizon: { value: new THREE.Color("#f0cc94") },
+    uSkyHorizon: { value: new THREE.Color("#f2c98a") },
     uAerial: { value: /[?&]aerial=0/.test(location.search) ? new THREE.Vector2(0, 0) : new THREE.Vector2(0.5, 1) },
     /* v72: насколько дальше обычного стоит камера (телефон) — на столько же отодвигается дымка */
     uFogShift: { value: 0 },
@@ -375,14 +375,14 @@ export class HillScene {
       uniforms: {
         uZenith: { value: new THREE.Color("#9eb0bf") },
         uHigh: { value: new THREE.Color("#bcc6c8") },
-        uMid: { value: new THREE.Color("#eee3c6") },
+        uMid: { value: new THREE.Color("#efe1bf") },
         uHorizon: this.uniforms.uSkyHorizon,
-        uGlow: { value: new THREE.Color("#ffbe5c") },
+        uGlow: { value: new THREE.Color("#ffb956") },
         uSunDir: this.uniforms.uSunDir,
         uSunCol: { value: new THREE.Color(1.6, 1.15, 0.7) },
         uSunDisc: { value: 6 },
         /* v80: широкое свечение неба вокруг солнца (shaders.ts, skyMie); ?mie=0 — без него */
-        uMie: { value: /[?&]mie=0/.test(location.search) ? 0 : 0.6 },
+        uMie: { value: /[?&]mie=0/.test(location.search) ? 0 : 0.8 },
         /* v96, ?next=1: облака в небе (shaders.ts, skyClouds) — тот же сдвиг и покрытие, что у теней облаков на траве */
         uCloud: this.uniforms.uCloud,
         /* облака — только в сменяемой погоде (облака, дождь, сумерки), в ясную на первом экране их нет (Никита 20.10);
@@ -1013,7 +1013,7 @@ export class HillScene {
         this.scene.environmentIntensity = 0.7;
         h.sh.coefficients.forEach((c, i) => this.uniforms.uSH.value[i].copy(c));
         /* v107: цвет солнца из HDRI почти красный (2,4 / 0,83 / 0,05) — луг и дымка уходили в персик. Свет жёлто-золотой */
-        this.uniforms.uSunCol.value.copy(h.sunColor).multiplyScalar(2.4).lerp(SUN_GOLD, 0.85);
+        this.uniforms.uSunCol.value.copy(h.sunColor).multiplyScalar(2.4).lerp(SUN_GOLD, 0.65);
         this.weather.setLightBase(this.uniforms.uSunCol.value, 0.38);
         /* ?bg=hdri — посмотреть на саму HDRI вместо нарисованного неба */
         if (/[?&]bg=hdri/.test(location.search)) {
@@ -2020,8 +2020,10 @@ export class HillScene {
        компьютером и деревом; кресло в правой половине, дерево режет правая кромка. Ниже гребня камера смотрела в склон
        снизу вверх — дали не было видно, а трава с расстояния 1,7 казалась лысой. Подбор: ?camd ?mcx ?mcy ?mtx ?mty */
     const mob = (k: string, d: number) => Number(q.get(k) ?? d);
-    const camMax = mob("camd", 1.45);
-    this.camDistance = aspect < 1 ? Math.min(camMax, 1 + (1 - aspect) * 1.6) : 1;
+    /* v108 (Никита): камера ещё дальше — с 1,45 у нижнего края травинки стояли редко и сквозь них виднелась земля;
+       с расстояния 2 холм читается сплошным лугом */
+    const camMax = mob("camd", 2);
+    this.camDistance = aspect < 1 ? Math.min(camMax, 1 + (1 - aspect) * mob("mcf", 3)) : 1;
     /* v72: на вертикальном экране камера отъезжает на ~6 м, и дымка по расстоянию (airFog) густела на весь
        склон — цвет на телефоне был блёклым, серо-оливковым. Дымку сдвигаем на величину отъезда: склон в том же
        воздухе, что на широком экране, дальний план — по-прежнему в дымке */
@@ -2035,7 +2037,7 @@ export class HillScene {
     CAMERA_REST_OFF.y = -0.3 + mob("mcy", 1.5) * (1 - panK);
     CAMERA_TARGET.x = 0.2 + (CAMERA_PAN.y - 0.2) * panK;
     CAMERA_TARGET.x += mob("mtx", -1) * (1 - panK);
-    CAMERA_TARGET.y = 3.2 + mob("mty", -0.4) * (1 - panK);
+    CAMERA_TARGET.y = 3.2 + mob("mty", -0.15) * (1 - panK);
     /* отъезд первого экрана — композиция широкого кадра: на телефоне камера и так дальше, а текст встаёт по кроне */
     HERO_PULL_OFF.copy(HERO_PULL_DIR).multiplyScalar(HERO_PULL * panK);
     /* Поворот телефона или сужение окна отодвигает камеру — передний склон, посаженный под

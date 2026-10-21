@@ -88,6 +88,13 @@
    (5× к 2× по сетке правил). Знак — 4 модуля в высоту */
 .cs-hero-brand { position: absolute; top: 0; left: 0; display: flex; align-items: center; gap: 14px; margin: 0; font-size: clamp(20px, 1.8vw, 28px); font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
 .cs-hero-brand .cs-brand { height: clamp(40px, 3.6vw, 56px); width: auto; margin: 0; border-radius: 22%; }
+/* v107: на телефоне рядом с широким знаком (Сбер) название переносилось на три строки и наезжало на строку о продукте —
+   знак с названием встаёт в поток колонки, название при нехватке места уходит под знак одной строкой */
+@media (max-width: 600px) {
+  .cs-hero-text { padding-top: 0; }
+  .cs-hero-brand { position: relative; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 16px; }
+  .cs-hero-brand span { white-space: nowrap; }
+}
 .cs-kicker { color: var(--faint); font-weight: 500; font-size: clamp(14px, 1.15vw, 17px); }
 .cs-hero h1 { margin-top: 16px; font-size: clamp(44px, 6vw, 96px); font-weight: 700; line-height: 1; letter-spacing: -0.035em; text-wrap: balance; }
 body.lang-ru .cs-hero h1 { line-height: 1.05; letter-spacing: -0.024em; }

@@ -136,7 +136,7 @@ export function createPostFx(
   /* ?tone=neutral|agx|punchy — сравнение тонмапперов; по умолчанию Neutral */
   const toneMode = ({ neutral: 0, agx: 1, punchy: 2 } as Record<string, number>)[q.get("tone") ?? ""] ?? 0;
   const params = {
-    rays: 0.12, // v107: 0,32 заливали кадр персиковой пеленой, дерево тонуло
+    rays: 0.17, // v107: 0,32 заливали кадр персиковой пеленой, дерево тонуло; 0,12 — Никите мало цвета
     raysEnabled: true,
     bgCheap: false,
     portal: 0,
@@ -145,7 +145,7 @@ export function createPostFx(
     /* выбрано сравнением кадров: Neutral + vibrance 0.35 + контраст 1.12 держит тёплое
        небо референса и наливает траву; AgX/Punchy серили небо */
     /* v6: трава ушла в реалистичный оливковый — насыщенность вернули почти к нейтрали */
-    vibrance: q.has("vib") ? Number(q.get("vib")) : 0.3,
+    vibrance: q.has("vib") ? Number(q.get("vib")) : 0.34,
     contrast: q.has("con") ? Number(q.get("con")) : 1.1,
     focus: q.get("focus") === "0" ? 0 : 1,
     /* интро: холодный грейд «камеры наблюдения», глитч и провал в темноту */
