@@ -20,8 +20,6 @@ import { createTree } from "./tree";
 import { createRocks, rockFootprints } from "./rocks";
 import {
   TRAIL_SLOTS,
-  ghostFragment,
-  ghostVertex,
   plantFragment,
   plantVertex,
   wispFragment,
@@ -223,7 +221,6 @@ export class HillScene {
     this.buildVista();
     this.buildTree();
     if (!/[?&]rocks=0/.test(location.search)) this.scene.add(createRocks(this.uniforms));
-    this.buildGhost();
     this.buildGround();
     this.buildGrass();
     this.buildPollen();
@@ -439,38 +436,6 @@ export class HillScene {
     const k = Math.min(1, Math.max(0, (this.camera.aspect - 0.6) / 0.7));
     const x = 2.8 + (0.95 - 2.8) * k, z = -5.2 + (-2.7 + 5.2) * k;
     this.tree.place(x, heightAt(x, z) - 0.05, z, 0.85 - 0.07 * k);
-  }
-
-  /* «SYLVA» у оригинала — огромное полупрозрачное слово за сценой; у нас оно
-     стоит в воздухе за холмом, и гребень его частично закрывает */
-  private buildGhost() {
-    const c = document.createElement("canvas");
-    c.width = 2048; c.height = 512;
-    const g = c.getContext("2d")!;
-    g.fillStyle = "#fff";
-    g.font = "400 430px Onest, 'Segoe UI', sans-serif";
-    g.textAlign = "center";
-    g.textBaseline = "alphabetic";
-    const draw = () => {
-      g.clearRect(0, 0, c.width, c.height);
-      (g as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = "40px";
-      g.fillText("NIKITA", c.width / 2, 470);
-      tex.needsUpdate = true;
-    };
-    const tex = new THREE.CanvasTexture(c);
-    draw();
-    document.fonts?.load("400 430px Onest").then(draw).catch(() => {});
-    const mat = new THREE.ShaderMaterial({
-      vertexShader: ghostVertex,
-      fragmentShader: ghostFragment,
-      transparent: true,
-      depthWrite: false,
-      uniforms: { uMap: { value: tex }, uColor: { value: new THREE.Color("#5d5a45") }, uOpacity: { value: 0.05 } },
-    });
-    const plane = new THREE.Mesh(new THREE.PlaneGeometry(18, 4.5), mat);
-    plane.position.set(0, 3.2, -16);
-    plane.renderOrder = -5;
-    this.scene.add(plane);
   }
 
   private buildGround() {

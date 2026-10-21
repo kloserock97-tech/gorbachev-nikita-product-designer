@@ -1217,26 +1217,6 @@ void main(){
 }
 `;
 
-/* надпись-призрак за холмом (как «SYLVA» в оригинале, только в глубине сцены) */
-export const ghostVertex = /* glsl */ `
-varying vec2 vUv;
-void main(){
-  vUv = uv;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-}
-`;
-export const ghostFragment = /* glsl */ `
-uniform sampler2D uMap;
-uniform vec3 uColor;
-uniform float uOpacity;
-varying vec2 vUv;
-void main(){
-  float a = texture2D(uMap, vUv).r * uOpacity;
-  if (a < 0.002) discard;
-  gl_FragColor = vec4(uColor, a);
-}
-`;
-
 /* ---------------- постобработка ---------------- */
 
 export const fullscreenVertex = /* glsl */ `

@@ -179,7 +179,10 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
       /* высота хребта в седловине под солнцем, доля от полной; ?msad= */
       uSaddle: { value: Number(q.get("msad") ?? 0.1) },
       /* высота предгорий под солнцем, м (до уменьшения в SCALE); ?mfoot= */
-      uFoot: { value: Number(q.get("mfoot") ?? 500) },
+      uFoot: { value: Number(q.get("mfoot") ?? 1100) },
+      /* горы отодвинуты дальше, чем лежит их рельеф, м: Никита попросил их подальше (меньше и в дымке). Дальний край
+         (FAR + uPush)·SCALE + |PUSH_Z| должен остаться ближе дальней плоскости камеры (400 м); ?mpush=<км> */
+      uPush: { value: Math.min(4, Number(q.get("mpush") ?? 3.5)) * 1000 },
       /* x — доля неба вблизи (ближние склоны), y — плотность воздуха на километр; ?mhaze=0.32,0.095 */
       uHaze: { value: new THREE.Vector2(...((q.get("mhaze") ?? "0.32,0.095").split(",").map(Number) as [number, number])) },
       tMap: { value: mapRT.texture },
@@ -189,6 +192,7 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
       uniform float uReady;
       uniform float uSaddle;
       uniform float uFoot;
+      uniform float uPush;
       uniform vec3 uSunDir;
       uniform sampler2D tMap;
       varying vec3 vReal;
@@ -211,6 +215,7 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
         float foot = uFoot * (0.8 + 0.14 * sin(u * 0.0019 + 1.3) + 0.08 * sin(u * 0.0053 + 0.4) + 0.04 * sin(u * 0.013))
           * smoothstep(3300.0, 5200.0, d) * (1.0 - smoothstep(6800.0, 9000.0, d));
         p.y = max(p.y, foot * (1.0 - smoothstep(0.22, 0.5, off)));
+        p.z -= uPush;
         vReal = p;
         vWorld = (modelMatrix * vec4(p, 1.0)).xyz;
         gl_Position = uReady > 0.5 ? projectionMatrix * modelViewMatrix * vec4(p, 1.0) : vec4(2.0, 2.0, 2.0, 1.0);
