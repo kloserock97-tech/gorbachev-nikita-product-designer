@@ -62,6 +62,7 @@ function groundOccluders() {
 }
 
 const SUN_DIR = new THREE.Vector3(-0.08, 0.04, -1).normalize();
+const SUN_GOLD = new THREE.Color(2.4, 1.2, 0.4);
 const SHADOW_DIR = new THREE.Vector3(0.25, 1.0, -0.55).normalize();
 
 /* v10: камера на 1.8 м дальше (было z 10.8) — ближняя трава мельче и спокойнее */
@@ -137,7 +138,9 @@ export class HillScene {
     uSunCol: { value: new THREE.Color(2.4, 1.55, 0.85) },
     uSH: { value: Array.from({ length: 9 }, () => new THREE.Vector3(0.3, 0.32, 0.34)) },
     uAmbient: { value: 1.0 },
-    uFogCol: { value: new THREE.Color("#eedcb8") },
+    /* v107 (пример Никиты 22.10): дымка, небо и солнце без персикового налёта — небо сверху холодное серо-голубое, к
+       горизонту золотое, дымка светлая нейтральная, свет солнца жёлтый, а не красно-оранжевый */
+    uFogCol: { value: new THREE.Color("#e4ddc8") },
     uShadowMap: { value: null as THREE.Texture | null },
     uShadowMatrix: { value: new THREE.Matrix4() },
     uShadowTexel: { value: 1 / 1024 },
@@ -147,8 +150,8 @@ export class HillScene {
     uGrassLook: { value: new THREE.Vector4(...(["gtr", "gsky", "gao"] as const).map((k, i) => { const v = new URLSearchParams(location.search).get(k); return v === null ? [1.4, 0.92, 0.5][i] : Number(v); }).concat(0) as [number, number, number, number]) },
     uHaze: { value: /[?&]haze=0/.test(location.search) ? 0 : 1 },
     /* v80: дымка теплее к солнцу и прохладнее в стороне (shaders.ts, fogTint); ?aerial=0 — прежняя ровная */
-    uSkyHorizon: { value: new THREE.Color("#f4d49a") },
-    uAerial: { value: /[?&]aerial=0/.test(location.search) ? new THREE.Vector2(0, 0) : new THREE.Vector2(1, 1) },
+    uSkyHorizon: { value: new THREE.Color("#f0cc94") },
+    uAerial: { value: /[?&]aerial=0/.test(location.search) ? new THREE.Vector2(0, 0) : new THREE.Vector2(0.5, 1) },
     /* v72: насколько дальше обычного стоит камера (телефон) — на столько же отодвигается дымка */
     uFogShift: { value: 0 },
     /* v72: во сколько раз шире травинки, когда их меньше (ступени качества) — покрытие дёрна то же */
@@ -370,16 +373,16 @@ export class HillScene {
       side: THREE.BackSide,
       depthWrite: false,
       uniforms: {
-        uZenith: { value: new THREE.Color("#b3c1c8") },
-        uHigh: { value: new THREE.Color("#d8ddd8") },
-        uMid: { value: new THREE.Color("#efebdd") },
+        uZenith: { value: new THREE.Color("#9eb0bf") },
+        uHigh: { value: new THREE.Color("#bcc6c8") },
+        uMid: { value: new THREE.Color("#eee3c6") },
         uHorizon: this.uniforms.uSkyHorizon,
-        uGlow: { value: new THREE.Color("#f7c27e") },
+        uGlow: { value: new THREE.Color("#ffbe5c") },
         uSunDir: this.uniforms.uSunDir,
         uSunCol: { value: new THREE.Color(1.6, 1.15, 0.7) },
         uSunDisc: { value: 6 },
         /* v80: широкое свечение неба вокруг солнца (shaders.ts, skyMie); ?mie=0 — без него */
-        uMie: { value: /[?&]mie=0/.test(location.search) ? 0 : 1 },
+        uMie: { value: /[?&]mie=0/.test(location.search) ? 0 : 0.6 },
         /* v96, ?next=1: облака в небе (shaders.ts, skyClouds) — тот же сдвиг и покрытие, что у теней облаков на траве */
         uCloud: this.uniforms.uCloud,
         /* облака — только в сменяемой погоде (облака, дождь, сумерки), в ясную на первом экране их нет (Никита 20.10);
@@ -1009,7 +1012,8 @@ export class HillScene {
         this.scene.environmentRotation.y = h.yaw;
         this.scene.environmentIntensity = 0.7;
         h.sh.coefficients.forEach((c, i) => this.uniforms.uSH.value[i].copy(c));
-        this.uniforms.uSunCol.value.copy(h.sunColor).multiplyScalar(2.4);
+        /* v107: цвет солнца из HDRI почти красный (2,4 / 0,83 / 0,05) — луг и дымка уходили в персик. Свет жёлто-золотой */
+        this.uniforms.uSunCol.value.copy(h.sunColor).multiplyScalar(2.4).lerp(SUN_GOLD, 0.85);
         this.weather.setLightBase(this.uniforms.uSunCol.value, 0.38);
         /* ?bg=hdri — посмотреть на саму HDRI вместо нарисованного неба */
         if (/[?&]bg=hdri/.test(location.search)) {
@@ -1248,6 +1252,7 @@ export class HillScene {
   private storyTarget = 0;
   private storyS = 0;
   private storyApplied = -1;
+  private storyRight = new THREE.Vector3();
   private storyEnd: Pose = { pos: new THREE.Vector3(), yaw: 0, pitch: 0, roll: 0 };
   private storyPose: Pose = { pos: new THREE.Vector3(), yaw: 0, pitch: 0, roll: 0 };
   private coolWB = new THREE.Vector3(0.86, 0.95, 1.12);
@@ -1460,11 +1465,15 @@ export class HillScene {
       const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2);
       const size = this.storyTmp3.copy(this.pcLocalBox.max).sub(this.pcLocalBox.min).multiply(this.pc.scale);
       const fitH = (size.y * c.height) / (2 * tanH * (slot.bottom - slot.top));
-      const fitW = size.x / (2 * tanH * this.camera.aspect * 0.8);
+      /* v107: компьютер не шире 64 % кадра и сдвинут влево — справа от него место под подпись «а это Келли»
+         (раньше она висела над компьютером и на невысоком телефоне налезала на абзац) */
+      const fitW = size.x / (2 * tanH * this.camera.aspect * 0.64);
       /* ближняя грань ближе центра и выглядит крупнее — запас 12 % */
       /* v74.2: ещё 14 процентов — воздух между компьютером и абзацами над и под ним */
-      dist = Math.min(7, Math.max(1.5, Math.max(fitH, fitW) * 1.12 * 1.14));
+      dist = Math.min(7, Math.max(1.5, Math.max(fitH, fitW) * 1.12 * 1.06));
       e.pos.copy(this.storyEndCam).addScaledVector(fwd, dist);
+      const right = this.storyRight.crossVectors(fwd, THREE.Object3D.DEFAULT_UP).normalize();
+      e.pos.addScaledVector(right, -0.13 * 2 * dist * tanH * this.camera.aspect);
       const mid = (slot.top + slot.bottom) / 2 - c.top;
       e.pos.y += (0.5 - mid / c.height) * 2 * dist * tanH;
       e.pos.y -= ((this.pcLocalBox.min.y + this.pcLocalBox.max.y) / 2) * this.pc.scale.y;
@@ -2006,7 +2015,12 @@ export class HillScene {
        четверть крупнее, а травинок в кадре меньше — кадр дешевле. Текстовый блок встаёт по кроне сам (mobileCopy) */
     /* v106 (Никита): на телефоне холм стоял слишком близко — камера отъезжает дальше (было не больше 1,25), кресло с
        компьютером мельче, зато виден весь холм с деревом и закатом. ?camd= — подобрать предел */
-    const camMax = Number(new URLSearchParams(location.search).get("camd") ?? 1.7);
+    const q = new URLSearchParams(location.search);
+    /* v107: кадр телефона по картинке Никиты: камера выше гребня — за креслом горизонт, горы и море тумана, солнце между
+       компьютером и деревом; кресло в правой половине, дерево режет правая кромка. Ниже гребня камера смотрела в склон
+       снизу вверх — дали не было видно, а трава с расстояния 1,7 казалась лысой. Подбор: ?camd ?mcx ?mcy ?mtx ?mty */
+    const mob = (k: string, d: number) => Number(q.get(k) ?? d);
+    const camMax = mob("camd", 1.45);
     this.camDistance = aspect < 1 ? Math.min(camMax, 1 + (1 - aspect) * 1.6) : 1;
     /* v72: на вертикальном экране камера отъезжает на ~6 м, и дымка по расстоянию (airFog) густела на весь
        склон — цвет на телефоне был блёклым, серо-оливковым. Дымку сдвигаем на величину отъезда: склон в том же
@@ -2017,8 +2031,11 @@ export class HillScene {
        правую кромку. Поэтому на телефоне кадр остаётся прежним, центральным, а к широкому экрану
        разворот набирается плавно: композиция по золотому сечению — про широкий кадр. */
     const panK = Math.min(1, Math.max(0, (aspect - 0.6) / 0.7));
-    CAMERA_REST_OFF.x = 0.6 + (CAMERA_PAN.x - 0.6) * panK;
+    CAMERA_REST_OFF.x = 0.6 + (CAMERA_PAN.x - 0.6) * panK + mob("mcx", 1.5) * (1 - panK);
+    CAMERA_REST_OFF.y = -0.3 + mob("mcy", 1.5) * (1 - panK);
     CAMERA_TARGET.x = 0.2 + (CAMERA_PAN.y - 0.2) * panK;
+    CAMERA_TARGET.x += mob("mtx", -1) * (1 - panK);
+    CAMERA_TARGET.y = 3.2 + mob("mty", -0.4) * (1 - panK);
     /* отъезд первого экрана — композиция широкого кадра: на телефоне камера и так дальше, а текст встаёт по кроне */
     HERO_PULL_OFF.copy(HERO_PULL_DIR).multiplyScalar(HERO_PULL * panK);
     /* Поворот телефона или сужение окна отодвигает камеру — передний склон, посаженный под

@@ -721,7 +721,8 @@ vec3 skyMie(vec3 d){
 }
 vec3 skyBase(vec3 d){
   float e = d.y;
-  vec3 c = mix(uHorizon, uMid, smoothstep(-0.02, 0.17, e));
+  /* v107: золотая полоса горизонта уже (было до 0,17) — выше неё светлое кремовое небо, как в примере */
+  vec3 c = mix(uHorizon, uMid, smoothstep(-0.02, 0.12, e));
   c = mix(c, uHigh, smoothstep(0.13, 0.40, e));
   c = mix(c, uZenith, smoothstep(0.34, 0.90, e));
 
@@ -729,6 +730,12 @@ vec3 skyBase(vec3 d){
   vec3 sd = normalize(vec3(uSunDir.x, 0.0, uSunDir.z));
   float toward = max(dot(normalize(vec3(d.x, 0.0, d.z)), sd), 0.0);
   return mix(c, uGlow, pow(toward, 4.0) * (1.0 - smoothstep(-0.05, 0.25, e)) * 0.6);
+}
+/* v107 (пример Никиты 22.10): туман в низинах — светлое облачное море, а не цвет оранжевого горизонта: та же яркость,
+   что у неба за ним, но почти без цвета, чуть тёплый */
+vec3 mistTone(vec3 sky){
+  float l = dot(sky, vec3(0.3, 0.59, 0.11));
+  return mix(sky, vec3(l * 1.08) * vec3(1.0, 0.97, 0.93), 0.68);
 }
 `;
 
@@ -785,6 +792,8 @@ void main(){
   vec3 d = normalize(vDir);
   vec4 cl = skyClouds(d, skyBase(d));
   vec3 c = cl.rgb;
+  /* v107: ниже горизонта, в щели между равниной и подножием гор, — то же облачное море, а не оранжевая полоса */
+  c = mix(c, mistTone(c), smoothstep(0.0, -0.025, d.y));
 
   /* диск и ореол солнца; облако закрывает диск */
   float cosA = max(dot(d, uSunDir), 0.0);
@@ -829,7 +838,8 @@ void main(){
   vec3 up = max(vec3(0.0), uSH[0] * 0.886227 + uSH[1] * 1.023328) * uAmbient;
   vec3 soil = vec3(0.045, 0.062, 0.018) * up * 0.6;
   /* у края земли — её же дымка, к первой гряде — цвет неба, как в тумане у её подножия */
-  vec3 fogc = mix(uSkyHorizon, sky, smoothstep(24.0, 40.0, dist));
+  /* v107: равнина вокруг холма — облачное море в цвете тумана гор (mistTone), без оранжевой полосы у подножия */
+  vec3 fogc = mix(mix(uSkyHorizon, mistTone(sky), 0.9), mistTone(sky), smoothstep(24.0, 40.0, dist));
   /* к первой гряде дымка густеет до конца: у её подножия равнина — ровно цвет неба, как и сама гряда там */
   float fog = clamp(0.76 + 0.24 * smoothstep(22.0, 43.0, dist), 0.0, 1.0);
   gl_FragColor = vec4(mix(soil, fogc, fog), 1.0);
@@ -939,7 +949,7 @@ void main(){
   /* v80: у самого подножия гряда целиком тонет в дымке — там она сходится с равниной (plainFragment) одним цветом,
      без ровной границы; выше темнеет плавно, на высоту слоя тумана */
   float air = clamp(uAerial + (1.0 - uAerial) * mist, 0.0, 1.0);
-  gl_FragColor = vec4(mix(c, sky, air), cov);
+  gl_FragColor = vec4(mix(c, mix(sky, mistTone(sky), mist), air), cov);
 }
 `;
 

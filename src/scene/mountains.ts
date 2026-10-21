@@ -184,7 +184,10 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
          (FAR + uPush)·SCALE + |PUSH_Z| должен остаться ближе дальней плоскости камеры (400 м); ?mpush=<км> */
       uPush: { value: Math.min(4, Number(q.get("mpush") ?? 3.5)) * 1000 },
       /* x — доля неба вблизи (ближние склоны), y — плотность воздуха на километр; ?mhaze=0.32,0.095 */
-      uHaze: { value: new THREE.Vector2(...((q.get("mhaze") ?? "0.32,0.095").split(",").map(Number) as [number, number])) },
+      uHaze: { value: new THREE.Vector2(...((q.get("mhaze") ?? "0.2,0.07").split(",").map(Number) as [number, number])) },
+      /* v107 (пример Никиты 22.10): x — доля холодного серо-сиреневого тона в воздухе перед теневыми склонами (горы
+         стоят против солнца, к камере повёрнута тень), y — высота тумана в долинах, м; ?mcool=0.55,420 */
+      uCool: { value: new THREE.Vector2(...((q.get("mcool") ?? "0.55,420").split(",").map(Number) as [number, number])) },
       tMap: { value: mapRT.texture },
     },
     vertexShader: /* glsl */ `
@@ -225,6 +228,7 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
       uniform sampler2D tMap;
       uniform float uScale;
       uniform vec2 uHaze;
+      uniform vec2 uCool;
       varying vec3 vReal;
       varying vec3 vWorld;
       varying vec2 vMap;
@@ -250,7 +254,7 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
         vec3 V = vWorld - cameraPosition;
         vec3 vd = normalize(V);
         float ao = clamp(0.75 + cav * 0.8, 0.35, 1.0);
-        vec3 amb = mix(uHorizon, uZenith, 0.5 + 0.5 * n.y) * 0.6;
+        vec3 amb = mix(uHorizon, uZenith, 0.7 + 0.3 * n.y) * 0.6;
         float wrap = max((dot(n, uSunDir) + 0.2) / 1.2, 0.0);
         vec3 col = alb * (uSunCol * wrap * 0.5 + amb * ao);
 
@@ -260,9 +264,17 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
         sky += uSunCol * (pow(cosA, 90.0) * 0.3 + pow(cosA, 12.0) * 0.06) + skyMie(vd);
         float km = length(V) / uScale * 0.001;
         float air = uHaze.x + (1.0 - uHaze.x) * (1.0 - exp(-km * uHaze.y));
-        /* подножие тонет в дымке долины — без ровной границы с грядами */
-        air = max(air, smoothstep(260.0, 0.0, h) * 0.85);
-        gl_FragColor = vec4(mix(col, sky, clamp(air, 0.0, 1.0)), 1.0);
+        /* v107: воздух перед теневой стороной холоднее неба за ней — серо-сиреневый, а не оранжевый; к солнцу тёплый.
+           Так дальние хребты ложатся слоями, каждый светлее предыдущего, как в примере */
+        float lum = dot(sky, vec3(0.3, 0.59, 0.11));
+        vec3 airCol = mix(sky, vec3(lum) * vec3(0.95, 0.93, 1.0), uCool.x * (1.0 - pow(cosA, 6.0)));
+        vec3 c = mix(col, airCol, clamp(air, 0.0, 1.0));
+        /* туман в долинах: всё ниже uCool.y заливает светлое облачное море с неровным верхом */
+        float top = uCool.y * (0.8 + 0.4 * fbm(p * 0.0016));
+        float mist = smoothstep(top + 140.0, top - 80.0, h);
+        vec3 mistCol = mistTone(sky) + uSunCol * pow(cosA, 8.0) * 0.12;
+        c = mix(c, mistCol, mist * 0.92);
+        gl_FragColor = vec4(c, 1.0);
       }
     `,
   });
