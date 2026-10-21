@@ -16,7 +16,7 @@ import { PILLAR, buildPillar, fontsReady, paintFace, type Pillar } from "./signp
 
 const SCALE = 1.45;
 const GLOW = 2.4;
-const RISE = 1.15; // с — вырасти или уйти в землю
+const RISE = 0.8; // с — вырасти или уйти в землю (v106: было 1,15 — переход между кейсами быстрее)
 
 type Ground = (x: number, z: number) => number;
 type HeightUniforms = Record<"uHeight" | "uCenter" | "uSize" | "uTexel", THREE.IUniform>;
@@ -183,6 +183,51 @@ export function createSignpost3d(o: { shadows: boolean; heightGLSL: string; U: H
   };
   onLang(() => slots.forEach((s) => void paint(s)));
 
+  /* v106 (Никита): пунктирная тропинка от столба к столбу — неяркие точки над травой. Проступают по ходу камеры и
+     остаются за последними кейсами: виден пройденный путь. Точки — спрайты с мягким краем, без глубины в запись */
+  const TRAIL_SEGS = 5, DOT_STEP = 0.5, DOT_LIFT = 0.8, TRAIL_MAX = 700;
+  const trailPos = new Float32Array(TRAIL_MAX * 3);
+  const trailGeo = new THREE.BufferGeometry();
+  trailGeo.setAttribute("position", new THREE.BufferAttribute(trailPos, 3).setUsage(THREE.DynamicDrawUsage));
+  trailGeo.setDrawRange(0, 0);
+  const dotTex = (() => {
+    const c = document.createElement("canvas");
+    c.width = c.height = 32;
+    const g = c.getContext("2d")!;
+    const r = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+    r.addColorStop(0, "rgba(255,255,255,1)"); r.addColorStop(0.45, "rgba(255,255,255,0.85)"); r.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = r; g.fillRect(0, 0, 32, 32);
+    return new THREE.CanvasTexture(c);
+  })();
+  const trailMat = new THREE.PointsMaterial({ size: 0.15, sizeAttenuation: true, map: dotTex, color: "#fff2d6", transparent: true, opacity: 0.55, depthWrite: false });
+  const trail = new THREE.Points(trailGeo, trailMat);
+  trail.frustumCulled = false;
+  root.add(trail);
+  /* отрезок: от прежнего столба к новому, лёгкой дугой вбок, как протоптанная тропа */
+  const segs: { a: THREE.Vector3; b: THREE.Vector3; c: THREE.Vector3; live: boolean }[] = [];
+  const bez = (s: (typeof segs)[number], t: number, out: THREE.Vector3) => {
+    const m = 1 - t;
+    return out.set(m * m * s.a.x + 2 * m * t * s.c.x + t * t * s.b.x, 0, m * m * s.a.z + 2 * m * t * s.c.z + t * t * s.b.z);
+  };
+  const drawTrail = (ground: Ground, reveal: number) => {
+    let n = 0;
+    const p = new THREE.Vector3();
+    for (const s of segs) {
+      const len = s.a.distanceTo(s.b);
+      const count = Math.max(2, Math.floor(len / DOT_STEP));
+      /* у самих столбов точек нет — тропа начинается и кончается в паре метров от них */
+      for (let j = 2; j < count - 1 && n < TRAIL_MAX; j++) {
+        const t = j / count;
+        if (s.live && t > reveal) break;
+        bez(s, t, p);
+        trailPos[n * 3] = p.x; trailPos[n * 3 + 1] = ground(p.x, p.z) + DOT_LIFT; trailPos[n * 3 + 2] = p.z;
+        n++;
+      }
+    }
+    trailGeo.setDrawRange(0, n);
+    trailGeo.attributes.position.needsUpdate = true;
+  };
+
   let active: Slot | null = null;
   const tmpV = new THREE.Vector3();
 
@@ -225,8 +270,9 @@ export function createSignpost3d(o: { shadows: boolean; heightGLSL: string; U: H
     const fx = fwd.x, fz = fwd.z;
     const base = active ? active.pos : camera.position;
     side = -side;
-    const along = active ? 40 + Math.random() * 15 : 26;
-    const lateral = active ? side * (9 + Math.random() * 6) : -3;
+    /* v106: следующий столб ближе (было 40–55 м) — короткая прогулка по лугу, а не перелёт */
+    const along = active ? 22 + Math.random() * 8 : 26;
+    const lateral = active ? side * (5 + Math.random() * 4) : -3;
     if (!settle(base.x + fx * along - fz * lateral, base.z + fz * along + fx * lateral, ground, sea, s.pos)) return;
     /* полёт: из текущей позы камеры к точке обзора нового столба */
     travel.from.copy(lastCam ?? camera.position);
@@ -235,8 +281,9 @@ export function createSignpost3d(o: { shadows: boolean; heightGLSL: string; U: H
     const far = travel.dir.length();
     travel.dir.normalize();
     travel.start = now;
-    travel.dur = THREE.MathUtils.clamp(far / 9, 3.6, 7);
-    travel.arc = THREE.MathUtils.clamp(far * 0.06, 1, 4);
+    /* v106: быстрее (было far/9, 3,6–7 с) и низом: на полпути камера опускается к траве, как шаг по лугу, а не дуга */
+    travel.dur = THREE.MathUtils.clamp(far / 12, 1.8, 3);
+    travel.arc = -THREE.MathUtils.clamp(far * 0.05, 0.8, 1.6);
     travel.on = true;
     /* лицом к точке, где встанет камера, вполоборота — видна боковая грань с пазом */
     const vx = s.pos.x - travel.dir.x * VIEW, vz = s.pos.z - travel.dir.z * VIEW;
@@ -245,7 +292,16 @@ export function createSignpost3d(o: { shadows: boolean; heightGLSL: string; U: H
     s.k = 0;
     s.dir = 1;
     void paint(s);
-    if (active) active.dir = -1;
+    if (active) {
+      active.dir = -1;
+      /* тропинка от прежнего столба к новому: дуга вбок на четверть длины */
+      const a = active.pos.clone(), b = s.pos.clone();
+      const mid = a.clone().lerp(b, 0.5), dx = b.x - a.x, dz = b.z - a.z;
+      const c = mid.add(new THREE.Vector3(-dz, 0, dx).multiplyScalar(0.18 * side));
+      segs.forEach((x) => (x.live = false));
+      segs.push({ a, b, c, live: true });
+      if (segs.length > TRAIL_SEGS) segs.shift();
+    }
     active = s;
   };
 
@@ -273,8 +329,8 @@ export function createSignpost3d(o: { shadows: boolean; heightGLSL: string; U: H
         THREE.MathUtils.lerp(travel.from.y, ty, e) + Math.sin(Math.PI * u) * travel.arc,
         THREE.MathUtils.lerp(travel.from.z, tz, e),
       );
-      /* не ниже земли по дороге */
-      pos.y = Math.max(pos.y, ground(pos.x, pos.z) + 3.2);
+      /* не ниже земли по дороге: в середине прогулки камера идёт над самой травой */
+      pos.y = Math.max(pos.y, ground(pos.x, pos.z) + 2.3);
       const lk = smoother(Math.min(1, u * 1.3));
       look.set(
         THREE.MathUtils.lerp(travel.fromLook.x, P.x + rx * lx, lk),
@@ -292,8 +348,10 @@ export function createSignpost3d(o: { shadows: boolean; heightGLSL: string; U: H
     update(dt: number, now: number, i: number, on: boolean, camera: THREE.Camera, look: THREE.Vector3, ground: Ground, sea: number) {
       lastCam = (lastCam ?? new THREE.Vector3()).copy(camera.position);
       lastLook = (lastLook ?? new THREE.Vector3()).copy(look);
-      if (!on || i < 0) { if (active) { active.dir = -1; active = null; travel.on = false; } }
+      if (!on || i < 0) { if (active) { active.dir = -1; active = null; travel.on = false; } segs.length = 0; }
       else if (!active || active.caseIdx !== i) spawn(i, camera, ground, sea, now);
+      /* тропинка проступает вслед за камерой: последний отрезок — до той доли, что пройдена */
+      drawTrail(ground, travel.on ? THREE.MathUtils.clamp((now - travel.start) / travel.dur, 0, 1) : 1);
       for (const s of slots) {
         s.k = THREE.MathUtils.clamp(s.k + (s.dir * dt) / RISE, 0, 1);
         const vis = s.k > 0.001;
