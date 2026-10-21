@@ -88,13 +88,15 @@ body {
      и равняем, одна видимая левая линия от заголовка до статистики */
   /* v92: текстовый блок по варианту 2 стенда (выбор Никиты 07.10): имя в одну строку, роль крупно под ним, серая
      строка, ряд тем, кнопка «Смотреть кейсы»; всё от поля 84u */
-  .hero .headline { left: calc(84 * var(--u)); top: calc(150 * var(--u)); font-size: calc(71 * var(--u)); line-height: 1; }
+  /* v102: --copy-shift опускает весь левый блок так, чтобы верх заглавных букв имени стоял на уровне верхушки кроны
+     (считает ui/hero/mobileCopy.ts по сцене; без него блок на прежнем месте) */
+  .hero .headline { left: calc(84 * var(--u)); top: calc(150 * var(--u) + var(--copy-shift, 0px)); font-size: calc(71 * var(--u)); line-height: 1; }
   .hero .headline .role, .lang-ru .hero .headline .role { font-size: 0.685em; line-height: 1.12; font-weight: 400; margin-left: -0.06em; }
-  .hero .focus, .lang-ru .hero .focus { left: calc(86 * var(--u)); top: calc(291 * var(--u)); font-size: calc(28.5 * var(--u)); font-weight: 400; }
-  .hero-tags { left: calc(86 * var(--u)); top: calc(349 * var(--u)); font-size: calc(15.5 * var(--u)); }
+  .hero .focus, .lang-ru .hero .focus { left: calc(86 * var(--u)); top: calc(291 * var(--u) + var(--copy-shift, 0px)); font-size: calc(28.5 * var(--u)); font-weight: 400; }
+  .hero-tags { left: calc(86 * var(--u)); top: calc(349 * var(--u) + var(--copy-shift, 0px)); font-size: calc(15.5 * var(--u)); }
   .hero-tags li { padding: 0 calc(22 * var(--u)); border-left: 1px solid rgba(60, 56, 44, 0.28); }
   .hero-tags li:first-child { padding-left: 0; border-left: 0; }
-  .hero .cta-wrap, .lang-ru .hero .cta-wrap { left: calc(86 * var(--u)); top: calc(432 * var(--u)); }
+  .hero .cta-wrap, .lang-ru .hero .cta-wrap { left: calc(86 * var(--u)); top: calc(432 * var(--u) + var(--copy-shift, 0px)); }
   /* подпись справа от кроны, с чертой перед первой строкой */
   .hero-tagline { left: calc(1407 * var(--u)); top: calc(349 * var(--u)); padding-left: calc(40 * var(--u)); font-size: calc(14 * var(--u)); }
   .hero-tagline::before { width: calc(24 * var(--u)); }

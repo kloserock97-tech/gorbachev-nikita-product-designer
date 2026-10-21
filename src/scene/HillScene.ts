@@ -80,6 +80,12 @@ const CAMERA_PIVOT = new THREE.Vector3(0, 2.62, 0);
 const CAMERA_PAN = new THREE.Vector2(3.0, -2.0);
 const CAMERA_REST_OFF = new THREE.Vector3(3.0, -0.3, 0.8);
 const CAMERA_TARGET = new THREE.Vector3(-2.0, 3.2, 0);
+/* v102 (кадр по скриншоту Никиты 21.10): поза покоя первого экрана отодвинута назад и чуть вверх — ровно на первый
+   отрезок пути камеры при прокрутке (0.7, 0.53, 2.0). Дерево мельче, за ним видно солнце и дальние холмы.
+   ?pull=k — подобрать долю отъезда (0 — прежний кадр) */
+const HERO_PULL = Number(new URLSearchParams(location.search).get("pull") ?? 1);
+const HERO_PULL_DIR = new THREE.Vector3(0.7, 0.53, 2.0);
+const HERO_PULL_OFF = new THREE.Vector3();
 const SHADOW_LAYER = 3;
 /* v72: ближние предметы — над ними лучи приглушаются (маска в postfx.ts) */
 const SHIELD_LAYER = 6;
@@ -488,7 +494,7 @@ export class HillScene {
   private restPos = new THREE.Vector3();
   /* без выделения памяти: вызывается каждый кадр; кому нужна копия — клонирует */
   private cameraRest() {
-    return this.restPos.lerpVectors(CAMERA_PIVOT, CAMERA_BASE, this.camDistance).add(CAMERA_REST_OFF);
+    return this.restPos.lerpVectors(CAMERA_PIVOT, CAMERA_BASE, this.camDistance).add(CAMERA_REST_OFF).add(HERO_PULL_OFF);
   }
 
   /* Всё посаженное (трава, цветы, пампасы, колоски) — одной группой: посадка зависит от позы
@@ -1221,13 +1227,13 @@ export class HillScene {
   private polaroidTmp = new THREE.Vector3();
   /** v85.3: верх кроны дерева по вертикали, px окна, при камере в покое — как на первом экране. По нему телефон
       ставит середину кнопки «Смотреть кейсы» (ui/hero/mobileCopy.ts). Считается по запросу (resize), не в кадре */
-  treeTopClient(): number | null {
+  treeTopClient(reach = 0.37): number | null {
     if (!this.tree) return null;
     const p = this.tree.crownTopWorld(new THREE.Vector3());
     /* видимая верхушка — между центром верхнего пучка и краем его карточек: над пучком торчат листья, но самые
        крайние тонут в дымке. 0,37 пути к верху рамки дерева — по замеру кадров на четырёх телефонах (±3 px) */
     const box = new THREE.Box3().setFromObject(this.tree.group);
-    if (!box.isEmpty()) p.y += (box.max.y - p.y) * 0.37;
+    if (!box.isEmpty()) p.y += (box.max.y - p.y) * reach;
     const cam = this.camera.clone();
     cam.position.copy(this.cameraRest());
     cam.lookAt(CAMERA_TARGET);
@@ -2043,6 +2049,8 @@ export class HillScene {
     const panK = Math.min(1, Math.max(0, (aspect - 0.6) / 0.7));
     CAMERA_REST_OFF.x = 0.6 + (CAMERA_PAN.x - 0.6) * panK;
     CAMERA_TARGET.x = 0.2 + (CAMERA_PAN.y - 0.2) * panK;
+    /* отъезд первого экрана — композиция широкого кадра: на телефоне камера и так дальше, а текст встаёт по кроне */
+    HERO_PULL_OFF.copy(HERO_PULL_DIR).multiplyScalar(HERO_PULL * panK);
     const panMoved = Math.abs(panK - this.plantedFor.pan) > 0.04;
     /* Поворот телефона или сужение окна отодвигает камеру — передний склон, посаженный под
        прежнюю позу, остался бы голым. Шире 16:9 × 1.2 — не хватит травы по бокам. */
