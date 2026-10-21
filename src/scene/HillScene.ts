@@ -2143,6 +2143,10 @@ export class HillScene {
     if (this.walk && this.fx.params.alt > 0) {
       /* курсор над лугом пускает волны по траве; сенсорный экран — без волн */
       this.walk.setPointer(this.ndc.x < 2 && !this.reduced ? this.ndc : null);
+      if (this.signpost) {
+        const { c, f } = chapters(this.storyS);
+        this.walk.setSign(this.signCase, f <= 0 && c > CASES.cardsIn[0] - 0.02 && c < CASES.stripOut[0] + 0.02);
+      }
       this.walk.update(dt);
     }
     if (this.storyS > 0) this.onStoryFrame?.();
@@ -2288,6 +2292,13 @@ export class HillScene {
   private walkStarted = false;
   private readonly walkOff = new URLSearchParams(location.search).get("walk") === "0";
   private readonly vignetteBase = 0.55;
+  /* v103: указатель кейса на лугу (meadow/signpost3d.ts); номер кейса приходит из списка кейсов (ui/casesSignpost.ts).
+     ?signpost=0 — прежняя карточка */
+  readonly signpost = !/[?&]signpost=0/.test(location.search);
+  private signCase = -1;
+  setSignCase(i: number) {
+    this.signCase = i;
+  }
   private ensureWalk() {
     if (this.walkStarted || this.walkOff || !this.tierLocked || this.storyS < CHAPTER - 0.12) return;
     this.walkStarted = true;
@@ -2309,6 +2320,7 @@ export class HillScene {
       this.walk.setDensity(this.ladder[this.tier][2]);
       const w = this.canvas.clientWidth || window.innerWidth, h = this.canvas.clientHeight || window.innerHeight;
       this.walk.setSize(w, h, this.dpr);
+      if (this.signpost) this.walk.enableSignpost();
       this.walk.update(0);
       this.fx.params.altRender = (target, destination) => {
         if (destination) this.walk?.portal.setDestination(destination);

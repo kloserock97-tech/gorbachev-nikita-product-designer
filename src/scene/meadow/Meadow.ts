@@ -2,6 +2,8 @@ import * as THREE from "three";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { heightGLSL, noiseGLSL, terrainHeight } from "./noise";
 import { MeadowPortal } from "./MeadowPortal";
+import { createBloom } from "./bloom";
+import { createSignpost3d } from "./signpost3d";
 
 /* v32: луг Meadow Walk — фон главы «Кейсы». Порт github.com/kloserock97-tech/meadow-walk (код Никиты, MIT)
    на «голый» three без React, пресет dusk зашит константами.
@@ -380,7 +382,9 @@ export class Meadow {
             vec2 fromC = abs(wxz - uGrassCenter) / (0.5 * T);
             /* переход к гладкому лугу — широкий и мягкий: участок едет с камерой, и узкий край читался волной,
                по которой трава то вырастала, то уходила в землю */
-            float edge = 1.0 - smoothstep(0.2, 1.0, max(fromC.x, fromC.y));
+            /* v103: край участка круглый — по max(|x|,|z|) он был квадратным, и с высокой камеры его граница
+               читалась прямоугольниками */
+            float edge = 1.0 - smoothstep(0.3, 0.98, length(fromC));
             edge = edge * edge * (3.0 - 2.0 * edge);
             float h = hfHeight(wxz);
             float sea = uSea;
@@ -633,6 +637,33 @@ export class Meadow {
 
   setPortal(progress: number) { this.portalProgress = progress; }
 
+  /* ── v103: световой указатель кейса (signpost3d.ts) ─────────────────────────
+     Луг прежний: облёт сверху, рельеф меняется. На главе кейсов (focus → 1) камера летит к столбу текущего кейса и
+     стоит у него, пока кейс не сменится; прогулка «подтягивается» к камере (pathOff), поэтому после главы она
+     продолжается отсюда, без скачка. Путь по лугу идёт по своим часам (pathT) — на главе кейсов медленнее. */
+  private sign?: ReturnType<typeof createSignpost3d>;
+  private bloom?: ReturnType<typeof createBloom>;
+  private signCase = -1;
+  private signOn = false;
+  private signFocus = 0;
+  private pathT = 40;
+  private pathOff = 0;
+  private readonly signPos = new THREE.Vector3();
+  private readonly signLook = new THREE.Vector3();
+
+  enableSignpost() {
+    if (this.sign) return;
+    const U = this.U;
+    this.sign = createSignpost3d({ shadows: this.q.shadows, heightGLSL: sampleHeightGLSL, U: { uHeight: U.uHeight, uCenter: U.uCenter, uSize: U.uSize, uTexel: U.uTexel }, wind: U.uWindTime });
+    this.scene.add(this.sign.root);
+    this.bloom = createBloom(this.renderer, 0.05);
+  }
+  /** номер кейса для столба и видна ли глава кейсов */
+  setSign(i: number, on: boolean) {
+    this.signCase = i;
+    this.signOn = on;
+  }
+
   update(dt: number) {
     dt = Math.min(dt, 1 / 20);
     const U = this.U;
@@ -640,6 +671,10 @@ export class Meadow {
     const routeDt = this.portalProgress > 0 ? 0 : dt;
     this.t += routeDt;
     const t = this.t;
+    this.signFocus += ((this.sign && this.signOn ? 1 : 0) - this.signFocus) * (1 - Math.exp(-dt * 1.1));
+    const focus = this.signFocus * this.signFocus * (3 - 2 * this.signFocus);
+    this.pathT += routeDt * (1 - 0.82 * focus);
+    const tp = this.pathT;
     U.uTime.value = t;
     U.uWindTime.value += dt;
     U.uSea.value = SEA + 0.16 * Math.sin(t * 0.021) + 0.06 * Math.sin(t * 0.37 - 0.6);
@@ -652,25 +687,42 @@ export class Meadow {
     /* v73.2: сверху и подальше (владелец): 7–11 м над лугом, взгляд вниз под 30–42°. Трава при этом читается —
        с тех пор как её шейдер снова собирается, и размытие главы вдвое слабее */
     let height = THREE.MathUtils.lerp(7, 11, smooth(breath)) + Math.sin(t * 0.105) * 0.8;
-    this.walked += routeDt * 2.1;
+    height = THREE.MathUtils.lerp(height, 6.2 + Math.sin(t * 0.07) * 0.7, focus);
+    this.walked += routeDt * 2.1 * (1 - 0.84 * focus);
     this.mouse.lerp(this.hover ? this.pointer : Meadow.ZERO, 1 - Math.exp(-routeDt * 2.4));
-    let x = pathX(t) + this.mouse.x * 0.6;
+    let x = pathX(tp) + this.pathOff + this.mouse.x * 0.6;
     let z = -this.walked;
-    const heading = Math.atan2(pathX(t + 0.5) - pathX(t - 0.5), 2.1);
+    const heading = Math.atan2(pathX(tp + 0.5) - pathX(tp - 0.5), 2.1);
     let ground = sea;
     for (const ahead of [0, 4, 9]) ground = Math.max(ground, terrainHeight(x + Math.sin(heading) * ahead, z - Math.cos(heading) * ahead, t));
     if (this.groundSmooth === null) this.groundSmooth = ground;
     this.groundSmooth += (ground - this.groundSmooth) * Math.min(1, dt * (ground > this.groundSmooth ? 3 : 0.8));
-    height = Math.max(height, this.groundSmooth + 5.5);
+    height = Math.max(height, this.groundSmooth + THREE.MathUtils.lerp(5.5, 4.6, focus));
     const lift = THREE.MathUtils.clamp((height - 4) / 15, 0, 1);
     /* v73: взгляд чуть сверху вниз, под углом: склон с цветами занимает кадр, серое небо — полосой сверху.
        Было −14…−40° (одна трава и чёрная полоска неба), почти горизонт (−4…−13°) владельцу показался плоским */
-    const pitch = THREE.MathUtils.degToRad(THREE.MathUtils.lerp(-30, -42, smooth(lift)) + Math.sin(t * 0.13) * 2 + this.mouse.y * 2.5);
-    const yaw = THREE.MathUtils.degToRad(THREE.MathUtils.radToDeg(heading) * 0.8 + Math.sin(t * 0.057) * 9 - this.mouse.x * 4);
+    const pitch = THREE.MathUtils.degToRad(THREE.MathUtils.lerp(THREE.MathUtils.lerp(-30, -42, smooth(lift)), -24.5, focus) + Math.sin(t * 0.13) * 2 + this.mouse.y * 2.5);
+    const yaw = THREE.MathUtils.degToRad(THREE.MathUtils.radToDeg(heading) * 0.8 + Math.sin(t * 0.057) * 9 * (1 - 0.6 * focus) - this.mouse.x * 4);
     this.camera.position.set(x, height, z);
     this.dir.set(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
-    const dist = Math.min(Math.max(height - this.groundSmooth, 1) / Math.max(-this.dir.y, 0.12), 70);
+    let dist = Math.min(Math.max(height - this.groundSmooth, 1) / Math.max(-this.dir.y, 0.12), 70);
     this.look.copy(this.camera.position).addScaledVector(this.dir, dist);
+    /* указатель: камера летит к столбу (signpost3d.cameraPose) — смешивается с прогулкой по focus */
+    if (this.sign && focus > 0.001 && this.sign.cameraPose(t, this.camera.aspect, (gx, gz) => Math.max(terrainHeight(gx, gz, t), sea), this.signPos, this.signLook)) {
+      this.camera.position.lerp(this.signPos, focus);
+      this.look.lerp(this.signLook, focus);
+      this.camera.position.x += this.mouse.x * 0.35 * focus;
+      this.camera.position.y += this.mouse.y * 0.2 * focus;
+      this.dir.subVectors(this.look, this.camera.position);
+      dist = this.dir.length();
+      this.dir.normalize();
+      if (focus > 0.5) {
+        this.walked = -this.camera.position.z;
+        this.pathOff = this.camera.position.x - pathX(tp);
+      }
+      x = this.camera.position.x;
+      z = this.camera.position.z;
+    } else this.pathOff *= Math.exp(-dt / 20);
     this.camera.lookAt(this.look);
     this.camera.updateMatrixWorld();
 
@@ -700,7 +752,7 @@ export class Meadow {
     this.sun.position.set(fx + Math.sin(az) * Math.cos(el) * 80, Math.sin(el) * 80, fz - Math.cos(az) * Math.cos(el) * 80);
     this.sun.target.updateMatrixWorld();
 
-
+    this.sign?.update(dt, t, this.signCase, this.signOn && this.portalProgress <= 0, this.camera, this.look, (gx, gz) => terrainHeight(gx, gz, t), sea);
     this.updateCursor(dt);
   }
 
@@ -778,6 +830,8 @@ export class Meadow {
     if (this.q.shadows) r.shadowMap.needsUpdate = true;
     r.setRenderTarget(target);
     r.render(this.scene, this.camera);
+    /* v103: свечение указателя в воздухе (лицо столба вырезано трафаретом) */
+    this.bloom?.apply(target);
   }
 
   /** шейдеры луга — заранее, в ту же цель, что и кадр: первый показ без рывка */
@@ -790,8 +844,13 @@ export class Meadow {
     // Include hidden doorway programs in the warm-up, before the user reaches it.
     const portalVisible = this.portal.group.visible;
     this.portal.group.visible = true;
+    /* и указатель кейса: он скрыт, пока глава не открыта */
+    const hidden: THREE.Object3D[] = [];
+    this.sign?.root.traverse((o) => { if (!o.visible) { hidden.push(o); o.visible = true; } });
     const b = r.compileAsync(this.scene, this.camera);
+    for (const o of hidden) o.visible = false;
     this.portal.group.visible = portalVisible;
+    this.bloom?.compile();
     r.setRenderTarget(prev);
     r.initRenderTarget(this.heightRT);
     return Promise.all([a, b]).then(() => undefined);
@@ -803,5 +862,6 @@ export class Meadow {
     for (const m of this.materials) m.dispose();
     for (const g of this.geometries) g.dispose();
     this.sun.shadow.map?.dispose();
+    this.bloom?.dispose();
   }
 }

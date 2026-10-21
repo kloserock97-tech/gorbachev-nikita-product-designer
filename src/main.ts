@@ -3,6 +3,8 @@ import "./ui/hero/hero.css";
 import "./ui/hill-ui.css";
 import "./ui/walk.css";
 import "./ui/case-v37.css";
+import "./ui/cases-signpost.css";
+import { initCasesSignpost } from "./ui/casesSignpost";
 import "./ui/hero/hero-mobile.css";
 import { HillScene, type HillSceneOptions } from "./scene/HillScene";
 import { initHeroUi } from "./ui/hero/heroUi";
@@ -177,6 +179,8 @@ function start3d(caseView?: CaseView) {
   const story = initStory(scene);
   initMobileCopy(scene);
   initCases(scene);
+  /* v103: указатель кейса на лугу; без 3D (лёгкая версия) или с ?signpost=0 — прежняя карточка */
+  if (scene.signpost && !document.body.classList.contains("lite")) initCasesSignpost((i) => scene.setSignCase(i));
   initWalkChapter(scene);
   initFieldNote();
   initSound(scene);

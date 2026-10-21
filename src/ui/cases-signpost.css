@@ -1,0 +1,51 @@
+/* v103: глава «Кейсы» с указателем (ui/casesSignpost.ts, scene/meadow/signpost3d.ts). Кейс показывает световой столб на
+   лугу, поэтому летающей карточки, живых сцен кейсов и знака продукта нет. */
+body.has-signpost .cx-scene,
+body.has-signpost .cx-brand,
+body.has-signpost .cx-center { display: none; }
+
+/* ── широкий экран: список слева и колонка справа — оба по центру экрана по вертикали, столб между ними ── */
+body.has-signpost .cases:not(.is-narrow) .cx-list { top: 50%; translate: 0 -50%; }
+.pl-right {
+  position: absolute; right: var(--side); top: 50%; translate: 0 -50%;
+  width: clamp(340px, 31vw, 540px); max-height: calc(100% - 150px);
+  display: flex; flex-direction: column; gap: 22px;
+}
+.cases:not(.is-narrow) .pl-right > .cx-title { position: relative; left: auto; right: auto; bottom: auto; width: 100%; font-size: clamp(40px, 3.8vw, 76px); }
+.cases:not(.is-narrow) .pl-right > .cx-facts { position: relative; right: auto; bottom: auto; width: 100%; }
+
+/* превью: фильм интерфейса, экран в окне или телефон */
+.pl-shot {
+  position: relative; display: block; pointer-events: auto; align-self: flex-start; min-height: 0;
+  opacity: 0; translate: 0 10px; transition: opacity 0.5s var(--ease-x) 80ms, translate 0.5s var(--ease-x) 80ms;
+}
+.pl-shot[data-device="browser"] { width: 100%; }
+.cx.is-in .pl-shot { opacity: 1; translate: 0 0; }
+.cx.is-out .pl-shot { opacity: 0; transition-duration: 0.16s; transition-delay: 0s; }
+.pl-img { display: block; user-select: none; -webkit-user-drag: none; transition: scale 0.5s var(--ease-x); }
+.pl-img--browser {
+  width: 100%; height: auto; max-height: 34vh; aspect-ratio: 16 / 10; object-fit: cover; object-position: 0 0; border-radius: 12px; background: #0b0d10;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16), 0 24px 50px -18px rgba(0, 0, 0, 0.6);
+}
+video.pl-img--browser { aspect-ratio: 16 / 9; object-position: 50% 50%; }
+.pl-img--phone {
+  height: min(36vh, 340px); width: auto; border-radius: 22px; background: #0b0d10;
+  box-shadow: 0 0 0 5px #15171c, 0 0 0 6px rgba(255, 255, 255, 0.14), 0 24px 50px -18px rgba(0, 0, 0, 0.6);
+}
+.pl-img--obj { height: min(32vh, 300px); width: auto; filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.45)); }
+@media (hover: hover) { .pl-shot:hover .pl-img { scale: 1.015; } }
+.pl-shot:focus-visible { outline: 2px solid #fff; outline-offset: 6px; border-radius: 12px; }
+
+/* ── телефон: столб — в верхней половине кадра (камеру ставит signpost3d), превью — справа сверху рядом с ним,
+   название и подписи — внизу, как были ── */
+.cases.is-narrow .pl-right { display: contents; }
+.cases.is-narrow .pl-shot { position: absolute; top: calc(84px + env(safe-area-inset-top)); right: var(--side); width: 44vw; }
+/* картинка не шире колонки (у img в flex минимальная ширина — исходная, экран 1440 px раздувал превью) */
+.cases.is-narrow .pl-img { max-width: 100%; margin-left: auto; }
+.cases.is-narrow .pl-img--browser { width: 100%; height: auto; max-height: none; border-radius: 9px; }
+.cases.is-narrow .pl-img--phone { height: min(30vh, 250px); border-radius: 18px; box-shadow: 0 0 0 4px #15171c, 0 0 0 5px rgba(255, 255, 255, 0.14), 0 18px 36px -14px rgba(0, 0, 0, 0.6); }
+.cases.is-narrow .pl-img--obj { height: min(24vh, 200px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pl-shot { transition: none; translate: none; }
+}

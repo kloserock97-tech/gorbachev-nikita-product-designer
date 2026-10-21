@@ -80,7 +80,8 @@ export function createPostFx(
   /* v22.1: задник главы «Кейсы» — половинное разрешение без MSAA. Под размытием полноразмерная трава
      с MSAA не видна, а стоила дороже самого холма (замер с readPixels: кейсы 20 мс против холма 17) —
      прокрутка кейсов тормозила. Вчетверо меньше пикселей, картинка после размытия та же */
-  const bgRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 0 });
+  /* v103: с трафаретом — блум луга не ложится на светящиеся грани указателя (meadow/bloom.ts) */
+  const bgRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 0, stencilBuffer: true });
   /* четверть разрешения: размытый задник и мягкая тень компьютера (quarterFragment) */
   const bgBlurRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
   const shadowRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
@@ -108,8 +109,8 @@ export function createPostFx(
   const halfRT = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: false });
   /* v32: луг — без MSAA, чуть ниже разрешения сцены (как и в самом Meadow Walk, сглаживание не нужно под зерном);
      altBgRT/altBlurRT — его размытый вариант, пока на выходе из кейсов смешиваем с холмом */
-  const altRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 0 });
-  const altBgRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 0 });
+  const altRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 0, stencilBuffer: true });
+  const altBgRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 0, stencilBuffer: true });
   const altBlurRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
   /* второй проход расфокуса заставки: шестнадцать выборок одного прохода на большом радиусе дают зерно, второй его сглаживает */
   const introRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
@@ -254,7 +255,9 @@ export function createPostFx(
       sceneRT.setSize(W, H);
       bgRT.setSize(Math.max(1, Math.ceil(W / 2)), Math.max(1, Math.ceil(H / 2)));
       bgBlurRT.setSize(Math.max(1, Math.ceil(W / 4)), Math.max(1, Math.ceil(H / 4)));
-      altRT.setSize(Math.max(1, Math.round(W * 0.8)), Math.max(1, Math.round(H * 0.8)));
+      /* v103: луг кейсов в полном разрешении — на 80 % кромки и печать указателя шли лесенкой; ?altscale=0.8 — как было */
+      const altK = Number(q.get("altscale") ?? 1);
+      altRT.setSize(Math.max(1, Math.round(W * altK)), Math.max(1, Math.round(H * altK)));
       altBgRT.setSize(Math.max(1, Math.ceil(W / 2)), Math.max(1, Math.ceil(H / 2)));
       altBlurRT.setSize(Math.max(1, Math.ceil(W / 4)), Math.max(1, Math.ceil(H / 4)));
       introRT.setSize(Math.max(1, Math.ceil(W / 4)), Math.max(1, Math.ceil(H / 4)));
@@ -348,7 +351,8 @@ export function createPostFx(
       final.uniforms.uSharp.value = low || altFull || portalOn ? 0 : sharp;
       /* v44: без MSAA края сглаживает финальный проход целиком, с MSAA 2× — наполовину (две ступени покрытия
          всё ещё дают лесенку на DPR 1); с MSAA 4× не нужен. Размытому заднику он тоже не нужен. ?edgeaa=0|1 — для сравнения */
-      final.uniforms.uEdgeAA.value = low || altFull ? 0 : portalOn ? 1 : edgeAA ?? (sceneRT.samples === 0 ? 1 : sceneRT.samples <= 2 ? 0.5 : 0);
+      /* v103: у луга нет MSAA — его края тоже сглаживает финальный проход (иначе кромки указателя лесенкой) */
+      final.uniforms.uEdgeAA.value = low ? 0 : altFull || portalOn ? edgeAA ?? 1 : edgeAA ?? (sceneRT.samples === 0 ? 1 : sceneRT.samples <= 2 ? 0.5 : 0);
       if (params.overlay) {
         const mask = camera.layers.mask;
         const alpha = renderer.getClearAlpha();
