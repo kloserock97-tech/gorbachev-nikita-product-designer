@@ -636,6 +636,11 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 @media (max-width: 900px) {
   .vf { font-size: 11px; letter-spacing: 0.04em; }
   .vf-label--bl { display: none; }
+  /* v110: рамка на телефоне узкая — подписи «OBJ_01…» и «Слежение/Захват» в одной строке сверху наезжали друг на друга.
+     Состояние уходит вниз налево (там пусто: размер в пикселях на телефоне скрыт) */
+  .vf-label--tr { right: auto; left: 0; bottom: auto; top: calc(100% + 9px); }
+  /* уголки на пунктире: разведённые на 5px, на маленькой рамке они читались второй рамкой поверх первой */
+  .vf-c--tl, .vf-c--tr, .vf-c--bl, .vf-c--br { translate: 0 0; }
 }
 @media (prefers-reduced-motion: reduce) { .vf-dot { animation: none; } .vf-c { transition: none; } .vf--lock .vf-c { animation: none; } }
 /* интерфейс холма ушёл целиком — его размытый слой не рисуется */
@@ -964,10 +969,11 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 .kelly-note.is-on .kelly-head { stroke-dashoffset: 0; transition: stroke-dashoffset 0.3s ease-out 1.25s; }
 /* телефон: подпись в полосе между абзацем и монитором, короткая стрелка вниз к карточке */
 @media (max-width: 900px) {
-  /* v107: справа от полароида, в две строки; стрелка ведёт от подписи влево-вверх к карточке */
-  .kelly-text { font-size: 20px; right: auto; bottom: auto; left: 34px; top: 40px; rotate: -4deg; white-space: normal; width: 4.1em; line-height: 1.05; display: block; }
+  /* v107: справа от полароида, в две строки. v110: стрелка — та же дуга, повёрнутая на четверть: идёт от подписи
+     влево и упирается в край карточки (раньше перевёрнутая дуга читалась вывернутым крючком) */
+  .kelly-text { font-size: 18px; right: auto; bottom: auto; left: 44px; top: 18px; rotate: -4deg; white-space: normal; width: 4.1em; line-height: 1.05; display: block; }
   .kelly-smile { display: inline-block; vertical-align: -0.12em; }
-  .kelly-arrow { width: 40px; height: 36px; right: auto; bottom: auto; left: 4px; top: 8px; transform: scale(-1, -1); }
+  .kelly-arrow { width: 34px; height: 31px; right: auto; bottom: auto; left: 14px; top: 2px; transform: rotate(90deg); }
 }
 @media (prefers-reduced-motion: reduce) {
   .kelly-arc, .kelly-head { stroke-dashoffset: 0 !important; transition: none !important; }
@@ -1186,6 +1192,12 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
      окно растёт, когда прячется панель, — под холстом открывалась тёмная полоса страницы */
   #scene { top: 0; bottom: auto; height: calc(100vh + 140px); height: calc(100lvh + 140px); }
   .story-hero, .cases, .site-footer { bottom: auto; height: 100vh; height: 100svh; }
+  /* v110 (Никита): нижняя строка футера (© и ссылки) — у нижнего края браузера. Футер по малому окну, и когда панель
+     браузера пряталась, под строкой оставалась пустая полоса. Строка опускается на высоту спрятанной панели
+     (dvh − svh), как нижний блок «Кейсов» (cases-card.css); остальной футер стоит на месте */
+  .site-footer { --bar: 0px; }
+  @supports (height: 100dvh) { .site-footer { --bar: max(0px, calc(100dvh - 100svh)); } }
+  .sf-bar { margin-bottom: calc(-1 * var(--bar)); }
 }
 
 /* v106: подложка «Кейсов», пока луг собирается: размытый кадр того же луга вместо размытого холма. Стоит над холстом,

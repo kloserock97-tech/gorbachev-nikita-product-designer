@@ -1257,7 +1257,6 @@ export class HillScene {
   private storyTarget = 0;
   private storyS = 0;
   private storyApplied = -1;
-  private storyRight = new THREE.Vector3();
   private storyEnd: Pose = { pos: new THREE.Vector3(), yaw: 0, pitch: 0, roll: 0 };
   private storyPose: Pose = { pos: new THREE.Vector3(), yaw: 0, pitch: 0, roll: 0 };
   private coolWB = new THREE.Vector3(0.86, 0.95, 1.12);
@@ -1470,15 +1469,13 @@ export class HillScene {
       const tanH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2);
       const size = this.storyTmp3.copy(this.pcLocalBox.max).sub(this.pcLocalBox.min).multiply(this.pc.scale);
       const fitH = (size.y * c.height) / (2 * tanH * (slot.bottom - slot.top));
-      /* v107: компьютер не шире 64 % кадра и сдвинут влево — справа от него место под подпись «а это Келли»
-         (раньше она висела над компьютером и на невысоком телефоне налезала на абзац) */
-      const fitW = size.x / (2 * tanH * this.camera.aspect * 0.64);
+      /* v107: компьютер не шире 56 % кадра — справа от полароида место под подпись «а это Келли» (раньше она висела
+         над компьютером и на невысоком телефоне налезала на абзац). v110: по центру кадра, без сдвига влево (Никита) */
+      const fitW = size.x / (2 * tanH * this.camera.aspect * 0.56);
       /* ближняя грань ближе центра и выглядит крупнее — запас 12 % */
       /* v74.2: ещё 14 процентов — воздух между компьютером и абзацами над и под ним */
       dist = Math.min(7, Math.max(1.5, Math.max(fitH, fitW) * 1.12 * 1.06));
       e.pos.copy(this.storyEndCam).addScaledVector(fwd, dist);
-      const right = this.storyRight.crossVectors(fwd, THREE.Object3D.DEFAULT_UP).normalize();
-      e.pos.addScaledVector(right, -0.13 * 2 * dist * tanH * this.camera.aspect);
       const mid = (slot.top + slot.bottom) / 2 - c.top;
       e.pos.y += (0.5 - mid / c.height) * 2 * dist * tanH;
       e.pos.y -= ((this.pcLocalBox.min.y + this.pcLocalBox.max.y) / 2) * this.pc.scale.y;

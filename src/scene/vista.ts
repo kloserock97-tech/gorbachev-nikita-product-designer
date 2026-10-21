@@ -51,6 +51,8 @@ const THETA0 = -Math.PI - 0.7, THETA1 = 0.7;
 /** полуразмер квадрата земли холма (HillScene.buildGround, 44 м) — равнина начинается чуть внутри, под ним */
 const GROUND_HALF = 22;
 const SUN_T = Math.atan2(-1, -0.08);
+/* направление низины: на широком кадре это x ≈ 450–650 px из 1672, сразу левее склона холма */
+const VALLEY_T = Number(new URLSearchParams(location.search).get("vt") ?? -1.92);
 const smoothstep = (a: number, b: number, x: number) => { const k = Math.min(1, Math.max(0, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
 
 export function createVista(shared: {
@@ -78,7 +80,11 @@ export function createVista(shared: {
       const side = Math.min(1, Math.min(t - THETA0, THETA1 - t) / 0.5);
       /* азимут солнца — SUN_DIR в HillScene (−0,08; −1): почти прямо за холмом */
       const dip = g.saddle ? 0.25 + 0.75 * smoothstep(0.1, 0.55, Math.abs(t - SUN_T)) : 1;
-      const h = g.base + (g.lo + (g.hi - g.lo) * Math.pow(n, 1.35)) * (0.55 + 0.45 * side) * dip;
+      /* v110 (Никита, пример 22.10): у левого края холма — низина. Гряды высокие слева и спускаются к склону, у самого
+         края уходят в туман; дальше они за холмом, а справа снова поднимаются. Азимут низины — VALLEY_T (?vt=) */
+      const valley = t < VALLEY_T ? smoothstep(0.02, 0.4, VALLEY_T - t) : smoothstep(0.15, 0.6, t - VALLEY_T);
+      const low = 0.04 + 0.96 * valley;
+      const h = g.base + (g.lo + (g.hi - g.lo) * Math.pow(n, 1.35)) * (0.55 + 0.45 * side) * dip * low;
       const top = h + g.forest * 1.02;
       pos.set([x, g.base - 4, z, x, top, z], i * 6);
       arc.set([t * g.r, h, t * g.r, h], i * 4);
