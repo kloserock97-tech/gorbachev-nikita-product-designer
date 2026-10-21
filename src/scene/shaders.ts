@@ -108,7 +108,11 @@ vec3 fogTint(vec3 w){
   vec3 fog = mix(cool, uFogCol, smoothstep(-0.2, 0.6, mu)) + uSunCol * hg * 0.16 * uAerial.x;
   /* даль (равнина за холмом) уходит в цвет горизонта — в тот же, в котором тонут подножия гряд: иначе земля
      вдали оставалась серовато-бежевой, гряды над ней — тёплыми, и на стыке читалась полоса */
-  return mix(fog, uSkyHorizon + uSunCol * hg * 0.16 * uAerial.x, smoothstep(14.0, 30.0, length(w - cameraPosition)) * uAerial.y);
+  /* v109: даль уходит в туман облачного моря (как mistTone в SKY_PARS), а не в оранжевый горизонт — иначе нижние
+     склоны холма слева ложились оранжевой полосой поверх тумана */
+  float hl = dot(uSkyHorizon, vec3(0.3, 0.59, 0.11));
+  vec3 farc = mix(uSkyHorizon, vec3(hl * 1.08) * vec3(1.0, 0.97, 0.93), 0.55);
+  return mix(fog, farc + uSunCol * hg * 0.16 * uAerial.x, smoothstep(14.0, 30.0, length(w - cameraPosition)) * uAerial.y);
 }
 
 /* облучённость из SH9 — та же формула, что shGetIrradianceAt в three */
@@ -841,7 +845,8 @@ void main(){
   /* v107: равнина вокруг холма — облачное море в цвете тумана гор (mistTone), без оранжевой полосы у подножия */
   vec3 fogc = mix(mix(uSkyHorizon, mistTone(sky), 0.9), mistTone(sky), smoothstep(24.0, 40.0, dist));
   /* к первой гряде дымка густеет до конца: у её подножия равнина — ровно цвет неба, как и сама гряда там */
-  float fog = clamp(0.76 + 0.24 * smoothstep(22.0, 43.0, dist), 0.0, 1.0);
+  /* v109: у подножия холма — тоже туман облачного моря, а не дёрн в дымке (оранжевая полоса слева от склона) */
+  float fog = clamp(0.9 + 0.1 * smoothstep(22.0, 43.0, dist), 0.0, 1.0);
   gl_FragColor = vec4(mix(soil, fogc, fog), 1.0);
 }
 `;
@@ -877,6 +882,9 @@ uniform float uSeed;
    тот же, что у облаков). uMistDrift — сила (0 — прежний ровный туман) */
 uniform vec3 uCloud;
 uniform float uMistDrift;
+/* v109 (пример Никиты): x — доля холодного серо-сиреневого воздуха перед гребнем (как у гор, mountains.ts uCool);
+   y — уровень облачного моря (мировой y): ниже него гряда тонет в светлом тумане, z — толщина перехода, м */
+uniform vec3 uSea;
 varying vec3 vW;
 varying vec2 vArc;
 
@@ -949,7 +957,17 @@ void main(){
   /* v80: у самого подножия гряда целиком тонет в дымке — там она сходится с равниной (plainFragment) одним цветом,
      без ровной границы; выше темнеет плавно, на высоту слоя тумана */
   float air = clamp(uAerial + (1.0 - uAerial) * mist, 0.0, 1.0);
-  gl_FragColor = vec4(mix(c, mix(sky, mistTone(sky), mist), air), cov);
+  float lum = dot(sky, vec3(0.3, 0.59, 0.11));
+  vec3 airCol = mix(sky, vec3(lum) * vec3(0.95, 0.93, 1.0), uSea.x * (1.0 - pow(cosA, 6.0)));
+  vec3 col = mix(c, mix(airCol, mistTone(sky), mist), air);
+  /* облачное море: ровный уровень для всех гряд, верх рваный и медленно плывёт (тот же сдвиг, что у облаков) */
+  if (uSea.z > 0.0) {
+    float a = vArc.x * 0.045 + uCloud.x * 1.3;
+    float top = uSea.y + uSea.z * (0.35 * sin(a * 1.3 + 0.7) + 0.22 * sin(a * 2.9 + 2.1) + 0.12 * sin(a * 6.1 + 4.0));
+    float sea = 1.0 - smoothstep(top - uSea.z, top + uSea.z * 0.6, vW.y);
+    col = mix(col, mistTone(sky) * 1.04 + uSunCol * pow(cosA, 8.0) * 0.1, sea);
+  }
+  gl_FragColor = vec4(col, cov);
 }
 `;
 

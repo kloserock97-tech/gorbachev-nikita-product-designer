@@ -22,15 +22,27 @@ type Ridge = {
   aerial: number;  // доля неба в цвете
   mist: number;    // высота тумана в низине, м
   seed: number;
+  cool?: number;    // v109: доля холодного воздуха (uSea.x)
+  sea?: [number, number]; // v109: уровень облачного моря (мировой y) и толщина перехода, м
+  ridged?: boolean; // v109: профиль с гребнями (горные склоны), а не пологие холмы
+  saddle?: boolean; // v109: под солнцем гряда проваливается — солнце садится в просвет, как у гор
 };
 
 /* Высоты подобраны под кадр: ближняя гряда поднимается над горизонтом на пару градусов, дальние — выше, но
    не выше нижней трети неба, где заголовок. Зелень — тёмная оливка травы, к дали холоднее и синее */
+const q = new URLSearchParams(location.search);
+const MID_RIDGES: Ridge[] = q.get("mid") === "0" ? [] : [
+  { r: 100, base: -6, lo: 4, hi: 11, freq: 4.2, forest: 0, crown: 1, tint: "#45424a", aerial: 0.48, mist: 1.5, seed: 4.3, saddle: true, ridged: true, cool: 0.5, sea: [1.6, 1.1] },
+  { r: 170, base: -8, lo: 7, hi: 17, freq: 3.4, forest: 0, crown: 1, tint: "#4d4954", aerial: 0.62, mist: 2, seed: 8.1, saddle: true, ridged: true, cool: 0.5, sea: [4.2, 1.8] },
+];
 const RIDGES: Ridge[] = [
   { r: 44, base: -1.2, lo: 0.4, hi: 2.4, freq: 3.2, forest: 1.1, crown: 1.1, tint: "#2c3a1c", aerial: 0.36, mist: 2.2, seed: 1.7 },
   /* v102: средняя (r 80) и дальняя (r 140) гряды убраны по просьбе Никиты — с горами слоёв рельефа было слишком
      много. Остался ближний лес, за ним сразу горы; солнце садится на их предгорья (mountains.ts, uFoot) */
   /* v78: самая дальняя гряда (горы, r 240, до 42 м) убрана по просьбе Никиты — она закрывала солнце у горизонта */
+  /* v109 (пример Никиты 22.10): «кулисы» между ближним лесом и горами — пологие горные склоны без леса, ниже горизонта,
+     каждый светлее предыдущего; у подножия каждой туман (mist), и между слоями лежат светлые полосы облачного моря */
+  ...MID_RIDGES,
 ];
 
 /* дуга за холмом и по бокам: камера смотрит в −z, на широком экране кадр захватывает и бока */
@@ -38,6 +50,8 @@ const THETA0 = -Math.PI - 0.7, THETA1 = 0.7;
 
 /** полуразмер квадрата земли холма (HillScene.buildGround, 44 м) — равнина начинается чуть внутри, под ним */
 const GROUND_HALF = 22;
+const SUN_T = Math.atan2(-1, -0.08);
+const smoothstep = (a: number, b: number, x: number) => { const k = Math.min(1, Math.max(0, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
 
 export function createVista(shared: {
   sky: Record<string, THREE.IUniform>;
@@ -58,9 +72,13 @@ export function createVista(shared: {
       const t = THETA0 + ((THETA1 - THETA0) * i) / segs;
       const x = Math.cos(t) * g.r, z = Math.sin(t) * g.r;
       /* крупные холмы и мелкие перегибы; к краям дуги гряда ниже — не торчит стеной сбоку */
-      const n = fbm(t * g.freq + g.seed, g.seed * 3.1, 4);
+      const n0 = fbm(t * g.freq + g.seed, g.seed * 3.1, 4);
+      /* гребни: сложенный по модулю шум даёт острые вершины и седловины, мелкая октава — изломы склонов */
+      const n = g.ridged ? Math.min(1, Math.max(0, 0.3 * n0 + 0.8 * Math.pow(1 - Math.abs(2 * fbm(t * g.freq * 0.7 + g.seed * 2.3, 1.7, 3) - 1), 1.6) + (fbm(t * g.freq * 5 + g.seed, 4.1, 2) - 0.5) * 0.22)) : n0;
       const side = Math.min(1, Math.min(t - THETA0, THETA1 - t) / 0.5);
-      const h = g.base + (g.lo + (g.hi - g.lo) * Math.pow(n, 1.35)) * (0.55 + 0.45 * side);
+      /* азимут солнца — SUN_DIR в HillScene (−0,08; −1): почти прямо за холмом */
+      const dip = g.saddle ? 0.25 + 0.75 * smoothstep(0.1, 0.55, Math.abs(t - SUN_T)) : 1;
+      const h = g.base + (g.lo + (g.hi - g.lo) * Math.pow(n, 1.35)) * (0.55 + 0.45 * side) * dip;
       const top = h + g.forest * 1.02;
       pos.set([x, g.base - 4, z, x, top, z], i * 6);
       arc.set([t * g.r, h, t * g.r, h], i * 4);
@@ -89,6 +107,7 @@ export function createVista(shared: {
         uMist: { value: g.mist },
         uBase: { value: g.base },
         uSeed: { value: g.seed * 13.7 },
+        uSea: { value: new THREE.Vector3(g.cool ?? 0, g.sea?.[0] ?? 0, g.sea?.[1] ?? 0) },
       },
     });
     /* кромка крон режется discard — с MSAA сглаживаем её покрытием, как края травинок */
