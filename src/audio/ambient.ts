@@ -21,6 +21,7 @@ export type SoundState = {
   c: number; // глава «Кейсы» 0…1
   f: number; // футер 0…1
   focus: boolean; // камера у экрана компьютера
+  caseOpen: boolean; // v104: открыта страница кейса — холма не видно, фон молчит
 };
 
 
@@ -241,7 +242,9 @@ export function createAmbient(ctx: AudioContext) {
     /* v20.1: в главе «Кейсы» природы нет — фон уходит в тишину, птицы и сверчки молчат */
     const gone = ramp(st.c, 0.0, 0.12) * (1 - ramp(st.f, 0.15, 0.5));
     const level = Math.max(0.16, 1 - eaten) * (1 - gone) * (st.focus ? 0.55 : 1);
-    set(out.gain, 0.8 * level * fadeIn * fadeIn, 0.6);
+    /* v104 (Никита): в кейсе звук холма гаснет за полсекунды и возвращается, когда кейс закрыли; кнопка звука остаётся
+       включённой — это не выключение, а пауза на время чтения */
+    set(out.gain, st.caseOpen ? 0 : 0.8 * level * fadeIn * fadeIn, st.caseOpen ? 0.18 : 0.6);
     set(muffle.frequency, 16000 * Math.pow(1 - eaten, 2.2) + 650, 0.4);
 
     /* v20.1: ветер был слишком громким — теперь это тихая подложка своя для каждой погоды:

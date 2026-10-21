@@ -62,7 +62,7 @@ export function initSound(scene: Scene) {
     last = t;
     const { s, c, f } = chapters(scene.storyProgress);
     /* в футере холм снова «живой»: s как на первом экране */
-    engine.update({ wind: scene.windNow, weather: scene.weatherKind, s: f > 0.15 ? 0 : s, c, f, focus: scene.computerFocused }, dt);
+    engine.update({ wind: scene.windNow, weather: scene.weatherKind, s: f > 0.15 ? 0 : s, c, f, focus: scene.computerFocused, caseOpen: document.body.classList.contains("case-open") }, dt);
   };
 
   const enable = (announce: boolean) => {
