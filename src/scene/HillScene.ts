@@ -12,7 +12,6 @@ import type { Meadow } from "./meadow/Meadow";
 import { SCROLL_LAMBDA } from "../scrollFeel";
 import { KINETIC_BASE, KINETIC_FONT, createKinetic, type Kinetic } from "./kinetic";
 import { Studio, projectBox, type HillLights } from "./studio";
-import { QualityGovernor } from "./quality";
 import { createPolaroid } from "./polaroid";
 import { createVista } from "./vista";
 import { createMountains } from "./mountains";
@@ -201,7 +200,6 @@ export class HillScene {
     /* на холст рисуется только финальный полноэкранный проход — буфер глубины и трафарета ему не нужны */
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, depth: false, stencil: false, powerPreference: "high-performance" });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    void this.tierKey(); // имя видеокарты — пока очередь пуста
     /* Neutral (Khronos PBR Neutral) держит цвета неба как задуманы, ACES их гасил в серое */
     this.renderer.toneMapping = THREE.NeutralToneMapping;
     this.renderer.toneMappingExposure = 1.0;
@@ -254,7 +252,7 @@ export class HillScene {
     window.addEventListener("pointerdown", this.onPointer, { passive: true });
     document.documentElement.addEventListener("pointerleave", this.onLeave);
     window.addEventListener("blur", this.onLeave);
-    this.restoreTier();
+    this.pinTier();
     this.observer = new IntersectionObserver(([e]) => (this.onScreen = e?.isIntersecting ?? true));
     this.observer.observe(canvas);
     /* Потеря WebGL-контекста (телефон выгрузил вкладку, сбой драйвера): после восстановления
@@ -327,7 +325,7 @@ export class HillScene {
   /** Readiness of setup phases, not transferred byte percentage. */
   get loadingProgress() {
     return .08 + Math.min(this.assetsReady, 2) * .21 + (this.shadersReady ? .22 : 0)
-      + (this.pendingCompile === 0 ? .08 : 0) + (this.tierLocked ? .14 : 0);
+      + (this.pendingCompile === 0 ? .08 : 0) + (this.settled ? .14 : 0);
   }
 
   /* ---------------------------- интро --------------------------------- */
@@ -491,7 +489,7 @@ export class HillScene {
     this.meadowGroup = new THREE.Group();
     this.stalkSpots = [];
     this.buildGrass();
-    this.setTier(this.tier);
+    this.setTier(this.tier, "replant");
   }
 
   private buildGrass() {
@@ -857,7 +855,6 @@ export class HillScene {
   private seedTimer = 0;
   /* v96: флаги адреса — один раз, а не регулярным выражением в каждом кадре */
   private readonly windOff = /[?&]wind=0/.test(location.search);
-  private readonly forcedDpr = Number(new URLSearchParams(location.search).get("dpr")) > 0;
   private driftSeeds(dt: number) {
     if (this.reduced || this.windOff) return;
     this.seedTimer += dt * (0.6 + this.uniforms.uWind.value * 0.8);
@@ -1869,23 +1866,8 @@ export class HillScene {
   };
 
   private observer?: IntersectionObserver;
-  /** v24: интерфейс показан раньше калибровки (медленная сеть: модели и HDRI ещё едут) — пока не
-      откалибровались, стоим на осторожной ступени, а не на самой тяжёлой: на бюджетном телефоне первые
-      секунды истории шли на ступени 0 по 13 кадров */
-  provisionalTier() {
-    if (this.tierLocked) return;
-    const nav = navigator as Navigator & { deviceMemory?: number };
-    const weak = matchMedia("(pointer: coarse)").matches || (navigator.hardwareConcurrency ?? 8) <= 4 || (nav.deviceMemory ?? 8) <= 4;
-    const t = weak ? 6 : 4;
-    if (this.tier < t) {
-      this.setTier(t, "provisional");
-      this.calibSkip = 6;
-      this.calibFrames = [];
-    }
-  }
-
-  /** v24: сцена не справляется — main.ts переводит страницу в лёгкую версию без 3D */
-  onDegrade?: (why: "slow" | "context") => void;
+  /** WebGL-контекст пропал и не вернулся — main.ts переводит страницу в лёгкую версию без 3D */
+  onDegrade?: (why: "context") => void;
   renderedFrames = 0;
   private resolvePresentation!: () => void;
   /** A frame with the critical assets and compiled materials has actually been drawn. */
@@ -2001,7 +1983,7 @@ export class HillScene {
     const native = Math.min(window.devicePixelRatio || 1, 2.25);
     this.dprMax = this.phone ? native : Math.max(native, Math.min(1.5, native * 1.5));
     const forced = Number(new URLSearchParams(location.search).get("dpr"));
-    if (forced > 0) { this.dprMax = forced; this.qualityScale = 1; if (!this.tierLocked) this.lockTier(false); }
+    if (forced > 0) { this.dprMax = forced; this.qualityScale = 1; }
     /* ступень качества задаёт долю от максимума; раньше здесь было min(текущий, максимум)
        со стартом 1 — DPR никогда не поднимался выше 1 и картинка на экране 2.25 была пиксельной */
     /* пол резкости: на экране с DPR ≥ 1.25 сцена не рисуется грубее 1.25 (на DPR 1 — не ниже 1) */
@@ -2079,10 +2061,9 @@ export class HillScene {
     this.raf = requestAnimationFrame(this.loop);
     /* вкладка скрыта, канвас прокручен за экран или поверх открыта страница кейса — не рисуем вовсе */
     if (document.hidden || !this.onScreen || this.paused) return;
-    /* во время калибровки потолка нет — иначе интервалы упрутся в 60 Гц */
     const since = now - this.lastRafAt;
     this.lastRafAt = now;
-    if (this.frameInterval > 0 && this.tierLocked) {
+    if (this.frameInterval > 0) {
       if (this.vsyncSkip > 0) {
         if (++this.rafCount % this.vsyncSkip !== 0) return;
       } else {
@@ -2164,31 +2145,21 @@ export class HillScene {
       this.walk.update(dt);
     }
     if (this.storyS > 0) this.onStoryFrame?.();
-    const gov = this.governor;
-    gov?.begin();
     this.fx.render();
     this.renderedFrames++;
     if (this.assetsReady >= 2) this.resolvePresentation();
-    gov?.end();
-    if (gov && !gov.asleep) {
-      const idle = this.storyS === 0 && this.focus === 0 && !document.hidden;
-      const next = gov.poll(this.tier, idle, dt);
-      if (next !== null) {
-        this.setTier(next, "governor");
-        try { localStorage.setItem(this.tierKey(), JSON.stringify({ tier: this.tier, at: Date.now() })); } catch { /* ничего */ }
-      }
-    }
-    if (!this.storyWarm && this.tierLocked && this.pc && this.assetsReady >= 2) this.warmStory();
-    /* калибровка — после компиляции шейдеров, пока UI ещё проявляется */
-    if (!this.tierLocked && this.assetsReady === 2) {
-      /* ждём секунду после загрузки кресла и HDRI: PMREM, декодирование Draco и
-         компиляция материалов иначе попадают в замер и роняют ступень до пола */
-      this.calibrateDelay -= dt;
-      if (this.calibrateDelay <= 0) this.calibrate(now);
-    }
+    if (!this.storyWarm && this.settled && this.pc && this.assetsReady >= 2) this.warmStory();
+    /* кресло и HDRI на месте — сцена готова, интерфейс может проявляться */
+    if (!this.settled && this.assetsReady === 2) this.settle();
   };
 
-  /* Ступени качества вместо непрерывной подстройки. Раньше DPR менялся раз в
+  /* v104: подстройки качества под устройство больше нет — Никита: «сразу показать качественный результат, а если не
+     тянет, человек перейдёт на лёгкую версию» (кнопка на заставке и в навигации). Сцена всегда на верхней ступени:
+     родной DPR (на экранах ниже 1.5 — суперсэмплинг до 1.5), MSAA 4×, вся трава, лучи. Ушли стартовый замер кадров,
+     регулятор по таймеру видеокарты (quality.ts), запоминание ступени на две недели и уход в лёгкую версию «медленно».
+     Лестницы ниже остались для ?tier= — посмотреть, как выглядели бы нижние ступени. История ниже — как они подбирались.
+
+     Ступени качества вместо непрерывной подстройки. Раньше DPR менялся раз в
      секунду: на экране 165 Гц пороги срабатывали то вверх, то вниз, буферы
      пересоздавались, картинка «дышала» резкостью — это было второе мерцание.
      Теперь: на старте (канвас ещё скрыт входом UI) сцена меряет время кадра
@@ -2239,64 +2210,18 @@ export class HillScene {
   /* телефон или планшет: основной указатель — палец, мыши нет */
   private readonly phone = matchMedia("(pointer: coarse)").matches && !matchMedia("(any-pointer: fine)").matches;
   private readonly ladder = this.phone ? HillScene.PHONE_LADDER : HillScene.LADDER;
-  /* Бюджет — медиана интервала кадров; 18 мс — с запасом над 16.7 мс экрана 60 Гц, где быстрее vsync интервал всё равно
-     не станет; 45 мс (меньше 22 кадров) — порог «слишком медленно», такому устройству лучше лёгкая версия.
-     v96: у телефона бюджет 33 мс (30 к/с) и порог 70 (≈14 к/с): первый экран почти статичен, ему этого хватает, а
-     погоня за 60 кадрами сажала iPhone на нижнюю ступень */
-  private readonly budgetMs = this.phone ? 33 : 18;
-  private readonly tooSlowMs = this.phone ? 70 : 45;
   private tier = 0;
-  private tierLocked = false;
-  private retried = false;
-  private predicted = false;
-  private climbs = 0;
-  private climbFailed = false;
-  private fallbackTier = -1;
+  private settled = false;
   private assetsReady = 0; // кресло и HDRI
-  private calibrateDelay = 0.3;
-  readonly calibrationLog: [number, number, number][] = []; // [dpr, мс, время сцены] — для замеров
-  /* UI проявляется только после калибровки: CSS-маски входа нагружают ту же
-     видеокарту и завышали замер (ступень падала до DPR 1.0) */
-  private resolveCalibrated!: () => void;
-  readonly calibrated = new Promise<void>((r) => (this.resolveCalibrated = r));
+  /* UI проявляется, когда кресло и HDRI на месте (settle) */
+  private resolveSettled!: () => void;
+  readonly sceneReady = new Promise<void>((r) => (this.resolveSettled = r));
   private dprMax = 1;
 
-  /* v103: имя видеокарты спрашиваем один раз, сразу после создания контекста. getParameter — синхронный запрос к
-     процессу видеокарты: в restoreTier он стоял в очереди за загрузкой буферов травы и ждал до 0,17 с */
-  private gpuName = "";
-  private tierKey() {
-    if (!this.gpuName) {
-      const gl = this.renderer.getContext();
-      const ext = gl.getExtension("WEBGL_debug_renderer_info");
-      this.gpuName = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : "gpu";
-    }
-    const gpu = this.gpuName;
-    /* v3 — версия рендер-пайплайна: при его изменении старые ступени недействительны */
-    return `hill-tier:v18:${gpu}:${screen.width}x${screen.height}@${window.devicePixelRatio}:${this.bladeTotal}`;
-  }
-
-  private static readonly TIER_TTL = 14 * 24 * 3600 * 1000;
-  private restoreTier() {
-    if (this.tierLocked) return; // ?dpr= — ручной режим для замеров
-    /* v44: ?tier=0…8 — поставить ступень руками (посмотреть, что видит слабый компьютер); регулятор выключен */
+  /* v44: ?tier=0…8 — поставить ступень руками (посмотреть, что видит слабый компьютер). Без параметра — верхняя */
+  private pinTier() {
     const forcedTier = new URLSearchParams(location.search).get("tier");
-    if (forcedTier !== null && Number.isInteger(+forcedTier) && +forcedTier >= 0 && +forcedTier < this.ladder.length) {
-      this.setTier(+forcedTier, "param");
-      this.lockTier(false);
-      return;
-    }
-    if (/[?&]recalibrate=1/.test(location.search)) return;
-    try {
-      /* ступень хранится со временем замера: одна неудачная калибровка (занятая видеокарта,
-         ноутбук на батарее) не должна навсегда держать устройство на низкой ступени —
-         через две недели меряем заново */
-      const raw = JSON.parse(localStorage.getItem(this.tierKey()) ?? "null") as { tier: number; at: number } | null;
-      const fresh = raw && Date.now() - raw.at < HillScene.TIER_TTL;
-      if (fresh && Number.isInteger(raw.tier) && raw.tier >= 0 && raw.tier < this.ladder.length) {
-        this.setTier(raw.tier, "restore");
-        this.lockTier(false);
-      }
-    } catch { /* приватный режим или старый формат — просто меряем заново */ }
+    if (forcedTier !== null && Number.isInteger(+forcedTier) && +forcedTier >= 0 && +forcedTier < this.ladder.length) this.setTier(+forcedTier, "param");
   }
 
   /* густота травы и лучи: ступень качества × облегчение под размытием кейсов (v25) */
@@ -2326,7 +2251,7 @@ export class HillScene {
   private walkWaiting = false;
   private ensureWalk() {
     /* и не ждём, пока закончится подбор качества (tierLocked): на встроенной видеокарте он идёт долго, и луг не начинал
-       собираться вовсе. Плотность луга всё равно подстраивается под ступень в setTier */
+       собираться вовсе. Плотность луга всё равно подстраивается под ступень в setTier. С v104 подбора нет совсем */
     if (this.walkStarted || this.walkOff || document.body.classList.contains("intro-loading")) return;
     if (!this.walkAfter) this.walkAfter = performance.now() + 6000;
     if (this.storyS < 0.015 && performance.now() < this.walkAfter) return;
@@ -2375,7 +2300,7 @@ export class HillScene {
 
   /** журнал смен ступени: [секунд с загрузки, ступень, откуда] — для замеров и ?debug=1 */
   readonly tierLog: string[] = [];
-  private setTier(t: number, why = "calibrate") {
+  private setTier(t: number, why: string) {
     this.tierLog.push(`${(performance.now() / 1000).toFixed(1)}s ${why} ${this.tier}→${t}`);
     this.tier = t;
     this.qualityScale = this.ladder[t][0];
@@ -2389,100 +2314,9 @@ export class HillScene {
     this.resize();
   }
 
-  /* Замер — медиана реальных интервалов между кадрами (без потолка FPS), а не
-     readPixels: на гибридной графике (RTX рисует, Intel выводит) синхронное чтение
-     пикселя то раздувало время в разы, то подвешивало страницу. Если видеокарта не
-     успевает, браузер сам растягивает кадры — это и есть то, что видит человек. */
-  private calibFrames: number[] = [];
-  private calibLast = 0;
-  private calibSkip = 6;
-
-  private calibrate(now: number) {
-    if (this.tierLocked) return;
-    if (this.opts.fixedCamera) { this.lockTier(false); return; }
-    if (this.forcedDpr) { this.lockTier(false); return; }
-    /* после смены ступени пропускаем кадры: пересоздание буферов и прогрев */
-    if (this.calibSkip > 0) { this.calibSkip--; this.calibLast = now; return; }
-    this.calibFrames.push(now - this.calibLast);
-    this.calibLast = now;
-    if (this.calibFrames.length < 20) return;
-    const sorted = this.calibFrames.slice().sort((a, b) => a - b);
-    /* v22.2: кадр, упёршийся в развёртку экрана, укладывается в бюджет. На 55 Гц медиана 18.2 мс —
-       чуть выше прежнего бюджета 18, и ступень падала до DPR 1.35 без лучей («качество упало»).
-       Быстрейший из 20 интервалов ≈ период развёртки, если GPU успевает; бюджет — не меньше него + 10% */
-    /* v96: не второй по скорости кадр, а нижняя четверть: один случайно короткий интервал (6 мс в журнале) выключал
-       поправку на развёртку, и ступень скакала 0→5→8→6 девять секунд */
-    const vsync = sorted[Math.floor(sorted.length * 0.25)];
-    const raw = sorted[sorted.length >> 1];
-    const budget = vsync > 12 && vsync < 19 ? Math.max(this.budgetMs, vsync * 1.1) : this.budgetMs;
-    const ms = raw * (this.budgetMs / budget);
-    this.calibFrames = [];
-    this.calibSkip = 6;
-    this.calibrationLog.push([+this.dpr.toFixed(2), +ms.toFixed(1), +this.uniforms.uTime.value.toFixed(1)]);
-    /* чуть выше бюджета — возможно, случайная помеха (видеокарта общая); перемеряем один раз */
-    if (ms > this.budgetMs && ms < this.budgetMs * 1.15 && !this.retried) {
-      this.retried = true;
-      return;
-    }
-    this.retried = false;
-    /* Первый замер — на верхней ступени. Остальные не перебираем по одной
-       (на Intel это ~4 с до показа сцены), а прогнозируем: вершинная часть
-       травы от разрешения не зависит (~35%), пиксельная растёт как DPR² и
-       чуть дешевле с MSAA 2×. Прыгаем на подходящую ступень и перемеряем. */
-    if (!this.predicted && ms > this.budgetMs) {
-      this.predicted = true;
-      const [s0, m0] = this.ladder[this.tier];
-      /* вершинная часть ∝ доле травинок, пиксельная ∝ DPR² и числу сэмплов */
-      const msaaFactor = (m: number) => (m === m0 ? 1 : m === 0 ? 0.6 : m < m0 ? 0.82 : 1.2);
-      const cost = (s: number, m: number, b: number) => 0.35 * b + 0.65 * ((s * s) / (s0 * s0)) * msaaFactor(m);
-      let t = this.tier;
-      while (t < this.ladder.length - 1 && ms * cost(this.ladder[t][0], this.ladder[t][1], this.ladder[t][2]) > this.budgetMs) t++;
-      this.setTier(t);
-      return;
-    }
-    /* проба ступенью выше не удалась — возвращаемся и больше не поднимаемся */
-    if (this.fallbackTier >= 0 && ms > this.budgetMs) {
-      this.climbFailed = true;
-      this.setTier(this.fallbackTier);
-      this.fallbackTier = -1;
-      return;
-    }
-    if (ms > this.budgetMs && this.tier < this.ladder.length - 1) {
-      this.setTier(this.tier + 1);
-      return; // следующий кадр перемеряет на новой ступени
-    }
-    /* v72: подъём, пока есть запас. Раньше была одна проба вверх и только после прогноза, с условием «медиана
-       меньше 14 мс». На экране 60 Гц интервал кадра не бывает короче 16.7 мс, так что условие не выполнялось
-       никогда: телефон, опущенный на осторожную ступень (интерфейс показан до калибровки — медленная сеть),
-       так на ней и оставался. iPhone 11 получал треть травы и сцену в DPR 1.2. Теперь запас — это либо
-       короткий кадр, либо кадры без пропусков: 85 % интервалов в пределах развёртки. Тогда пробуем ступень
-       выше, до пяти раз; первая же проба с пропусками возвращает на прежнюю и калибровка заканчивается */
-    const onTime = vsync > 12 && vsync < 19 && sorted[Math.floor(sorted.length * 0.85)] < vsync * 1.25;
-    const headroom = ms < this.budgetMs * 0.78 || onTime;
-    if (!this.climbFailed && this.climbs < 5 && this.tier > 0 && headroom) {
-      this.climbs++;
-      this.fallbackTier = this.tier;
-      this.setTier(this.tier - 1);
-      return;
-    }
-    this.fallbackTier = -1;
-    /* v24: даже нижняя ступень дольше 45 мс (меньше 22 кадров) — на скролле будет ~13 (бюджетный Android
-       в нагрузочном прогоне); такому устройству лучше лёгкая версия */
-    if (this.tier === this.ladder.length - 1 && ms > this.tooSlowMs && !/[?&]lite=0/.test(location.search)) {
-      this.lockTier(false);
-      this.onDegrade?.("slow");
-      return;
-    }
-    this.lockTier(true);
-  }
-
-  private governor: QualityGovernor | null = null;
-  private lockTier(save: boolean) {
-    this.tierLocked = true;
-    const manual = this.opts.fixedCamera || Number(new URLSearchParams(location.search).get("dpr")) > 0 || /[?&](governor=0|tier=d)/.test(location.search);
-    if (!manual && !this.governor) this.governor = new QualityGovernor(this.renderer.getContext() as WebGL2RenderingContext, this.ladder, this.phone ? 28 : 15, this.phone ? 36 : 22);
-    if (save) try { localStorage.setItem(this.tierKey(), JSON.stringify({ tier: this.tier, at: Date.now() })); } catch { /* ничего */ }
-    this.resolveCalibrated();
+  private settle() {
+    this.settled = true;
+    this.resolveSettled();
   }
   get qualityTier() {
     return this.tier;

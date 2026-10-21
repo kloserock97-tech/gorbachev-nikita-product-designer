@@ -1,13 +1,15 @@
 /* Лёгкая версия без 3D (v24, нагрузочный прогон docs/prompts/v24.md).
    Кому: браузер без WebGL2 (корпоративные ноутбуки и VDI с выключенным ускорением), программный рендер
-   (SwiftShader, llvmpipe — там холм шёл 0,2 кадра в секунду), устройства, где сцена не укладывается даже
-   в нижнюю ступень качества, и потеря WebGL-контекста без восстановления.
+   (SwiftShader, llvmpipe — там холм шёл 0,2 кадра в секунду) и потеря WebGL-контекста без восстановления.
+   v104: «3D слишком медленное» больше не причина — на медленном устройстве человек переходит сам.
    Что видит человек: та же страница обычной прокруткой — первый экран на постере холма, About, сетка
    кейсов, футер с контактами; внизу тихая плашка «Lite version» со ссылкой «Try 3D anyway».
    v27: плашка и подписи переключаются вместе с языком страницы. */
 import { onLang, t, type Key } from "../i18n";
 
-const KEY = "hill-lite";
+/* v104: новый ключ. Прежний помнил и уход «3D слишком медленное» — его больше нет (качество не подстраивается, лёгкую
+   версию человек выбирает сам), и такие устройства не должны ещё две недели открываться без 3D */
+const KEY = "hill-lite:v2";
 const TTL = 14 * 24 * 3600 * 1000;
 
 /** причина открыть лёгкую версию сразу, или null — пробуем 3D */
@@ -42,7 +44,7 @@ export function rememberLite() {
   try { localStorage.setItem(KEY, JSON.stringify({ at: Date.now() })); } catch { /* ничего */ }
 }
 
-const WHY = ["webgl", "software", "slow", "saved", "context", "stall", "error", "param"] as const;
+const WHY = ["webgl", "software", "saved", "context", "stall", "error", "param"] as const;
 const note = (reason: string) => (WHY.includes(reason as (typeof WHY)[number]) ? t(`lite.why.${reason}` as Key) : "");
 
 export function enterLite(reason: string) {

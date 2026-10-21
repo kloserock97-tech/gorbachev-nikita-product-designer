@@ -13,7 +13,7 @@ export type FocusLoader = {
     behind an opaque veil; once it is ready, the veil melts into the blurred hill and «Enter» shows up. Pressing it
     blurs the title away and brings the hill into focus, and the interface comes in on the way.
     The blur is the scene's own (postfx: params.intro), so the hill is alive behind the title: the grass sways as
-    soft light. Before readiness nothing is blurred: quality calibration measures the honest sharp frame under the veil.
+    soft light. Before readiness nothing is blurred: the opaque veil hides the hill, so the blur passes would be wasted.
     v95.1 (owner): no heavy fog and no breathing focus — the hill is only slightly blurred and tinted green, the tint
     and the blur leave together after «Enter».
     v95.2 (owner): the copy is English in both languages, no footer line, the name in the accent face (Ugol).
@@ -141,7 +141,7 @@ export function createFocusLoader(onDone: () => void, onLite: () => void): Focus
       if (clock - enterAt >= UI_AT) done();
       if (f >= 1) { done(); setBlur?.(0); dispose(); return; }
     }
-    /* sharp under the opaque veil: calibration must see the real frame */
+    /* sharp under the opaque veil: nobody sees it, the blur passes would be wasted */
     setBlur?.(revealAt >= 0 ? blur : 0);
   };
   raf = requestAnimationFrame(frame);

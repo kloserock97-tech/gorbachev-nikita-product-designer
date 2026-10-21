@@ -232,14 +232,14 @@ function start3d(caseView?: CaseView) {
       });
     } else setTimeout(() => ui.ready(), 280);
   };
-  scene.calibrated.then(start);
+  scene.sceneReady.then(start);
   scene.presentationReady.then(lateFonts);
-  setTimeout(() => { if (!started) scene.provisionalTier(); start(); }, 6000);
+  setTimeout(start, 6000);
 
-  /* v24: сцена не тянет (калибровка на нижней ступени всё равно дольше бюджета, WebGL-контекст пропал
-     и не вернулся, или за 14 с не нарисовано ни кадра) — переходим в лёгкую версию, не оставляя
-     человека перед замёрзшим холстом */
-  const degrade = (why: "slow" | "context" | "stall") => {
+  /* v24: WebGL-контекст пропал и не вернулся, или за 14 с не нарисовано ни кадра — переходим в лёгкую версию, не
+     оставляя человека перед замёрзшим холстом. v104: «медленно» больше не повод — качество не подстраивается, а лёгкую
+     версию человек выбирает сам (кнопка на заставке и в навигации) */
+  const degrade = (why: "context" | "stall") => {
     if (body.classList.contains("lite")) return;
     if (why !== "context") rememberLite();
     /* кейс не открыт — уходим на лёгкую страницу; открыт — дочитывают его здесь, в лёгком режиме */
@@ -432,8 +432,8 @@ function start3d(caseView?: CaseView) {
     const tick = (now: number) => {
       frames++;
       if (now - last > 1000) {
-        const s = scene as unknown as { qualityTier: number; pixelRatio: number; blades: number; calibrationLog: number[][] };
-        box.textContent = `tier ${s.qualityTier}  dpr ${s.pixelRatio.toFixed(2)} / screen ${devicePixelRatio}\nfps ${Math.round((frames * 1000) / (now - last))}  blades ${s.blades}\ncalib ${JSON.stringify(s.calibrationLog)}`;
+        const s = scene as unknown as { qualityTier: number; pixelRatio: number; blades: number };
+        box.textContent = `tier ${s.qualityTier}  dpr ${s.pixelRatio.toFixed(2)} / screen ${devicePixelRatio}\nfps ${Math.round((frames * 1000) / (now - last))}  blades ${s.blades}`;
         frames = 0; last = now;
       }
       requestAnimationFrame(tick);

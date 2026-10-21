@@ -298,7 +298,6 @@ const ru: Record<keyof typeof en, string> = {
   "lite.try": "Всё равно показать 3D",
   "lite.why.webgl": "3D в этом браузере выключено",
   "lite.why.software": "3D было бы слишком медленным на этом устройстве",
-  "lite.why.slow": "3D оказалось слишком медленным на этом устройстве",
   "lite.why.saved": "в прошлый раз 3D было слишком медленным",
   "lite.why.context": "3D-сцена упала",
   "lite.why.stall": "3D не запустилось",

@@ -59,14 +59,13 @@ Useful URL parameters while developing:
 | `?cases=wheel` / `wheel2d` / `wheel3d` / `ribbon` / `deck` | other views of the Work chapter: the wheel of titles on an arc (and the same without WebGL, or with it forced on phones), the old ribbon of cards, a stack. Any value shows a small switcher at the bottom |
 | `?story=0.62` | jump to a point of the scroll story (0 to 1) |
 | `?tblur=0.55` / `?taberr=0.03` | strength of the transition’s radial smear and chromatic aberration |
-| `?tier=0` | pin the quality step (the lowest ones drop the god rays) |
+| `?tier=0` | pin a quality step to see what a weaker setting looks like (0 is what everyone gets; the lowest ones drop the god rays) |
 | `?rayshalo=5` / `?raysmask=0.85,2.2` | how wide the sun’s halo is in the god-ray mask and from what brightness the frame feeds it |
 | `?lite=1` / `?lite=0` | force the lite version or force 3D |
 | `?debug=1` | show the quality tier, DPR and FPS |
 | `?dpr=1.5&msaa=2` | fix the render resolution and MSAA (disables auto quality) |
 | `?tree=0` / `?rocks=0` | hide the tree or the boulders |
 | `?shield=0` | let the god rays wash over the armchair and computer as they did before |
-| `?governor=0` | switch off the GPU-timer governor (use it with `?tier=`, or the tier drifts) |
 | `?dog=rain` / `?dog=sleep` | put the umbrella hat on Kelly or send her to sleep |
 | `?ui=0` | hide the interface, scene only |
 | `?lang=ru` / `?lang=en` | open the page in that language |
@@ -83,7 +82,6 @@ src/
     story.ts         story timing: chapters, camera paths, keyframes
     postfx.ts        render targets and the post-processing chain
     shaders.ts       GLSL for grass, sky, fog, god rays, final pass
-    quality.ts       GPU-timer quality governor
     dog.ts           Kelly: poses, head tracking, sleep, umbrella hat
     weather.ts       clear / cloudy / rain / dusk
     ...
@@ -116,7 +114,7 @@ Behind the case cards the meadow is fully blurred, so it renders cheaply there. 
 
 ### Quality
 
-On load the page measures frame time and picks one of nine tiers. On desktops the tiers trade MSAA first, then resolution, then grass density and god rays; on screens with a DPR below 1.5 the top tier supersamples the scene at DPR 1.5 and the final pass filters it down. Phones get their own ladder: their tile-based GPUs resolve MSAA almost for free, so grass density and rays go first, MSAA 4× stays until the seventh step, and the lowest three steps drop MSAA for a higher resolution with edge smoothing in the final pass. Browsers without a GPU timer (every browser on iPhone) fall back to frame intervals: if the idle hill runs slower than 45 fps, the tier goes down. The choice is cached per GPU and screen for two weeks. While you look at the hill, a governor reads GPU time through `EXT_disjoint_timer_query_webgl2` and moves the tier up or down by one step.
+Everyone gets the top quality: native resolution (on screens with a DPR below 1.5 the scene is supersampled at DPR 1.5 and the final pass filters it down), MSAA 4×, all the grass and the god rays. Nothing is measured or lowered behind the visitor's back; if a device can't keep up, the visitor switches to the lite version with the button on the loading screen or in the navigation. The page only falls back to the lite version on its own when 3D can't run at all: no WebGL2, software rendering, a WebGL context that is lost for good, or no frame drawn in 14 seconds. The lower tiers (`?tier=1..8`, a desktop ladder and a phone ladder) are kept for comparisons. Until October 2026 the page measured frame time on load, picked one of these tiers, cached it per GPU for two weeks and let a GPU-timer governor move it; that is gone.
 
 Shaders compile in parallel before the first frame (`KHR_parallel_shader_compile`). Models that arrive later compile after the HDRI is in, because the environment map changes the program key. Without that, the first frame blocked the main thread for about 2.4 seconds on a fast desktop.
 

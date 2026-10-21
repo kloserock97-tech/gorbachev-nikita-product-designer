@@ -295,7 +295,6 @@ const en = {
   "lite.try": "Try 3D anyway",
   "lite.why.webgl": "3D is off in this browser",
   "lite.why.software": "3D would be too slow on this device",
-  "lite.why.slow": "3D was too slow on this device",
   "lite.why.saved": "3D was too slow on this device last time",
   "lite.why.context": "the 3D view crashed",
   "lite.why.stall": "3D didn't start",

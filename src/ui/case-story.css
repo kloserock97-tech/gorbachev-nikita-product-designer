@@ -41,6 +41,9 @@
   -webkit-backdrop-filter: blur(20px) saturate(1.8); backdrop-filter: blur(20px) saturate(1.8);
 }
 .cs-top.is-scrolled::before { opacity: 1; }
+/* v104: когда под шапкой проявилась размытая полоса, кнопки и название лежат уже на ней — их собственное размытие
+   размывало размытое, а это проход на каждый кадр прокрутки ради почти непрозрачных (78–88 %) капсул */
+.cs-top.is-scrolled :is(.cs-back, .cs-top-arrow, .cs-top-title) { -webkit-backdrop-filter: none; backdrop-filter: none; }
 .cs-back, .cs-top-arrow {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 17px; border: 0; border-radius: 999px;
   background: color-mix(in srgb, #fff 78%, transparent); color: var(--ink); font: 500 14px/1 var(--font);
@@ -534,6 +537,7 @@ body.case-open .lite-bar { opacity: 0; pointer-events: none; }
   position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); translate: -50% 0; z-index: 8; display: inline-flex; align-items: center; gap: 12px;
   height: 50px; max-width: min(92vw, 460px); padding: 0 12px 0 18px; border: 0; border-radius: 999px;
   background: color-mix(in srgb, var(--ink) 86%, transparent); color: #fff; font: 500 15px/1 var(--font);
+  /* v104: размытие нужно — без него сквозь 14 % прозрачности читался текст страницы под капсулой (проверено кадрами) */
   -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6);
   box-shadow: 0 16px 40px color-mix(in srgb, var(--ink) 34%, transparent); cursor: pointer; transition: scale 0.3s var(--ease), background 0.3s var(--ease);
 }

@@ -9,8 +9,7 @@
    WebGL-холсту. Плюс сеть: что и в каком отрезке скачано.
 
    node tools/cdp-journey.mjs [--base <url>] [--q "lang=ru"] [--w 1368 --h 775 --dpr 1.5] [--gpu] [--profile] [--window] [--out shots/journey/x.json]
-   --gpu — ещё и время видеокарты (добавляет ?governor=0&jgpu=1: регулятор качества пользуется тем же таймером;
-   ступень тогда берите явно, --q "tier=2"). */
+   --gpu — ещё и время видеокарты (добавляет ?jgpu=1); другую ступень — --q "tier=2". */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -25,7 +24,7 @@ const has = (k) => process.argv.includes(`--${k}`);
 const PROFILE = has("profile");
 const BASE = arg("base", "http://127.0.0.1:5191/");
 const GPU = has("gpu");
-const Q = [arg("q", ""), GPU ? "governor=0&jgpu=1" : ""].filter(Boolean).join("&");
+const Q = [arg("q", ""), GPU ? "jgpu=1" : ""].filter(Boolean).join("&");
 const W = +arg("w", 1368), H = +arg("h", 775), PORT = +arg("port", 9381);
 const OUT = resolve(arg("out", "shots/journey/run.json"));
 const CASES = arg("cases", "grif-ai,community,ai-agents,moderator-dashboard,plati-chastyami,restaurant-guru").split(",").filter(Boolean);
