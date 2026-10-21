@@ -196,6 +196,7 @@ const items = [...document.querySelectorAll<HTMLAnchorElement>(".ll-notch [data-
 const mark = (section: string) => {
   if (!notch || notch.dataset.section === section) return;
   notch.dataset.section = section;
+  document.body.dataset.section = section;
   items.forEach((a) => {
     const on = a.dataset.nav === section;
     a.classList.toggle("is-active", on);

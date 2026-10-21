@@ -26,6 +26,8 @@ export function initDockNav(nav: Nav) {
     shown = section;
     /* v104: чёлка раскрыта на первом экране и сжимается в главах (ui/hero/notch.css) */
     dock.dataset.section = section;
+    /* v106: язык и лёгкая версия видны только на первом экране (notch.css, body[data-section]) */
+    document.body.dataset.section = section;
     dock.querySelectorAll<HTMLElement>("[data-nav]").forEach((el) => {
       const active = el.dataset.nav === section && section !== "home";
       el.classList.toggle("is-active", active);
