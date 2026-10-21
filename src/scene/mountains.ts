@@ -176,6 +176,8 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
       /* 0 — рельеф ещё не запечён: вершины уходят за кадр. Меш виден с первого кадра, чтобы его программа собралась
          вместе со всей сценой (precompile), а не синхронно в момент появления гор */
       uReady: { value: 0 },
+      /* высота хребта в седловине под солнцем, доля от полной; ?msad= */
+      uSaddle: { value: Number(q.get("msad") ?? 0.1) },
       /* x — доля неба вблизи (ближние склоны), y — плотность воздуха на километр; ?mhaze=0.32,0.095 */
       uHaze: { value: new THREE.Vector2(...((q.get("mhaze") ?? "0.32,0.095").split(",").map(Number) as [number, number])) },
       tMap: { value: mapRT.texture },
@@ -183,6 +185,7 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
     vertexShader: /* glsl */ `
       uniform float uOffset;
       uniform float uReady;
+      uniform float uSaddle;
       uniform vec3 uSunDir;
       uniform sampler2D tMap;
       varying vec3 vReal;
@@ -196,7 +199,7 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
            вершинами, а не за ними */
         vec3 w0 = (modelMatrix * vec4(position, 1.0)).xyz;
         float off = acos(clamp(dot(normalize(w0.xz - cameraPosition.xz), normalize(uSunDir.xz)), -1.0, 1.0));
-        p.y *= mix(0.1, 1.0, smoothstep(0.03, 0.32, off));
+        p.y *= mix(uSaddle, 1.0, smoothstep(0.03, 0.32, off));
         vReal = p;
         vWorld = (modelMatrix * vec4(p, 1.0)).xyz;
         gl_Position = uReady > 0.5 ? projectionMatrix * modelViewMatrix * vec4(p, 1.0) : vec4(2.0, 2.0, 2.0, 1.0);
