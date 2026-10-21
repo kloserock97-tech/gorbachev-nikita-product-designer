@@ -221,6 +221,8 @@ export function createPostFx(
       uAlt: { value: 0 },
       tIntro: { value: introRT.texture },
       uIntro: { value: 0 },
+      /* v105: ?introfx=tilt|glass|prism|orton — эффект заставки, по умолчанию tilt-shift */
+      uIntroFx: { value: Math.max(0, ["tilt", "glass", "prism", "orton"].indexOf(new URLSearchParams(location.search).get("introfx") ?? "tilt")) },
     },
   });
   const blit = new THREE.ShaderMaterial({

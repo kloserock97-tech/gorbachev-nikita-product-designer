@@ -1348,6 +1348,7 @@ uniform float uTear;       /* v19: нижний край оторванной с
 uniform float uBgBlur;     /* v19: размытие сцены-фона в главе «Кейсы» (само размытие — в четвертном проходе) */
 uniform sampler2D tIntro;  /* v95: расфокус заставки — кадр, размытый двумя четвертными проходами */
 uniform float uIntro;      /* доля размытого кадра, 0 — резко */
+uniform float uIntroFx;    /* v105: эффект заставки — 0 tilt-shift, 1 матовое стекло, 2 призма, 3 Ортон */
 uniform sampler2D tShadow; /* v22.1: мягкая тень компьютера, посчитанная на четверти разрешения */
 uniform sampler2D tAlt;    /* v32: второй фон (луг) — для смешивания с холмом на выходе из кейсов */
 uniform float uAlt;        /* 0 — только tScene, 0…1 — доля tAlt */
@@ -1485,11 +1486,32 @@ void main(){
     e = 0.25 * (texture2D(tScene, uv + vec2(-uDown.x, -uDown.y)).rgb + texture2D(tScene, uv + vec2(uDown.x, -uDown.y)).rgb
       + texture2D(tScene, uv + vec2(-uDown.x, uDown.y)).rgb + texture2D(tScene, uv + vec2(uDown.x, uDown.y)).rgb);
   }
-  /* v104: мягкий фокус Ортона в цвете — размытый кадр подмешан к резкому, а его светлые места ещё и светятся
-     (b², поэтому тёмное не засвечивается): закат растекается сиянием, детали холма видны сквозь него */
+  /* v105: эффект заставки (Никита попросил другой вместо Ортона). k — сила 0…1: заставка держит intro 0,3, «Enter»
+     сводит его к нулю, и любой эффект уходит вместе с ним */
   if (uIntro > 0.0) {
-    vec3 b = texture2D(tIntro, uv).rgb;
-    e = mix(e, b, uIntro * 0.5) + b * b * uIntro * 0.8;
+    float k = clamp(uIntro / 0.51, 0.0, 1.0);
+    if (uIntroFx < 0.5) {
+      /* tilt-shift, «миниатюра»: резкая полоса на вершине холма (кресло, дерево), выше и ниже — всё сильнее
+         размыто; цвет чуть плотнее, как у снимка макета */
+      float m = smoothstep(0.05, 0.3, abs(uv.y - 0.47)) * k;
+      e = mix(e, texture2D(tIntro, uv).rgb, m);
+      e = mix(vec3(dot(e, vec3(0.2126, 0.7152, 0.0722))), e, 1.0 + 0.22 * k);
+    } else if (uIntroFx < 1.5) {
+      /* матовое стекло: размытый кадр сдвинут крупинками изморози — у каждой клетки в 3 px свой сдвиг */
+      vec2 cell = floor(gl_FragCoord.xy / 3.0);
+      vec2 jit = vec2(hash21(cell), hash21(cell + 17.3)) - 0.5;
+      vec3 f = texture2D(tIntro, uv + jit * 0.012 * k).rgb;
+      e = mix(e, f * 1.04 + 0.025 * k, 0.85 * k);
+    } else if (uIntroFx < 2.5) {
+      /* призма: каналы расходятся от центра кадра, к краям сильнее — как в старом объективе; плюс лёгкая мягкость */
+      vec2 d = (uv - 0.5) * 0.022 * k;
+      vec3 p = vec3(texture2D(tScene, uv + d).r, texture2D(tScene, uv).g, texture2D(tScene, uv - d).b);
+      e = mix(p, texture2D(tIntro, uv).rgb, 0.3 * k);
+    } else {
+      /* Ортон (v104): размытый кадр подмешан к резкому, светлое ещё и светится */
+      vec3 b = texture2D(tIntro, uv).rgb;
+      e = mix(e, b, uIntro * 0.5) + b * b * uIntro * 0.8;
+    }
   }
   float shift = dot(chroma, chroma);
   if (shift > 0.0) {
