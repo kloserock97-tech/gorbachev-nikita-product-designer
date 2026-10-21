@@ -1,0 +1,103 @@
+/* v104: док — «чёлка», как вырез экрана iPhone (просьба Никиты). Чёрная плашка висит от верхнего края и стекает в него
+   вогнутыми «плечами». На первом экране подписи видны; когда человек ушёл в главу, чёлка сжимается до значков и
+   подписи текущего раздела — как Dynamic Island, который показывает, что идёт сейчас. Наведение раскрывает её снова.
+   Язык и переход в лёгкую версию вынесены из дока в отдельные кнопки слева (.top-tools), звук остаётся справа.
+   Разметка и переходы прежние (index.html, dockNav.ts); увеличение пунктов под курсором (heroUi.ts) чёлке не идёт —
+   оно здесь выключено. */
+.dock-wrap { top: 0; }
+.dock {
+  --notch: #0b0b0a;
+  --nr: calc(16 * var(--u));
+  align-items: center; height: auto; gap: calc(2 * var(--u));
+  padding: calc(7 * var(--u)) calc(9 * var(--u)) calc(9 * var(--u));
+  border: 0; border-radius: 0 0 calc(26 * var(--u)) calc(26 * var(--u));
+  background: var(--notch);
+  box-shadow: 0 calc(12 * var(--u)) calc(32 * var(--u)) rgba(24, 18, 8, 0.22);
+  transition: padding 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* плечи: квадрат у верхнего края минус четверть круга — чёлка плавно переходит в край экрана */
+.dock::before, .dock::after { content: ""; position: absolute; top: 0; width: var(--nr); height: var(--nr); pointer-events: none; }
+.dock::before { right: 100%; background: radial-gradient(circle at 0 100%, transparent calc(var(--nr) - 0.5px), var(--notch) var(--nr)); }
+.dock::after { left: 100%; background: radial-gradient(circle at 100% 100%, transparent calc(var(--nr) - 0.5px), var(--notch) var(--nr)); }
+
+.dock .dock-item {
+  height: calc(34 * var(--u)); padding: 0 calc(12 * var(--u)); gap: 0;
+  border: 0; border-radius: calc(17 * var(--u));
+  background: transparent; color: rgba(255, 255, 255, 0.64); box-shadow: none;
+  font-weight: 500; letter-spacing: calc(1.2 * var(--u));
+  scale: none; translate: none; margin-inline: 0;
+  transition: color 0.2s ease, background 0.25s ease, padding 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), gap 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.dock .dock-item[data-nav="lab"] { color: rgba(255, 255, 255, 0.64); }
+.dock .dock-item:hover, .dock .dock-item[data-near="true"], .dock .dock-item:focus-visible { color: #fff; background: rgba(255, 255, 255, 0.1); border-color: transparent; box-shadow: none; }
+.dock .dock-item:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+.dock .dock-item--enter, .dock .dock-item--enter:not([data-near="true"]) { color: #fff; background: transparent; box-shadow: none; }
+.dock .dock-item.is-active { background: #f6f3ec; color: #0b0b0a; }
+.dock .dock-item .glyph { opacity: 0.9; }
+.dock .dock-mark, .dock .dock-mark[data-near="true"] { width: calc(34 * var(--u)); padding: 0; border: 0; border-radius: 50%; background: #f6f3ec; color: #0b0b0a; }
+.dock .dock-mark:hover { background: #fff; }
+
+/* подписи: раскрываются вбок, как остров. Показаны на первом экране, у текущего раздела и пока чёлку держат курсором */
+.dock .dock-item > span:not(.glyph) {
+  display: inline-block; max-width: 0; opacity: 0; overflow: hidden;
+  transition: max-width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease, margin 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@media (min-width: 901px) {
+  .dock[data-section="home"] .dock-item > span:not(.glyph),
+  .dock:hover .dock-item > span:not(.glyph),
+  .dock:focus-within .dock-item > span:not(.glyph),
+  .dock .dock-item.is-active > span:not(.glyph) { max-width: calc(160 * var(--u)); opacity: 1; margin-left: calc(8 * var(--u)); }
+}
+@media (max-width: 900px) {
+  .dock { --nr: 14px; padding: 6px 8px 8px; gap: 2px; border-radius: 0 0 22px 22px; }
+  .dock .dock-item { width: 44px; height: 42px; padding: 0; border-radius: 21px; }
+  .dock .dock-mark { width: 42px; }
+  /* на iPhone чёлка сайта встаёт под настоящий вырез экрана */
+  .dock-wrap { padding-top: env(safe-area-inset-top); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dock, .dock .dock-item, .dock .dock-item > span:not(.glyph) { transition: none; }
+}
+
+/* ── язык и лёгкая версия — отдельные кнопки слева, в той же строке, что звук справа ── */
+.top-tools {
+  position: fixed; z-index: 30; top: calc(38 * var(--u)); left: calc(46 * var(--u));
+  display: flex; align-items: center; gap: 8px;
+  opacity: 0; translate: 0 -8px; pointer-events: none;
+  transition: opacity 0.5s ease, translate 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.is-ready .top-tools { opacity: 1; translate: none; pointer-events: auto; transition-delay: 0.5s; }
+.no-ui .top-tools, .lite .top-tools, .case-open .top-tools { display: none; }
+.pc-focus .top-tools { opacity: 0.55; }
+.top-lang, .top-lite {
+  height: max(40px, calc(46 * var(--u)));
+  border: 1px solid rgba(255, 255, 255, 0.6); border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.82), rgba(244, 239, 230, 0.74));
+  box-shadow: 0 10px 28px rgba(70, 56, 24, 0.14), inset 0 1px rgba(255, 255, 255, 0.8);
+}
+/* язык: переключатель на два положения, текущий — тёмная плашка */
+.top-lang { display: flex; align-items: center; padding: 4px; }
+.top-lang button {
+  height: 100%; min-width: max(34px, calc(40 * var(--u))); padding: 0 10px; border: 0; border-radius: 999px;
+  background: none; color: #6a665a; font: 600 12px/1 var(--font); letter-spacing: 0.04em; cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+.top-lang button:hover { color: #1b1a16; }
+.top-lang button[aria-pressed="true"] { background: #2b2a24; color: #f7f4ec; }
+.top-lang button:focus-visible, .top-lite:focus-visible { outline: 2px solid #2b2a24; outline-offset: 3px; }
+/* лёгкая версия: значок монитора и подпись, на узком экране — только значок */
+.top-lite {
+  display: inline-flex; align-items: center; gap: 8px; padding: 0 16px 0 13px;
+  color: #2e2c25; font: 500 13px/1 var(--font); text-decoration: none; white-space: nowrap;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.top-lite svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.top-lite:hover { color: #1b1a16; border-color: rgba(43, 42, 36, 0.14); }
+@media (max-width: 900px) {
+  /* в строку под чёлкой, зеркально кнопке звука */
+  .top-tools { top: calc(env(safe-area-inset-top) + 56px + 10px); left: calc(34 * var(--u)); translate: 0 -8px; }
+  .top-lang, .top-lite { height: 42px; }
+  .top-lite { width: 42px; padding: 0; justify-content: center; }
+  .top-lite span { display: none; }
+  .sound-fab { top: calc(env(safe-area-inset-top) + 56px + 10px); }
+}

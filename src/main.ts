@@ -1,6 +1,7 @@
 import "./ui/fonts.css";
 import "./ui/hero/hero.css";
 import "./ui/hill-ui.css";
+import "./ui/hero/notch.css";
 import "./ui/walk.css";
 import "./ui/case-v37.css";
 import "./ui/cases-signpost.css";

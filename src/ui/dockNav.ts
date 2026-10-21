@@ -24,6 +24,8 @@ export function initDockNav(nav: Nav) {
   const track = (section: DockSection) => {
     if (section === shown) return;
     shown = section;
+    /* v104: чёлка раскрыта на первом экране и сжимается в главах (ui/hero/notch.css) */
+    dock.dataset.section = section;
     dock.querySelectorAll<HTMLElement>("[data-nav]").forEach((el) => {
       const active = el.dataset.nav === section && section !== "home";
       el.classList.toggle("is-active", active);
