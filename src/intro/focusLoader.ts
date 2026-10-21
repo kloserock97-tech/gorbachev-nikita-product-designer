@@ -40,7 +40,7 @@ export function createFocusLoader(onDone: () => void, onLite: () => void): Focus
         <button class="focus-loader__enter" type="button">Enter</button>
       </div>
     </div>
-    <button class="focus-loader__fallback" type="button">Open lightweight version</button>`;
+    <button class="focus-loader__fallback" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v10H4zM9 20h6M12 16v4"/></svg>Lightweight version, no 3D</button>`;
   document.body.appendChild(root);
   document.body.classList.add("intro-loading");
   document.body.classList.add("focus-loading");
@@ -87,7 +87,8 @@ export function createFocusLoader(onDone: () => void, onLite: () => void): Focus
   root.addEventListener("keydown", e => {
     if (e.key === "Tab") {
       e.preventDefault();
-      const to = root.classList.contains("is-ready") ? enter : root.classList.contains("is-slow") ? fallback : root;
+      /* v104: лёгкая версия доступна всегда — Tab переключает между «Enter» и ней */
+      const to = document.activeElement === fallback && root.classList.contains("is-ready") ? enter : fallback;
       to.focus({ preventScroll: true });
     }
   });

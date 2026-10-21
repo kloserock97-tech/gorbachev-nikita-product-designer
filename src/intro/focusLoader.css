@@ -1,15 +1,14 @@
-/* v95, заставка «Расфокус» (focusLoader.ts). Своего фона нет: за ней — сам холм в мягком фокусе (постобработка: размытый
-   кадр поверх резкого) и в графите. Вуаль закрывает кадр, пока сцена готовится, и тает в этот холм; «Enter» возвращает
-   резкость и цвет заката.
-   Тон (графит — выбор Никиты из шести вариантов): фильтр канваса, вуаль и текст заданы на body — их читают и канвас,
-   и заставка. Премиальность — низкая насыщенность и глубина, а не оттенок. Контраст поднят, чтобы свечение в небе
-   читалось светом, а не серой дымкой */
+/* v95, заставка «Расфокус» (focusLoader.ts). Своего фона нет: за ней — сам холм в мягком фокусе Ортона (постобработка:
+   размытый кадр подмешан к резкому, светлое ещё и светится). Вуаль закрывает кадр, пока сцена готовится, и тает в этот
+   холм; «Enter» возвращает резкость.
+   v104 (Никита): без графита — холм в цветах заката, как на первых кадрах подбора тона; без виньетки (тёмная грязнила,
+   светлая молочнила), зерно слабее — оно серое и тоже глушило цвет. Текст тёмный: за ним светлое закатное небо */
 body.focus-tint {
-  --fl-filter: grayscale(.94) sepia(.12) brightness(.5) contrast(1.16);
-  --fl-veil-bg: #0c0c0b;
-  --fl-ink: #f3efe7; --fl-ink-soft: #f3efe7a6; --fl-line: #f3efe733;
-  --fl-vignette: #050505;
-  --fl-grain: .22;
+  --fl-filter: saturate(1.05);
+  --fl-veil-bg: #1b150d;
+  --fl-ink: #1d1810; --fl-ink-soft: #1d1810a8; --fl-line: #1d181033;
+  --fl-vignette: transparent;
+  --fl-grain: .07;
 }
 .focus-loader {
   position: fixed; inset: 0; z-index: 2000;
@@ -80,13 +79,22 @@ body.focus-tint.focus-entering #scene { filter: none; }
 .focus-loader.is-ready .focus-loader__status { opacity: 0; }
 .focus-loader.is-ready .focus-loader__enter { opacity: 1; transform: none; pointer-events: auto; }
 
+/* v104: лёгкая версия предлагается сразу, а не только когда загрузка затянулась: слабому ноутбуку или телефону на мобильном
+   интернете незачем ждать 3D. Полупрозрачная пилюля внизу; если загрузка затянулась — она плотнее и заметнее */
 .focus-loader__fallback {
-  display: none; position: absolute; left: 50%; bottom: clamp(56px, 9vh, 90px); transform: translateX(-50%);
-  appearance: none; cursor: pointer; padding: 9px 18px; border-radius: 999px; border: 1px solid var(--fl-line);
-  background: none; color: var(--fl-ink); font: 500 12px var(--font);
+  position: absolute; left: 50%; bottom: max(28px, calc(env(safe-area-inset-bottom) + 20px)); transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 8px;
+  appearance: none; cursor: pointer; padding: 10px 18px; border-radius: 999px; border: 1px solid rgba(255, 250, 240, .55);
+  background: rgba(255, 250, 240, .32); color: var(--fl-ink); font: 500 13px var(--font); white-space: nowrap;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  opacity: 0; animation: focus-loader-in 1s ease 1.2s forwards;
+  transition: background .25s ease, border-color .25s ease;
 }
+.focus-loader__fallback svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.focus-loader__fallback:hover { background: rgba(255, 250, 240, .6); }
 .focus-loader__fallback:focus-visible { outline: 2px solid var(--fl-ink); outline-offset: 3px; }
-.focus-loader.is-slow .focus-loader__fallback { display: block; }
+.focus-loader.is-slow .focus-loader__fallback { background: rgba(255, 250, 240, .7); border-color: #fffaf0; }
+.focus-loader.is-entering .focus-loader__fallback { opacity: 0; transition: opacity .4s ease; animation: none; }
 
 /* «Войти»: надписи уходят в тот же расфокус, из которого выходит холм */
 .focus-loader.is-entering { pointer-events: none; }

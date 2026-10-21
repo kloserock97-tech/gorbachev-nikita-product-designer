@@ -1485,7 +1485,12 @@ void main(){
     e = 0.25 * (texture2D(tScene, uv + vec2(-uDown.x, -uDown.y)).rgb + texture2D(tScene, uv + vec2(uDown.x, -uDown.y)).rgb
       + texture2D(tScene, uv + vec2(-uDown.x, uDown.y)).rgb + texture2D(tScene, uv + vec2(uDown.x, uDown.y)).rgb);
   }
-  if (uIntro > 0.0) e = mix(e, texture2D(tIntro, uv).rgb, uIntro);
+  /* v104: мягкий фокус Ортона в цвете — размытый кадр подмешан к резкому, а его светлые места ещё и светятся
+     (b², поэтому тёмное не засвечивается): закат растекается сиянием, детали холма видны сквозь него */
+  if (uIntro > 0.0) {
+    vec3 b = texture2D(tIntro, uv).rgb;
+    e = mix(e, b, uIntro * 0.5) + b * b * uIntro * 0.8;
+  }
   float shift = dot(chroma, chroma);
   if (shift > 0.0) {
     e.r = texture2D(tScene, uv + chroma).r;
