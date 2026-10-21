@@ -7,7 +7,7 @@ import { createPostFx, type PostFx } from "./postfx";
 import { PortfolioScreen } from "./portfolioScreen";
 import { Dog } from "./dog";
 import { Weather, type WeatherKind } from "./weather";
-import { CASES, CHAPTER, FOOTER, MEADOW_OUT, STORY, STORY_FX, TRANSITION, aberrationAt, bell, casesCamera, chapters, flightPose, footerCamera, portalAt, ramp, storyCamera, zoomBlur, type Pose } from "./story";
+import { CASES, FOOTER, MEADOW_OUT, STORY, STORY_FX, TRANSITION, aberrationAt, bell, casesCamera, chapters, flightPose, footerCamera, portalAt, ramp, storyCamera, zoomBlur, type Pose } from "./story";
 import type { Meadow } from "./meadow/Meadow";
 import { SCROLL_LAMBDA } from "../scrollFeel";
 import { KINETIC_BASE, KINETIC_FONT, createKinetic, type Kinetic } from "./kinetic";
@@ -1335,6 +1335,9 @@ export class HillScene {
       ? viaPortal ? (pk < 0.999 ? Math.max(0.002, 1 - THREE.MathUtils.smoothstep(pk, 0.6, 0.95)) : 0) : 1 - wo * wo * (3 - 2 * wo)
       : 0;
     fx.alt = alt;
+    /* луг ещё собирается, а человек уже в «Кейсах» — вместо размытого холма размытый кадр луга (index.html .walk-wait) */
+    const waiting = c > 0.01 && f <= 0 && !this.walkReady && !this.walkOff;
+    if (waiting !== this.walkWaiting) { this.walkWaiting = waiting; document.body.classList.toggle("walk-wait", waiting); }
     fx.portal = viaPortal ? pk : 0;
     this.walk?.setPortal(viaPortal ? pk : 0);
     // Establish the chair/hill inside the small opening, then settle into the
@@ -2310,8 +2313,17 @@ export class HillScene {
   setSignCase(i: number) {
     this.signCase = i;
   }
+  /* v106: луг собирался, только когда прокрутка подходила к «Кейсам». Быстрая прокрутка или «Кейсы» в чёлке приводили в главу
+     раньше, чем он был готов, и несколько секунд за кейсами стоял размытый холм. Теперь сборка начинается, как только
+     человек тронул историю, или через 6 с после первого экрана (после заставки, в свободное время браузера) */
+  private walkAfter = 0;
+  private walkWaiting = false;
   private ensureWalk() {
-    if (this.walkStarted || this.walkOff || !this.tierLocked || this.storyS < CHAPTER - 0.12) return;
+    /* и не ждём, пока закончится подбор качества (tierLocked): на встроенной видеокарте он идёт долго, и луг не начинал
+       собираться вовсе. Плотность луга всё равно подстраивается под ступень в setTier */
+    if (this.walkStarted || this.walkOff || document.body.classList.contains("intro-loading")) return;
+    if (!this.walkAfter) this.walkAfter = performance.now() + 6000;
+    if (this.storyS < 0.015 && performance.now() < this.walkAfter) return;
     this.walkStarted = true;
     const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 0));
     /* v96: луг и портал — отдельный чанк, грузится здесь, а не с первым экраном */
@@ -2337,7 +2349,8 @@ export class HillScene {
         if (destination) this.walk?.portal.setDestination(destination);
         this.walk?.render(target);
       };
-      void this.walk.compile(this.fx.altTarget).then(() => { if (!this.disposed) this.walkReady = true; }).catch(() => { this.walkReady = false; });
+      /* ?walkhold=1 — луг никогда не «готов»: проверить подложку .walk-wait */
+      void this.walk.compile(this.fx.altTarget).then(() => { if (!this.disposed && !/[?&]walkhold=1/.test(location.search)) this.walkReady = true; }).catch(() => { this.walkReady = false; });
     }), { timeout: 1500 });
   }
   private applyDensity() {

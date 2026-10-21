@@ -1175,3 +1175,9 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   #scene { top: 0; bottom: auto; height: calc(100vh + 140px); height: calc(100lvh + 140px); }
   .story-hero, .cases, .site-footer { bottom: auto; height: 100vh; height: 100svh; }
 }
+
+/* v106: подложка «Кейсов», пока луг собирается: размытый кадр того же луга вместо размытого холма. Стоит над холстом,
+   под интерфейсом главы; уходит за полсекунды, как только луг готов */
+.walk-wait { position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0; transition: opacity 0.5s ease; background: #2d3510 url("/ui/walk-wait.webp") 50% 50% / cover no-repeat; }
+@media (max-aspect-ratio: 4/5) { .walk-wait { background-image: url("/ui/walk-wait-m.webp"); } }
+body.walk-wait .walk-wait { opacity: 1; transition-duration: 0.2s; }

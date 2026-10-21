@@ -75,6 +75,8 @@
 <!-- Первый экран: сцена холма и интерфейс поверх неё (стили — src/ui/hero/hero.css, поведение — src/ui/hero/heroUi.ts) -->
 <main class="hero" id="hero">
   <canvas id="scene" data-i18n-label="scene.alt" aria-label="A chair on a grassy hill at sunset"></canvas>
+  <!-- v106: подложка «Кейсов», пока луг собирается (HillScene.ensureWalk) — размытый кадр луга, 1,6 КБ -->
+  <div class="walk-wait" aria-hidden="true"></div>
   <div class="scene-cover" aria-hidden="true"></div>
   <!-- компьютер: подсказка у курсора и управление, пока камера у экрана -->
   <span class="pc-tip" data-i18n="pc.tip" aria-hidden="true">Read the magazine</span>
