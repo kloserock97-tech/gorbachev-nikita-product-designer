@@ -18,6 +18,8 @@ export default defineConfig(({ command }) => ({
   base: command === "build" ? "./" : "/",
   build: {
     rolldownOptions: {
+      /* v102: вторая страница — лёгкая версия без WebGL (lite.html, src/liteLab) */
+      input: { main: "index.html", lite: "lite.html" },
       output: {
         /* three.js — половина основного скрипта и меняется раз в несколько месяцев, а код сайта выкатывается
            по нескольку раз в день. В отдельном файле он остаётся в кеше браузера между выкатками: вернувшийся

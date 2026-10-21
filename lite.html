@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Никита Горбачев — продуктовый дизайнер</title>
+<meta name="description" content="Портфолио продуктового дизайнера Никиты Горбачева: кейсы, пэт-проекты и контакты.">
+<meta name="theme-color" content="#f3f2ee">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" as="image" href="lite/hero/hill.avif" type="image/avif" fetchpriority="high">
+</head>
+<body>
+<a class="ll-skip" href="#work" data-ll="skip"></a>
+
+<header class="ll-top">
+  <nav class="ll-bar" aria-label="Разделы" data-ll-label="nav.label">
+    <a class="ll-bar__brand" href="#top"><img src="ui/portrait.jpg" alt="" width="28" height="28"><span data-ll="hero.name"></span></a>
+    <div class="ll-bar__links">
+      <a href="#about" data-ll="nav.about"></a>
+      <a href="#work" data-ll="nav.work"></a>
+      <a href="#lab" data-ll="nav.lab"></a>
+      <a href="#contact" data-ll="nav.contacts"></a>
+    </div>
+    <div class="ll-bar__end">
+      <div class="ll-lang" role="group" data-ll-label="nav.langs">
+        <button type="button" data-lang-set="ru" lang="ru">RU</button>
+        <button type="button" data-lang-set="en" lang="en">EN</button>
+      </div>
+      <a class="ll-3d" href="./?lite=0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span data-ll="nav.3d"></span></a>
+      <a class="ll-bar__hi" href="#contact" data-ll="nav.hi"></a>
+      <button class="ll-bar__menu" type="button" aria-expanded="false" aria-controls="ll-sheet" data-ll-label="nav.menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="ll-bar__l1" d="M5 9h14"/><path class="ll-bar__l2" d="M5 15h14"/></svg></button>
+    </div>
+  </nav>
+  <!-- на телефоне разделы и кнопки — в шторке под панелью -->
+  <div class="ll-sheet" id="ll-sheet" hidden>
+    <a href="#about" data-ll="nav.about"></a>
+    <a href="#work" data-ll="nav.work"></a>
+    <a href="#lab" data-ll="nav.lab"></a>
+    <a href="#contact" data-ll="nav.contacts"></a>
+    <div class="ll-sheet__row">
+      <a class="ll-3d" href="./?lite=0"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg><span data-ll="nav.3d"></span></a>
+      <a class="ll-bar__hi" href="#contact" data-ll="nav.hi"></a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <!-- первый экран: имя крупным словом, справа короткая подпись, ниже — кадр холма в рамке -->
+  <section class="hero" aria-labelledby="ll-name">
+    <div class="hero__head">
+      <h1 class="hero__name" id="ll-name" data-ll="hero.name"></h1>
+      <div class="hero__aside">
+        <div class="hero__who">
+          <img src="ui/portrait.jpg" alt="" width="44" height="44">
+          <span class="hero__tag" data-ll="hero.role"></span>
+        </div>
+        <p data-ll="hero.lead"></p>
+      </div>
+    </div>
+
+    <figure class="hero__frame">
+      <picture>
+        <source srcset="lite/hero/hill.avif" type="image/avif">
+        <img src="lite/hero/hill.webp" alt="" data-ll-alt="hero.alt" width="1672" height="941" fetchpriority="high">
+      </picture>
+      <div class="hero__trust">
+        <p data-ll="hero.trust"></p>
+        <ul class="hero__logos">
+          <li><img src="lite/logos/ozon.svg" alt="" width="22" height="22">Ozon</li>
+          <li><img src="lite/logos/mos.svg" alt="" width="22" height="22">Mos.ru</li>
+          <li><img src="lite/logos/sber.svg" alt="" width="22" height="22"><span data-ll="brand.sber"></span></li>
+          <li><img src="lite/logos/grif.svg" alt="" width="22" height="22">Grif AI</li>
+        </ul>
+      </div>
+      <!-- колода, как в карточке 3D-версии: кейсы, потом пэт-проекты (heroDeck.ts) -->
+      <div class="hero__deck" role="group" tabindex="0" data-ll-label="deck.label">
+        <div class="hero__deck-bar">
+          <span class="hero__deck-kind" data-deck-kind></span>
+          <span class="hero__deck-nav">
+            <button type="button" data-deck-step="-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+            <span class="hero__deck-count" data-deck-count></span>
+            <button type="button" data-deck-step="1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button>
+          </span>
+        </div>
+        <a class="hero__case" data-deck-link href="./?lite=1#/work/grif-ai">
+          <img data-deck-img src="ui/card-grif-ai.webp" alt="" width="120" height="76">
+          <span class="hero__case-body">
+            <span class="hero__case-title" data-deck-title>GRIF AI</span>
+            <span class="hero__case-meta" data-deck-meta></span>
+          </span>
+          <span class="ll-round" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 16 16 8M9 8h7v7"/></svg></span>
+        </a>
+      </div>
+    </figure>
+  </section>
+
+  <!-- о себе: одна фраза крупно, продолжение светлее — как абзац на референсе -->
+  <section class="ll-statement" id="about" aria-labelledby="ll-about">
+    <p class="ll-label" id="ll-about" data-ll="nav.about"></p>
+    <p class="ll-statement__text"><span data-statement="lead"></span> <span class="ll-statement__rest" data-statement="rest"></span></p>
+  </section>
+
+  <section class="ll-facts" data-ll-label="facts.label">
+    <article class="ll-fact ll-fact--logos">
+      <div class="ll-fact__logos">
+        <img src="lite/logos/ozon.svg" alt="Ozon" width="44" height="44">
+        <img src="lite/logos/mos.svg" alt="Mos.ru" width="44" height="44">
+        <img src="lite/logos/sber.svg" alt="" data-ll-alt="brand.sber" width="44" height="44">
+        <img src="lite/logos/grif.svg" alt="Grif AI" width="44" height="44">
+      </div>
+      <p class="ll-fact__label" data-ll="about.logos"></p>
+      <p class="ll-fact__num">4</p>
+    </article>
+    <article class="ll-fact ll-fact--dark">
+      <p class="ll-fact__label" data-ll="about.fact.years.sub"></p>
+      <p class="ll-fact__text" data-ll="about.p2"></p>
+      <p class="ll-fact__num" data-ll="about.fact.years"></p>
+    </article>
+    <article class="ll-fact">
+      <img class="ll-fact__thumb" src="cases/community/diorama.webp" alt="" width="120" height="80" loading="lazy">
+      <p class="ll-fact__label" data-ll="facts.cases"></p>
+      <p class="ll-fact__num" data-facts-cases></p>
+    </article>
+    <article class="ll-fact ll-fact--photo">
+      <p class="ll-fact__label" data-ll="facts.teams"></p>
+      <p class="ll-fact__num" data-ll="about.fact.teams.sub"></p>
+    </article>
+  </section>
+
+  <section class="ll-sec" id="work" aria-labelledby="ll-work">
+    <header class="ll-head">
+      <div>
+        <h2 id="ll-work" data-ll="work.title"></h2>
+        <p data-ll="work.note"></p>
+      </div>
+      <div class="ll-chips" role="group" data-ll-label="work.filter">
+        <button type="button" class="ll-chip" data-kind="all" aria-pressed="true" data-ll="filter.all"></button>
+        <button type="button" class="ll-chip" data-kind="web" aria-pressed="false" data-ll="filter.web"></button>
+        <button type="button" class="ll-chip" data-kind="mobile" aria-pressed="false" data-ll="filter.mobile"></button>
+      </div>
+    </header>
+    <ul class="ll-grid" data-cases></ul>
+  </section>
+
+  <section class="ll-sec" id="lab" aria-labelledby="ll-lab">
+    <header class="ll-head">
+      <div>
+        <h2 id="ll-lab" data-ll="notes.pick"></h2>
+        <p data-ll="lab.note"></p>
+      </div>
+    </header>
+    <ul class="ll-list" data-notes></ul>
+  </section>
+</main>
+
+<footer class="ll-foot" id="contact" aria-labelledby="ll-contact">
+  <div class="ll-foot__top">
+    <div>
+      <p class="ll-label ll-label--light" data-ll="footer.kicker"></p>
+      <h2 id="ll-contact" data-ll="contact.title"></h2>
+      <a class="ll-foot__mail" href="mailto:kloserock97@gmail.com">kloserock97@gmail.com</a>
+    </div>
+    <nav class="ll-foot__cols" aria-label="Ссылки">
+      <div>
+        <p data-ll="foot.nav"></p>
+        <a href="#about" data-ll="nav.about"></a>
+        <a href="#work" data-ll="nav.work"></a>
+        <a href="#lab" data-ll="nav.lab"></a>
+        <a href="./?lite=0" data-ll="footer.nav.3d"></a>
+      </div>
+      <div>
+        <p data-ll="foot.social"></p>
+        <a href="https://t.me/Gorbachev_Nikita_Designer" target="_blank" rel="noopener">Telegram</a>
+        <a href="https://www.linkedin.com/in/nikita-gorbachev-productdesigner" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://github.com/kloserock97-tech" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </nav>
+  </div>
+  <!-- слово символами ASCII (asciiWord.ts); для экранных дикторов — обычным текстом -->
+  <pre class="ll-foot__ascii" aria-hidden="true"></pre>
+  <p class="ll-visually-hidden" data-ll="foot.word"></p>
+  <p class="ll-foot__copy" data-ll="footer.copyright"></p>
+</footer>
+
+<script type="module" src="/src/liteLab/main.ts"></script>
+</body>
+</html>

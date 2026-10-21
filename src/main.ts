@@ -53,7 +53,17 @@ initI18n();
 /* v24: лёгкая версия без 3D — нет WebGL2, программный рендер, ?lite=1 или устройство уже оказалось
    слишком медленным (нагрузочный прогон: SwiftShader 0.2 fps, без WebGL — исключение и пустой экран) */
 const lite = liteReason(params);
-if (lite) startLite(lite);
+/* v102: лёгкая версия — отдельная страница lite.html (src/liteLab). Здесь в лёгком режиме остаётся только страница
+   кейса по прямой ссылке: она та же, что в 3D-версии. Закрыли кейс — уходим на lite.html */
+const isCaseLink = () => location.hash.startsWith("#/work/");
+function toLitePage() {
+  const url = new URL("lite.html", location.href);
+  const lang = params.get("lang");
+  if (lang) url.searchParams.set("lang", lang);
+  location.replace(url.href);
+}
+if (lite && !isCaseLink()) toLitePage();
+else if (lite) startLite(lite);
 /* v69: открыли прямой ссылкой на кейс — страница кейса собирается первой, холм поднимается после неё */
 else if (location.hash.startsWith("#/work/")) startCaseFirst();
 else boot3d();
@@ -63,6 +73,7 @@ function boot3d(caseView?: CaseView) {
     start3d(caseView);
   } catch (e) {
     console.warn("3D не запустилось — лёгкая версия", e);
+    if (!isCaseLink()) return toLitePage();
     startLite("error");
   }
 }
@@ -118,6 +129,8 @@ function startLite(reason: string) {
   initCaseView();
   initLangToggle();
   ui.ready();
+  /* кейс закрыли (адрес без #/work/ и страница кейса убрана) — возвращаемся на лёгкую страницу */
+  new MutationObserver(() => { if (!isCaseLink() && !body.classList.contains("case-open")) toLitePage(); }).observe(body, { attributes: true, attributeFilter: ["class"] });
 }
 
 function start3d(caseView?: CaseView) {
@@ -228,6 +241,8 @@ function start3d(caseView?: CaseView) {
   const degrade = (why: "slow" | "context" | "stall") => {
     if (body.classList.contains("lite")) return;
     if (why !== "context") rememberLite();
+    /* кейс не открыт — уходим на лёгкую страницу; открыт — дочитывают его здесь, в лёгком режиме */
+    if (!isCaseLink() && !body.classList.contains("case-open")) return toLitePage();
     clearInterval(introPoll);
     intro?.dispose();
     closePc();
