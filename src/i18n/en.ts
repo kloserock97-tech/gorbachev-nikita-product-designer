@@ -21,6 +21,9 @@ const en = {
   "nav.sound.off": "Sound is off. Turn it on",
   "sound.label.on": "Sound is on",
   "sound.label.off": "Turn sound on",
+  "nav.menu": "Menu",
+  "nav.menu.close": "Close menu",
+  "nav.down": "Scroll down",
 
   /* компьютер на столике */
   "pc.tip": "Read the magazine",

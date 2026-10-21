@@ -83,12 +83,13 @@ export function initStory(scene: Scene) {
     const r = head.getBoundingClientRect();
     scene.setKineticTarget?.({ left: r.left, baseline: base.getBoundingClientRect().top, font: parseFloat(getComputedStyle(head).fontSize) });
     /* v43: узкий экран — тексты стоят над компьютером и под ним; сцене нужен промежуток между ними.
-       offsetTop не зависит от translate, которым тексты въезжают. 64px сверху — под подпись «а это Келли» */
+       offsetTop не зависит от translate, которым тексты въезжают. v107: подпись «а это Келли» теперь справа от
+       компьютера, сверху хватает 16px воздуха (было 64px под неё) */
     const left = hero.querySelector<HTMLElement>(".story-col--left");
     const below = [...hero.children].filter((el): el is HTMLElement => el instanceof HTMLElement && el !== left && el.offsetHeight > 0 && getComputedStyle(el).position !== "absolute");
     if (innerWidth <= 900 && left && below.length) {
       const top = hero.getBoundingClientRect().top;
-      scene.setStorySlot?.({ top: top + left.offsetTop + left.offsetHeight + 64, bottom: top + Math.min(...below.map((el) => el.offsetTop)) - 8 });
+      scene.setStorySlot?.({ top: top + left.offsetTop + left.offsetHeight + 16, bottom: top + Math.min(...below.map((el) => el.offsetTop)) - 8 });
     } else scene.setStorySlot?.(null);
   };
   addEventListener("scroll", schedule, { passive: true });

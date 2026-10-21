@@ -1,0 +1,110 @@
+/* v107 (картинка Никиты 22.10): телефон. Наверху — знак «N» слева, язык и меню справа, вместо чёлки, кнопок языка/версии
+   и звука: интерфейса поверх холма было слишком много. Первый экран — имя в две строки, темы столбиком, светлая кнопка,
+   кружок со стрелкой внизу; подпись «Продукты для ясного завтра» и «Заглянуть внутрь» убраны, карточка кейса — за
+   первым экраном. Поведение — mobileNav.ts. Подключается после hero-mobile.css. */
+.m-bar, .m-menu, .m-down { display: none; }
+
+@media (max-width: 900px) {
+  .dock-wrap, .top-tools, .sound-fab { display: none !important; }
+
+  .m-bar {
+    position: fixed; z-index: 31; top: calc(env(safe-area-inset-top) + 14px); left: 20px; right: 20px;
+    display: flex; align-items: center; gap: 10px;
+    opacity: 0; translate: 0 -8px; pointer-events: none;
+    transition: opacity 0.5s ease, translate 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .is-ready .m-bar { opacity: 1; translate: none; pointer-events: auto; transition-delay: 0.4s; }
+  .no-ui .m-bar, .lite .m-bar, .case-open .m-bar, .pc-focus .m-bar { opacity: 0; pointer-events: none; transition-delay: 0s; }
+
+  .m-bar__mark {
+    width: 40px; height: 40px; margin-right: auto; border-radius: 11px;
+    display: grid; place-items: center; background: #fbfaf6; color: #11110f;
+    box-shadow: 0 6px 18px rgba(40, 34, 18, 0.16);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .m-bar__mark svg { width: 22px; height: 22px; fill: currentColor; }
+
+  /* стекло без размытия: под ним живой холст, backdrop-filter перерисовывал бы его кусок каждый кадр (v72) */
+  .m-bar__lang, .m-bar__burger {
+    height: 40px; border: 1px solid rgba(255, 255, 255, 0.72); border-radius: 999px;
+    background: rgba(255, 252, 245, 0.5); color: #23221d;
+    box-shadow: 0 6px 18px rgba(40, 34, 18, 0.1);
+    font: 600 13px/1 var(--font); letter-spacing: 0.04em; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.35s ease, translate 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.25s ease;
+  }
+  .m-bar__lang { min-width: 52px; padding: 0 14px; }
+  /* язык — только на первом экране, как было с отдельными кнопками (v106) */
+  body:not([data-section="home"]) .m-bar__lang { opacity: 0; translate: 0 -8px; pointer-events: none; }
+  .m-bar__burger { position: relative; width: 40px; padding: 0; }
+  .m-bar__burger i {
+    position: absolute; left: 12px; width: 16px; height: 1.6px; border-radius: 2px; background: currentColor;
+    transition: translate 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), rotate 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease, width 0.3s ease;
+  }
+  .m-bar__burger i:nth-child(1) { top: 13.5px; }
+  .m-bar__burger i:nth-child(2) { top: 18.5px; }
+  .m-bar__burger i:nth-child(3) { top: 23.5px; width: 10px; }
+  .m-menu-open .m-bar__burger { background: #fbfaf6; }
+  .m-menu-open .m-bar__burger i:nth-child(1) { translate: 0 5px; rotate: 45deg; }
+  .m-menu-open .m-bar__burger i:nth-child(2) { opacity: 0; }
+  .m-menu-open .m-bar__burger i:nth-child(3) { width: 16px; translate: 0 -5px; rotate: -45deg; }
+  .m-bar__lang:focus-visible, .m-bar__burger:focus-visible, .m-bar__mark:focus-visible { outline: 2px solid #23221d; outline-offset: 3px; }
+
+  /* меню — светлая шторка сверху: разделы крупно, ниже звук и лёгкая версия */
+  .m-menu {
+    display: block; position: fixed; z-index: 30; inset: 0;
+    background: rgba(28, 26, 20, 0.18);
+    opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0s 0.3s;
+  }
+  .m-menu-open .m-menu { opacity: 1; visibility: visible; transition: opacity 0.3s ease; }
+  .m-menu__in {
+    padding: calc(env(safe-area-inset-top) + 72px) 20px 22px;
+    display: flex; flex-direction: column;
+    background: #f6f3ec; border-radius: 0 0 26px 26px;
+    box-shadow: 0 20px 50px rgba(40, 34, 18, 0.2);
+    translate: 0 -24px; transition: translate 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .m-menu-open .m-menu__in { translate: none; }
+  .m-menu__in > a {
+    display: block; padding: 11px 0; border-bottom: 1px solid rgba(40, 36, 26, 0.1);
+    color: #14140f; text-decoration: none; font: 500 28px/1.15 var(--font); letter-spacing: -0.01em;
+  }
+  .m-menu__row { display: flex; gap: 8px; margin-top: 20px; }
+  .m-menu__sound, .m-menu__lite {
+    flex: 1 1 0; height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 12px;
+    border: 1px solid rgba(40, 36, 26, 0.14); border-radius: 999px; background: #fffdf8;
+    color: #23221d; font: 500 14px/1 var(--font); text-decoration: none; white-space: nowrap; cursor: pointer;
+  }
+  .m-menu__sound[aria-pressed="true"] { background: #23221d; border-color: #23221d; color: #f7f4ec; }
+}
+@media (max-width: 900px) and (prefers-reduced-motion: reduce) {
+  .m-bar, .m-menu, .m-menu__in, .m-bar__burger i { transition: none; }
+}
+
+/* ── первый экран на вертикальном телефоне ── */
+@media (max-width: 900px) and (max-aspect-ratio: 1 / 1) {
+  /* карточка кейса и ряд цифр — ниже первого экрана: на нём только имя, кнопка и холм */
+  :root { --m-fold: max(calc(1324 * var(--u)), calc(100svh + 36px)); }
+
+  .headline { font-size: clamp(42px, 12.4vw, 56px); line-height: 1.02; }
+  .headline > span:first-child i { display: inline-block; max-width: 6.4em; }
+  .hero-tags { flex-direction: column; flex-wrap: nowrap; align-items: flex-start; gap: 10px; }
+  .hero-tagline, button.pc-hint { display: none; }
+
+  /* светлая кнопка, как на картинке: тёмный текст на молочном */
+  .cta.metal {
+    background: #fbfaf6; color: #17160f; text-shadow: none;
+    box-shadow: 0 10px 28px rgba(40, 34, 18, 0.18), inset 0 1px 0 #fff;
+  }
+  .cta.metal > .metal-rim, .cta.metal::before { display: none; }
+
+  .m-down {
+    display: grid; place-items: center; position: absolute; z-index: 4;
+    top: calc(100svh - 76px - env(safe-area-inset-bottom)); left: 50%; translate: -50% 0;
+    width: 44px; height: 44px; padding: 0; border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.85); background: rgba(255, 255, 255, 0.12); color: #fff;
+    box-shadow: 0 4px 16px rgba(20, 24, 16, 0.18); cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .m-down svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .lite .m-down, .no-ui .m-down { display: none; }
+}

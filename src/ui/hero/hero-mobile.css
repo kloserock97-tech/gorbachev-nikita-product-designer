@@ -14,6 +14,8 @@
     --m-open: max(300px, calc(470 * var(--u)));
     /* полоса статистики под карточкой */
     --m-stats: max(72px, calc(96 * var(--u)));
+    /* v107: где начинается карточка кейса; на вертикальном телефоне — за первым экраном (mobile-nav.css) */
+    --m-fold: calc(1324 * var(--u));
   }
 
   .stage {
@@ -23,9 +25,9 @@
     /* док сверху: 30u отступа + 56px высоты — заголовок начинается ниже него */
     /* v85.3: на вертикальном экране блок опускается так, что середина кнопки — у верхушки кроны (ui/hero/mobileCopy.ts) */
     padding: max(calc(128 * var(--u)), calc(30 * var(--u) + 74px), var(--m-copy-top, 0px)) calc(34 * var(--u)) 0;
-    height: calc(1357 * var(--u) + var(--m-card) + var(--m-stats));
+    height: calc(var(--m-fold) + 33 * var(--u) + var(--m-card) + var(--m-stats));
   }
-  .stage:has(.card--stove.is-open) { height: calc(1357 * var(--u) + var(--m-card) + var(--m-open) + var(--m-stats)); }
+  .stage:has(.card--stove.is-open) { height: calc(var(--m-fold) + 33 * var(--u) + var(--m-card) + var(--m-open) + var(--m-stats)); }
   /* открытая карточка растёт вниз, статистика остаётся на месте */
 
   .headline, .focus, .hero-tags, .cta-wrap, .hero-tagline { position: relative; left: auto; top: auto; }
@@ -66,14 +68,14 @@
      (холст закреплён), и белый текст там пропадал */
   .hero-stats {
     position: absolute; left: calc(34 * var(--u)); right: calc(34 * var(--u));
-    top: calc(1324 * var(--u) + var(--m-card) + max(18px, calc(28 * var(--u))));
+    top: calc(var(--m-fold) + var(--m-card) + max(18px, calc(28 * var(--u))));
     justify-content: space-between; padding: max(8px, calc(12 * var(--u))) max(14px, calc(22 * var(--u)));
     border-radius: max(18px, calc(28 * var(--u))); color: var(--card-ink); text-shadow: none;
     background: linear-gradient(160deg, rgba(247, 240, 231, 0.62), rgba(218, 208, 196, 0.5));
     border: 1px solid rgba(255, 255, 255, 0.5);
   }
   /* раскрытая карточка растёт вниз — ряд уезжает за ней */
-  .stage:has(.card--stove.is-open) .hero-stats { top: calc(1324 * var(--u) + var(--m-card) + var(--m-open) + max(18px, calc(28 * var(--u)))); }
+  .stage:has(.card--stove.is-open) .hero-stats { top: calc(var(--m-fold) + var(--m-card) + var(--m-open) + max(18px, calc(28 * var(--u)))); }
   .hero-stats .stat { gap: max(8px, calc(10 * var(--u))); min-height: 44px; }
   .hero-stats .mark { width: max(22px, calc(34 * var(--u))); height: max(22px, calc(34 * var(--u))); color: #4f5347; filter: none; }
   .hero-stats dd { font-size: max(16px, calc(26 * var(--u))); line-height: 1.1; color: var(--card-ink); }

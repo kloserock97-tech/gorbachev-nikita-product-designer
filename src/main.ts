@@ -7,6 +7,8 @@ import "./ui/case-v37.css";
 import "./ui/cases-signpost.css";
 import { initCasesSignpost } from "./ui/casesSignpost";
 import "./ui/hero/hero-mobile.css";
+import "./ui/hero/mobile-nav.css";
+import { initMobileNav } from "./ui/hero/mobileNav";
 import { HillScene, type HillSceneOptions } from "./scene/HillScene";
 import { initHeroUi } from "./ui/hero/heroUi";
 import { initWorkMenu } from "./ui/workMenu";
@@ -371,6 +373,7 @@ function start3d(caseView?: CaseView) {
     liteTracking = () => trackByScroll(dockNav.track);
   }
   initLangToggle();
+  initMobileNav();
   document.querySelector(".pc-back")?.addEventListener("click", closePc);
   window.addEventListener("wheel", (e) => {
     if (!scene.computerFocused) return;

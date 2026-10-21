@@ -725,6 +725,16 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   .story-intro { font-size: clamp(15px, 2.3vw, 21px); max-width: 38em; }
   .story-p { font-size: clamp(14px, 2vw, 18px); max-width: 40em; }
   .story-reveal--r { translate: 0 20px; }
+  /* v107: на невысоком телефоне тексты съедали всё место, и компьютеру оставалась полоска в 50px — он был крошечным и
+     наезжал на абзацы. Логотипы компаний переехали в строку с «Привет!», справа (отсчёт от .story-hero) */
+  .story-col--right { position: static; }
+  .sf-logos { position: absolute; top: 84px; right: 20px; margin: 0; }
+  .sf-logos__item { --sf-logo-size: 36px; }
+  .sf-logos__disc { border-width: 2px; }
+}
+/* невысокий телефон: плашка фактов без значков — компьютеру ещё ~30px */
+@media (max-width: 900px) and (max-height: 760px) {
+  .about-facts__ico { display: none; }
 
 }
 @media (prefers-reduced-motion: reduce) {
@@ -954,8 +964,10 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 .kelly-note.is-on .kelly-head { stroke-dashoffset: 0; transition: stroke-dashoffset 0.3s ease-out 1.25s; }
 /* телефон: подпись в полосе между абзацем и монитором, короткая стрелка вниз к карточке */
 @media (max-width: 900px) {
-  .kelly-text { font-size: 21px; right: 46px; bottom: 34px; rotate: -4deg; }
-  .kelly-arrow { width: 46px; height: 42px; right: -8px; bottom: 2px; }
+  /* v107: справа от полароида, в две строки; стрелка ведёт от подписи влево-вверх к карточке */
+  .kelly-text { font-size: 20px; right: auto; bottom: auto; left: 34px; top: 40px; rotate: -4deg; white-space: normal; width: 4.1em; line-height: 1.05; display: block; }
+  .kelly-smile { display: inline-block; vertical-align: -0.12em; }
+  .kelly-arrow { width: 40px; height: 36px; right: auto; bottom: auto; left: 4px; top: 8px; transform: scale(-1, -1); }
 }
 @media (prefers-reduced-motion: reduce) {
   .kelly-arc, .kelly-head { stroke-dashoffset: 0 !important; transition: none !important; }

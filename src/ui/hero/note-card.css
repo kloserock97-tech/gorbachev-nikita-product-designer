@@ -214,7 +214,7 @@
   }
   .card--stove {
     --nc-pad: var(--m-cpad); --nc-fig: var(--m-fig); --nc-chev: var(--m-chev); --nc-r: max(20px, calc(34 * var(--u)));
-    top: calc(1324 * var(--u)); margin-top: 0; touch-action: pan-y;
+    top: var(--m-fold, calc(1324 * var(--u))); margin-top: 0; touch-action: pan-y;
   }
   .note-cap { left: max(16px, calc(26 * var(--u))); right: max(14px, calc(22 * var(--u))); bottom: max(16px, calc(24 * var(--u))); gap: 10px; }
   .note-cap__title { font-size: max(16px, calc(26 * var(--u))); }

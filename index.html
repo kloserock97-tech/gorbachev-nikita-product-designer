@@ -236,6 +236,8 @@
       <span class="wind__ring" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 9h11a3 3 0 1 0-3-3"/><path d="M3 13h15a3 3 0 1 1-3 3"/><path d="M3 17h7"/></svg><i class="wind__orbit"></i></span>
       <span class="hint-label wind__label" aria-hidden="true" data-i18n="hero.wind">Wind</span>
     </button>
+    <!-- v107: телефон — кружок со стрелкой внизу первого экрана (как на картинке Никиты); карточка кейса ушла ниже -->
+    <button class="m-down" type="button" data-i18n-label="nav.down" aria-label="Scroll down"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="m6 13 6 6 6-6"/></svg></button>
 
   </div>
 </main>
@@ -259,6 +261,27 @@
   </div>
   <a class="top-lite" href="lite.html" data-i18n-label="nav.lite.label" aria-label="Open the lightweight version without 3D"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v10H4zM9 20h6M12 16v4"/></svg><span data-i18n="nav.lite">Lightweight version</span></a>
 </div>
+<!-- v107: телефон — панель по картинке Никиты: знак слева, язык и меню справа. Разделы, звук и лёгкая версия — в меню;
+     чёлка, кнопки языка/версии и звука на узком экране спрятаны (ui/hero/mobileNav.ts, mobile-nav.css) -->
+<div class="m-bar">
+  <a class="m-bar__mark" href="#" data-i18n-label="nav.home" aria-label="Nikita Gorbachev: back to the start">
+    <svg viewBox="-10 -10 100 120" aria-hidden="true"><path d="M0 100H20V74.538C30.615 90.372 44.633 100 60 100H80V0H60V82.704C40.662 82.704 24.437 55.963 20 19.897V0H0Z"/></svg>
+  </a>
+  <button class="m-bar__lang" type="button" data-i18n="nav.lang.short" data-i18n-label="nav.lang" aria-label="Читать по-русски">RU</button>
+  <button class="m-bar__burger" type="button" aria-expanded="false" aria-controls="m-menu" data-i18n-label="nav.menu" aria-label="Menu"><i></i><i></i><i></i></button>
+</div>
+<nav class="m-menu" id="m-menu" data-i18n-label="nav.menu" aria-label="Menu" inert>
+  <div class="m-menu__in">
+    <a href="#about" data-m-go="about"><span data-i18n="nav.about">About</span></a>
+    <a href="#work" data-m-go="work"><span data-i18n="nav.work">Work</span></a>
+    <a href="#notes" data-m-go="lab"><span data-i18n="nav.lab">Pet projects</span></a>
+    <a href="#contact" data-m-go="contact"><span data-i18n="nav.hi">Say hi</span></a>
+    <div class="m-menu__row">
+      <button class="m-menu__sound" type="button" aria-pressed="false"><span data-m-sound>Turn sound on</span></button>
+      <a class="m-menu__lite" href="lite.html"><span data-i18n="nav.lite">Lightweight version</span></a>
+    </div>
+  </div>
+</nav>
 <button class="sound-fab" type="button" aria-pressed="false" data-i18n-label="nav.sound.off" aria-label="Sound is off. Turn it on">
   <span class="sound-fab__ico" aria-hidden="true">
     <svg viewBox="0 0 24 24">

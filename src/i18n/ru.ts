@@ -24,6 +24,9 @@ const ru: Record<keyof typeof en, string> = {
   "nav.sound.off": "Звук выключен. Включить",
   "sound.label.on": "Звук включён",
   "sound.label.off": "Включить звук",
+  "nav.menu": "Меню",
+  "nav.menu.close": "Закрыть меню",
+  "nav.down": "Листать дальше",
 
   /* компьютер на столике */
   "pc.tip": "Почитать журнал",
