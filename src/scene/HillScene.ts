@@ -15,6 +15,7 @@ import { Studio, projectBox, type HillLights } from "./studio";
 import { QualityGovernor } from "./quality";
 import { createPolaroid } from "./polaroid";
 import { createVista } from "./vista";
+import { createMountains } from "./mountains";
 import { createTree } from "./tree";
 import { createRocks, rockFootprints } from "./rocks";
 import {
@@ -409,6 +410,16 @@ export class HillScene {
       ambient: this.uniforms.uAmbient,
       horizon: this.uniforms.uSkyHorizon,
     }));
+    /* v102: за грядами — горы в той же дымке (mountains.ts). Рельеф запекается, когда сцена уже показана и браузер
+       свободен: десяток октав шума на слабой видеокарте не должен задерживать первый кадр. ?mtn=off — без гор */
+    if (!/[?&]mtn=off/.test(location.search)) {
+      const m = createMountains(this.renderer, {
+        sky: { uZenith: u.uZenith, uHigh: u.uHigh, uMid: u.uMid, uHorizon: u.uHorizon, uGlow: u.uGlow, uSunDir: u.uSunDir, uSunCol: u.uSunCol, uMie: u.uMie },
+      });
+      this.scene.add(m.mesh);
+      const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 0));
+      void this.envReady.then(() => idle(() => void m.bake(), { timeout: 3000 }));
+    }
   }
 
   /* v72: дерево на правом плече холма (tree.ts). На широком экране — за креслом, чуть правее: крона над

@@ -700,7 +700,7 @@ void main(){
 
 /* v72: цвет неба по направлению — общий для неба и дальнего плана (vista.ts): дальняя гряда в дымке
    берёт ровно тот цвет, что небо прямо за ней, и растворяется в нём без шва */
-const SKY_PARS = /* glsl */ `
+export const SKY_PARS = /* glsl */ `
 uniform vec3 uZenith;
 uniform vec3 uHigh;
 uniform vec3 uMid;
