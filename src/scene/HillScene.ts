@@ -767,8 +767,8 @@ export class HillScene {
   flowerCount = 0;
 
   private buildPampas() {
-    /* v118 (Никита): белые метёлки пампасов на склоне не читались травой и выбивались из кадра — убраны. ?pampas=1 — вернуть */
-    if (!/[?&]pampas=1/.test(location.search)) return;
+    /* ?pampas=0 — без пампасов (v118 их по ошибке убирали — Никита имел в виду белую полосу у гор) */
+    if (/[?&]pampas=0/.test(location.search)) return;
     const rng = makeRng(0xba5a);
     const leaf = { off: [] as number[], nrm: [] as number[], rnd: [] as number[], clump: [] as number[], lean: [] as number[] };
     const plumeOff: number[] = [], plume: number[] = [];

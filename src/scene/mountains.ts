@@ -280,7 +280,8 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
         float top = uCool.y * (0.8 + 0.4 * fbm(p * 0.0016));
         float mist = smoothstep(top + 140.0, top - 80.0, h);
         vec3 mistCol = mistTone(sky) + uSunCol * pow(cosA, 8.0) * 0.12;
-        c = mix(c, mistCol, mist * 0.92);
+        /* v119: туман в долинах — мягче и в цвет неба, без белой полосы у подножия */
+        c = mix(c, mix(sky, mistCol, 0.3), mist * 0.6);
         gl_FragColor = vec4(c, 1.0);
       }
     `,
