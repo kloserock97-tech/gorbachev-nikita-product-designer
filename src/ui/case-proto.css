@@ -78,3 +78,23 @@
   .pt-spot::before { opacity: 0.6; scale: 1.1; }
   .pt-page.is-in, .pt-page.is-out, .pt-page.is-in-back, .pt-page.is-out-back { animation: none; }
 }
+
+/* веб-продукт: окно браузера вместо телефона, шире; текст слева уже */
+.pt--browser { grid-template-columns: minmax(240px, 0.72fr) minmax(0, 1.6fr); gap: clamp(24px, 3.6vw, 56px); }
+.pt-window { max-width: none; padding: 0; border-radius: 16px; background: #1b1c1f; overflow: hidden; }
+.pt-bar { display: flex; gap: 7px; height: 32px; align-items: center; padding: 0 14px; background: #26272b; }
+.pt-bar i { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, 0.22); }
+.pt-window .pt-screen { border-radius: 0; }
+.pt-window .pt-spot { width: 48px; height: 48px; margin: -24px 0 0 -24px; }
+.pt-window .pt-spot i { inset: 12px; }
+/* плашка-итог поверх экрана, когда отдельного экрана «готово» в макетах нет */
+.pt-toast { position: absolute; z-index: 3; left: 50%; top: 9%; translate: -50% 0; display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px 12px 14px; border-radius: 14px; background: #141512; color: #fff; font-size: 15px; font-weight: 500; white-space: nowrap; box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.5); animation: pt-toast 0.5s 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.pt-toast svg { width: 20px; height: 20px; flex: none; padding: 2px; border-radius: 50%; background: #2fbf6b; fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+@keyframes pt-toast { from { opacity: 0; translate: -50% -12px; } }
+@media (max-width: 860px) {
+  .pt--browser { grid-template-columns: 1fr; }
+  .pt-window { order: -1; max-width: none; border-radius: 12px; padding: 0; }
+  .pt-bar { height: 24px; }
+  .pt-toast { font-size: 13px; padding: 9px 14px 9px 11px; }
+}
+@media (prefers-reduced-motion: reduce) { .pt-toast { animation: none; } }

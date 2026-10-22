@@ -84,9 +84,11 @@ export type CaseStep = { title: string; text: string; image?: CaseImage; gallery
 export type CaseFilm = { src: string; poster: string; w: number; h: number; caption: string };
 /* v114: кликабельный прототип из готовых экранов (идея — «Try the prototype» с портфолио klinaeva, код свой).
    Шаг — экран, место нажатия в долях ширины и высоты экрана (0–1), что сделать и почему экран такой.
-   У последнего шага места нажатия нет: это результат, с него можно начать заново */
-export type ProtoStep = { image: CaseImage; spot?: [number, number]; action: string; why?: string };
-export type CasePrototype = { title: string; lead?: string; steps: ProtoStep[] };
+   У последнего шага места нажатия нет: это результат, с него можно начать заново.
+   wait — экран-загрузка: проходит сам через столько миллисекунд. toast — плашка-итог поверх экрана, когда в макетах
+   нет отдельного экрана «готово». device — рамка: телефон (по умолчанию) или окно браузера для веб-продуктов */
+export type ProtoStep = { image: CaseImage; spot?: [number, number]; action: string; why?: string; wait?: number; toast?: string };
+export type CasePrototype = { title: string; lead?: string; device?: "phone" | "browser"; steps: ProtoStep[] };
 
 export type CaseStory = {
   id: string;

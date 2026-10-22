@@ -397,7 +397,8 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
 
         ${s.decisions.film || s.prototype || hasDemo(s.id) ? `<section class="cs-sec cs-sec--interface">
           ${head(++sec, "interface", t("cs.interface"))}
-          ${s.decisions.film ? filmBlock(s.decisions.film) : s.prototype ? protoBlock(s.prototype) : demoBlock(s.id)}
+          ${s.prototype ? protoBlock(s.prototype) : ""}
+          ${s.decisions.film ? filmBlock(s.decisions.film) : s.prototype ? "" : demoBlock(s.id)}
         </section>` : ""}
 
         ${s.gallery.length ? `<section class="cs-sec cs-sec--screens">

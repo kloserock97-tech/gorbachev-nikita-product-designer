@@ -140,6 +140,18 @@ export const en: CaseStory = {
       },
     ],
   },
+  /* v114: prototype from the mock-ups — the main flow: home → guide → picking → the place */
+  prototype: {
+    title: "Find somewhere to go tonight",
+    lead: "From the home screen to a table: the guide picks a place to match the mood. These are my Figma mock-ups; the dot shows where to tap.",
+    steps: [
+      { image: img(R + "01-home.webp", 786, 1704, "Home screen"), spot: [0.5, 0.935], action: "Open the Guide in the middle of the tab bar", why: "The bottom navigation is the easiest zone to reach, so that is where the things you promote go." },
+      { image: img(R + "03-guide-invite.webp", 786, 1704, "Invitation"), spot: [0.333, 0.757], action: "Pick \"quiet, for two\"", why: "A sample request works both as a promo and as a lesson in the format." },
+      { image: img(R + "04-guide-thinking.webp", 786, 1704, "Picking"), wait: 2200, action: "The guide is picking a place", why: "While it searches, the guide repeats the request and shows an object instead of a spinner. The wait is no longer empty." },
+      { image: img(R + "05-guide-answer.webp", 786, 1704, "Answer"), spot: [0.5, 0.477], action: "Open \"Ronin\"", why: "The answer is a place card with a photo, facts and booking, not a chat message: a chat screen promises a conversation that won't happen." },
+      { image: img(R + "09-place-card.webp", 786, 1704, "Place card"), action: "Done: everything for the decision on one screen", why: "The answer became an action: the table, the route and the 19:30 booking side by side." },
+    ],
+  },
   takeaways: [
     "With no users of your own, other people's research is a reasonable foundation. The rules are to name the source behind every number and never pass someone else's result off as your own.",
     "The word on a button moves behaviour as much as the feature does. \"Guide\" and \"AI assistant\" are two different products to someone deciding where to have dinner.",

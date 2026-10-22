@@ -129,6 +129,17 @@ export const en: CaseStory = {
       { x: "Ready solutions from the feed accepted without edits: 68%", y: "Cards confirmed as they were.", z: "Ready scenarios in place of suggestion buttons." },
     ],
   },
+  /* v114: prototype from the mock-ups — the main flow: meeting files → brief and a ready email → sent */
+  prototype: {
+    title: "Send a follow-up after the meeting",
+    lead: "Two taps from the meeting files to a sent email. These are my Figma mock-ups; the dot shows where to tap.",
+    device: "browser",
+    steps: [
+      { image: img(G + "t-chat-attach.webp", 1440, 900, "A request with the meeting files"), spot: [0.892, 0.804], action: "Send the meeting files and the task", why: "When an action has a way in — the input, the chips, a card in the feed — people find it without a hint." },
+      { image: img(G + "03.webp", 1436, 1292, "The brief and a ready email"), spot: [0.84, 0.627], action: "Check the email and press Send", why: "Under the brief you can see what it is based on: Telegram, Gmail, Notion. And the line \"I won't send without your confirmation\" removes the fear that the system will get it wrong and send it on its own." },
+      { image: img(G + "06.webp", 1438, 1084, "The email is sent"), action: "Done: the email is sent and can be taken back", why: "When a sent action can be undone, people confirm more boldly." },
+    ],
+  },
   takeaways: [
     "With a team of agents, the time goes elsewhere: phrasing a rule so it cannot be read two ways, and deciding what counts as a good result.",
     "An agent does not argue. A human designer asks \"what for?\", and some bad ideas die on that question. Without that filter, describing your expectations clearly (how it should and shouldn't be, what is good and what is bad) becomes a critical skill. This project grew it a lot.",

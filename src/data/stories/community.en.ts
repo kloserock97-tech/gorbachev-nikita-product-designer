@@ -135,6 +135,17 @@ export const en: CaseStory = {
       "Both target groups use the site: 24 to 35 and 55+",
     ],
   },
+  /* v114: prototype from the mock-ups — the main flow: a reader becomes an author (feed → story → form) */
+  prototype: {
+    title: "Read a story, then tell your own",
+    lead: "The path of a reader who becomes an author: the feed, a story and the form. These are my Figma mock-ups; the dot shows where to tap.",
+    device: "browser",
+    steps: [
+      { image: img(C + "01.webp", 1440, 788, "The feed of the first version"), spot: [0.464, 0.767], action: "Open any story from the feed", why: "One action looks the same everywhere: Listen, comments and topics sit in the same place on every card." },
+      { image: img(C + "02.webp", 1440, 860, "A story page"), spot: [0.915, 0.042], action: "Want to tell yours? Open your profile", why: "Built for long reading: the eyes don't tire and the interface doesn't compete with the story." },
+      { image: img(C + "03.webp", 876, 862, "The \"Tell your story\" form"), action: "Tell your story: a title, the text and photos", why: "If the main action has to be searched for, nobody takes it. The first residents' stories arrived in the very first week." },
+    ],
+  },
   takeaways: [
     "Agree on the goal before the first mock-up. The phrase \"a place where residents take part\" gave us both the contents of the first version and the success metrics.",
     "An MVP is a decision about what to put off. Smart search and podcasts went to the roadmap, and the first version shipped sooner.",

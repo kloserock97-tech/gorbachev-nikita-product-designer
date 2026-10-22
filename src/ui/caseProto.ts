@@ -5,6 +5,8 @@
    Точка нажатия — кнопка поверх экрана с пульсирующим кольцом. Нажали её — следующий экран въезжает справа, как
    переход в приложении. Нажали мимо — точка вспыхивает, подсказывая, куда жать. Длинный экран прокручивается
    внутри телефона (у каждого экрана своя прокрутка), к точке он доезжает сам. Шаги слева тоже кнопки: можно перейти к любому.
+   Экран-загрузка (wait) проходит сам; плашка-итог (toast) встаёт поверх последнего экрана, если отдельного нет.
+   Рамка — телефон или окно браузера (device): у браузера пропорция берётся по первому экрану.
    «Меньше движения» — экраны сменяются без въезда, кольцо не пульсирует. */
 import type { CasePrototype } from "../data/caseStory";
 import { getLang } from "../i18n";
@@ -25,20 +27,23 @@ const T = {
 const tr = (x: { ru: string; en: string }) => (getLang() === "ru" ? x.ru : x.en);
 const ICON = {
   back: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12 5 7 10l5 5"/></svg>',
+  check: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 10.5 3.2 3L15 6.5"/></svg>',
   again: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10a6 6 0 1 0 2-4.5"/><path d="M4 3.5V7h3.5"/></svg>',
 };
 
 export function protoBlock(p: CasePrototype) {
   const n = p.steps.length;
-  return `<div class="pt" data-proto>
+  const web = p.device === "browser";
+  const first = p.steps[0].image;
+  return `<div class="pt${web ? " pt--browser" : ""}" data-proto>
     <div class="pt-side">
       <p class="pt-live"><i></i>${tr(T.live)}</p>
       <h3 class="pt-title">${esc(p.title)}</h3>
       ${p.lead ? `<p class="pt-lead">${esc(p.lead)}</p>` : ""}
-      <ol class="pt-steps">${p.steps.map((s, k) => `<li><button type="button" data-go="${k}" data-why="${esc(s.why ?? "")}">
+      <ol class="pt-steps">${p.steps.map((s, k) => `<li><button type="button" data-go="${k}" data-why="${esc(s.why ?? "")}"${s.wait ? ` data-wait="${s.wait}"` : ""}>
         <span class="pt-k">${k + 1 < n ? k + 1 : "✓"}</span><span class="pt-act">${esc(s.action)}</span></button></li>`).join("")}</ol>
       <div class="pt-now" aria-live="polite">
-        <p class="pt-count" data-count></p>
+        <p class="pt-count" data-pt-count></p>
         <div class="pt-why" data-why-box><p class="pt-mini">${tr(T.why)}</p><p data-why-text></p></div>
       </div>
       <p class="pt-tools">
@@ -46,11 +51,13 @@ export function protoBlock(p: CasePrototype) {
         <button type="button" class="pt-btn" data-again>${ICON.again}${tr(T.again)}</button>
       </p>
     </div>
-    <div class="pt-phone">
-      <div class="pt-screen" data-screen>
+    <div class="pt-phone${web ? " pt-window" : ""}">
+      ${web ? '<p class="pt-bar" aria-hidden="true"><i></i><i></i><i></i></p>' : ""}
+      <div class="pt-screen" data-screen${web ? ` style="aspect-ratio:${first.w} / ${first.h}"` : ""}>
         ${p.steps.map((s, k) => `<div class="pt-page" data-page="${k}"${k ? " hidden" : ""}>
           <div class="pt-canvas"><img src="${BASE}${s.image.src}" alt="${esc(s.image.caption)}" width="${s.image.w}" height="${s.image.h}" loading="lazy" decoding="async">
-          ${s.spot ? `<button type="button" class="pt-spot" style="left:${(s.spot[0] * 100).toFixed(2)}%;top:${(s.spot[1] * 100).toFixed(2)}%" aria-label="${esc(s.action)}"><i></i></button>` : ""}</div>
+          ${s.spot ? `<button type="button" class="pt-spot" style="left:${(s.spot[0] * 100).toFixed(2)}%;top:${(s.spot[1] * 100).toFixed(2)}%" aria-label="${esc(s.action)}"><i></i></button>` : ""}
+          ${s.toast ? `<p class="pt-toast">${ICON.check}${esc(s.toast)}</p>` : ""}</div>
         </div>`).join("")}
       </div>
     </div>
@@ -64,15 +71,17 @@ export function mountProto(root: HTMLElement) {
   root.querySelectorAll<HTMLElement>("[data-proto]").forEach((box) => {
     const pages = [...box.querySelectorAll<HTMLElement>(".pt-page")];
     const steps = [...box.querySelectorAll<HTMLButtonElement>("[data-go]")];
-    const count = box.querySelector<HTMLElement>("[data-count]")!;
+    const count = box.querySelector<HTMLElement>("[data-pt-count]")!;
     const why = box.querySelector<HTMLElement>("[data-why-text]")!;
     const whyBox = box.querySelector<HTMLElement>("[data-why-box]")!;
     const back = box.querySelector<HTMLButtonElement>("[data-back]")!;
     const n = pages.length;
     let at = 0;
+    let timer = 0;
 
     function show(k: number, dir = 1) {
       if (k < 0 || k >= n) return;
+      clearTimeout(timer);
       const from = pages[at];
       const to = pages[k];
       if (from !== to) {
@@ -107,6 +116,9 @@ export function mountProto(root: HTMLElement) {
       const low = spot ? spot.offsetTop > to.clientHeight * 0.8 : false;
       const y = spot ? spot.offsetTop - to.clientHeight * 0.55 : 0;
       if (low) setTimeout(() => to.scrollTo({ top: y, behavior: calm ? "auto" : "smooth" }), calm ? 0 : 420);
+      /* экран-загрузка проходит сам */
+      const wait = Number(steps[k].dataset.wait);
+      if (wait && !last) timer = window.setTimeout(() => show(k + 1, 1), wait);
     }
 
     const onClick = (e: MouseEvent) => {
@@ -124,7 +136,7 @@ export function mountProto(root: HTMLElement) {
       if (el.closest("[data-again]")) show(0, -1);
     };
     box.addEventListener("click", onClick);
-    offs.push(() => box.removeEventListener("click", onClick));
+    offs.push(() => { box.removeEventListener("click", onClick); clearTimeout(timer); });
     show(0);
   });
   return () => offs.forEach((f) => f());

@@ -202,6 +202,19 @@ export const en: CaseStory = {
     ],
     honesty: "The numbers on the screenshots (639 agents, 142 assessed) are demo data from the mock-up.",
   },
+  /* v114: prototype from the mock-ups — the risk manager's main flow: registry → agent → archive → draft of risks → edit */
+  prototype: {
+    title: "Assess the risks of a new agent",
+    lead: "A risk manager's path: from the registry to a reviewed draft of risks. These are my Figma mock-ups; the dot shows where to tap.",
+    device: "browser",
+    steps: [
+      { image: img(A + "01.webp", 1440, 900, "The list of all AI agents"), spot: [0.255, 0.62], action: "Open an agent from the registry", why: "A summary above the list: the day starts with a ready answer you can show your manager without a report." },
+      { image: img(A + "02.webp", 1440, 900, "The agent card before assessment"), spot: [0.405, 0.824], action: "Upload the archive of the agent's documents", why: "The empty state suggests the next step: the model builds a draft of risks from the archive." },
+      { image: img(A + "03.webp", 1440, 900, "Reading the archive"), wait: 2600, action: "Wait while the model reads the archive", why: "Progress and risk placeholders instead of a spinner: attention drifts after 10 seconds, and reading an archive takes longer." },
+      { image: img("cases/figma/agents-review.webp", 1520, 950, "The draft: 13 risks to review"), spot: [0.257, 0.613], action: "Open a risk from the draft", why: "The model's levels and reasons are a draft. The final call is a person's." },
+      { image: img(A + "07.webp", 1200, 1800, "Level, reasoning and a required comment"), action: "Adjust the level and write why", why: "The model's reasoning stays in view, and the risk manager must add their own: the reason is stored with the risk." },
+    ],
+  },
   takeaways: [
     "Nobody knows how to ease a pain better than the person who feels it, your user. Go deep enough into their work, and even bank risk management, which I understood nothing about at first, becomes a simple system an outsider can find their way around.",
   ],
