@@ -138,6 +138,7 @@ export function setSnapGlide(fn: (top: number, seconds: number) => void) { glide
 const SNAP = typeof location === "undefined" || !/[?&]snap=0/.test(location.search);
 let snapTimer = 0;
 let lastScrollAt = 0;
+let scrollDir = 0, dirY = 0;
 function scheduleSnap() {
   clearTimeout(snapTimer);
   if (!SNAP || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -151,6 +152,16 @@ function scheduleSnap() {
     const reach = (bounds.end - bounds.start) * (CHAPTER2 - CHAPTER) * (CASES.strip[1] - CASES.strip[0]) / Math.max(1, counts.cases - 1) * 0.5;
     let best = -1, dist = Infinity;
     for (const y of snapStops) { const d = Math.abs(y - scrollY); if (d < dist) { dist = d; best = y; } }
+    /* v120 (замер: «Кейсы тормозят»): ближайшая остановка тянула назад даже после нескольких щелчков к следующему кейсу —
+       листать было как против пружины. Если человек ушёл от остановки в сторону прокрутки хотя бы на пятую часть шага,
+       доводим вперёд, к следующей остановке в ту же сторону (если она не дальше шага) */
+    const step = reach * 2;
+    let forward = false;
+    if (scrollDir !== 0 && Math.abs(scrollY - best) > step * 0.2 && Math.sign(scrollY - best) === scrollDir) {
+      const ahead = snapStops.filter((y) => Math.sign(y - scrollY) === scrollDir && Math.abs(y - scrollY) < step * 1.05)
+        .sort((a, b) => Math.abs(a - scrollY) - Math.abs(b - scrollY))[0];
+      if (ahead !== undefined) { best = ahead; dist = Math.abs(ahead - scrollY); forward = true; }
+    }
     /* v115 (как у igloo): в портале не стоят — за серединой прохода он довозит до футера, раньше — назад к лугу */
     const p = Math.min(1, Math.max(0, (scrollY - bounds.start) / Math.max(1, bounds.end - bounds.start)));
     const { f } = chapters(p);
@@ -162,7 +173,7 @@ function scheduleSnap() {
       glideTo ? glideTo(best, Math.min(2.2, Math.max(0.9, (dist / innerHeight) * 0.9))) : scrollTo({ top: best, behavior: "smooth" });
       return;
     }
-    if (best < 0 || dist < 2 || dist > reach) return;
+    if (best < 0 || dist < 2 || (dist > reach && !forward)) return;
     /* длительность от расстояния: короткий доезд ~0,6 с, полшага — до 1,3 с */
     const seconds = Math.min(1.3, Math.max(0.6, (dist / innerHeight) * 1.6));
     if (glideTo) glideTo(best, seconds);
@@ -180,6 +191,7 @@ if (typeof window !== "undefined") {
   addEventListener("touchmove", (e) => { input(); hold(e); }, { passive: false });
   addEventListener("scroll", () => {
     lastScrollAt = performance.now();
+    if (Math.abs(scrollY - dirY) > 2) { scrollDir = Math.sign(scrollY - dirY); dirY = scrollY; }
     const y = scrollY;
     const now = performance.now();
     if (stopY > 0 && now < holdUntil && Math.abs(y - stopY) > 1) {
