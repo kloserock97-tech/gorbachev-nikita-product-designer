@@ -78,7 +78,7 @@ export function protoBlock(p: CasePrototype) {
       </div>
     </div>
     <div class="pt-device">
-      <div class="pt-amb" aria-hidden="true"></div>
+      <div class="pt-amb" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       <div class="pt-phone${web ? " pt-window" : ""}">
         ${web ? '<p class="pt-bar" aria-hidden="true"><i></i><i></i><i></i></p>' : ""}
         <div class="pt-screen" data-screen>${screen}</div>
@@ -304,6 +304,8 @@ function ambientLight(box: HTMLElement, calm: boolean) {
   screen.addEventListener("scroll", onScroll, { capture: true, passive: true });
   const io = new IntersectionObserver(([e]) => {
     live = e.isIntersecting;
+    /* подсветка дышит, только пока блок на экране */
+    box.classList.toggle("is-lit", live);
     clearInterval(tick);
     if (live) { sample(); tick = window.setInterval(sample, 1500); }
   });

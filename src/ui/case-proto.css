@@ -87,14 +87,22 @@
 
 /* рамка и подсветка за ней */
 .pt-device { position: relative; isolation: isolate; display: grid; justify-items: center; gap: 12px; min-width: 0; }
-.pt-amb {
-  position: absolute; z-index: -1; inset: -16% -26%; pointer-events: none; opacity: 1; filter: blur(64px) saturate(1.45);
-  background:
-    radial-gradient(34% 44% at 20% 50%, var(--am-l), transparent 72%),
-    radial-gradient(34% 44% at 80% 50%, var(--am-r), transparent 72%),
-    radial-gradient(44% 30% at 50% 14%, var(--am-t), transparent 72%),
-    radial-gradient(44% 30% at 50% 86%, var(--am-b), transparent 72%);
+/* подсветка живая: четыре пятна (по краю экрана каждое) медленно дышат — растут и сжимаются, чуть смещаются, меняют
+   яркость. Циклы 17–31 с и разные, поэтому картинка не повторяется. Двигаются только transform и opacity: размытие
+   рисуется один раз, дальше работает композитор. Вне экрана — пауза (.is-lit ставит ambientLight) */
+.pt-amb { position: absolute; z-index: -1; inset: -16% -26%; pointer-events: none; }
+.pt-amb i {
+  position: absolute; border-radius: 50%; filter: blur(60px) saturate(1.45); opacity: 0.85;
+  will-change: transform, opacity; animation: 23s ease-in-out infinite alternate both paused;
 }
+.pt-amb i:nth-child(1) { left: 0; top: 18%; width: 50%; height: 64%; background: radial-gradient(closest-side, var(--am-l), transparent); animation-name: pt-breathe-a; animation-duration: 19s; }
+.pt-amb i:nth-child(2) { right: 0; top: 18%; width: 50%; height: 64%; background: radial-gradient(closest-side, var(--am-r), transparent); animation-name: pt-breathe-b; animation-duration: 23s; animation-delay: -7s; }
+.pt-amb i:nth-child(3) { left: 22%; top: 0; width: 56%; height: 42%; background: radial-gradient(closest-side, var(--am-t), transparent); animation-name: pt-breathe-c; animation-duration: 29s; animation-delay: -12s; }
+.pt-amb i:nth-child(4) { left: 22%; bottom: 0; width: 56%; height: 42%; background: radial-gradient(closest-side, var(--am-b), transparent); animation-name: pt-breathe-a; animation-duration: 31s; animation-delay: -18s; animation-direction: alternate-reverse; }
+.pt.is-lit .pt-amb i { animation-play-state: running; }
+@keyframes pt-breathe-a { 0% { transform: translate(0, 0) scale(0.94); opacity: 0.72; } 50% { transform: translate(4%, -5%) scale(1.12); opacity: 1; } 100% { transform: translate(-3%, 4%) scale(0.9); opacity: 0.66; } }
+@keyframes pt-breathe-b { 0% { transform: translate(0, 0) scale(1.06); opacity: 0.9; } 45% { transform: translate(-5%, 4%) scale(0.9); opacity: 0.68; } 100% { transform: translate(3%, -3%) scale(1.14); opacity: 1; } }
+@keyframes pt-breathe-c { 0% { transform: translate(0, 0) scale(0.92); opacity: 0.7; } 55% { transform: translate(-6%, 3%) scale(1.1); opacity: 0.95; } 100% { transform: translate(5%, -2%) scale(1); opacity: 0.78; } }
 /* рамка телефона влезает в окно и по высоте: на 1280×800 и 1024×768 она была выше экрана (поля — кнопки сверху и капсула снизу) */
 .pt-phone { position: relative; width: 100%; max-width: min(380px, calc((100svh - 150px) * 786 / 1704 + 20px)); padding: 10px; border-radius: 52px; background: #0b0b0c; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 40px 80px -30px rgba(0, 0, 0, 0.8); }
 .pt-screen { position: relative; aspect-ratio: 786 / 1704; overflow: hidden; border-radius: 42px; background: #fff; isolation: isolate; }
@@ -165,14 +173,15 @@
   .pt-window { max-width: none; border-radius: 12px; padding: 0; }
   .pt-bar { height: 24px; }
   .pt-toast { font-size: 13px; padding: 9px 14px 9px 11px; }
-  .pt-amb { inset: -6% -10%; filter: blur(40px) saturate(1.15); }
+  .pt-amb { inset: -6% -10%; }
+  .pt-amb i { filter: blur(40px) saturate(1.3); }
   .pt-composer { min-height: 52px; padding-left: 16px; }
   .pt-prompt { font-size: 14px; }
 }
 @media (max-width: 600px) { .pt--live.pt--browser .pt-window .pt-screen { aspect-ratio: 3 / 4; } }
 @media (prefers-reduced-motion: reduce) {
   .pt { transition: none; }
-  .pt-spark, .pt-think i, .pt-spot::before { animation: none; }
+  .pt-spark, .pt-think i, .pt-spot::before, .pt-amb i { animation: none; }
   .pt-spot::before { opacity: 0.6; scale: 1.1; }
   .pt-page.is-in, .pt-page.is-out, .pt-page.is-in-back, .pt-page.is-out-back, .pt-toast { animation: none; }
   .pt-live-root .pt-hint { animation: none; box-shadow: 0 0 0 3px rgba(36, 120, 255, 0.6); }
