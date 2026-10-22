@@ -15,7 +15,8 @@ import { wordsTexture } from "./bgWords";
 
 export type PostFx = {
   /* dpr — разрешение сцены; canvasDpr — канваса (родной DPR экрана) */
-  setSize: (w: number, h: number, dpr: number, canvasDpr: number) => void;
+  /** pcDpr — разрешение слоя компьютера, если сцена временно рисуется грубее (HillScene.setMotionRes) */
+  setSize: (w: number, h: number, dpr: number, canvasDpr: number, pcDpr?: number) => void;
   /* MSAA меняется ступенью качества; ?msaa= в адресе имеет приоритет */
   setSamples: (n: number) => void;
   render: () => void;
@@ -268,7 +269,7 @@ export function createPostFx(
       pcRT.samples = next;
       pcRT.dispose();
     },
-    setSize(w, h, dpr, canvasDpr) {
+    setSize(w, h, dpr, canvasDpr, pcDpr = dpr) {
       const W = Math.max(1, Math.round(w * dpr)), H = Math.max(1, Math.round(h * dpr));
       sceneRT.setSize(W, H);
       bgRT.setSize(Math.max(1, Math.ceil(W / 2)), Math.max(1, Math.ceil(H / 2)));
@@ -281,8 +282,8 @@ export function createPostFx(
       introRT.setSize(Math.max(1, Math.ceil(W / 4)), Math.max(1, Math.ceil(H / 4)));
       shadowRT.setSize(Math.max(1, Math.ceil(W / 4)), Math.max(1, Math.ceil(H / 4)));
       quarter.uniforms.uAspect.value = w / h;
-      pcSize.set(W, H);
-      if (pcUsed) pcRT.setSize(W, H);
+      pcSize.set(Math.max(1, Math.round(w * pcDpr)), Math.max(1, Math.round(h * pcDpr)));
+      if (pcUsed) pcRT.setSize(pcSize.x, pcSize.y);
       halfRT.setSize(Math.max(1, Math.ceil((w * canvasDpr) / 2)), Math.max(1, Math.ceil((h * canvasDpr) / 2)));
       final.uniforms.uTexel.value.set(1 / W, 1 / H);
       /* v72: сцена крупнее экрана (суперсэмплинг на DPR 1) — финал сжимает её четырьмя билинейными выборками

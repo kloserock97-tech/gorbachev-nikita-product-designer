@@ -88,6 +88,7 @@ const HERO_PULL_DIR = new THREE.Vector3(0.7, 0.53, 2.0);
 const HERO_PULL_OFF = new THREE.Vector3();
 const PC_BG = !/[?&]pcbg=0/.test(location.search);
 const WORDS = !/[?&]words=0/.test(location.search);
+const MOTION_RES = !/[?&]motionres=0/.test(location.search);
 const FOV_KICK = !/[?&]fovkick=0/.test(location.search);
 const BASE_FOV = 30;
 const TUMBLE = !/[?&]tumble=0/.test(location.search);
@@ -1347,6 +1348,24 @@ export class HillScene {
     return this.storyS;
   }
 
+  /* v122 (Никита: «от первого экрана до серого фона — неплавно, с задержкой»): на экране DPR 2 холм с 220 тыс.
+     травинок рисуется в двойном разрешении и на встроенной видеокарте стоит 30+ мс на кадр. Пока страница уезжает
+     с холма в About (камера отъезжает, кадр размывается и уходит под серый лист), сцена рисуется грубее — 0,65 от
+     обычного, не ниже 1,25; компьютер своим слоем остаётся в полном. Встали — через полсекунды снова полное.
+     ?motionres=0 — без этого */
+  private size = { w: 1, h: 1, canvasDpr: 1 };
+  private motionLow = false;
+  private motionAt = -1e9;
+  private motionDpr() { return Math.min(this.dpr, Math.max(1.25, this.dpr * 0.65)); }
+  private setMotionRes(now: number, moving: boolean, zone: boolean) {
+    if (!MOTION_RES || this.dpr <= 1.3) return;
+    if (moving && zone) this.motionAt = now;
+    const want = zone && now - this.motionAt < 500;
+    if (want === this.motionLow) return;
+    this.motionLow = want;
+    this.fx.setSize(this.size.w, this.size.h, want ? this.motionDpr() : this.dpr, this.size.canvasDpr, this.dpr);
+  }
+
   private updateStory(dt: number) {
     const target = this.focusOn ? 0 : this.storyTarget;
     /* The portal has a softer response, blended in/out with its chapter. Keep
@@ -1372,6 +1391,7 @@ export class HillScene {
     /* главы: s — холм → About, c — «Кейсы» (story.ts, CHAPTER) */
     const { s, c, f } = chapters(this.storyS);
     this.storyCh1 = s;
+    this.setMotionRes(performance.now(), Math.abs(this.storyS - sPrev) > 1e-6, c <= 0 && f <= 0 && this.storyS > 0.0008 && s < 0.47);
     if (this.motes) this.motes.visible = (s < 0.3 && c <= 0) || f > 0.6;
     this.storyCh2 = c;
     this.storyCh3 = f;
@@ -2252,7 +2272,8 @@ ${SCREEN_SPILL}`)
     const canvasDpr = /[?&]canvas=scene/.test(location.search) ? this.dpr : forced > 0 ? Math.min(forced, native) : native;
     this.renderer.setPixelRatio(canvasDpr);
     this.renderer.setSize(w, h, false);
-    this.fx.setSize(w, h, this.dpr, canvasDpr);
+    this.size = { w, h, canvasDpr };
+    this.fx.setSize(w, h, this.motionLow ? this.motionDpr() : this.dpr, canvasDpr, this.dpr);
     this.walk?.setSize(w, h, this.dpr);
     this.pollenScale(this.dpr);
     this.camera.aspect = w / h;

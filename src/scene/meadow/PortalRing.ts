@@ -268,7 +268,7 @@ export class PortalRing {
     vertexShader: `attribute vec4 aSeed; uniform float uTime; uniform float uPixelScale; uniform float uNear; varying float vA; varying vec2 vQ;
       vec3 path(float t) {
         float e = t * t;
-        float r = mix(${RING_OUT.toFixed(2)} * (1.0 + aSeed.z * 0.9), ${(RING_IN * 0.55).toFixed(2)}, e);
+        float r = mix(${RING_OUT.toFixed(2)} * (1.0 + aSeed.z * 0.9), ${(RING_IN * 0.08).toFixed(2)}, e);
         /* закрутка растёт к центру — как вода в сливе */
         float a = aSeed.w * 6.2832 + e * (2.6 + aSeed.y * 1.4) + uTime * 0.04;
         float z = mix(0.4 + aSeed.y * 1.8, 0.0, e);
@@ -289,7 +289,9 @@ export class PortalRing {
         c.xy += off * position.x * c.w;
         gl_Position = c;
         float r = length(head.xy);
-        vA = smoothstep(0.0, 0.18, life) * smoothstep(${(RING_IN * 0.62).toFixed(2)}, ${(RING_IN * 1.02).toFixed(2)}, r)
+        /* v122 (Никита: «воздух должен уходить в сам портал, а не только вокруг»): штрих проходит кромку и гаснет уже
+           внутри окна, у центра */
+        vA = smoothstep(0.0, 0.18, life) * smoothstep(${(RING_IN * 0.1).toFixed(2)}, ${(RING_IN * 0.55).toFixed(2)}, r)
            * (0.3 + 0.7 * life) * smoothstep(1.0, 3.0, depth) * uNear;
         vQ = position.xy;
       }`,
@@ -318,12 +320,58 @@ export class PortalRing {
         float w = vn3(vec3(cs * 2.0, s * 3.0 + t)) * vn3(vec3(cs * 3.4 + 5.0, s * 5.0 + t * 1.3)) * vn3(vec3(cs * 5.5 + 9.0, s * 8.0 + t * 1.7));
         /* без насыщения: пряди не вспыхивают яркими дугами, остаются дымкой */
         w = smoothstep(0.06, 0.3, w);
-        float fade = smoothstep(${(RING_IN * 0.62).toFixed(2)}, ${(RING_IN * 1.05).toFixed(2)}, r) * (1.0 - smoothstep(${(RING_OUT + 1.2).toFixed(2)}, ${FUNNEL_OUT.toFixed(2)}, r));
+        float fade = smoothstep(${(RING_IN * 0.3).toFixed(2)}, ${(RING_IN * 0.95).toFixed(2)}, r) * (1.0 - smoothstep(${(RING_OUT + 1.2).toFixed(2)}, ${FUNNEL_OUT.toFixed(2)}, r));
         float plasma = exp(-abs(r - ${(RING_IN + 0.05).toFixed(2)}) * 5.0) * (0.55 + 0.45 * sin(ang * 6.0 - uTime * 1.3 + sin(ang * 3.0 + uTime * 0.5) * 2.0));
         float v = w * fade * 0.1 + plasma * vn3(vec3(cs * 4.0, uTime * 0.6)) * 0.22 * uGlow;
         gl_FragColor = vec4(vec3(1.0, 0.86, 0.66) * v, v) * uOpacity * uNear;
       }`,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, side: THREE.DoubleSide,
+  });
+
+  /* v122 (Никита: «чтобы камни туда стремились, прямо из луга»): камешки выныривают из травы перед порталом,
+     поднимаются дугой и по спирали, кувыркаясь и ускоряясь, уходят в окно — проходят за его плоскость и скрываются за
+     картинкой подвала. Позиции считает вершинный шейдер по семени и времени, на процессоре ничего не движется */
+  private readonly stones = new THREE.ShaderMaterial({
+    uniforms: { uTime: this.time, uOpacity: this.opacity, uCenterW: this.centerW, uFacing: this.facing, uGlow: this.glow },
+    vertexShader: `attribute vec4 aSeed; uniform float uTime; uniform float uOpacity;
+      varying vec3 vN; varying vec3 vW; varying float vShade;
+      vec3 turn(vec3 v, vec3 axis, float a) { float c = cos(a), s = sin(a); return v * c + cross(axis, v) * s + axis * dot(axis, v) * (1.0 - c); }
+      void main() {
+        float life = fract(aSeed.x + uTime * (0.045 + aSeed.y * 0.04));
+        /* старт: в траве перед порталом, левее и правее входа */
+        vec3 p0 = vec3((aSeed.z - 0.5) * 15.0, -4.55, 1.2 + aSeed.w * 8.5);
+        float rise = smoothstep(0.0, 0.14, life);
+        vec3 start = p0 + vec3(0.0, rise * 0.75, 0.0);
+        float k = smoothstep(0.1, 1.0, life);
+        k = k * k;
+        vec3 c = vec3(0.0, 0.0, -0.6);
+        vec3 p = mix(start, c, k);
+        /* закрутка вокруг оси портала растёт к центру, плюс дуга вверх на полпути */
+        float ang = k * k * (2.4 + aSeed.y * 1.5);
+        vec2 o = p.xy - c.xy;
+        p.xy = c.xy + mat2(cos(ang), sin(ang), -sin(ang), cos(ang)) * o;
+        p.y += sin(k * 3.14159) * (0.6 + aSeed.w * 1.4);
+        float size = (0.06 + aSeed.y * 0.1) * smoothstep(0.0, 0.06, life) * (1.0 - smoothstep(0.88, 1.0, k)) * uOpacity;
+        vec3 axis = normalize(vec3(aSeed.w - 0.5, aSeed.z - 0.5, aSeed.y - 0.5) + 0.001);
+        float spin = uTime * (0.6 + aSeed.z * 2.0) + k * 6.0;
+        vec3 local = turn(position * vec3(1.0, 0.75, 0.9), axis, spin) * size;
+        vec4 wp = modelMatrix * vec4(p + local, 1.0);
+        vN = normalize(mat3(modelMatrix) * turn(normal, axis, spin));
+        vW = wp.xyz;
+        vShade = 0.75 + 0.5 * fract(aSeed.x * 17.3);
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }`,
+    fragmentShader: `uniform vec3 uCenterW; uniform vec3 uFacing; uniform float uGlow; varying vec3 vN; varying vec3 vW; varying float vShade;
+      void main() {
+        vec3 n = normalize(vN);
+        vec3 amb = mix(vec3(0.06, 0.055, 0.035), vec3(0.18, 0.2, 0.26), n.y * 0.5 + 0.5);
+        vec3 toC = uCenterW + uFacing * 0.6 - vW;
+        float d = length(toC);
+        vec3 win = vec3(1.6, 1.05, 0.55) * max(dot(n, toC / d), 0.0) * (0.25 + 0.75 * uGlow) * 6.0 / (6.0 + d * d);
+        vec3 col = vec3(0.2, 0.2, 0.21) * vShade * (amb + win + 0.35 * max(dot(n, normalize(vec3(0.0, 1.0, 0.0) + uFacing * 0.5)), 0.0));
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+    toneMapped: false,
   });
 
   constructor(group: THREE.Group, centreY: number) {
@@ -364,6 +412,23 @@ export class PortalRing {
     core.renderOrder = 5;
     group.add(core);
 
+    const rock = new THREE.IcosahedronGeometry(1, 0); // уже без индексов — грани плоские
+    rock.computeVertexNormals();
+    const stoneGeo = new THREE.InstancedBufferGeometry();
+    stoneGeo.setAttribute("position", rock.getAttribute("position"));
+    stoneGeo.setAttribute("normal", rock.getAttribute("normal"));
+    rock.dispose();
+    const ns = typeof innerWidth !== "undefined" && innerWidth < 700 ? 36 : 72;
+    const ss = new Float32Array(ns * 4), srand = rng(3319);
+    for (let i = 0; i < ss.length; i++) ss[i] = srand();
+    stoneGeo.setAttribute("aSeed", new THREE.InstancedBufferAttribute(ss, 4));
+    stoneGeo.instanceCount = ns;
+    this.geometries.push(stoneGeo);
+    const stones = new THREE.Mesh(stoneGeo, this.stones);
+    stones.position.y = centreY;
+    stones.frustumCulled = false;
+    group.add(stones);
+
     const streakGeo = buildStreaks(typeof innerWidth !== "undefined" && innerWidth < 700 ? 260 : 480);
     this.geometries.push(streakGeo);
     const streaks = new THREE.Mesh(streakGeo, this.streaks);
@@ -392,6 +457,6 @@ export class PortalRing {
   }
   dispose() {
     this.geometries.forEach((g) => g.dispose());
-    this.bricks.dispose(); this.halo.dispose(); this.streaks.dispose(); this.core.dispose(); this.funnel.dispose();
+    this.bricks.dispose(); this.halo.dispose(); this.streaks.dispose(); this.core.dispose(); this.funnel.dispose(); this.stones.dispose();
   }
 }

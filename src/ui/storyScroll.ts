@@ -139,6 +139,12 @@ const SNAP = typeof location === "undefined" || !/[?&]snap=0/.test(location.sear
 let snapTimer = 0;
 let lastScrollAt = 0;
 let scrollDir = 0, dirY = 0;
+/* v122 (Никита: «перескакивает через кейс»): остановка, у которой стояли перед жестом. Вперёд доводим только к соседней
+   с ней — раньше «соседняя» считалась от ближайшей к месту остановки, и, проскочив кейс на треть шага, страница
+   уезжала ещё на кейс дальше */
+let anchor = -1;
+let gestureAt = -1e9;
+const nearestStop = (y: number) => snapStops.reduce((b, v) => (Math.abs(v - y) < Math.abs(b - y) ? v : b), snapStops[0] ?? -1);
 function scheduleSnap() {
   clearTimeout(snapTimer);
   if (!SNAP || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -157,11 +163,23 @@ function scheduleSnap() {
        доводим вперёд, к следующей остановке в ту же сторону (если она не дальше шага) */
     const step = reach * 2;
     let forward = false;
-    if (scrollDir !== 0 && Math.abs(scrollY - best) > step * 0.2 && Math.sign(scrollY - best) === scrollDir) {
-      const ahead = snapStops.filter((y) => Math.sign(y - scrollY) === scrollDir && Math.abs(y - scrollY) < step * 1.05)
-        .sort((a, b) => Math.abs(a - scrollY) - Math.abs(b - scrollY))[0];
+    if (scrollDir !== 0 && best === anchor && Math.abs(scrollY - best) > step * 0.2 && Math.sign(scrollY - best) === scrollDir) {
+      const ahead = snapStops.filter((y) => Math.sign(y - anchor) === scrollDir && Math.abs(y - anchor) < step * 1.6)
+        .sort((a, b) => Math.abs(a - anchor) - Math.abs(b - anchor))[0];
       if (ahead !== undefined) { best = ahead; dist = Math.abs(ahead - scrollY); forward = true; }
     }
+    /* v122 (Никита: «долетел до колонны, а кейс справа не появился»): между заставкой кейсов и первым кейсом и между
+       уходом ленты и первым пэт-проектом страница не стоит — доезжает до первого */
+    if (!forward) {
+      const pg = Math.min(1, Math.max(0, (scrollY - bounds.start) / Math.max(1, bounds.end - bounds.start)));
+      const ch = chapters(pg).c;
+      const funnel = ([a, b]: readonly [number, number]) => ch > a && ch < b && scrollDir >= 0;
+      const first = (span: readonly [number, number]) => topFor(CHAPTER + (CHAPTER2 - CHAPTER) * span[0]);
+      if (chapters(pg).f <= 0 && funnel([CASES.cardsIn[0] - 0.03, CASES.strip[0] - 0.002])) { best = first(CASES.strip); dist = Math.abs(best - scrollY); forward = true; }
+      else if (chapters(pg).f <= 0 && funnel([CASES.stripOut[1] - 0.01, CASES.notesRun[0] - 0.002])) { best = first(CASES.notesRun); dist = Math.abs(best - scrollY); forward = true; }
+    }
+    /* к первому экрану не тянем: чуть прокрутили от него и остановились — страница стоит, где оставили */
+    if (!forward && best === 0) return;
     /* v115 (как у igloo): в портале не стоят — за серединой прохода он довозит до футера, раньше — назад к лугу */
     const p = Math.min(1, Math.max(0, (scrollY - bounds.start) / Math.max(1, bounds.end - bounds.start)));
     const { f } = chapters(p);
@@ -176,13 +194,20 @@ function scheduleSnap() {
     if (best < 0 || dist < 2 || (dist > reach && !forward)) return;
     /* длительность от расстояния: короткий доезд ~0,6 с, полшага — до 1,3 с */
     const seconds = Math.min(1.3, Math.max(0.6, (dist / innerHeight) * 1.6));
+    anchor = best;
     if (glideTo) glideTo(best, seconds);
     else scrollTo({ top: best, behavior: "smooth" });
   }, 1400);
 }
 if (typeof window !== "undefined") {
   onViewport(() => requestAnimationFrame(placeStops));
-  const input = () => { lastInput = performance.now(); scheduleSnap(); };
+  /* начало жеста (после паузы больше 0,6 с): запоминаем остановку, у которой стояли */
+  const input = () => {
+    const now = performance.now();
+    if (now - gestureAt > 600 && snapStops.length) anchor = nearestStop(scrollY);
+    gestureAt = now;
+    lastInput = now; scheduleSnap();
+  };
   /* инерция пальца продолжается после отпускания — окно «жеста» после touchend длиннее */
   addEventListener("touchend", () => { lastInput = performance.now() + 900; scheduleSnap(); }, { passive: true });
   addEventListener("keydown", input);

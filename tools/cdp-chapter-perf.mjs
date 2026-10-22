@@ -27,7 +27,7 @@ await send("Runtime.enable");
 await send("Performance.enable");
 await send("Page.addScriptToEvaluateOnNewDocument", { source: readFileSync(resolve(here, "pre-draw-count.js"), "utf8") });
 await send("Emulation.setDeviceMetricsOverride", { width: W, height: H, deviceScaleFactor: DPR, mobile: false });
-await send("Page.navigate", { url: `${BASE}?intro=0&splash=0&governor=0&tier=${arg("tier", "3")}` });
+await send("Page.navigate", { url: `${BASE}?intro=0&splash=0&governor=0${arg("tier", "3") === "none" ? "" : "&tier=" + arg("tier", "3")}${arg("extra", "")}` });
 await sleep(+arg("wait", 12000));
 const metric = async () => Object.fromEntries((await send("Performance.getMetrics")).result.metrics.map((m) => [m.name, m.value]));
 
