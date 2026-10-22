@@ -14,19 +14,21 @@ import { bodyHas, onBodyState } from "../lib/bodyState";
 const BASE = import.meta.env.BASE_URL;
 
 /* фильмы интерфейса — те же, что на страницах кейсов (stories/*: film); постер — первый кадр */
-const FILMS: Record<string, string> = { "grif-ai": "cases/grif-ai/film", community: "cases/community/film" };
+/* v118 (замер): превью шириной ~400 px играло полный фильм 1920×1080 — 2,8 и 4,4 МБ на одну главу. Теперь лёгкие копии
+   640×360 из карточки холма (ui/card-<id>, 0,3–0,6 МБ): webm для Chrome и Firefox, mp4 для Safari */
+const FILMS: Record<string, string> = { "grif-ai": "ui/card-grif-ai", community: "ui/card-community" };
 const calm = matchMedia("(prefers-reduced-motion: reduce)").matches
   || !!(navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
 
 function preview(c: CaseItem) {
   const film = FILMS[c.id];
   if (film) {
-    const poster = `${BASE}${film}-poster.webp`;
+    const poster = `${BASE}${film}.webp`;
     return calm
       ? `<img class="pl-img pl-img--browser" src="${poster}" alt="" decoding="async">`
       /* v103: без autoplay и с preload="none". Список собирается при загрузке, и autoplay скачивал фильм первого кейса
          (2,8 МБ — больше половины веса страницы) на первом экране, когда до главы ещё далеко. Играет его sync() */
-      : `<video class="pl-img pl-img--browser" muted loop playsinline preload="none" poster="${poster}" aria-hidden="true" tabindex="-1"><source src="${BASE}${film}.mp4" type="video/mp4"></video>`;
+      : `<video class="pl-img pl-img--browser" muted loop playsinline preload="none" poster="${poster}" aria-hidden="true" tabindex="-1"><source src="${BASE}${film}.webm" type="video/webm"><source src="${BASE}${film}.mp4" type="video/mp4"></video>`;
   }
   const s = c.look.screen;
   if (s) return `<img class="pl-img pl-img--${s.device}" src="${BASE}${s.src}" width="${s.w}" height="${s.h}" alt="" decoding="async">`;

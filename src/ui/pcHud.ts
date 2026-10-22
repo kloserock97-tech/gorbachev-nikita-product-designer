@@ -37,7 +37,6 @@ export function initPcHud(scene: Scene) {
   root.setAttribute("aria-hidden", "true");
   root.innerHTML = `
     <canvas class="pc-dossier__lines"></canvas>
-    <canvas class="pc-dossier__lines pc-dossier__ripple"></canvas>
     <div class="pc-dossier__label pc-dossier__label--title"><b data-l="0"></b><b data-l="1"></b></div>
     <div class="pc-dossier__label pc-dossier__label--temp"><b><i>TEMP</i><span data-l="f"></span></b><b><i></i><span data-l="c"></span></b></div>
     <div class="pc-dossier__label pc-dossier__label--date"><b data-l="d"></b><b data-l="hint"></b></div>`;
@@ -46,10 +45,6 @@ export function initPcHud(scene: Scene) {
 
   const canvas = root.querySelector<HTMLCanvasElement>(".pc-dossier__lines")!;
   const ctx = canvas.getContext("2d")!;
-  /* v116: рябь — свой холст со смешиванием «мягкий свет» (pc-hud.css): белый на нём лишь чуть высветляет то, что
-     под ним, поэтому на синем экране и на бежевом корпусе рябь одинаково еле заметна */
-  const rippleCanvas = root.querySelector<HTMLCanvasElement>(".pc-dossier__ripple")!;
-  const rctx = rippleCanvas.getContext("2d")!;
   const labels = {
     title: root.querySelector<HTMLElement>(".pc-dossier__label--title")!,
     temp: root.querySelector<HTMLElement>(".pc-dossier__label--temp")!,
@@ -58,7 +53,8 @@ export function initPcHud(scene: Scene) {
   let dpr = 1;
   const resize = () => {
     dpr = Math.min(2, devicePixelRatio || 1);
-    for (const cv of [canvas, rippleCanvas]) { cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr); }
+    canvas.width = Math.round(innerWidth * dpr);
+    canvas.height = Math.round(innerHeight * dpr);
   };
   resize();
   addEventListener("resize", resize);
@@ -109,34 +105,7 @@ export function initPcHud(scene: Scene) {
   let wasArrived = false, lastSettle = 0;
   let lastT = performance.now();
 
-  /* v115 (по мотивам igloo): под курсором на компьютере расходится рябь из светлых треугольников и гаснет за ~0,8 с;
-     ведёшь мышью — за ней тянется след. Только мышь, не палец */
-  const ripples: { x: number; y: number; t0: number }[] = [];
-  let rippleDirty = false;
-  let lastRip = 0, rx = 0, ry = 0, rect: { x: number; y: number; w: number; h: number } | null = null;
-  if (matchMedia("(hover: hover) and (pointer: fine)").matches && !reduced) {
-    addEventListener("pointermove", (e) => {
-      if (!shown || !rect) return;
-      const inside = e.clientX > rect.x && e.clientX < rect.x + rect.w && e.clientY > rect.y && e.clientY < rect.y + rect.h;
-      const now = performance.now();
-      if (!inside || now - lastRip < 70 || Math.hypot(e.clientX - rx, e.clientY - ry) < 10) return;
-      lastRip = now; rx = e.clientX; ry = e.clientY;
-      ripples.push({ x: e.clientX, y: e.clientY, t0: now });
-      if (ripples.length > 14) ripples.shift();
-    }, { passive: true });
-  }
-  const tri = (ctx2: CanvasRenderingContext2D, x: number, y: number, r: number) => {
-    const h = 13;
-    for (const ang of [0, Math.PI / 3, -Math.PI / 3]) {
-      const dx = Math.cos(ang), dy = Math.sin(ang);
-      for (let o = -r; o <= r; o += h) {
-        const px = x - dy * o, py = y + dx * o;
-        const half = Math.sqrt(Math.max(0, r * r - o * o));
-        ctx2.moveTo(px - dx * half, py - dy * half);
-        ctx2.lineTo(px + dx * half, py + dy * half);
-      }
-    }
-  };
+  /* v118: рябь под курсором теперь на самом компьютере — в шейдере корпуса (HillScene.pcRippleLook) */
   const prev = scene.onStoryFrame;
   scene.onStoryFrame = () => {
     prev?.();
@@ -152,7 +121,6 @@ export function initPcHud(scene: Scene) {
         root.classList.remove("is-on");
         (Object.keys(labels) as (keyof typeof labels)[]).forEach((k) => setShown(k, false, now));
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        rctx.clearRect(0, 0, rippleCanvas.width, rippleCanvas.height);
       }
       return;
     }
@@ -227,26 +195,6 @@ export function initPcHud(scene: Scene) {
       ctx.fillRect(dax - 1.5, day - 1.5, 3, 3);
     }
 
-    rect = r;
-    /* рябь на компьютере: сетка треугольников внутри растущего круга, кромка ярче */
-    if (ripples.length || rippleDirty) {
-      rctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      rctx.clearRect(0, 0, innerWidth, innerHeight);
-      rippleDirty = ripples.length > 0;
-      rctx.lineWidth = 1;
-      rctx.strokeStyle = "#ffffff";
-      for (let i = ripples.length - 1; i >= 0; i--) {
-        const p = ripples[i];
-        const k = (now - p.t0) / 800;
-        if (k >= 1) { ripples.splice(i, 1); continue; }
-        const rad = 40 + 80 * Math.min(1, k / 0.4);
-        const fade = (1 - k) * (1 - k) * a;
-        rctx.globalAlpha = fade * 0.45;
-        rctx.beginPath(); tri(rctx, p.x, p.y, rad); rctx.stroke();
-        rctx.globalAlpha = fade * 0.7;
-        rctx.beginPath(); rctx.arc(p.x, p.y, rad, 0, Math.PI * 2); rctx.stroke();
-      }
-    }
     const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
     const R = Math.max(r.w, r.h) * 0.72;
     /* к центру созвездие гаснет — поверх компьютера ни пунктира, ни крестиков, они видны только вокруг */

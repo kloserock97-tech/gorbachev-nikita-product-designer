@@ -178,7 +178,9 @@ export function initWalkChapter(scene: StoryScene) {
     for (const img of shelf.querySelectorAll<HTMLImageElement>("img")) {
       queue.push(() => { img.loading = "eager"; return img.decode().catch(() => {}); });
     }
-    for (const v of shelf.querySelectorAll<HTMLVideoElement>("video")) {
+    /* v118 (замер): заранее — только ролик первой карточки; остальные (ещё ~1,2 МБ) грузятся, когда карточку выбрали
+       (playOnly), до этого виден их постер */
+    for (const v of [...shelf.querySelectorAll<HTMLVideoElement>("video")].slice(0, 1)) {
       queue.push(() => new Promise<void>((done) => {
         v.preload = "auto";
         v.addEventListener("loadeddata", () => done(), { once: true });

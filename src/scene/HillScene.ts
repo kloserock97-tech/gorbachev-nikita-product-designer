@@ -767,6 +767,8 @@ export class HillScene {
   flowerCount = 0;
 
   private buildPampas() {
+    /* v118 (Никита): белые метёлки пампасов на склоне не читались травой и выбивались из кадра — убраны. ?pampas=1 — вернуть */
+    if (!/[?&]pampas=1/.test(location.search)) return;
     const rng = makeRng(0xba5a);
     const leaf = { off: [] as number[], nrm: [] as number[], rnd: [] as number[], clump: [] as number[], lean: [] as number[] };
     const plumeOff: number[] = [], plume: number[] = [];
@@ -1218,6 +1220,7 @@ export class HillScene {
         warmed.add(mat);
         mat.color.multiply(new THREE.Color(1.06, 1.0, 0.9));
         mat.envMapIntensity = 0.7;
+        this.pcRippleLook(mat);
       }
       mesh.layers.enable(SHIELD_LAYER);
       if (mesh.name === "screen") {
@@ -1241,6 +1244,7 @@ export class HillScene {
     pc.scale.set(1, 1, 1);
     pc.updateMatrixWorld(true);
     this.pcLocalBox.setFromObject(pc);
+    this.rip.k.value = this.pcLocalBox.getSize(new THREE.Vector3()).length();
     this.placePolaroid(pc);
     pc.position.copy(keep.p);
     pc.quaternion.copy(keep.q);
@@ -1740,6 +1744,88 @@ export class HillScene {
   }
   private pcLocalBox = new THREE.Box3();
   /** студийный свет — от камеры страницы; прямоугольник компьютера в кадре — для фона, тени и рамки */
+  /* v118 (Никита: «у igloo рябь идёт по объекту»; приём igloo, код свой). Курсор над компьютером на странице About —
+     луч из камеры страницы попадает в корпус, точка попадания запоминается в координатах самого компьютера, и от неё
+     по поверхности расходится волна: светлая кромка и сетка треугольников, гаснет за ~1 с. Считает шейдер корпуса
+     (pcRippleLook), поэтому рябь лежит на объекте, повторяет его форму и не выходит за края. ?pcrip=0 — без неё */
+  private readonly rip = {
+    hits: { value: Array.from({ length: 6 }, () => new THREE.Vector4(0, 0, 0, -99)) },
+    inv: { value: new THREE.Matrix4() },
+    time: { value: 0 },
+    k: { value: 1 },
+    head: 0,
+    last: new THREE.Vector3(1e6, 0, 0),
+    lastAt: 0,
+    client: new THREE.Vector2(-1, -1),
+    ray: (() => { const r = new THREE.Raycaster(); r.layers.enableAll(); return r; })(),
+    on: !/[?&]pcrip=0/.test(location.search) && matchMedia("(hover: hover) and (pointer: fine)").matches,
+  };
+  private pcRippleLook(m: THREE.MeshStandardMaterial) {
+    if (!this.rip.on) return;
+    const R = this.rip;
+    m.customProgramCacheKey = () => "pc-ripple";
+    m.onBeforeCompile = (sh) => {
+      Object.assign(sh.uniforms, { uRipHits: R.hits, uPcInv: R.inv, uRipTime: R.time, uRipK: R.k });
+      sh.vertexShader = sh.vertexShader
+        .replace("#include <common>", `#include <common>
+uniform mat4 uPcInv;
+varying vec3 vPcL;
+varying vec3 vPcN;`)
+        .replace("#include <project_vertex>", `#include <project_vertex>
+  vPcL = (uPcInv * modelMatrix * vec4(transformed, 1.0)).xyz;
+  vPcN = normalize(mat3(uPcInv * modelMatrix) * objectNormal);`);
+      sh.fragmentShader = sh.fragmentShader
+        .replace("#include <common>", `#include <common>
+uniform vec4 uRipHits[6];
+uniform float uRipTime;
+uniform float uRipK;
+varying vec3 vPcL;
+varying vec3 vPcN;
+float ripLine(float x) { return smoothstep(0.42, 0.5, abs(fract(x) - 0.5)); }`)
+        .replace("#include <opaque_fragment>", `{
+    /* сетка треугольников на плоскости, ближайшей к грани (проекция по главной оси нормали) */
+    vec3 an = abs(vPcN);
+    vec2 q = an.x > an.y && an.x > an.z ? vPcL.yz : an.y > an.z ? vPcL.xz : vPcL.xy;
+    q *= 34.0 / uRipK;
+    float tri = max(ripLine(q.y), max(ripLine(dot(q, vec2(0.866, 0.5))), ripLine(dot(q, vec2(-0.866, 0.5)))));
+    float rip = 0.0;
+    for (int i = 0; i < 6; i++) {
+      vec4 h = uRipHits[i];
+      float age = uRipTime - h.w;
+      if (age < 0.0 || age > 1.1) continue;
+      float d = distance(vPcL, h.xyz) / uRipK;
+      float r = 0.02 + age * 0.55;
+      float front = exp(-abs(d - r) * 60.0);
+      float inside = 1.0 - smoothstep(r - 0.03, r, d);
+      float fade = 1.0 - smoothstep(0.45, 1.1, age);
+      rip += (front * (0.25 + 0.9 * tri) + inside * tri * 0.04) * fade;
+    }
+    outgoingLight += vec3(0.78, 0.86, 1.0) * min(rip, 1.0) * 0.24;
+  }
+  #include <opaque_fragment>`);
+    };
+  }
+  private updateRipple() {
+    const R = this.rip;
+    R.time.value = this.uniforms.uTime.value;
+    if (!R.on || !this.pc) return;
+    R.inv.value.copy(this.pc.matrixWorld).invert();
+    /* только когда компьютер долетел и стоит на странице About; луч — по движению мыши, не чаще ~16 раз в секунду */
+    if (this.storyFlight < 0.9 || this.storyCh1 >= 0.995 || !(this.studio && this.studio.mix > 0.5)) return;
+    const now = performance.now();
+    if (now - R.lastAt < 60 || R.client.equals(this.lastClient)) return;
+    R.lastAt = now;
+    R.client.copy(this.lastClient);
+    /* свой луч: компьютер в About живёт на слое PC_LAYER, общий raycaster видит только слой 0 */
+    R.ray.setFromCamera(this.ndc, this.overlayCam);
+    const hit = R.ray.intersectObject(this.pc, true)[0];
+    if (!hit) return;
+    const p = this.pc.worldToLocal(hit.point.clone());
+    if (p.distanceTo(R.last) < R.k.value * 0.05) return;
+    R.last.copy(p);
+    R.hits.value[R.head].set(p.x, p.y, p.z, R.time.value);
+    R.head = (R.head + 1) % R.hits.value.length;
+  }
   private updateStudio() {
     const S = this.studio;
     if (!S || !this.pc) return;
@@ -2311,6 +2397,7 @@ ${SCREEN_SPILL}`)
       this.syncOverlayCam();
       this.fx.params.overlayCamera = this.overlayCam;
       this.updateStudio();
+      this.updateRipple();
     }
     if (hillShown) {
       this.updateCursor(dt);
