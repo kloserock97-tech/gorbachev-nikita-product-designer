@@ -142,10 +142,10 @@ export const en: CaseStory = {
     live: "community",
     device: "browser",
     steps: [
-      { image: img(C + "proto-feed.webp", 1440, 2942, "The story feed"), spot: [0.811, 0.373], action: "Open \"The mysterious Dangauerovka\"", why: "One action looks the same everywhere: Listen, comments and topics sit in the same place on every card." },
-      { image: img(C + "proto-article.webp", 1440, 3723, "A story page"), spot: [0.916, 0.0099], action: "Want to tell yours? Open your profile", why: "Built for long reading: the eyes don't tire and the interface doesn't compete with the story." },
-      { image: img(C + "proto-form.webp", 1440, 1066, "The \"Tell your story\" form"), spot: [0.141, 0.709], action: "Write the story and press Send", why: "If the main action has to be searched for, nobody takes it. So the form sits both in the profile and right in the feed." },
-      { image: img(C + "proto-published.webp", 1440, 1574, "The story is published in the profile"), action: "Done: the story is published", why: "After moderation a story appears in Community and in the author's profile. The first residents' stories arrived in the very first week." },
+      { image: img(C + "s1-feed.webp", 1440, 3058, "The story feed"), spot: [0.719, 0.727], action: "Open \"The mysterious Dangauerovka\"", why: "One action looks the same everywhere: Listen, comments and topics sit in the same place on every card." },
+      { image: img(C + "s1-article.webp", 1440, 4011, "A story page"), spot: [0.817, 0.0092], action: "Want to tell yours? Press \"Tell a story\"", why: "Built for long reading: the eyes don't tire and the interface doesn't compete with the story." },
+      { image: img(C + "s1-story.webp", 1440, 1064, "The \"Tell a story\" form"), spot: [0.295, 0.697], action: "Write the story and press Send", why: "If the main action has to be searched for, nobody takes it. The form is short: a title, text and up to ten images, and then the story goes to review." },
+      { image: img(C + "s1-profile.webp", 1440, 1884, "The author's profile: activity"), action: "Done: the story is published", why: "After moderation a story appears in Community and in the author's profile. The first residents' stories arrived in the very first week." },
     ],
   },
   takeaways: [
