@@ -131,16 +131,17 @@ export const en: CaseStory = {
       "[TO FILL] Share of complaints handled on time",
     ],
   },
-  /* v114: prototype from the mock-ups — the moderator's main flow: queue → profile → take into work */
+  /* v114: prototype from the mock-ups — the "Take into work and approve" scenario from Figma TsqIZDg5rUgbxPNV5ghDZB (section 2494:85199): queue → profile → confirm → in work → approved */
   prototype: {
-    title: "Take a case into work",
+    title: "Check a user and approve",
     lead: "A moderator's path: from the queue to a decision about a user. These are my Figma mock-ups; the dot shows where to tap.",
     device: "browser",
     steps: [
       { image: img(F + "moderator-queue.webp", 1440, 1156, "The user queue"), spot: [0.453, 0.33], action: "Open a user from the queue", why: "The list is split by status: moderators open the dashboard asking \"what is waiting for me now\"." },
       { image: img(F + "moderator-profile.webp", 1440, 861, "The user profile"), spot: [0.142, 0.205], action: "Press \"Take into work\"", why: "A detailed page for disputed cases: when context has to be gathered across tabs, decisions become guesses." },
       { image: img(F + "moderator-confirm.webp", 1440, 861, "Confirmation before taking the case"), spot: [0.5, 0.574], action: "Confirm", why: "Taking a case is a meaningful action, so it gets one confirmation." },
-      { image: img(F + "moderator-profile.webp", 1440, 861, "The case is in work"), toast: "Taken into work", action: "Done: the case is yours", why: "One way of working for five types of objects: moderators learn it once." },
+      { image: img(F + "moderator-inwork.webp", 1440, 861, "The profile in work"), spot: [0.127, 0.204], action: "Press Approve", why: "Fitts's law: every decision — approve, freeze, send to a manager, block — sits where the moderator is already looking." },
+      { image: img(F + "moderator-approved.webp", 1440, 861, "The profile is approved"), action: "Done: the profile is approved", why: "\"Take the next one\" leads straight to a new case, with no trip back to the queue. One way of working for five types of objects: moderators learn it once." },
     ],
   },
   takeaways: [

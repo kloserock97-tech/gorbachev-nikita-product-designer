@@ -84,7 +84,7 @@
 .pt-window { max-width: none; padding: 0; border-radius: 16px; background: #1b1c1f; overflow: hidden; }
 .pt-bar { display: flex; gap: 7px; height: 32px; align-items: center; padding: 0 14px; background: #26272b; }
 .pt-bar i { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, 0.22); }
-.pt-window .pt-screen { border-radius: 0; }
+.pt-window .pt-screen { aspect-ratio: 16 / 10; border-radius: 0; }
 .pt-window .pt-spot { width: 48px; height: 48px; margin: -24px 0 0 -24px; }
 .pt-window .pt-spot i { inset: 12px; }
 /* плашка-итог поверх экрана, когда отдельного экрана «готово» в макетах нет */

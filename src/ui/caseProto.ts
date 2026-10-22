@@ -6,7 +6,7 @@
    переход в приложении. Нажали мимо — точка вспыхивает, подсказывая, куда жать. Длинный экран прокручивается
    внутри телефона (у каждого экрана своя прокрутка), к точке он доезжает сам. Шаги слева тоже кнопки: можно перейти к любому.
    Экран-загрузка (wait) проходит сам; плашка-итог (toast) встаёт поверх последнего экрана, если отдельного нет.
-   Рамка — телефон или окно браузера (device): у браузера пропорция берётся по первому экрану.
+   Рамка — телефон или окно браузера (device). Окно всегда 16:10: высокие страницы целиком прокручиваются внутри.
    «Меньше движения» — экраны сменяются без въезда, кольцо не пульсирует. */
 import type { CasePrototype } from "../data/caseStory";
 import { getLang } from "../i18n";
@@ -34,7 +34,6 @@ const ICON = {
 export function protoBlock(p: CasePrototype) {
   const n = p.steps.length;
   const web = p.device === "browser";
-  const first = p.steps[0].image;
   return `<div class="pt${web ? " pt--browser" : ""}" data-proto>
     <div class="pt-side">
       <p class="pt-live"><i></i>${tr(T.live)}</p>
@@ -53,7 +52,7 @@ export function protoBlock(p: CasePrototype) {
     </div>
     <div class="pt-phone${web ? " pt-window" : ""}">
       ${web ? '<p class="pt-bar" aria-hidden="true"><i></i><i></i><i></i></p>' : ""}
-      <div class="pt-screen" data-screen${web ? ` style="aspect-ratio:${first.w} / ${first.h}"` : ""}>
+      <div class="pt-screen" data-screen>
         ${p.steps.map((s, k) => `<div class="pt-page" data-page="${k}"${k ? " hidden" : ""}>
           <div class="pt-canvas"><img src="${BASE}${s.image.src}" alt="${esc(s.image.caption)}" width="${s.image.w}" height="${s.image.h}" loading="lazy" decoding="async">
           ${s.spot ? `<button type="button" class="pt-spot" style="left:${(s.spot[0] * 100).toFixed(2)}%;top:${(s.spot[1] * 100).toFixed(2)}%" aria-label="${esc(s.action)}"><i></i></button>` : ""}
@@ -78,6 +77,13 @@ export function mountProto(root: HTMLElement) {
     const n = pages.length;
     let at = 0;
     let timer = 0;
+
+    /* точка ниже края экрана — экран сам доезжает до неё. offsetTop — от .pt-canvas, она начинается с верха экрана */
+    function reach(page: HTMLElement) {
+      const spot = page.querySelector<HTMLElement>(".pt-spot");
+      if (!spot || !page.clientHeight || spot.offsetTop <= page.clientHeight * 0.8) return;
+      page.scrollTo({ top: spot.offsetTop - page.clientHeight * 0.55, behavior: calm ? "auto" : "smooth" });
+    }
 
     function show(k: number, dir = 1) {
       if (k < 0 || k >= n) return;
@@ -110,12 +116,7 @@ export function mountProto(root: HTMLElement) {
       whyBox.hidden = !why.textContent;
       back.disabled = k === 0;
       box.classList.toggle("is-done", last);
-      /* точка ниже края телефона — экран сам доезжает до неё */
-      const spot = to.querySelector<HTMLElement>(".pt-spot");
-      /* offsetTop — от .pt-canvas, она начинается с верха экрана; едем, только если точка у нижнего края или ниже */
-      const low = spot ? spot.offsetTop > to.clientHeight * 0.8 : false;
-      const y = spot ? spot.offsetTop - to.clientHeight * 0.55 : 0;
-      if (low) setTimeout(() => to.scrollTo({ top: y, behavior: calm ? "auto" : "smooth" }), calm ? 0 : 420);
+      setTimeout(() => reach(to), calm ? 0 : 420);
       /* экран-загрузка проходит сам */
       const wait = Number(steps[k].dataset.wait);
       if (wait && !last) timer = window.setTimeout(() => show(k + 1, 1), wait);
@@ -136,7 +137,10 @@ export function mountProto(root: HTMLElement) {
       if (el.closest("[data-again]")) show(0, -1);
     };
     box.addEventListener("click", onClick);
-    offs.push(() => { box.removeEventListener("click", onClick); clearTimeout(timer); });
+    /* блок собирается, пока страница кейса ещё скрыта: доехать до точки первого экрана — когда он показался */
+    const seen = new IntersectionObserver(([e]) => { if (e.isIntersecting) { reach(pages[at]); seen.disconnect(); } }, { threshold: 0.3 });
+    seen.observe(box);
+    offs.push(() => { box.removeEventListener("click", onClick); clearTimeout(timer); seen.disconnect(); });
     show(0);
   });
   return () => offs.forEach((f) => f());

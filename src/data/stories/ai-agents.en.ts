@@ -202,7 +202,7 @@ export const en: CaseStory = {
     ],
     honesty: "The numbers on the screenshots (639 agents, 142 assessed) are demo data from the mock-up.",
   },
-  /* v114: prototype from the mock-ups — the risk manager's main flow: registry → agent → archive → draft of risks → edit */
+  /* v114: prototype from the mock-ups — the risk manager's main flow: registry → agent → archive → draft → risk card → edit. Card and edit are frames 30:2 and 30:332 from Figma XomA0T1zFMATidI4Qq5nEw */
   prototype: {
     title: "Assess the risks of a new agent",
     lead: "A risk manager's path: from the registry to a reviewed draft of risks. These are my Figma mock-ups; the dot shows where to tap.",
@@ -212,7 +212,8 @@ export const en: CaseStory = {
       { image: img(A + "02.webp", 1440, 900, "The agent card before assessment"), spot: [0.405, 0.824], action: "Upload the archive of the agent's documents", why: "The empty state suggests the next step: the model builds a draft of risks from the archive." },
       { image: img(A + "03.webp", 1440, 900, "Reading the archive"), wait: 2600, action: "Wait while the model reads the archive", why: "Progress and risk placeholders instead of a spinner: attention drifts after 10 seconds, and reading an archive takes longer." },
       { image: img("cases/figma/agents-review.webp", 1520, 950, "The draft: 13 risks to review"), spot: [0.257, 0.613], action: "Open a risk from the draft", why: "The model's levels and reasons are a draft. The final call is a person's." },
-      { image: img(A + "07.webp", 1200, 1800, "Level, reasoning and a required comment"), action: "Adjust the level and write why", why: "The model's reasoning stays in view, and the risk manager must add their own: the reason is stored with the risk." },
+      { image: img(A + "proto-risk-card.webp", 1440, 900, "The risk card"), spot: [0.697, 0.942], action: "Press Edit", why: "Next to the level sit the model's reasoning and the documents behind it: you can check it without leaving the card." },
+      { image: img(A + "proto-risk-edit.webp", 1440, 900, "Level, reasoning and a required comment"), action: "Adjust the level and write why", why: "The model's reasoning stays in view, and the risk manager must add their own: the reason is stored with the risk." },
     ],
   },
   takeaways: [

@@ -86,7 +86,7 @@ export type CaseFilm = { src: string; poster: string; w: number; h: number; capt
    Шаг — экран, место нажатия в долях ширины и высоты экрана (0–1), что сделать и почему экран такой.
    У последнего шага места нажатия нет: это результат, с него можно начать заново.
    wait — экран-загрузка: проходит сам через столько миллисекунд. toast — плашка-итог поверх экрана, когда в макетах
-   нет отдельного экрана «готово». device — рамка: телефон (по умолчанию) или окно браузера для веб-продуктов */
+   нет отдельного экрана «готово». device — рамка: телефон (по умолчанию) или окно браузера 16:10 для веб-продуктов */
 export type ProtoStep = { image: CaseImage; spot?: [number, number]; action: string; why?: string; wait?: number; toast?: string };
 export type CasePrototype = { title: string; lead?: string; device?: "phone" | "browser"; steps: ProtoStep[] };
 

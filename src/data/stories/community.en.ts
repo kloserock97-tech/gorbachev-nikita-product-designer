@@ -135,15 +135,16 @@ export const en: CaseStory = {
       "Both target groups use the site: 24 to 35 and 55+",
     ],
   },
-  /* v114: prototype from the mock-ups — the main flow: a reader becomes an author (feed → story → form) */
+  /* v114: prototype from the mock-ups — the main flow: a reader becomes an author (feed → story → form → published). Full pages from Figma LdUrYy9cNus6q7005xnmXo: 2103:12251, 2109:18727, 2202:7956, 2128:33091 */
   prototype: {
     title: "Read a story, then tell your own",
-    lead: "The path of a reader who becomes an author: the feed, a story and the form. These are my Figma mock-ups; the dot shows where to tap.",
+    lead: "The path of a reader who becomes an author: the feed, a story, the form and publishing. These are my Figma mock-ups; the dot shows where to tap.",
     device: "browser",
     steps: [
-      { image: img(C + "01.webp", 1440, 788, "The feed of the first version"), spot: [0.464, 0.767], action: "Open any story from the feed", why: "One action looks the same everywhere: Listen, comments and topics sit in the same place on every card." },
-      { image: img(C + "02.webp", 1440, 860, "A story page"), spot: [0.915, 0.042], action: "Want to tell yours? Open your profile", why: "Built for long reading: the eyes don't tire and the interface doesn't compete with the story." },
-      { image: img(C + "03.webp", 876, 862, "The \"Tell your story\" form"), action: "Tell your story: a title, the text and photos", why: "If the main action has to be searched for, nobody takes it. The first residents' stories arrived in the very first week." },
+      { image: img(C + "proto-feed.webp", 1440, 2942, "The story feed"), spot: [0.811, 0.373], action: "Open \"The mysterious Dangauerovka\"", why: "One action looks the same everywhere: Listen, comments and topics sit in the same place on every card." },
+      { image: img(C + "proto-article.webp", 1440, 3723, "A story page"), spot: [0.916, 0.0099], action: "Want to tell yours? Open your profile", why: "Built for long reading: the eyes don't tire and the interface doesn't compete with the story." },
+      { image: img(C + "proto-form.webp", 1440, 1066, "The \"Tell your story\" form"), spot: [0.141, 0.709], action: "Write the story and press Send", why: "If the main action has to be searched for, nobody takes it. So the form sits both in the profile and right in the feed." },
+      { image: img(C + "proto-published.webp", 1440, 1574, "The story is published in the profile"), action: "Done: the story is published", why: "After moderation a story appears in Community and in the author's profile. The first residents' stories arrived in the very first week." },
     ],
   },
   takeaways: [
