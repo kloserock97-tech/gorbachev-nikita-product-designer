@@ -180,21 +180,27 @@ a:hover > .ll-round, a:focus-visible > .ll-round { rotate: 45deg; }
 .ll-chip:hover { border-color: rgba(20, 21, 18, 0.3); }
 .ll-chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
 
-.ll-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-@media (max-width: 1000px) { .ll-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 640px) { .ll-grid { grid-template-columns: 1fr; } }
+/* v114: плитки по мотивам klinaeva — две колонки крупных обложек без серой подложки, теги чипами на обложке,
+   подписи под ней. Курсор «Смотреть» (cursor.ts) заменяет стрелку на мыши; на касании стрелка остаётся */
+.ll-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(28px, 3vw, 44px) clamp(12px, 1.4vw, 20px); }
+@media (max-width: 700px) { .ll-grid { grid-template-columns: 1fr; } }
 .ll-tile[hidden] { display: none; }
-.ll-tile a { position: relative; display: flex; flex-direction: column; height: 100%; padding: 8px; border-radius: var(--r-l); background: var(--card); text-decoration: none; transition: background 0.25s ease; }
-.ll-tile a:hover { background: #e2e1db; }
-.ll-tile__art { display: grid; place-items: center; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 16px; background: linear-gradient(150deg, var(--st0), var(--st1)); }
-.ll-tile__art img { width: 92%; height: 92%; object-fit: contain; transition: scale 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.ll-tile a:hover .ll-tile__art img { scale: 1.04; }
-.ll-tile__body { display: grid; gap: 4px; padding: 16px 60px 12px 12px; }
-.ll-tile__title { font-size: 19px; line-height: 1.2; font-weight: 500; letter-spacing: -0.015em; }
+.ll-tile a { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-content: start; height: 100%; text-decoration: none; }
+.ll-tile__art { grid-column: 1 / -1; }
+.ll-tile__art { position: relative; display: grid; place-items: center; aspect-ratio: 16 / 10; overflow: hidden; border-radius: var(--r-l); background: linear-gradient(150deg, var(--st0), var(--st1)); }
+.ll-tile__art img { width: 92%; height: 92%; object-fit: contain; transition: scale 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.ll-tile__art img.is-cover { width: 100%; height: 100%; object-fit: cover; }
+.ll-tile a:hover .ll-tile__art img { scale: 1.035; }
+.ll-tile__tags { position: absolute; left: 12px; top: 12px; right: 12px; display: flex; flex-wrap: wrap; gap: 6px; pointer-events: none; }
+.ll-tag { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 8px; background: rgba(20, 21, 18, 0.78); color: #f6f4ee; font-size: 12px; font-weight: 500; letter-spacing: 0.01em; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.ll-tag svg { width: 14px; height: 14px; stroke-width: 1.4; }
+.ll-tile__body { display: grid; gap: 4px; padding: 18px 16px 0 2px; }
+.ll-tile__title { font-size: clamp(22px, 2vw, 28px); line-height: 1.15; font-weight: 500; letter-spacing: -0.025em; }
 .ll-tile__about { font-size: 14px; color: var(--muted); }
-.ll-tile__stat { margin-top: 10px; font-size: 13px; color: var(--muted); line-height: 1.35; }
-.ll-tile__stat b { display: block; font-size: 22px; font-weight: 500; color: var(--ink); letter-spacing: -0.02em; }
-.ll-tile .ll-round { position: absolute; right: 18px; bottom: 18px; }
+.ll-tile__stat { margin-top: 10px; font-size: 14px; color: var(--muted); line-height: 1.35; }
+.ll-tile__stat b { margin-right: 4px; font-size: 17px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+.ll-tile .ll-round { margin-top: 18px; }
+.has-ll-cursor .ll-tile .ll-round { display: none; }
 @media (prefers-reduced-motion: reduce) { .ll-tile__art img { transition: none; } }
 
 .ll-list { list-style: none; margin: 0; padding: 8px; border-radius: var(--r-l); background: var(--card); display: grid; }
@@ -253,9 +259,6 @@ a:hover > .ll-round, a:focus-visible > .ll-round { rotate: 45deg; }
 .ll-exp__role { margin: 0; font-size: 14px; color: #3c3e37; }
 .ll-exp__result { margin: auto 0 0; padding-top: 14px; border-top: 1px solid var(--line); font-size: 15px; line-height: 1.35; font-weight: 500; letter-spacing: -0.01em; }
 @media (prefers-reduced-motion: reduce) { .ll-exp__card { transition: background 0.3s ease; } .ll-exp__card:hover, .ll-exp__card:has(+ .ll-exp__card:hover), .ll-exp__card:hover + .ll-exp__card { translate: none; } }
-/* обложки кейсов (tools/render-case-cards.mjs) — во всю плитку */
-.ll-tile__art img.is-cover { width: 100%; height: 100%; object-fit: cover; }
-.ll-tile a:hover .ll-tile__art img.is-cover { scale: 1.03; }
 
 /* v111 (картинка Никиты): шапка на широком экране — как в 3D (ui/hero/notch.css): строка во всю ширину, слева знак и
    разделы со значками и подписями, справа язык и переход в 3D. При прокрутке разделы собираются в светлую плашку */
@@ -283,3 +286,92 @@ a:hover > .ll-round, a:focus-visible > .ll-round { rotate: 45deg; }
   .ll-3d { padding: 0 12px; font-size: 15px; color: #2a2923; }
   .ll-3d:hover { background: rgba(255, 255, 255, 0.55); }
 }
+
+/* ── v114: лента итогов (reel.ts) — по мотивам шоурила klinaeva, вёрстка своя. Сцена прилипает к верху; --e — вход
+   (раскрытие из рамки шириной с кадр холма), --o у кадра — дистанция до текущего (−1…1), --x — наезд листа ── */
+.ll-reel { --inset: max(var(--pad), calc((100vw - var(--max)) / 2 + var(--pad))); position: relative; z-index: 1; height: calc((2 + (var(--n, 6) - 1) * 0.8) * 100svh); margin-top: clamp(40px, 5vw, 72px); }
+.ll-reel__stage {
+  position: sticky; top: 0; height: 100svh; overflow: hidden; color: #f3f2ee; background: #141512;
+  clip-path: inset(calc((1 - var(--e, 1)) * 6svh) calc((1 - var(--e, 1)) * var(--inset)) round calc((1 - var(--e, 1)) * 40px + 0.01px));
+  scale: calc(1 - var(--x, 0) * 0.05);
+}
+.ll-reel__stage::after { content: ""; position: absolute; inset: 0; z-index: 20; background: #000; opacity: calc(var(--x, 0) * 0.45); pointer-events: none; }
+.ll-reel__bar { position: absolute; z-index: 15; left: var(--inset); right: var(--inset); top: clamp(84px, 9svh, 108px); display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+.ll-reel__count { margin: 0; font-size: 13px; color: rgba(243, 242, 238, 0.5); font-variant-numeric: tabular-nums; }
+.ll-reel__count b { font-weight: 500; color: #f3f2ee; }
+.ll-reel__slides { position: absolute; inset: 0; }
+.ll-reel__slide {
+  position: absolute; inset: 0; z-index: var(--i); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr); align-items: center; gap: clamp(24px, 4vw, 72px);
+  padding: clamp(120px, 14svh, 160px) var(--inset) clamp(80px, 11svh, 120px);
+}
+.ll-reel__slide.is-far { visibility: hidden; }
+/* фон кадра — тёмный тон кейса с отсветом его акцента; проступает поверх предыдущего кадра */
+.ll-reel__slide::before { content: ""; position: absolute; inset: 0; z-index: -1; opacity: var(--bgo, 1); background: radial-gradient(90% 80% at 78% 46%, color-mix(in oklab, var(--ac) 42%, var(--bg)) 0%, var(--bg) 62%), var(--bg); }
+.ll-reel__copy { display: grid; justify-items: start; gap: 14px; min-width: 0; }
+.ll-reel__case { margin: 0; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(243, 242, 238, 0.66); opacity: var(--fo, 1); translate: 0 calc(var(--o, 0) * 40px); }
+.ll-reel__case span { color: rgba(243, 242, 238, 0.4); }
+/* цифра — главная: поднимается из-под маски, уходит вверх */
+.ll-reel__num { margin: 0; max-width: 100%; overflow: hidden; padding-bottom: 0.06em; font-size: clamp(84px, 13.6vw, 236px); line-height: 0.92; font-weight: 600; letter-spacing: -0.06em; white-space: nowrap; }
+.ll-reel__num span { display: inline-block; translate: 0 calc(var(--o, 0) * 108%); opacity: var(--no, 1); }
+.ll-reel__what { margin: 0; max-width: 21ch; font-size: clamp(20px, 2.1vw, 32px); line-height: 1.18; font-weight: 500; letter-spacing: -0.02em; opacity: var(--fo, 1); translate: 0 calc(var(--o, 0) * 70px); }
+.ll-reel__open { display: inline-flex; align-items: center; gap: 10px; height: 46px; margin-top: 14px; padding: 0 18px 0 20px; border-radius: 999px; background: #f3f2ee; color: #141512; font-size: 15px; font-weight: 500; text-decoration: none; opacity: var(--fo, 1); translate: 0 calc(var(--o, 0) * 90px); transition: background 0.2s ease; }
+.ll-reel__open:hover { background: #fff; }
+.ll-reel__open svg { width: 18px; height: 18px; transition: translate 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.ll-reel__open:hover svg { translate: 3px 0; }
+.ll-reel__open:focus-visible { outline-color: #f3f2ee; }
+/* экран кейса: подходит справа развёрнутым, на месте выпрямляется, уходит влево */
+.ll-reel__shot {
+  display: block; aspect-ratio: 16 / 10; overflow: hidden; border-radius: clamp(16px, 1.8vw, 26px);
+  box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  transform-origin: 30% 50%;
+  transform: perspective(1800px) translate3d(calc(var(--o, 0) * 62%), calc(var(--o, 0) * 6%), 0) rotateY(calc(var(--o, 0) * -30deg)) rotateZ(calc(var(--o, 0) * 3deg)) scale(calc(1 - var(--o, 0) * var(--o, 0) * 0.1));
+  opacity: var(--so, 1);
+}
+.ll-reel__shot img { width: 100%; height: 100%; object-fit: cover; }
+.ll-reel__track { position: absolute; z-index: 15; left: var(--inset); right: var(--inset); bottom: clamp(28px, 4svh, 44px); display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.ll-reel__track li { height: 3px; border-radius: 2px; overflow: hidden; background: rgba(243, 242, 238, 0.18); }
+.ll-reel__track i { display: block; height: 100%; background: #f3f2ee; transform-origin: 0 50%; scale: var(--f, 0) 1; }
+@media (max-width: 760px) {
+  .ll-reel__slide { grid-template-columns: 1fr; align-content: center; gap: 28px; padding: calc(env(safe-area-inset-top) + 112px) 16px 72px; }
+  .ll-reel__bar { left: 16px; right: 16px; top: calc(env(safe-area-inset-top) + 64px); }
+  .ll-reel__track { left: 16px; right: 16px; bottom: 28px; }
+  .ll-reel__num { font-size: clamp(64px, 20vw, 128px); }
+  .ll-reel__what { font-size: 19px; }
+  .ll-reel__open { height: 42px; margin-top: 6px; font-size: 14px; }
+  .ll-reel__shot { transform: perspective(1400px) translate3d(calc(var(--o, 0) * 70%), 0, 0) rotateY(calc(var(--o, 0) * -24deg)); }
+}
+/* лист страницы наезжает на последний кадр ленты */
+.ll-sheet { position: relative; z-index: 2; margin-top: -100svh; padding-top: 1px; border-radius: var(--r-xl) var(--r-xl) 0 0; background: var(--page); box-shadow: 0 -30px 70px rgba(0, 0, 0, 0.22); }
+@media (prefers-reduced-motion: reduce) {
+  /* без движения лента — просто кадры друг под другом */
+  .ll-reel { height: auto; }
+  .ll-reel__stage { position: relative; height: auto; clip-path: none; scale: none; }
+  .ll-reel__stage::after { display: none; }
+  .ll-reel__bar { position: relative; inset: auto; padding: 72px var(--inset) 0; }
+  .ll-reel__slides { position: static; }
+  .ll-reel__slide { --o: 0 !important; --fo: 1 !important; --so: 1 !important; --no: 1 !important; --bgo: 1 !important; position: relative; inset: auto; min-height: 80svh; padding-top: 48px; padding-bottom: 72px; }
+  .ll-reel__slide.is-far { visibility: visible; }
+  .ll-reel__track { display: none; }
+  .ll-sheet { margin-top: 0; box-shadow: none; }
+}
+
+/* ── v114: появление (reveal.ts) — заголовок поднимается из-под маски, плитки и строки приходят по очереди ── */
+.is-armed .ll-rise { overflow: hidden; padding-bottom: 0.1em; margin-bottom: -0.1em; }
+.is-armed .ll-rise > span { display: inline-block; translate: 0 110%; transition: translate 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.is-armed .ll-rise.is-in > span { translate: 0 0; }
+.is-armed .ll-in { opacity: 0; transform: translateY(32px); transition: opacity 0.7s ease var(--d, 0ms), transform 1s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms); }
+.is-armed .ll-in.is-in { opacity: 1; transform: none; }
+
+/* ── v114: курсор «Смотреть» (cursor.ts) — кружок цвета кейса ── */
+.ll-cursor { position: fixed; left: 0; top: 0; z-index: 60; display: grid; place-items: center; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; background: var(--tone, #141512); color: #fff; font: 500 15px/1 Onest, sans-serif; letter-spacing: -0.01em; pointer-events: none; scale: 0; opacity: 0; transition: scale 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease, background-color 0.3s ease; }
+.ll-cursor.is-on { scale: 1; opacity: 1; }
+.has-ll-cursor [data-cursor] { cursor: none; }
+
+/* ── v114: почта в подвале и кнопка «Скопировать» ── */
+.ll-foot__mailrow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 28px 0 0; }
+.ll-foot__mailrow .ll-foot__mail { margin-top: 0; }
+.ll-copy { display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 14px 0 11px; border: 1px solid rgba(243, 242, 238, 0.22); border-radius: 999px; background: none; color: rgba(243, 242, 238, 0.86); font: 500 13px/1 Onest, sans-serif; cursor: pointer; transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease; }
+.ll-copy svg { width: 16px; height: 16px; }
+.ll-copy:hover { border-color: rgba(243, 242, 238, 0.5); color: #fff; }
+.ll-copy.is-done { border-color: #f3f2ee; background: #f3f2ee; color: #141512; }
+.ll-copy:focus-visible { outline-color: #f3f2ee; }

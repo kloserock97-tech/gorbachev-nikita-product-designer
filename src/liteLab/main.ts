@@ -8,6 +8,9 @@ import { getCases, type CaseItem } from "../data/cases";
 import notes from "../data/notes";
 import { mountHeroDeck } from "./heroDeck";
 import { mountAsciiWord } from "./asciiWord";
+import { mountReel } from "./reel";
+import { mountCursor } from "./cursor";
+import { watchReveal } from "./reveal";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -42,6 +45,12 @@ const OWN: Record<"ru" | "en", Record<string, string>> = {
     "deck.note": "Пэт-проект",
     "deck.prev": "Предыдущий проект",
     "deck.next": "Следующий проект",
+    "reel.title": "Что изменилось после моей работы",
+    "cursor.view": "Смотреть",
+    "mail.copy": "Скопировать",
+    "mail.copied": "Скопировано",
+    "kind.web": "Веб",
+    "kind.mobile": "Мобайл",
   },
   en: {
     skip: "Skip to the work",
@@ -73,6 +82,12 @@ const OWN: Record<"ru" | "en", Record<string, string>> = {
     "deck.note": "Pet project",
     "deck.prev": "Previous project",
     "deck.next": "Next project",
+    "reel.title": "What changed after my work",
+    "cursor.view": "View",
+    "mail.copy": "Copy",
+    "mail.copied": "Copied",
+    "kind.web": "Web",
+    "kind.mobile": "Mobile",
   },
 };
 /* подписи, собранные из строк 3D-версии */
@@ -111,14 +126,26 @@ const jobCard = (j: Job) => `<li class="ll-exp__card">
     <p class="ll-exp__result">${esc(j.result)}</p>
   </li>`;
 
-/* плитка кейса: его диорама на фоне цветов кейса; ссылка ведёт на страницу кейса в облегчённой версии сайта */
+/* плитка кейса: обложка (экраны на цветах кейса) с чипами поверх, под ней название, «о проекте» с годом и цифра.
+   v114: по мотивам карточек klinaeva — две колонки крупных обложек, теги чипами на самой обложке, курсор «Смотреть»
+   цвета кейса. Ссылка ведёт на страницу кейса в облегчённой версии сайта */
+const KIND_ICON: Record<string, string> = {
+  web: '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.8" y="2.6" width="12.4" height="8.6" rx="1.4"/><path d="M5.6 13.6h4.8"/></svg>',
+  mobile: '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4.4" y="1.6" width="7.2" height="12.8" rx="1.8"/><path d="M7 12h2"/></svg>',
+};
 function caseTile(c: CaseItem) {
+  const parts = c.tag.split(" · ");
+  const year = parts.pop() ?? "";
+  const chips = [
+    ...c.kind.map((k) => `<span class="ll-tag">${KIND_ICON[k]}${esc(L(`kind.${k}`))}</span>`),
+    ...parts.map((t) => `<span class="ll-tag">${esc(t)}</span>`),
+  ].join("");
   return `<li class="ll-tile" data-kind="${c.kind.join(" ")}" style="--st0:${c.look.stage[0]};--st1:${c.look.stage[1]}">
-    <a href="./?lite=1#/work/${c.id}" aria-label="${esc(`${L("case.open")}: ${c.title}`)}">
-      <span class="ll-tile__art"><img class="is-cover" src="${BASE}lite/cards/${c.id}.webp" alt="" width="960" height="600" loading="lazy" decoding="async"></span>
+    <a href="./?lite=1#/work/${c.id}" aria-label="${esc(`${L("case.open")}: ${c.title}`)}" data-cursor="view" data-tone="${c.look.accent}">
+      <span class="ll-tile__art"><img class="is-cover" src="${BASE}lite/cards/${c.id}.webp" alt="" width="960" height="600" loading="lazy" decoding="async"><span class="ll-tile__tags">${chips}</span></span>
       <span class="ll-tile__body">
         <span class="ll-tile__title">${esc(c.title)}</span>
-        <span class="ll-tile__about">${esc(c.about ?? c.subtitle)}</span>
+        <span class="ll-tile__about">${esc(c.about ?? c.subtitle)} · ${esc(year)}</span>
         <span class="ll-tile__stat"><b>${esc(c.stat.value)}</b> ${esc(c.stat.label)}</span>
       </span>
       ${arrow}
@@ -170,6 +197,9 @@ function render() {
   wireRows();
   refreshDeck?.();
   refreshAscii?.();
+  refreshReel?.();
+  refreshCursor();
+  watchReveal();
 }
 
 function applyFilter() {
@@ -197,6 +227,19 @@ const deckRoot = document.querySelector<HTMLElement>(".hero__deck");
 const refreshDeck = deckRoot ? mountHeroDeck(deckRoot, L) : null;
 const asciiPre = document.querySelector<HTMLElement>(".ll-foot__ascii");
 const refreshAscii = asciiPre ? mountAsciiWord(asciiPre, () => L("foot.word")) : null;
+const reelRoot = document.querySelector<HTMLElement>("[data-reel]");
+const refreshReel = reelRoot ? mountReel(reelRoot, L) : null;
+const refreshCursor = mountCursor(() => L("cursor.view"));
+
+/* почта: кнопка рядом кладёт адрес в буфер и на пару секунд говорит «Скопировано» */
+document.querySelector<HTMLButtonElement>(".ll-copy")?.addEventListener("click", async (e) => {
+  const b = e.currentTarget as HTMLButtonElement;
+  const text = b.querySelector<HTMLElement>("[data-copy-label]")!;
+  try { await navigator.clipboard.writeText(b.dataset.copy!); } catch { location.href = `mailto:${b.dataset.copy}`; return; }
+  b.classList.add("is-done");
+  text.textContent = L("mail.copied");
+  setTimeout(() => { b.classList.remove("is-done"); text.textContent = L("mail.copy"); }, 1800);
+});
 
 document.querySelector(".ll-chips")?.addEventListener("click", (e) => {
   const b = (e.target as HTMLElement).closest<HTMLButtonElement>(".ll-chip");
@@ -221,9 +264,9 @@ const mark = (section: string) => {
   });
 };
 const spy = new IntersectionObserver((es) => es.forEach((e) => {
-  if (e.isIntersecting) mark(e.target.classList.contains("hero") ? "home" : e.target.id);
+  if (e.isIntersecting) mark(e.target.classList.contains("hero") ? "home" : e.target.id === "results" ? "work" : e.target.id);
 }), { rootMargin: "-45% 0px -50% 0px" });
-document.querySelectorAll(".hero, #about, #work, #lab, #contact").forEach((el) => spy.observe(el));
+document.querySelectorAll(".hero, #results, #about, #work, #lab, #contact").forEach((el) => spy.observe(el));
 initI18n();
 onLang(render);
 render();

@@ -74,6 +74,21 @@
     </figure>
   </section>
 
+  <!-- v114: лента итогов — идея с портфолио klinaeva (шоурил результатов раскрывается из первого экрана, остальная
+       страница листом наезжает сверху); вёрстка и код свои. Кейс за кейсом: крупная цифра и экран продукта (reel.ts) -->
+  <section class="ll-reel" id="results" aria-labelledby="ll-reel-title" data-reel>
+    <div class="ll-reel__stage">
+      <div class="ll-reel__bar">
+        <p class="ll-label ll-label--light" id="ll-reel-title" data-ll="reel.title"></p>
+        <p class="ll-reel__count" data-reel-count></p>
+      </div>
+      <div class="ll-reel__slides" data-reel-slides></div>
+      <ol class="ll-reel__track" aria-hidden="true" data-reel-track></ol>
+    </div>
+  </section>
+
+  <!-- остальная страница — лист со скруглённым верхом: наезжает на последний кадр ленты -->
+  <div class="ll-sheet">
   <!-- о себе: одна фраза крупно, продолжение светлее — как абзац на референсе -->
   <section class="ll-statement" id="about" aria-labelledby="ll-about">
     <p class="ll-label" id="ll-about" data-ll="nav.about"></p>
@@ -97,7 +112,7 @@
   <section class="ll-sec" id="work" aria-labelledby="ll-work">
     <header class="ll-head">
       <div>
-        <h2 id="ll-work" data-ll="work.title"></h2>
+        <h2 id="ll-work" class="ll-rise"><span data-ll="work.title"></span></h2>
         <p data-ll="work.note"></p>
       </div>
       <div class="ll-chips" role="group" data-ll-label="work.filter">
@@ -112,20 +127,24 @@
   <section class="ll-sec" id="lab" aria-labelledby="ll-lab">
     <header class="ll-head">
       <div>
-        <h2 id="ll-lab" data-ll="notes.pick"></h2>
+        <h2 id="ll-lab" class="ll-rise"><span data-ll="notes.pick"></span></h2>
         <p data-ll="lab.note"></p>
       </div>
     </header>
     <ul class="ll-list" data-notes></ul>
   </section>
+  </div>
 </main>
 
 <footer class="ll-foot" id="contact" aria-labelledby="ll-contact">
   <div class="ll-foot__top">
     <div>
       <p class="ll-label ll-label--light" data-ll="footer.kicker"></p>
-      <h2 id="ll-contact" data-ll="contact.title"></h2>
-      <a class="ll-foot__mail" href="mailto:kloserock97@gmail.com">kloserock97@gmail.com</a>
+      <h2 id="ll-contact" class="ll-rise"><span data-ll="contact.title"></span></h2>
+      <p class="ll-foot__mailrow">
+        <a class="ll-foot__mail" href="mailto:kloserock97@gmail.com">kloserock97@gmail.com</a>
+        <button type="button" class="ll-copy" data-copy="kloserock97@gmail.com"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6A1.5 1.5 0 0 0 14 4.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/></svg><span data-ll="mail.copy" data-copy-label></span></button>
+      </p>
     </div>
     <nav class="ll-foot__cols" aria-label="Ссылки">
       <div>
