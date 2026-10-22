@@ -33,7 +33,8 @@ type Ridge = {
 const q = new URLSearchParams(location.search);
 /* v111 (Никита): ближний лес и облачное море между слоями убраны — луг холма продолжается равниной (createPlain), а
    вдали переходит в одну большую гору слева; она спускается к краю холма (VALLEY_T) и уходит под солнцем в седловину */
-const MID_RIDGES: Ridge[] = q.get("mid") === "0" ? [] : [
+/* v112 (Никита): и эта гора-предгорье убрана — за лугом сразу дальние горы. ?mid=1 — вернуть посмотреть */
+const MID_RIDGES: Ridge[] = q.get("mid") !== "1" ? [] : [
   { r: 190, base: -10, lo: 8, hi: 19, freq: 1.9, forest: 0, crown: 1, tint: "#4a4750", aerial: 0.68, mist: 6, seed: 4.3, saddle: true, ridged: true, cool: 0.5 },
 ];
 const RIDGES: Ridge[] = [
@@ -52,6 +53,8 @@ const THETA0 = -Math.PI - 0.7, THETA1 = 0.7;
 /** полуразмер квадрата земли холма (HillScene.buildGround, 44 м) — равнина начинается чуть внутри, под ним */
 const GROUND_HALF = 22;
 const SUN_T = Math.atan2(-1, -0.08);
+/* v112: вид луга за холмом — см. uMeadow в plainFragment (shaders.ts) */
+const MEADOW = Number(new URLSearchParams(location.search).get("meadow") ?? 2);
 /* направление низины: на широком кадре это x ≈ 450–650 px из 1672, сразу левее склона холма */
 const VALLEY_T = Number(new URLSearchParams(location.search).get("vt") ?? -1.92);
 const smoothstep = (a: number, b: number, x: number) => { const k = Math.min(1, Math.max(0, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
@@ -142,12 +145,15 @@ function createPlain(shared: { sky: Record<string, THREE.IUniform>; sh: THREE.IU
   const sm = (a: number, b: number, x: number) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), z = pos.getZ(i);
-    pos.setY(i, heightAt(x, z) - 0.08 - 3.2 * sm(GROUND_HALF - 0.5, 42, Math.max(Math.abs(x), Math.abs(z))));
+    const r = Math.max(Math.abs(x), Math.abs(z));
+    /* v112, ?meadow=2: пологие увалы на лугу — от 50 м, до 7 м; ближе ровно, чтобы не спорить со склоном холма */
+    const roll = MEADOW === 2 ? (fbm(x * 0.011 + 3.1, z * 0.011 - 1.7, 3) - 0.35) * 16 * sm(45, 120, r) : 0;
+    pos.setY(i, heightAt(x, z) - 0.08 - 3.2 * sm(GROUND_HALF - 0.5, 42, r) + roll);
   }
   const mat = new THREE.ShaderMaterial({
     vertexShader: plainVertex,
     fragmentShader: plainFragment,
-    uniforms: { ...shared.sky, uSH: shared.sh, uAmbient: shared.ambient, uSkyHorizon: shared.horizon, uHole: { value: GROUND_HALF - 0.6 } },
+    uniforms: { ...shared.sky, uSH: shared.sh, uAmbient: shared.ambient, uSkyHorizon: shared.horizon, uHole: { value: GROUND_HALF - 0.6 }, uMeadow: { value: MEADOW } },
   });
   const mesh = new THREE.Mesh(geo, mat);
   /* после земли и травы, раньше гряд: гряды за равниной не считаются там, где их закрывает земля */

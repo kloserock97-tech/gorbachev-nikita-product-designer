@@ -69,17 +69,17 @@
   .hero-stats {
     position: absolute; left: calc(34 * var(--u)); right: calc(34 * var(--u));
     top: calc(var(--m-fold) + var(--m-card) + max(18px, calc(28 * var(--u))));
-    justify-content: space-between; padding: max(8px, calc(12 * var(--u))) max(14px, calc(22 * var(--u)));
-    border-radius: max(18px, calc(28 * var(--u))); color: var(--card-ink); text-shadow: none;
-    background: linear-gradient(160deg, rgba(247, 240, 231, 0.62), rgba(218, 208, 196, 0.5));
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    justify-content: space-between; padding: max(8px, calc(12 * var(--u))) 0;
+    /* v112 (Никита): без плашки, как на широком экране — белым по траве. С v107 холм на телефоне занимает весь низ
+       кадра, и ряд, когда до него долистали, стоит на траве, а не на светлом небе; тень плотнее, чем на широком */
+    text-shadow: 0 1px 3px rgba(10, 14, 8, 0.5), 0 2px 14px rgba(10, 14, 8, 0.45);
   }
   /* раскрытая карточка растёт вниз — ряд уезжает за ней */
   .stage:has(.card--stove.is-open) .hero-stats { top: calc(var(--m-fold) + var(--m-card) + var(--m-open) + max(18px, calc(28 * var(--u)))); }
   .hero-stats .stat { gap: max(8px, calc(10 * var(--u))); min-height: 44px; }
-  .hero-stats .mark { width: max(22px, calc(34 * var(--u))); height: max(22px, calc(34 * var(--u))); color: #4f5347; filter: none; }
-  .hero-stats dd { font-size: max(16px, calc(26 * var(--u))); line-height: 1.1; color: var(--card-ink); }
-  .hero-stats dt { font-size: max(10px, calc(13 * var(--u))); margin-top: 3px; color: #4f5347; opacity: 1; }
+  .hero-stats .mark { width: max(22px, calc(34 * var(--u))); height: max(22px, calc(34 * var(--u))); }
+  .hero-stats dd { font-size: max(16px, calc(26 * var(--u))); line-height: 1.1; }
+  .hero-stats dt { font-size: max(10px, calc(13 * var(--u))); margin-top: 3px; }
 
 
 }
