@@ -8,6 +8,7 @@ import "./ui/cases-signpost.css";
 import { initCasesSignpost } from "./ui/casesSignpost";
 import "./ui/hero/hero-mobile.css";
 import "./ui/hero/mobile-nav.css";
+import "./ui/pc-hud.css";
 import { initMobileNav } from "./ui/hero/mobileNav";
 import { initLabMenu } from "./ui/labMenu";
 import { HillScene, type HillSceneOptions } from "./scene/HillScene";

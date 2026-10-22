@@ -2,6 +2,7 @@ import { CASES, CHAPTER, CHAPTER2, FOOTER, STORY, STORY_FX, chapters, portalAt, 
 import { onTimeline, storyBounds } from "./storyScroll";
 import { cue } from "../audio/bus";
 import { onLang, t as tr } from "../i18n";
+import { initPcHud } from "./pcHud";
 
 /* DOM-слой скролл-истории: прогресс прокрутки → сцена, и тексты экрана About портфолио
    на Tilda (слева «Hi there!», справа абзацы и логотипы), когда компьютер встал перед зрителем.
@@ -201,7 +202,9 @@ export function initStory(scene: Scene) {
 
   /* ── рамка видоискателя: мягко ведёт компьютер, пока он летит по светлой странице ── */
   const vf = document.querySelector<HTMLElement>(".vf");
-  if (vf && STORY_FX.finder) initFinder(scene, vf);
+  /* v113: вместо рамки — «досье» вокруг компьютера по мотивам igloo (pcHud.ts); ?hud=0 — прежняя рамка */
+  if (STORY_FX.hud) initPcHud(scene);
+  else if (vf && STORY_FX.finder) initFinder(scene, vf);
 
   /* ── футер: контакты на закатном холме ── */
   const footer = document.querySelector<HTMLElement>(".site-footer");

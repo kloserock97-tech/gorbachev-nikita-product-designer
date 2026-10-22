@@ -26,6 +26,8 @@ const en = {
   "nav.down": "Scroll down",
   "lab.note": "My own WebGL demos and tools — they open in a new tab",
   "lab.all": "All pet projects",
+  "hud.role": "PRODUCT DESIGNER",
+  "hud.hint": "SCROLL TO MEET",
 
   /* компьютер на столике */
   "pc.tip": "Read the magazine",

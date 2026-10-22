@@ -34,7 +34,7 @@ export type PostFx = {
     bgCheap: boolean; exposure: number; vignette: number; vibrance: number; contrast: number; focus: number; whiteBalance: THREE.Vector3; glitch: number; glitchSeed: number; black: number; radial: number; aberration: number; fill: number; overlay: boolean;
     /* v17, светлая страница с глубиной (как oryzo): studio 0…1 — сила студийного фона,
        pcRect — прямоугольник компьютера в UV кадра (x0, y0, x1, y1), spot — центр светового пятна */
-    studio: number; pcRect: THREE.Vector4; spot: THREE.Vector2;
+    studio: number; pcRect: THREE.Vector4; spot: THREE.Vector2; igloo: THREE.Vector4;
     /* v18: бегущая строка за компьютером (текстура, доля ширины/высоты, сдвиг, центр по y, высота полосы) */
     kinetic: number; kineticTex: THREE.Texture | null; kineticRatio: number; kineticShift: number; kineticY: number; kineticH: number;
     /* v19: при превращении в заголовок остаётся только «Hi there!» копии N: (N, доля ширины, сила) */
@@ -160,6 +160,7 @@ export function createPostFx(
     studio: 0,
     pcRect: new THREE.Vector4(0.4, 0.3, 0.6, 0.7),
     spot: new THREE.Vector2(0.5, 0.55),
+    igloo: new THREE.Vector4(0, 0, 0, 0),
     kinetic: 0,
     kineticTex: null as THREE.Texture | null,
     kineticRatio: 1,
@@ -208,6 +209,7 @@ export function createPostFx(
       tPC: { value: pcRT.texture },
       uOverlay: { value: 0 },
       uStudio: { value: 0 },
+      uIgloo: { value: new THREE.Vector4(0, 0, 0, 0) },
       uPCRect: { value: params.pcRect },
       uSpot: { value: params.spot },
       tKinetic: { value: null as THREE.Texture | null },
@@ -425,6 +427,7 @@ export function createPostFx(
       final.uniforms.uFill.value = params.fill;
       final.uniforms.uOverlay.value = params.overlay ? 1 : 0;
       final.uniforms.uStudio.value = params.studio;
+      final.uniforms.uIgloo.value.copy(params.igloo);
       final.uniforms.uKinetic.value = params.kineticTex ? params.kinetic : 0;
       final.uniforms.tKinetic.value = params.kineticTex;
       final.uniforms.uKinetic2.value.set(params.kineticRatio, params.kineticShift, params.kineticY, params.kineticH);

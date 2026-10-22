@@ -85,6 +85,8 @@ const CAMERA_TARGET = new THREE.Vector3(-2.0, 3.2, 0);
 const HERO_PULL = Number(new URLSearchParams(location.search).get("pull") ?? 1);
 const HERO_PULL_DIR = new THREE.Vector3(0.7, 0.53, 2.0);
 const HERO_PULL_OFF = new THREE.Vector3();
+const PC_BG = !/[?&]pcbg=0/.test(location.search);
+const TUMBLE = !/[?&]tumble=0/.test(location.search);
 const SHADOW_LAYER = 3;
 /* v72: ближние предметы — над ними лучи приглушаются (маска в postfx.ts) */
 const SHIELD_LAYER = 6;
@@ -1257,6 +1259,10 @@ export class HillScene {
   private storyTarget = 0;
   private storyS = 0;
   private storyApplied = -1;
+  private tumble = [1, -1, 1];
+  private rollTumble() {
+    this.tumble = this.tumble.map(() => (Math.random() < 0.5 ? -1 : 1) * (0.7 + Math.random() * 0.2));
+  }
   private storyEnd: Pose = { pos: new THREE.Vector3(), yaw: 0, pitch: 0, roll: 0 };
   private storyPose: Pose = { pos: new THREE.Vector3(), yaw: 0, pitch: 0, roll: 0 };
   private coolWB = new THREE.Vector3(0.86, 0.95, 1.12);
@@ -1405,6 +1411,8 @@ export class HillScene {
     const studioMix = sk * sk * (3 - 2 * sk);
     if (this.studio) this.studio.mix = studioMix;
     fx.studio = studioMix;
+    /* v113: фон вылета — туман и мерцающие точки (shaders.ts uIgloo); на странице About спокойнее. ?pcbg=0 — прежняя студия */
+    fx.igloo.set(PC_BG ? studioMix : 0, this.uniforms.uTime.value, s, ramp(s, 0.84, 0.95));
     /* v19: бегущая строка «Hi there! I’m Nikita…» — едет за компьютером, тормозит и встаёт
        заголовком левой колонки (updateKinetic) */
     this.updateKinetic(s);
@@ -1488,6 +1496,13 @@ export class HillScene {
     e.pitch = -Math.atan2(toCam.y, Math.hypot(toCam.x, toCam.z)) * 0.9;
 
     const pose = flightPose(this.pcRest, e, u, this.storyPose);
+    /* v113 (по мотивам igloo): пока компьютер подлетает, он кувыркается на угол, пропорциональный оставшемуся пути, и к
+       прибытию успокаивается. Знаки и доли — новые на каждый заход (с холма). ?tumble=0 — без кувырка */
+    if (u < 0.01) this.rollTumble();
+    const left = TUMBLE && !this.reduced ? Math.pow(1 - u, 1.6) * Math.min(1, u * 12) : 0;
+    pose.yaw += this.tumble[0] * 2.4 * left;
+    pose.pitch += this.tumble[1] * 1.1 * left;
+    pose.roll += this.tumble[2] * 0.55 * left;
     /* v74.2: на вертикальном экране компьютер стоит в промежутке между абзацами. Поворот по скроллу, наклон за
        пальцем и заметное покачивание делали его болтающимся, а повёрнутый боком он становился шире промежутка
        и заезжал на текст. Там он только чуть дышит */

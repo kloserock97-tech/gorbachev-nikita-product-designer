@@ -1397,6 +1397,10 @@ uniform float uOverlay;
 uniform float uStudio;     /* v17: студийный фон светлой страницы — пятно света, глубина, контактная тень */
 uniform vec4 uPCRect;      /* компьютер в UV кадра: x0, y0, x1, y1 */
 uniform vec2 uSpot;        /* центр светового пятна за компьютером */
+/* v113 (по мотивам сцены проектов igloo.inc, код свой): вместо студийной бумаги — туман из двух цветов шума и сетка
+   мерцающих точек. x — сила, y — время, с, z — прокрутка истории (туман и точки сдвигаются с ней), w — спокойствие:
+   на странице About туман светлее и ровнее, чтобы тёмный текст читался */
+uniform vec4 uIgloo;
 uniform sampler2D tKinetic; /* v18: бегущая строка за компьютером */
 uniform float uKinetic;
 uniform vec4 uKinetic2;    /* ширина/высота текстуры, сдвиг, центр полосы по y, высота полосы */
@@ -1671,6 +1675,24 @@ void main(){
       room = mix(room, vec3(0.80, 0.84, 0.90), exp(-dot(g2, g2) * 3.0) * 0.25);
       float w = max(uPCRect.z - uPCRect.x, 0.001);
       vec2 cs = vec2((uv.x - (uPCRect.x + uPCRect.z) * 0.5) / (w * 0.62), (uv.y - (uPCRect.y - w * 0.07)) / (w * 0.085 * aspect));
+      if (uIgloo.x > 0.001) {
+        vec2 fq = uv * vec2(aspect, 1.0);
+        float ft = uIgloo.y * 0.05;
+        /* два слоя шума плывут навстречу друг другу и вверх по прокрутке — облака светлого и тёмного воздуха */
+        float n = vnoise(fq * 1.1 + vec2(ft, -uIgloo.z * 1.2)) * 0.65 + vnoise(fq * 2.2 + vec2(-ft * 1.4, ft * 0.6 - uIgloo.z * 0.8) + 11.3) * 0.35;
+        vec3 fogLight = vec3(0.835, 0.85, 0.885), fogDark = vec3(0.43, 0.46, 0.52);
+        vec3 fog = mix(fogLight, mix(fogDark, fogLight, uIgloo.w * 0.6), smoothstep(0.28, 0.82, n));
+        /* сетка точек: ~26 рядов на кадр, каждая точка гаснет и загорается в своём ритме (треугольная волна от хэша
+           клетки); едет с прокруткой */
+        vec2 cu = fq * 26.0 + vec2(0.0, uIgloo.z * 9.0);
+        vec2 cf = fract(cu) - 0.5;
+        float id = hash21(floor(cu) + 17.0);
+        float blink = 1.0 - abs(fract(id * 3.7 + uIgloo.y * 0.11) - 0.5) * 2.0;
+        float r = length(cf);
+        float dotA = 1.0 - smoothstep(0.045, 0.045 + fwidth(r) * 1.5, r);
+        fog += dotA * blink * (0.5 - 0.2 * uIgloo.w);
+        room = mix(room, fog, uIgloo.x);
+      }
       room *= 1.0 - exp(-dot(cs, cs) * 1.4) * 0.2;
       paper = mix(paper, room, uStudio);
     }

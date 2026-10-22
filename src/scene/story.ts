@@ -269,6 +269,7 @@ export const STORY_FX = {
   kinetic: flags.get("kinetic") !== "0",
   finder: flags.get("finder") !== "0",
   spin: flags.get("spin") !== "0",
+  hud: flags.get("hud") !== "0",
 };
 
 /* Камера отъезжает назад и чуть вверх — как CameraRig у igloo: одна траектория по прогрессу.
