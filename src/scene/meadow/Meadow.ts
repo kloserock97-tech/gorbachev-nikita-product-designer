@@ -146,6 +146,8 @@ export class Meadow {
 
   /* курсор */
   private hover = false;
+  /** v115: на сколько градусов шире угол обзора на быстрой прокрутке */
+  fovKick = 0;
   private hoverAmt = 0;
   private sinceSpawn = 1;
   private readonly pointer = new THREE.Vector2();
@@ -724,9 +726,12 @@ export class Meadow {
       z = this.camera.position.z;
     } else this.pathOff *= Math.exp(-dt / 20);
     this.camera.lookAt(this.look);
+    /* v115: скорость прокрутки расширяет угол обзора (HillScene пишет fovKick) */
+    const fov = 40 + this.fovKick;
+    if (Math.abs(this.camera.fov - fov) > 0.01) { this.camera.fov = fov; this.camera.updateProjectionMatrix(); }
     this.camera.updateMatrixWorld();
 
-    this.portal.update(this.camera, this.portalProgress, t, sea, U.uWindTime.value);
+    this.portal.update(this.camera, this.portalProgress, t, sea, U.uWindTime.value, this.hover ? this.pointer : null);
     if (this.portalProgress > 0) {
       x = this.camera.position.x;
       z = this.camera.position.z;

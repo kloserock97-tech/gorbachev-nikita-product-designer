@@ -11,6 +11,7 @@ import "./ui/hero/mobile-nav.css";
 import "./ui/pc-hud.css";
 import { initMobileNav } from "./ui/hero/mobileNav";
 import { initLabMenu } from "./ui/labMenu";
+import { initStoryWheel } from "./ui/storyWheel";
 import { HillScene, type HillSceneOptions } from "./scene/HillScene";
 import { initHeroUi } from "./ui/hero/heroUi";
 import { initWorkMenu } from "./ui/workMenu";
@@ -37,7 +38,7 @@ syncScrollbar();
 addEventListener("resize", syncScrollbar);
 import { cue } from "./audio/bus";
 import { CASES, CHAPTER, CHAPTER2, TIMELINE, chapters } from "./scene/story";
-import { topFor } from "./ui/storyScroll";
+import { setSnapGlide, topFor } from "./ui/storyScroll";
 import { smoothWheel } from "./ui/smoothScroll";
 import { createFocusLoader } from "./intro/focusLoader";
 
@@ -390,6 +391,12 @@ function start3d(caseView?: CaseView) {
     e.preventDefault();
     scene.scrollScreen(e.deltaY * (e.deltaMode === 1 ? 36 : e.deltaMode === 2 ? 600 : 1) * 1.1);
   }, { passive: false });
+  /* v115: колесо как у igloo — после обработчика компьютера, чтобы тот первым забирал колесо у экрана ПК */
+  const wheel = initStoryWheel(() => {
+    const b = body.classList;
+    return isLite() || b.contains("case-open") || b.contains("m-menu-open") || b.contains("work-open") || b.contains("lab-open") || scene.computerFocused;
+  });
+  setSnapGlide(wheel.glide);
   window.addEventListener("keydown", (e) => {
     if (!scene.computerFocused) return;
     const steps: Record<string, () => void> = {

@@ -8,6 +8,7 @@ import { PortalRing, RING_IN } from "./PortalRing";
    окно круглое, у кромки — бегущие кольца «силового поля». ?portal=ivy — прежний проём */
 const IVY = typeof location !== "undefined" && /[?&]portal=ivy/.test(location.search);
 const R = RING_IN - 0.06;
+const ZERO = new THREE.Vector2();
 function circleOutline(radius: number, steps = 64) {
   /* по часовой, как portalOutline: clip() проверяет обход */
   return Array.from({ length: steps }, (_, i) => { const a = Math.PI / 2 - (i / steps) * Math.PI * 2; return new THREE.Vector3(Math.cos(a) * radius, Math.sin(a) * radius, 0.02); });
@@ -31,6 +32,7 @@ export class MeadowPortal {
   private readonly matrix = new THREE.Matrix4();
   private readonly point = new THREE.Vector3();
   private anchored = false;
+  private readonly mouse = new THREE.Vector2();
   private progress = 0;
   private readonly plane = new THREE.PlaneGeometry(WIDTH + 2, HEIGHT + 2);
   private readonly outline = IVY ? portalOutline(WIDTH - 0.18, HEIGHT - 0.18, RADIUS - 0.09) : circleOutline(R - 0.1);
@@ -84,7 +86,7 @@ export class MeadowPortal {
   setDestination(texture: THREE.Texture) { this.window.uniforms.tDestination.value = texture; }
   setSize(height: number, dpr: number) { this.garden?.setSize(height, dpr); this.ring?.setSize(height, dpr); }
 
-  update(camera: THREE.PerspectiveCamera, progress: number, time: number, sea: number, windTime: number) {
+  update(camera: THREE.PerspectiveCamera, progress: number, time: number, sea: number, windTime: number, pointer?: THREE.Vector2 | null) {
     this.progress = progress;
     if (progress <= 0) {
       this.anchored = false;
@@ -121,6 +123,15 @@ export class MeadowPortal {
     const amount = (1 - Math.exp(-4 * travel)) / (1 - Math.exp(-4));
     camera.position.lerpVectors(this.start, this.end, amount);
     camera.position.addScaledVector(this.right, -0.85 * Math.sin(Math.PI * amount) * (1 - amount));
+    /* v115 (как у igloo): пока кольцо перед нами, камера чуть обходит его в сторону курсора — кольцо смещается навстречу.
+       У самого входа отклик гаснет, чтобы пролёт был прямым */
+    if (!IVY) {
+      /* своё сглаживание: маршрут луга в портале стоит, и его сглаженный курсор не обновляется */
+      this.mouse.lerp(pointer ?? ZERO, 0.06);
+      const k = smooth(0.12, 0.3, progress) * (1 - smooth(0.78, 0.92, progress));
+      camera.position.addScaledVector(this.right, this.mouse.x * 1.6 * k);
+      camera.position.y += this.mouse.y * 0.9 * k;
+    }
     camera.position.y = Math.max(camera.position.y, sea + 1.2,
       terrainHeight(camera.position.x, camera.position.z, time) + 1.2);
     this.matrix.lookAt(camera.position, this.group.position, camera.up);

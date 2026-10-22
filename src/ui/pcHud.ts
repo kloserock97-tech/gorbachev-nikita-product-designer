@@ -9,8 +9,8 @@
      человек за компьютером).
    · Вокруг — созвездие: точки-крестики на невидимом цилиндре вокруг компьютера медленно обходят его, соседние
      соединяются пунктиром, линия прорастает за 0,35 с и так же убирается.
-   · За всем — крупные размытые моноширинные слова в глубине: плывут вверх по прокрутке тем быстрее, чем ближе,
-     и медленно гаснут/проявляются. Размытие — тень текста, без filter: blur (дёшево).
+   · v115: размытые слова в глубине убраны (прожарка) — эту роль играет бегущая строка «Привет! Я Никита…», на ходу
+     она серая и стоит за компьютером, как фоновые слова igloo.
    Всё рисуется в DOM и одном 2D-холсте поверх сцены; читается из сцены только прямоугольник компьютера. */
 import { STORY, chapters, trap } from "../scene/story";
 import { cue } from "../audio/bus";
@@ -30,14 +30,12 @@ const AT = { title: 0.42, temp: 0.56, date: 0.7 };
 const GLYPHS_EN = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789#/_";
 const GLYPHS_RU = "АБВГДЕЖЗИКЛМНПРСТУФХЦЧШЭЯ0123456789#/_";
 
-const WORDS = ["NIKITA_GORBACHEV", "PRODUCT_DESIGN", "LOAD 07/26", "CRT·2000", "AI ASSISTANTS", "RESEARCH→LAUNCH", "2021—2026", "OBJ_01", "UX/UI", "SBER · GRIF"];
 
 export function initPcHud(scene: Scene) {
   const root = document.createElement("div");
   root.className = "pc-dossier";
   root.setAttribute("aria-hidden", "true");
   root.innerHTML = `
-    <div class="pc-words">${WORDS.map((w) => `<span>${w}</span>`).join("")}</div>
     <canvas class="pc-dossier__lines"></canvas>
     <div class="pc-dossier__label pc-dossier__label--title"><b data-l="0"></b><b data-l="1"></b></div>
     <div class="pc-dossier__label pc-dossier__label--temp"><b><i>TEMP</i><span data-l="f"></span></b><b><i></i><span data-l="c"></span></b></div>
@@ -47,7 +45,6 @@ export function initPcHud(scene: Scene) {
 
   const canvas = root.querySelector<HTMLCanvasElement>(".pc-dossier__lines")!;
   const ctx = canvas.getContext("2d")!;
-  const words = [...root.querySelectorAll<HTMLElement>(".pc-words span")];
   const labels = {
     title: root.querySelector<HTMLElement>(".pc-dossier__label--title")!,
     temp: root.querySelector<HTMLElement>(".pc-dossier__label--temp")!,
@@ -62,13 +59,7 @@ export function initPcHud(scene: Scene) {
   resize();
   addEventListener("resize", resize);
 
-  /* слова в глубине: место по горизонтали, начальная высота, глубина 0…1, фаза мерцания — постоянные */
   const rnd = (i: number, k: number) => { const x = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); };
-  const wordState = words.map((el, i) => {
-    const depth = rnd(i, 1);
-    el.style.setProperty("--d", depth.toFixed(3));
-    return { el, x: rnd(i, 2) * 90 - 10, y: rnd(i, 3) * 120, depth, phase: rnd(i, 4) * 6.28 };
-  });
 
   /* тексты подписей: строка → перебор букв до места */
   const today = () => { const d = new Date(); const p = (n: number) => String(n).padStart(2, "0"); return `D ${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`; };
@@ -91,6 +82,8 @@ export function initPcHud(scene: Scene) {
     return out;
   };
 
+  /* текст пишется, только когда изменился: иначе браузер перекладывал бы подписи каждый кадр */
+  const put = (el: HTMLElement, text: string) => { if (el.textContent !== text) el.textContent = text; };
   type L = { shown: boolean; t0: number; tOff: number };
   const st: Record<keyof typeof labels, L> = { title: { shown: false, t0: 0, tOff: 0 }, temp: { shown: false, t0: 0, tOff: 0 }, date: { shown: false, t0: 0, tOff: 0 } };
   let lastBeep = 0;
@@ -109,7 +102,36 @@ export function initPcHud(scene: Scene) {
   const links = new Map<number, number>(); // ключ i*64+j → прорастание 0…1
 
   let shown = false;
+  let wasArrived = false, lastSettle = 0;
   let lastT = performance.now();
+
+  /* v115 (по мотивам igloo): под курсором на компьютере расходится рябь из светлых треугольников и гаснет за ~0,8 с;
+     ведёшь мышью — за ней тянется след. Только мышь, не палец */
+  const ripples: { x: number; y: number; t0: number }[] = [];
+  let lastRip = 0, rx = 0, ry = 0, rect: { x: number; y: number; w: number; h: number } | null = null;
+  if (matchMedia("(hover: hover) and (pointer: fine)").matches && !reduced) {
+    addEventListener("pointermove", (e) => {
+      if (!shown || !rect) return;
+      const inside = e.clientX > rect.x && e.clientX < rect.x + rect.w && e.clientY > rect.y && e.clientY < rect.y + rect.h;
+      const now = performance.now();
+      if (!inside || now - lastRip < 70 || Math.hypot(e.clientX - rx, e.clientY - ry) < 10) return;
+      lastRip = now; rx = e.clientX; ry = e.clientY;
+      ripples.push({ x: e.clientX, y: e.clientY, t0: now });
+      if (ripples.length > 14) ripples.shift();
+    }, { passive: true });
+  }
+  const tri = (ctx2: CanvasRenderingContext2D, x: number, y: number, r: number) => {
+    const h = 13;
+    for (const ang of [0, Math.PI / 3, -Math.PI / 3]) {
+      const dx = Math.cos(ang), dy = Math.sin(ang);
+      for (let o = -r; o <= r; o += h) {
+        const px = x - dy * o, py = y + dx * o;
+        const half = Math.sqrt(Math.max(0, r * r - o * o));
+        ctx2.moveTo(px - dx * half, py - dy * half);
+        ctx2.lineTo(px + dx * half, py + dy * half);
+      }
+    }
+  };
   const prev = scene.onStoryFrame;
   scene.onStoryFrame = () => {
     prev?.();
@@ -131,18 +153,14 @@ export function initPcHud(scene: Scene) {
     if (!shown) { shown = true; root.classList.add("is-on"); }
     root.style.setProperty("--a", a.toFixed(3));
     const u = scene.storyFlight;
+    /* v115: компьютер снова встал на место (после доводки или прокрутки туда-обратно) — подписи расшифровываются заново */
+    const arrived = u > 0.985;
+    if (arrived && !wasArrived && now - lastSettle > 1200) { lastSettle = now; (Object.keys(st) as (keyof typeof labels)[]).forEach((k) => { if (st[k].shown) st[k].t0 = now; }); }
+    wasArrived = arrived;
     const live = a > 0.5 && s < STORY.textOff;
     setShown("title", live && u > AT.title, now);
     setShown("temp", live && u > AT.temp, now);
     setShown("date", live && u > AT.date, now);
-
-    /* размытые слова плывут вверх по прокрутке (ближние быстрее) и по кругу возвращаются снизу */
-    for (const w of wordState) {
-      const y = ((w.y - s * 160 * (0.35 + w.depth) - (reduced ? 0 : now * 0.0012 * (0.3 + w.depth))) % 130 + 130) % 130 - 15;
-      const flick = 0.55 + 0.45 * Math.sin(now * 0.0004 + w.phase);
-      w.el.style.transform = `translate3d(${w.x.toFixed(2)}vw, ${y.toFixed(2)}vh, 0)`;
-      w.el.style.opacity = (flick * a * 0.55).toFixed(3);
-    }
 
     /* опорные точки — доли прямоугольника компьютера */
     const k = Math.max(26, Math.min(70, r.h * 0.22));
@@ -163,13 +181,13 @@ export function initPcHud(scene: Scene) {
     /* тексты: перебор букв 0,75 с после появления */
     const prog = (key: keyof typeof labels) => (st[key].shown ? Math.min(1, (now - st[key].t0) / 750) : 0);
     const kt = prog("title"), kd = prog("date"), kp = prog("temp");
-    labels.title.querySelectorAll<HTMLElement>("[data-l]").forEach((el, i) => { el.textContent = scramble(source[el.dataset.l!], kt, i * 31); });
-    labels.date.querySelectorAll<HTMLElement>("[data-l]").forEach((el, i) => { el.textContent = scramble(source[el.dataset.l!], kd, 70 + i * 31); });
+    labels.title.querySelectorAll<HTMLElement>("[data-l]").forEach((el, i) => put(el, scramble(source[el.dataset.l!], kt, i * 31)));
+    labels.date.querySelectorAll<HTMLElement>("[data-l]").forEach((el, i) => put(el, scramble(source[el.dataset.l!], kd, 70 + i * 31)));
     const tc = 36.6 + Math.sin(now * 0.00005 + 1.3) * 1.4;
     const tf = tc * 1.8 + 32;
     const fmt = (v: number) => (v < 0 ? "-" : "+") + Math.abs(v).toFixed(2).padStart(5, "0");
-    labels.temp.querySelector<HTMLElement>("[data-l='f']")!.textContent = scramble(tf.toFixed(2), kp, 140);
-    labels.temp.querySelector<HTMLElement>("[data-l='c']")!.textContent = scramble(fmt(tc), kp, 170);
+    put(labels.temp.querySelector<HTMLElement>("[data-l='f']")!, scramble(tf.toFixed(2), kp, 140));
+    put(labels.temp.querySelector<HTMLElement>("[data-l='c']")!, scramble(fmt(tc), kp, 170));
 
     /* линии и созвездие */
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -203,6 +221,28 @@ export function initPcHud(scene: Scene) {
       ctx.fillRect(dax - 1.5, day - 1.5, 3, 3);
     }
 
+    rect = r;
+    /* рябь на компьютере: сетка треугольников внутри растущего круга, кромка ярче */
+    if (ripples.length) {
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineWidth = 1;
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const p = ripples[i];
+        const k = (now - p.t0) / 800;
+        if (k >= 1) { ripples.splice(i, 1); continue; }
+        const rad = 40 + 80 * Math.min(1, k / 0.4);
+        const fade = (1 - k) * (1 - k) * a;
+        ctx.globalAlpha = fade * 0.6;
+        ctx.strokeStyle = "#ffffff";
+        ctx.beginPath(); tri(ctx, p.x, p.y, rad); ctx.stroke();
+        ctx.globalAlpha = fade;
+        ctx.beginPath(); ctx.arc(p.x, p.y, rad, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.restore();
+      ctx.globalAlpha = a;
+      ctx.strokeStyle = "rgba(28, 32, 40, 0.62)";
+    }
     const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
     const R = Math.max(r.w, r.h) * 0.72;
     /* к центру созвездие гаснет — поверх компьютера ни пунктира, ни крестиков, они видны только вокруг */

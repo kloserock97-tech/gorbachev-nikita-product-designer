@@ -7,7 +7,7 @@ import { createPostFx, type PostFx } from "./postfx";
 import { PortfolioScreen } from "./portfolioScreen";
 import { Dog } from "./dog";
 import { Weather, type WeatherKind } from "./weather";
-import { CASES, FOOTER, MEADOW_OUT, STORY, STORY_FX, TRANSITION, aberrationAt, bell, casesCamera, chapters, flightPose, footerCamera, portalAt, ramp, storyCamera, zoomBlur, type Pose } from "./story";
+import { CASES, FOOTER, MEADOW_OUT, STORY, STORY_FX, TIMELINE, TRANSITION, aberrationAt, bell, casesCamera, chapters, flightPose, footerCamera, portalAt, ramp, storyCamera, zoomBlur, type Pose } from "./story";
 import type { Meadow } from "./meadow/Meadow";
 import { SCROLL_LAMBDA } from "../scrollFeel";
 import { KINETIC_BASE, KINETIC_FONT, createKinetic, type Kinetic } from "./kinetic";
@@ -86,6 +86,8 @@ const HERO_PULL = Number(new URLSearchParams(location.search).get("pull") ?? 1);
 const HERO_PULL_DIR = new THREE.Vector3(0.7, 0.53, 2.0);
 const HERO_PULL_OFF = new THREE.Vector3();
 const PC_BG = !/[?&]pcbg=0/.test(location.search);
+const FOV_KICK = !/[?&]fovkick=0/.test(location.search);
+const BASE_FOV = 30;
 const TUMBLE = !/[?&]tumble=0/.test(location.search);
 const SHADOW_LAYER = 3;
 /* v72: ближние предметы — над ними лучи приглушаются (маска в postfx.ts) */
@@ -104,7 +106,7 @@ export type HillSceneOptions = {
 export class HillScene {
   private renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
-  private camera = new THREE.PerspectiveCamera(30, 1, 0.1, 400);
+  private camera = new THREE.PerspectiveCamera(BASE_FOV, 1, 0.1, 400);
   private timer = new THREE.Timer();
   private fx: PostFx;
   private raf = 0;
@@ -1257,6 +1259,7 @@ export class HillScene {
 
   private pcRest?: Pose;
   private storyTarget = 0;
+  private speedK = 0;
   private storyS = 0;
   private storyApplied = -1;
   private tumble = [1, -1, 1];
@@ -1288,8 +1291,18 @@ export class HillScene {
       ? THREE.MathUtils.smoothstep(footerProgress, 0, FOOTER.leave[1]) * (1 - THREE.MathUtils.smoothstep(footerProgress, ...FOOTER.settle))
       : 0;
     const scrollLambda = THREE.MathUtils.lerp(SCROLL_LAMBDA, 3.6, portalDamping);
+    const sPrev = this.storyS;
     this.storyS += (target - this.storyS) * (1 - Math.exp(-dt * scrollLambda));
     if (Math.abs(target - this.storyS) < 1e-5) this.storyS = target;
+    /* v115 (по мотивам igloo): на быстрой прокрутке угол обзора чуть шире — кадр «вдыхает» скорость и выдыхает на
+       остановке. Скорость — в экранах в секунду; до +2,2° у холма и +3° у луга. ?fovkick=0 — без этого */
+    if (FOV_KICK && !this.reduced && dt > 0) {
+      const v = Math.abs(this.storyS - sPrev) / dt * TIMELINE.total;
+      this.speedK += (Math.min(1, v / 2.5) - this.speedK) * (1 - Math.exp(-dt * 5));
+      const fov = BASE_FOV + 2.2 * this.speedK;
+      if (Math.abs(this.camera.fov - fov) > 0.01) { this.camera.fov = fov; this.camera.updateProjectionMatrix(); }
+      if (this.walk) this.walk.fovKick = 3 * this.speedK;
+    }
     /* главы: s — холм → About, c — «Кейсы» (story.ts, CHAPTER) */
     const { s, c, f } = chapters(this.storyS);
     this.storyCh1 = s;

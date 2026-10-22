@@ -1,6 +1,6 @@
 import { cue } from "../audio/bus";
 import type { SoundState } from "../audio/ambient";
-import { chapters } from "../scene/story";
+import { chapters, portalAt } from "../scene/story";
 import { onLang, t as tr } from "../i18n";
 
 /* Кнопка звука (docs/prompts/sound.md). v45: вынесена из дока в угол экрана — динамик, подпись состояния и полоски;
@@ -62,7 +62,7 @@ export function initSound(scene: Scene) {
     last = t;
     const { s, c, f } = chapters(scene.storyProgress);
     /* в футере холм снова «живой»: s как на первом экране */
-    engine.update({ wind: scene.windNow, weather: scene.weatherKind, s: f > 0.15 ? 0 : s, c, f, focus: scene.computerFocused, caseOpen: document.body.classList.contains("case-open") }, dt);
+    engine.update({ wind: scene.windNow, weather: scene.weatherKind, s: f > 0.15 ? 0 : s, c, f, focus: scene.computerFocused, caseOpen: document.body.classList.contains("case-open"), portal: f > 0 ? portalAt(f) : 0 }, dt);
   };
 
   const enable = (announce: boolean) => {

@@ -3,7 +3,7 @@
    Длина истории больше не записана в CSS числом. Её считает story.ts (layoutTimeline) от числа кейсов и заметок
    и от шага ленты, а сюда приходит результат: высота .story в экранах. Так один кейс занимает одинаковую
    дистанцию прокрутки на любом экране, а добавленный кейс сам удлиняет историю. */
-import { CASES, CHAPTER, CHAPTER2, TIMELINE, layoutTimeline, type TimelineInput } from "../scene/story";
+import { CASES, CHAPTER, CHAPTER2, TIMELINE, chapters, layoutTimeline, portalAt, type TimelineInput } from "../scene/story";
 
 const story = () => document.querySelector<HTMLElement>(".story");
 
@@ -124,11 +124,16 @@ function placeStops() {
   /* v114 (по мотивам igloo): точки доводки — About, каждый кейс в ленте, каждый пэт-проект */
   const at = (c: number) => topFor(CHAPTER + (CHAPTER2 - CHAPTER) * c);
   const run = ([a, b]: readonly [number, number], n: number) => Array.from({ length: n }, (_, i) => at(a + (b - a) * (i / Math.max(1, n - 1))));
-  snapStops = [stopY, ...run(CASES.strip, counts.cases), ...run(CASES.notesRun, counts.notes)];
+  /* v115: и края — начало (первый экран) и конец (футер), как остановки сцен у igloo */
+  const end = Math.max(0, (document.scrollingElement?.scrollHeight ?? 0) - innerHeight);
+  snapStops = [0, stopY, ...run(CASES.strip, counts.cases), ...run(CASES.notesRun, counts.notes), end];
 }
+/* чем доводить: плавным движением колеса (storyWheel.ts), иначе — браузерной плавной прокруткой */
+let glideTo: ((top: number, seconds: number) => void) | null = null;
+export function setSnapGlide(fn: (top: number, seconds: number) => void) { glideTo = fn; }
 
 /* v114 (по мотивам igloo.inc): доводка. Через 1,4 с после последнего жеста, если страница остановилась рядом с кейсом,
-   пэт-проектом или страницей About (ближе 40 % шага ленты), она плавно доезжает до него — человек не застревает
+   пэт-проектом или страницей About (v115: ближе половины шага ленты), она плавно доезжает до него — человек не застревает
    между двумя кейсами. Дальше от точки — не трогаем (глава между ними, футер, первый экран). ?snap=0 — без доводки */
 const SNAP = typeof location === "undefined" || !/[?&]snap=0/.test(location.search);
 let snapTimer = 0;
@@ -142,11 +147,26 @@ function scheduleSnap() {
     /* страница ещё катится (инерция пальца на телефоне) — подождать, пока встанет */
     if (performance.now() - lastScrollAt < 250) { scheduleSnap(); return; }
     const bounds = storyBounds();
-    const reach = (bounds.end - bounds.start) * (CHAPTER2 - CHAPTER) * (CASES.strip[1] - CASES.strip[0]) / Math.max(1, counts.cases - 1) * 0.4;
+    /* v115: порог — половина шага ленты (у igloo — середина пути до соседней остановки) */
+    const reach = (bounds.end - bounds.start) * (CHAPTER2 - CHAPTER) * (CASES.strip[1] - CASES.strip[0]) / Math.max(1, counts.cases - 1) * 0.5;
     let best = -1, dist = Infinity;
     for (const y of snapStops) { const d = Math.abs(y - scrollY); if (d < dist) { dist = d; best = y; } }
+    /* v115 (как у igloo): в портале не стоят — за серединой прохода он довозит до футера, раньше — назад к лугу */
+    const p = Math.min(1, Math.max(0, (scrollY - bounds.start) / Math.max(1, bounds.end - bounds.start)));
+    const { f } = chapters(p);
+    const pk = f > 0 ? portalAt(f) : 0;
+    if (pk > 0.02 && pk < 0.98) {
+      best = pk > 0.3 ? snapStops[snapStops.length - 1] : topFor(CHAPTER2);
+      dist = Math.abs(best - scrollY);
+      if (dist < 2) return;
+      glideTo ? glideTo(best, Math.min(2.2, Math.max(0.9, (dist / innerHeight) * 0.9))) : scrollTo({ top: best, behavior: "smooth" });
+      return;
+    }
     if (best < 0 || dist < 2 || dist > reach) return;
-    scrollTo({ top: best, behavior: "smooth" });
+    /* длительность от расстояния: короткий доезд ~0,6 с, полшага — до 1,3 с */
+    const seconds = Math.min(1.3, Math.max(0.6, (dist / innerHeight) * 1.6));
+    if (glideTo) glideTo(best, seconds);
+    else scrollTo({ top: best, behavior: "smooth" });
   }, 1400);
 }
 if (typeof window !== "undefined") {

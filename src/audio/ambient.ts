@@ -22,6 +22,7 @@ export type SoundState = {
   f: number; // футер 0…1
   focus: boolean; // камера у экрана компьютера
   caseOpen: boolean; // v104: открыта страница кейса — холма не видно, фон молчит
+  portal: number; // v115: проход сквозь кольцо портала 0…1 (story.portalAt)
 };
 
 
@@ -226,6 +227,22 @@ export function createAmbient(ctx: AudioContext) {
     }
   };
 
+  /* ── v115 (по мотивам igloo, звук свой): гул портала. Пока кольцо перед глазами — низкий тихий аккорд из двух синусов;
+     на пролёте сквозь кольцо поверх него нарастает и уходит вверх «свист» — полосовой шум. Мимо общего выхода фона:
+     в главе «Кейсы» природа молчит, а портал должен звучать */
+  const humOut = ctx.createGain();
+  humOut.gain.value = 0;
+  humOut.connect(ctx.destination);
+  const humLow = ctx.createOscillator(), humHigh = ctx.createOscillator();
+  humLow.frequency.value = 55; humHigh.frequency.value = 82.4;
+  const humTone = ctx.createGain(); humTone.gain.value = 0.55;
+  humLow.connect(humTone); humHigh.connect(humTone); humTone.connect(humOut);
+  humLow.start(); humHigh.start();
+  const whooshBP = ctx.createBiquadFilter();
+  whooshBP.type = "bandpass"; whooshBP.Q.value = 1.2; whooshBP.frequency.value = 300;
+  const whooshGain = ctx.createGain(); whooshGain.gain.value = 0;
+  loop(pink, 0.8, 1.7).connect(whooshBP).connect(whooshGain).connect(humOut);
+
   /* ── состояние сцены → параметры, ~10 раз в секунду ── */
   let breath = 0.5;
   let fadeIn = 0;
@@ -259,6 +276,13 @@ export function createAmbient(ctx: AudioContext) {
     set(rainGain.gain, rain * 0.08, 1.2);
     birdsOn = (1 - rain) * (1 - dusk) * (1 - cloudy * 0.6) * (1 - eaten) * (1 - gone) * (st.focus ? 0.4 : 1);
     cricketsOn = dusk * (1 - eaten) * (1 - gone);
+    const p = st.portal;
+    const near = ramp(p, 0.04, 0.2) * (1 - ramp(p, 0.93, 0.99));
+    const pass = Math.exp(-Math.pow((p - 0.88) / 0.07, 2));
+    set(humOut.gain, st.caseOpen ? 0 : fadeIn * (0.022 * near + 0.05 * pass), 0.25);
+    set(whooshGain.gain, pass * 1.6, 0.15);
+    set(whooshBP.frequency, 260 + pass * 1300, 0.2);
+    set(humHigh.frequency, 82.4 + pass * 6, 0.3);
     set(cricketGain.gain, cricketsOn * 0.012, 1);
     scheduleCrickets();
   };
@@ -325,9 +349,12 @@ export function createAmbient(ctx: AudioContext) {
       fadeIn = 0;
       out.gain.cancelScheduledValues(now());
       out.gain.setTargetAtTime(0, now(), 0.25);
+      humOut.gain.cancelScheduledValues(now());
+      humOut.gain.setTargetAtTime(0, now(), 0.25);
     },
     dispose: () => {
       clearTimeout(birdTimer);
+      humLow.stop(); humHigh.stop();
       setCueImpl(null);
     },
   };
