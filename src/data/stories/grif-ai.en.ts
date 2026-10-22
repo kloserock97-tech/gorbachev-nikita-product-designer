@@ -133,6 +133,7 @@ export const en: CaseStory = {
   prototype: {
     title: "Send a follow-up after the meeting",
     lead: "Two taps from the meeting files to a sent email. These are my Figma mock-ups; the dot shows where to tap.",
+    live: "grif-ai",
     device: "browser",
     steps: [
       { image: img(G + "t-chat-attach.webp", 1440, 900, "A request with the meeting files"), spot: [0.892, 0.804], action: "Send the meeting files and the task", why: "When an action has a way in — the input, the chips, a card in the feed — people find it without a hint." },

@@ -157,6 +157,7 @@ export const en: CaseStory = {
   prototype: {
     title: "Move a payment to payday",
     lead: "Three taps from the bank's home screen to the new schedule. These are my Figma mock-ups; the dot shows where to tap.",
+    live: "plati-chastyami",
     steps: [
       { image: img(P + "01-sbol-widget.webp", 786, 1704, "The bank's home screen"), spot: [0.8, 0.525], action: "Open your instalments from the home screen", why: "Status is visible with zero taps, the action takes one. People who can't see where they stand stop using the thing." },
       { image: img(P + "02-hub-gap.webp", 786, 3436, "The hub: status, advice and the payment timeline"), spot: [0.33, 0.374], action: "Tap the green button to move it to 6 September", why: "The payment falls in the window before payday, so the service offers the move itself. A missed payment turns into a moved one before it happens." },

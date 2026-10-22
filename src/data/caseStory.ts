@@ -88,7 +88,9 @@ export type CaseFilm = { src: string; poster: string; w: number; h: number; capt
    wait — экран-загрузка: проходит сам через столько миллисекунд. toast — плашка-итог поверх экрана, когда в макетах
    нет отдельного экрана «готово». device — рамка: телефон (по умолчанию) или окно браузера 16:10 для веб-продуктов */
 export type ProtoStep = { image: CaseImage; spot?: [number, number]; action: string; why?: string; wait?: number; toast?: string };
-export type CasePrototype = { title: string; lead?: string; device?: "phone" | "browser"; steps: ProtoStep[] };
+/* v115: live — id живого прототипа в src/ui/live (настоящий интерфейс в HTML вместо картинок); картинки шагов тогда
+   остаются запасными и описывают, как выглядит каждый шаг */
+export type CasePrototype = { title: string; lead?: string; device?: "phone" | "browser"; live?: string; steps: ProtoStep[] };
 
 export type CaseStory = {
   id: string;

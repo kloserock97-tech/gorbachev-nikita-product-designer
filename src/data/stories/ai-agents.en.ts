@@ -206,6 +206,7 @@ export const en: CaseStory = {
   prototype: {
     title: "Assess the risks of a new agent",
     lead: "A risk manager's path: from the registry to a reviewed draft of risks. These are my Figma mock-ups; the dot shows where to tap.",
+    live: "ai-agents",
     device: "browser",
     steps: [
       { image: img(A + "01.webp", 1440, 900, "The list of all AI agents"), spot: [0.255, 0.62], action: "Open an agent from the registry", why: "A summary above the list: the day starts with a ready answer you can show your manager without a report." },

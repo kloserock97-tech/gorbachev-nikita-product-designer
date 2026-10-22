@@ -139,6 +139,7 @@ export const en: CaseStory = {
   prototype: {
     title: "Read a story, then tell your own",
     lead: "The path of a reader who becomes an author: the feed, a story, the form and publishing. These are my Figma mock-ups; the dot shows where to tap.",
+    live: "community",
     device: "browser",
     steps: [
       { image: img(C + "proto-feed.webp", 1440, 2942, "The story feed"), spot: [0.811, 0.373], action: "Open \"The mysterious Dangauerovka\"", why: "One action looks the same everywhere: Listen, comments and topics sit in the same place on every card." },
