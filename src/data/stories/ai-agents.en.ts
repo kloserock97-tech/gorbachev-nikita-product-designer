@@ -205,7 +205,7 @@ export const en: CaseStory = {
   /* v114: prototype from the mock-ups — the risk manager's main flow: registry → agent → archive → draft → risk card → edit. Card and edit are frames 30:2 and 30:332 from Figma XomA0T1zFMATidI4Qq5nEw */
   prototype: {
     title: "Assess the risks of a new agent",
-    lead: "A risk manager's path: from the registry to a reviewed draft of risks. These are my Figma mock-ups; the dot shows where to tap.",
+    lead: "A risk manager's path: from the registry to a reviewed draft of risks. It is a working interface built from my mock-ups; the ring shows where to tap.",
     live: "ai-agents",
     device: "browser",
     steps: [
@@ -214,7 +214,8 @@ export const en: CaseStory = {
       { image: img(A + "03.webp", 1440, 900, "Reading the archive"), wait: 2600, action: "Wait while the model reads the archive", why: "Progress and risk placeholders instead of a spinner: attention drifts after 10 seconds, and reading an archive takes longer." },
       { image: img("cases/figma/agents-review.webp", 1520, 950, "The draft: 13 risks to review"), spot: [0.257, 0.613], action: "Open a risk from the draft", why: "The model's levels and reasons are a draft. The final call is a person's." },
       { image: img(A + "proto-risk-card.webp", 1440, 900, "The risk card"), spot: [0.697, 0.942], action: "Press Edit", why: "Next to the level sit the model's reasoning and the documents behind it: you can check it without leaving the card." },
-      { image: img(A + "proto-risk-edit.webp", 1440, 900, "Level, reasoning and a required comment"), action: "Adjust the level and write why", why: "The model's reasoning stays in view, and the risk manager must add their own: the reason is stored with the risk." },
+      { image: img(A + "proto-risk-edit.webp", 1440, 900, "Level, reasoning and a required comment"), spot: [0.887, 0.942], action: "Adjust the level and write why", why: "The model's reasoning stays in view, and the risk manager must add their own. Unsaved text can only be left behind through \"Leave the form?\"." },
+      { image: img("cases/figma/agents-review.webp", 1520, 950, "Risk reviewed: level and reasoning saved"), action: "Done: the level is saved, and the reason is stored with the risk", why: "The history of decisions builds up by itself. \"Not applicable\" also takes a reason: the risk changes state and never disappears." },
     ],
   },
   takeaways: [

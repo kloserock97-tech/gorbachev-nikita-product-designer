@@ -234,6 +234,8 @@ export function initCaseView(opts: Opts = {}) {
   addEventListener("popstate", route);
   addEventListener("keydown", (e) => {
     if (e.key !== "Escape" || !current) return;
+    /* v115: Escape внутри живого прототипа закрывает его панели и окна, а не кейс */
+    if ((document.activeElement as Element | null)?.closest?.(".pt-live-root") || (e.target as Element).closest?.(".pt-live-root")) return;
     /* открытый лайтбокс или лист оглавления закрываются сами, кейс остаётся */
     if (root.querySelector("dialog[open], .cs-sheet:not([hidden])")) {
       root.querySelector<HTMLElement>(".cs-sheet:not([hidden]) .cs-sheet-close")?.click();

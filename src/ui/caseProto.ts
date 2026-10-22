@@ -33,6 +33,7 @@ const T = {
   claude: { ru: "Прототип собран в Claude Code", en: "Prototype built in Claude Code" },
   demo: { ru: "Демо: данные выдуманы, ничего не отправляется", en: "Demo: the data is made up and nothing is sent" },
   loading: { ru: "Загружаю прототип…", en: "Loading the prototype…" },
+  pan: { ru: "Окно шире экрана — листайте его вбок", en: "The window is wider than the screen: swipe it sideways" },
 };
 const tr = (x: { ru: string; en: string }) => (getLang() === "ru" ? x.ru : x.en);
 const ICON = {
@@ -75,7 +76,7 @@ export function protoBlock(p: CasePrototype) {
         ${web ? '<p class="pt-bar" aria-hidden="true"><i></i><i></i><i></i></p>' : ""}
         <div class="pt-screen" data-screen>${screen}</div>
       </div>
-      ${live ? `<p class="pt-demo">${tr(T.demo)}</p>` : ""}
+      ${live ? `<p class="pt-pan">${tr(T.pan)}</p><p class="pt-demo">${tr(T.demo)}</p>` : ""}
     </div>
   </div>`;
 }
@@ -153,8 +154,12 @@ export function mountProto(root: HTMLElement) {
       const load = LIVE[liveRoot!.dataset.live!];
       const mod = (await load()).default;
       const screen = liveRoot!.parentElement!;
+      /* на узком экране окно браузера не ужимаем мельче 0,5: текст в 1100 px читался бы в 4 px. Лишнее по ширине
+         прокручивается пальцем внутри окна (.pt-screen.is-pan) */
       const size = () => {
-        const z = screen.clientWidth / mod.design.w;
+        const fitZ = screen.clientWidth / mod.design.w;
+        const z = mod.design.w > 600 ? Math.max(fitZ, 0.5) : fitZ;
+        screen.classList.toggle("is-pan", z > fitZ + 0.001);
         liveRoot!.style.zoom = String(z);
         liveRoot!.style.width = `${mod.design.w}px`;
         liveRoot!.style.height = `${screen.clientHeight / z}px`;

@@ -138,7 +138,7 @@ export const en: CaseStory = {
   /* v114: prototype from the mock-ups — the main flow: a reader becomes an author (feed → story → form → published). Full pages from Figma LdUrYy9cNus6q7005xnmXo: 2103:12251, 2109:18727, 2202:7956, 2128:33091 */
   prototype: {
     title: "Read a story, then tell your own",
-    lead: "The path of a reader who becomes an author: the feed, a story, the form and publishing. These are my Figma mock-ups; the dot shows where to tap.",
+    lead: "The path of a reader who becomes an author: the feed, a story, the form and publishing. It is a working interface built from my mock-ups; the ring shows where to tap.",
     live: "community",
     device: "browser",
     steps: [

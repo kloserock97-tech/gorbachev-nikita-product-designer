@@ -1,0 +1,196 @@
+/* v115: живой прототип GRIF AI (grif.ts). Всё — под .lv-grif. Тёмный экран, один синий акцент,
+   движение только прозрачностью и цветом, 120–200 мс. */
+@property --lv-a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+
+.lv-grif {
+  --bg: #0f0f11; --side: #1a1a1e; --surf: #19191d; --surf2: #232329; --surf3: #2c2c33;
+  --line: rgba(255, 255, 255, 0.07); --line2: rgba(255, 255, 255, 0.12);
+  --fg: #ececf1; --mut: #9696a1; --dim: #6c6c76;
+  --acc: #4a63ff; --acc2: #8d9cff; --ok: #34c77f;
+  position: relative; display: grid; grid-template-columns: 232px 1fr; gap: 0;
+  height: 100%; padding: 8px; box-sizing: border-box; overflow: hidden;
+  background: var(--bg); color: var(--fg);
+  font: 360 14px/1.45 Onest, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+}
+.lv-grif *, .lv-grif *::before, .lv-grif *::after { box-sizing: border-box; }
+.lv-grif [hidden] { display: none !important; }
+.lv-grif :where(p, h2, h3, ol, dl, dd) { margin: 0; padding: 0; }
+.lv-grif :where(button) { cursor: pointer; border: 0; background: none; padding: 0; }
+.lv-grif svg { flex: none; display: block; }
+.lv-grif :where(small) { display: block; font-size: 13px; color: var(--mut); }
+.lv-grow { flex: 1; min-width: 0; }
+.lv-grif .lv-mut { color: var(--mut); }
+.lv-grif .lv-in { animation: lv-fade 0.2s ease-out both; }
+@keyframes lv-fade { from { opacity: 0; } }
+
+/* боковая панель */
+.lv-side { display: flex; flex-direction: column; gap: 2px; padding: 16px 12px 14px; border-radius: 18px; background: var(--side); min-height: 0; }
+.lv-brand { display: flex; align-items: center; gap: 6px; padding: 2px 4px 18px; color: var(--acc); }
+.lv-brand b { font-weight: 700; font-size: 17px; letter-spacing: 0.02em; }
+.lv-wing { width: 34px; height: 20px; fill: currentColor; }
+.lv-tools { display: flex; gap: 12px; margin-left: auto; color: #cfcfd6; }
+.lv-nav { display: flex; align-items: center; gap: 10px; height: 42px; padding: 0 12px; border-radius: 12px; color: #e2e2e8; font-size: 14.5px; text-align: left; transition: background-color 0.16s, color 0.16s; }
+.lv-grif .lv-nav.is-on { background: var(--surf3); }
+.lv-grif button.lv-nav:hover { background: var(--surf3); }
+.lv-nav svg { color: #bdbdc6; }
+.lv-group { display: flex; align-items: center; gap: 4px; margin-top: 18px !important; padding: 0 6px 4px !important; font-size: 13px; color: var(--mut); }
+.lv-group svg { width: 14px; height: 14px; }
+.lv-item { padding: 5px 8px !important; font-size: 14px; color: #c4c4cc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 8px; }
+.lv-item.is-on { color: #fff; background: rgba(255, 255, 255, 0.05); }
+.lv-user { display: flex; align-items: center; gap: 10px; margin-top: auto; padding: 8px 6px 0; }
+.lv-user b { display: block; font-weight: 500; font-size: 14px; }
+.lv-ava { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(140deg, #3a4bd6, #7a5ee0); color: #fff; font-weight: 600; font-size: 15px; }
+
+/* основная часть */
+.lv-main { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.lv-head { display: flex; align-items: center; gap: 6px; height: 50px; padding: 0 0 0 44px; flex: none; font-size: 15px; color: #e6e6ec; }
+.lv-home { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 44px 18px; min-height: 0; }
+.lv-hi { font-weight: 500; font-size: 23px; letter-spacing: -0.01em; }
+.lv-sub { margin-top: 4px !important; font-size: 21px; color: var(--mut); letter-spacing: -0.01em; }
+.lv-home .lv-comp { width: 100%; max-width: 680px; margin-top: 26px; }
+.lv-note { flex: none; padding: 8px 0 6px !important; text-align: center; font-size: 13px; color: var(--dim); }
+
+/* поле ввода с живым бордером */
+.lv-comp { display: flex; flex-direction: column; border-radius: 20px; padding: 12px 12px 10px; }
+.lv-live-border {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--surf), var(--surf)) padding-box,
+    conic-gradient(from var(--lv-a), rgba(74, 99, 255, 0.85), rgba(80, 80, 96, 0.35) 22%, rgba(80, 80, 96, 0.25) 48%, rgba(150, 100, 255, 0.7) 62%, rgba(80, 80, 96, 0.3) 80%, rgba(74, 99, 255, 0.85)) border-box;
+  box-shadow: 0 0 28px -10px rgba(74, 99, 255, 0.45);
+  animation: lv-spin 9s linear infinite;
+}
+@keyframes lv-spin { to { --lv-a: 360deg; } }
+.lv-input { display: block; width: 100%; resize: none; border: 0; outline: 0; background: none; padding: 6px 6px 4px; color: var(--fg); font-size: 14.5px; line-height: 1.5; }
+.lv-input::placeholder { color: var(--dim); }
+.lv-bar { display: flex; align-items: center; gap: 14px; padding-top: 6px; }
+.lv-ic { display: grid; place-items: center; width: 34px; height: 34px; color: #cfcfd6; }
+.lv-send { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 13px; background: var(--acc); color: #fff; transition: background-color 0.16s; }
+.lv-send:hover { background: #5a72ff; }
+.lv-send.is-off { background: var(--surf3); color: var(--dim); }
+.lv-files { display: flex; gap: 8px; padding: 0 0 8px; }
+.lv-file { position: relative; display: flex; align-items: center; gap: 10px; min-width: 196px; padding: 8px 30px 8px 8px; border-radius: 12px; background: var(--surf2); }
+.lv-file b { display: block; font-weight: 400; font-size: 14px; white-space: nowrap; }
+.lv-file-ic { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 9px; background: #9aa6ff; color: #fff; }
+.lv-file-ic svg { width: 19px; height: 19px; }
+.lv-file-x { position: absolute; top: -6px; right: -6px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #d9d9de !important; color: #1a1a1e; }
+.lv-file--sm { min-width: 0; padding: 6px 12px 6px 6px; background: var(--surf3); }
+.lv-file--sm .lv-file-ic { width: 30px; height: 30px; }
+.lv-chips { display: flex; gap: 10px; width: 100%; max-width: 680px; margin-top: 12px; }
+.lv-chip { flex: 1; display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 14px; border-radius: 16px; background: var(--surf); color: #e6e6ec; font-size: 14px; text-align: left; white-space: nowrap; transition: background-color 0.16s; }
+.lv-grif button.lv-chip:hover { background: var(--surf2); }
+.lv-chip svg { color: #d4d4db; }
+
+/* чат */
+.lv-chat { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.lv-scroll { flex: 1; overflow-y: auto; min-height: 0; padding: 0 36px; scrollbar-width: none; }
+.lv-thread { max-width: 720px; margin: 0 auto; padding: 8px 0 22px; display: flex; flex-direction: column; gap: 14px; }
+.lv-comp--dock { width: calc(100% - 72px); max-width: 720px; margin: 0 auto; padding: 10px 12px 8px; flex: none; }
+.lv-comp--dock .lv-send { width: 40px; height: 40px; }
+.lv-me { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.lv-me-files { display: flex; gap: 8px; }
+.lv-bubble { max-width: 520px; padding: 11px 15px; border-radius: 18px 18px 6px 18px; background: var(--surf2); font-size: 14.5px; }
+
+/* шаги рассуждения */
+.lv-reason { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.lv-sum { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px; border-radius: 9px; background: var(--surf2) !important; color: #dcdce3; font-size: 13px; }
+.lv-sum svg { width: 15px; height: 15px; color: var(--mut); transition: rotate 0.16s; }
+.lv-sum.is-open svg { rotate: 180deg; }
+.lv-sum-dot { width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #8d9cff, #4a63ff 60%, #2a2f7a); }
+.lv-steps { display: flex; flex-direction: column; gap: 8px; }
+.lv-meta { font-size: 13px; color: var(--mut); }
+.lv-list { list-style: none; display: flex; flex-direction: column; gap: 0; }
+.lv-list li { position: relative; display: flex; align-items: center; gap: 12px; padding: 5px 0; font-size: 14.5px; color: var(--mut); transition: color 0.18s; }
+.lv-list li + li::before { content: ""; position: absolute; left: 5px; top: -7px; height: 12px; border-left: 1px solid var(--line2); }
+.lv-dot { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--dim); transition: background-color 0.18s, border-color 0.18s; }
+.lv-list li.is-now { color: var(--acc2); }
+.lv-list li.is-now .lv-dot { border-color: var(--acc2); background: var(--acc); animation: lv-breath 1.1s ease-in-out infinite; }
+.lv-list li.is-done .lv-dot { border-color: #4a4a55; background: #4a4a55; }
+@keyframes lv-breath { 50% { opacity: 0.35; } }
+
+/* ответ */
+.lv-answer { display: flex; flex-direction: column; gap: 10px; }
+.lv-title { font-weight: 500; font-size: 18px; letter-spacing: -0.01em; margin-top: 2px !important; }
+.lv-p { font-size: 14.5px; color: #c9c9d1; line-height: 1.55; }
+.lv-p:empty { display: none; }
+.lv-src { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
+.lv-ok { color: var(--ok); }
+.lv-tag { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 11px; border-radius: 999px; background: var(--surf2); font-size: 13.5px; color: #e0e0e6; }
+.lv-tag i { width: 7px; height: 7px; border-radius: 50%; background: #8a8a96; }
+.lv-mem { display: flex; align-items: center; gap: 12px; padding: 11px 16px 11px 12px; border-radius: 14px; background: var(--surf); box-shadow: inset 0 0 0 1px var(--line); font-size: 14.5px; }
+.lv-mem-ic { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: #d9dcff; color: #2c3590; }
+.lv-mem-ic svg { width: 18px; height: 18px; }
+.lv-link { color: var(--acc2) !important; font-size: 14.5px; white-space: nowrap; transition: color 0.16s; }
+.lv-link:hover { color: #b3bdff !important; }
+
+/* карточка письма */
+.lv-card { border-radius: 22px; background: var(--surf); box-shadow: inset 0 0 0 1px rgba(98, 112, 255, 0.55); overflow: hidden; transition: box-shadow 0.2s; }
+.lv-card.is-sent { box-shadow: inset 0 0 0 1px var(--line2); }
+.lv-card-top { display: flex; align-items: center; gap: 12px; padding: 16px 18px 6px; }
+.lv-card-top b { display: block; font-weight: 500; font-size: 15.5px; }
+.lv-mark { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 11px; background: var(--acc); color: #fff; }
+.lv-mark .lv-wing { width: 26px; height: 16px; }
+.lv-badge { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 8px; background: #123a40; color: #63d2da; font-size: 13.5px; }
+.lv-badge svg { width: 16px; height: 16px; }
+.lv-fields { display: grid; grid-template-columns: 54px 1fr; gap: 10px 4px; padding: 12px 18px 12px; align-items: center; font-size: 15px; }
+.lv-fields dt { font-size: 13.5px; color: var(--mut); }
+.lv-fields dd { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.lv-pic { display: inline-grid; place-items: center; width: 22px; height: 22px; margin-right: 2px; border-radius: 50%; background: #2c3590; color: #dfe3ff; vertical-align: middle; }
+.lv-body { margin: 0 14px !important; padding: 12px 14px !important; border-radius: 12px; background: #131316; font-size: 14px; color: #d6d6dd; }
+.lv-card-foot { display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 12px 14px 12px 18px; border-top: 1px solid var(--line); min-height: 66px; }
+.lv-safe { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; font-size: 14px; white-space: nowrap; color: var(--mut); }
+.lv-safe svg { color: var(--ok); width: 20px; height: 20px; }
+.lv-acts { display: flex; align-items: center; gap: 6px; }
+.lv-acts .lv-btn { padding: 0 14px; }
+.lv-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 16px; border-radius: 12px; font-size: 15px; font-weight: 500; color: var(--fg); white-space: nowrap; transition: background-color 0.16s, color 0.16s; }
+.lv-btn svg { width: 19px; height: 19px; }
+.lv-btn--ghost:hover { background: var(--surf2) !important; }
+.lv-grif .lv-btn--soft { background: var(--surf3); }
+.lv-grif .lv-btn--soft:hover { background: #36363e; }
+.lv-grif .lv-btn--main { background: var(--acc); color: #fff; }
+.lv-grif .lv-btn--main:hover { background: #5a72ff; }
+.lv-grif .lv-btn--line { height: 38px; padding: 0 12px; box-shadow: inset 0 0 0 1px var(--line2); font-size: 14.5px; }
+.lv-grif .lv-btn--line:hover { background: var(--surf2); }
+.lv-btn--wide { flex: 1; height: 46px; }
+
+/* строки «отправлено» / «отклонено» */
+.lv-row { display: flex; align-items: center; gap: 12px; padding: 12px 12px 12px 14px; border-radius: 16px; background: #10201a; box-shadow: inset 0 0 0 1px rgba(52, 199, 127, 0.22); }
+.lv-row b { display: block; font-weight: 500; font-size: 15px; }
+.lv-row--off { background: var(--surf); box-shadow: inset 0 0 0 1px var(--line); }
+.lv-row-ic { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--surf3); color: var(--mut); }
+.lv-row-ic svg { width: 14px; height: 14px; }
+.lv-row-ic--ok { background: var(--ok); color: #0b2a1b; }
+.lv-more { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.lv-more p { width: 100%; font-size: 14px; }
+.lv-chip--sm { flex: none; height: 42px; padding: 0 14px 0 12px; border-radius: 999px; font-size: 14px; box-shadow: inset 0 0 0 1px var(--line); }
+
+/* тост */
+.lv-toast { position: absolute; top: 10px; left: 50%; translate: -50% 0; display: flex; align-items: center; gap: 12px; height: 50px; padding: 0 8px 0 14px; border-radius: 14px; background: #0f5e43; box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.08); font-size: 15px; font-weight: 500; z-index: 3; }
+.lv-toast .lv-row-ic--ok { background: #4fe09a; }
+.lv-toast-btn { height: 34px; padding: 0 10px; border-radius: 9px; color: #fff !important; font-weight: 600; font-size: 15px; transition: background-color 0.16s; }
+.lv-toast-btn:hover { background: rgba(255, 255, 255, 0.1) !important; }
+
+/* панель редактора */
+.lv-shade { position: absolute; inset: 0; background: rgba(5, 5, 8, 0.45); z-index: 4; }
+.lv-panel { position: absolute; top: 8px; right: 8px; bottom: 8px; width: 404px; display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 18px; background: #17171b; box-shadow: -20px 0 50px -20px rgba(0, 0, 0, 0.7), inset 0 0 0 1px var(--line2); z-index: 5; }
+.lv-panel-head { display: flex; align-items: center; gap: 12px; }
+.lv-panel-head b { display: block; font-weight: 500; font-size: 16px; }
+.lv-panel-ic { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 11px; background: var(--surf3); color: var(--acc2); }
+.lv-x { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; color: #d0d0d7 !important; transition: background-color 0.16s; }
+.lv-x:hover { background: var(--surf2) !important; }
+.lv-panel-say { display: flex; align-items: center; gap: 10px; padding: 10px 12px !important; border-radius: 12px; background: var(--surf2); font-size: 13.5px; color: #d6d6dd; }
+.lv-panel-say .lv-wing { width: 22px; height: 13px; fill: #cfcfd6; }
+.lv-panel-f { display: grid; grid-template-columns: 48px 1fr; align-items: center; gap: 6px; font-size: 14.5px; }
+.lv-field { width: 100%; border: 0; outline: 0; border-radius: 10px; background: #111114; padding: 9px 11px; color: var(--fg); font-size: 14px; box-shadow: inset 0 0 0 1px var(--line2); transition: box-shadow 0.16s; }
+.lv-field:focus { box-shadow: inset 0 0 0 1px rgba(98, 112, 255, 0.7); }
+.lv-letter { flex: 1; min-height: 0; resize: none; line-height: 1.55; padding: 12px; }
+.lv-panel-foot { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.lv-saved { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--mut); }
+.lv-panel-acts { display: flex; gap: 10px; }
+
+/* меньше движения */
+.lv-grif.is-calm .lv-live-border, .lv-grif.is-calm .lv-list li.is-now .lv-dot { animation: none; }
+.lv-grif.is-calm * { transition: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .lv-grif .lv-live-border, .lv-grif .lv-in, .lv-grif .lv-list li.is-now .lv-dot { animation: none; }
+}

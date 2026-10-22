@@ -132,11 +132,12 @@ export const en: CaseStory = {
   /* v114: prototype from the mock-ups — the main flow: meeting files → brief and a ready email → sent */
   prototype: {
     title: "Send a follow-up after the meeting",
-    lead: "Two taps from the meeting files to a sent email. These are my Figma mock-ups; the dot shows where to tap.",
+    lead: "Two taps from the meeting files to a sent email. It is a working interface built from my mock-ups; the ring shows where to tap.",
     live: "grif-ai",
     device: "browser",
     steps: [
       { image: img(G + "t-chat-attach.webp", 1440, 900, "A request with the meeting files"), spot: [0.892, 0.804], action: "Send the meeting files and the task", why: "When an action has a way in — the input, the chips, a card in the feed — people find it without a hint." },
+      { image: img(G + "t-chat-reasoning-steps.webp", 1380, 304, "Reasoning steps"), wait: 3200, action: "GRIF reads the meeting and the threads", why: "If you can see the system reading, people double-check the answer less." },
       { image: img(G + "03.webp", 1436, 1292, "The brief and a ready email"), spot: [0.84, 0.627], action: "Check the email and press Send", why: "Under the brief you can see what it is based on: Telegram, Gmail, Notion. And the line \"I won't send without your confirmation\" removes the fear that the system will get it wrong and send it on its own." },
       { image: img(G + "06.webp", 1438, 1084, "The email is sent"), action: "Done: the email is sent and can be taken back", why: "When a sent action can be undone, people confirm more boldly." },
     ],

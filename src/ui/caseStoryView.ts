@@ -26,6 +26,7 @@ import { icon, type IconName } from "./icons";
 import { smoothWheel } from "./smoothScroll";
 import { tidy } from "../lib/typograph";
 import "./case-story.css";
+import "./case-zones.css";
 
 const BASE = import.meta.env.BASE_URL;
 /* всё, что уходит в разметку, проходит типограф показа: неразрывные пробелы после предлогов, у чисел и перед тире */
@@ -305,7 +306,7 @@ function compactBody(s: CaseStory) {
           <div class="cs-decisions cs-steps-list">${(s.steps ?? []).map((st, k) => stepBlock(st, k, s)).join("")}</div>
         </section>
 
-        <section class="cs-sec">
+        <section class="cs-sec cs-sec--takeaways">
           ${head(++sec, "takeaways", t("cs.takeaway"))}
           <p class="cs-takeaway" data-reveal>${esc(s.takeaways[0] ?? "")}</p>
         </section>
@@ -360,7 +361,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
   /** фото-разделитель встаёт после названной главы, если он у кейса есть */
   const brk = (after: string) => (s.interludes ?? []).filter((x) => x.after === after).map((x) => interlude(x.image, x.focus)).join("");
   const html = `
-  <article class="cs" data-case="${esc(s.id)}" style="${lookVars(card, "mono")}">
+  <article class="cs" data-case="${esc(s.id)}" style="${lookVars(card, "mono")};--case:${card.look.accent};--case-ink:${card.look.ink}">
     <div class="cs-top">
       <button type="button" class="cs-back"><span aria-hidden="true">←</span> ${t("cs.back")}</button>
       <div class="cs-top-title" aria-hidden="true"><b>${esc(card.title)}</b><i class="cs-progress"></i></div>
@@ -395,7 +396,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           <p class="cs-summary" data-reveal>${runIn(s.hero.summary)}</p>
         </section>
 
-        ${s.decisions.film || s.prototype || hasDemo(s.id) ? `<section class="cs-sec cs-sec--interface">
+        ${s.decisions.film || s.prototype || hasDemo(s.id) ? `<section class="cs-sec cs-sec--interface cs-zone">
           ${head(++sec, "interface", t("cs.interface"))}
           ${s.prototype ? protoBlock(s.prototype) : ""}
           ${s.decisions.film ? filmBlock(s.decisions.film) : s.prototype ? "" : demoBlock(s.id)}
@@ -406,7 +407,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           <div class="cs-gallery">${s.gallery.map(gallery).join("")}</div>
         </section>` : ""}
 
-        ${s.results ? `<section class="cs-sec">
+        ${s.results ? `<section class="cs-sec cs-sec--results">
           ${head(++sec, "results", t("cs.results"), s.results.lead)}
           ${s.results.intro ? paras(s.results.intro) : ""}
           ${s.results.pointsFirst ? resultPoints(s.results.points) : ""}
@@ -424,7 +425,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
 
         <p class="cs-break" data-reveal><span>${t("cs.steps")}</span></p>
 
-        <section class="cs-sec">
+        <section class="cs-sec cs-sec--context">
           ${head(++sec, "context", t("cs.context"), ctx.lead)}
           ${ctx.text ? paras(ctx.text) : ""}
           ${ctx.origin ? `<div class="cs-block" data-reveal>${mini(t("cs.origin"))}<p class="cs-text">${esc(ctx.origin)}</p></div>` : ""}
@@ -446,7 +447,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
         </section>` : ""}
         ${brk("approach")}
 
-        <section class="cs-sec">
+        <section class="cs-sec cs-sec--research cs-zone">
           ${head(++sec, "research", t("cs.research"), r.lead)}
           ${r.hypotheses?.first ? hypothesesBlock(r.hypotheses) : ""}
           <div class="cs-methods">${r.methods.map(methodCard).join("")}</div>
@@ -476,7 +477,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           ${flowBody(s.flow)}
         </section>` : ""}
 
-        <section class="cs-sec">
+        <section class="cs-sec cs-sec--decisions">
           ${head(++sec, "decisions", t("cs.decisions"))}
           <p class="cs-text cs-text--lead" data-reveal>${runIn(s.decisions.lead)}</p>
           ${s.flow?.folded ? `<details class="cs-fold" data-reveal>
@@ -497,7 +498,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           <p class="cs-why cs-why--wide" data-reveal><b>${t("cs.why")}</b>${esc(s.split.why)}</p>
         </section>` : ""}
 
-        ${s.mistakes ? `<section class="cs-sec">
+        ${s.mistakes ? `<section class="cs-sec cs-sec--mistakes cs-zone">
           ${head(++sec, "mistakes", t("cs.mistakes"), s.mistakes.lead)}
           ${s.mistakes.intro ? paras(s.mistakes.intro) : ""}
           <div class="cs-mistakes">${s.mistakes.items.map((m, k) => `<article class="cs-mistake" data-reveal style="--rd:${k}">

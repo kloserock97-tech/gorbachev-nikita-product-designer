@@ -117,3 +117,9 @@
   .pt-spark { animation: none; }
   .pt-live-root .pt-hint { animation: none; box-shadow: 0 0 0 3px rgba(36, 120, 255, 0.6); }
 }
+
+/* узкий экран: окно браузера выше, широкий интерфейс прокручивается внутри по горизонтали */
+@media (max-width: 860px) { .pt--live.pt--browser .pt-window .pt-screen { aspect-ratio: 3 / 4; } }
+.pt-screen.is-pan { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.pt-pan { display: none; margin: 0; font-size: 13px; color: var(--pt-fg); }
+.pt-device:has(.pt-screen.is-pan) .pt-pan { display: block; }

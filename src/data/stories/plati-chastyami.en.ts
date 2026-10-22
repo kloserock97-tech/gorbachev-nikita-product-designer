@@ -156,7 +156,7 @@ export const en: CaseStory = {
   /* v114: prototype from the mock-ups — "move a payment to payday" in three taps; the "why" lines come from the decisions */
   prototype: {
     title: "Move a payment to payday",
-    lead: "Three taps from the bank's home screen to the new schedule. These are my Figma mock-ups; the dot shows where to tap.",
+    lead: "Three taps from the bank's home screen to the new schedule. It is a working interface built from my mock-ups; the ring shows where to tap.",
     live: "plati-chastyami",
     steps: [
       { image: img(P + "01-sbol-widget.webp", 786, 1704, "The bank's home screen"), spot: [0.8, 0.525], action: "Open your instalments from the home screen", why: "Status is visible with zero taps, the action takes one. People who can't see where they stand stop using the thing." },
