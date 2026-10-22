@@ -20,6 +20,7 @@ import { t } from "../i18n";
 import { heroStage, mountHero } from "./caseHero";
 import { brandMark, goArrow, lookVars, objectPicture } from "./caseLook";
 import { demoBlock, hasDemo, mountDemos } from "./caseDemos";
+import { mountProto, protoBlock } from "./caseProto";
 import { mockupsHead, mountMockups } from "./mockupsTitle";
 import { icon, type IconName } from "./icons";
 import { smoothWheel } from "./smoothScroll";
@@ -326,7 +327,7 @@ export function sectionsOf(s: CaseStory): Section[] {
   }
   /* v99: сначала готовый интерфейс и результат, потом процесс */
   const list: Section[] = [{ id: "brief", label: t("cs.brief") }];
-  if (s.decisions.film || hasDemo(s.id)) list.push({ id: "interface", label: t("cs.interface") });
+  if (s.decisions.film || s.prototype || hasDemo(s.id)) list.push({ id: "interface", label: t("cs.interface") });
   if (s.gallery.length) list.push({ id: "screens", label: t("cs.screens") });
   if (s.results) list.push({ id: "results", label: t("cs.results") });
   list.push({ id: "context", label: t("cs.context") });
@@ -394,9 +395,9 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           <p class="cs-summary" data-reveal>${runIn(s.hero.summary)}</p>
         </section>
 
-        ${s.decisions.film || hasDemo(s.id) ? `<section class="cs-sec cs-sec--interface">
+        ${s.decisions.film || s.prototype || hasDemo(s.id) ? `<section class="cs-sec cs-sec--interface">
           ${head(++sec, "interface", t("cs.interface"))}
-          ${s.decisions.film ? filmBlock(s.decisions.film) : demoBlock(s.id)}
+          ${s.decisions.film ? filmBlock(s.decisions.film) : s.prototype ? protoBlock(s.prototype) : demoBlock(s.id)}
         </section>` : ""}
 
         ${s.gallery.length ? `<section class="cs-sec cs-sec--screens">
@@ -819,6 +820,7 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
   stops.push(() => io.disconnect());
 
   stops.push(mountDemos(root, scroller));
+  stops.push(mountProto(root));
   stops.push(mountFilms(root, scroller));
   stops.push(mountMockups(root, scroller));
   stops.push(mountHero(root, scroller));

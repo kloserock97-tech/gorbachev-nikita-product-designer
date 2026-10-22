@@ -82,6 +82,11 @@ export type Outcome = { x: string; y: string; z: string };
    схема «было / стало» из flow (развёрнутая) */
 export type CaseStep = { title: string; text: string; image?: CaseImage; gallery?: Gallery; flow?: true };
 export type CaseFilm = { src: string; poster: string; w: number; h: number; caption: string };
+/* v114: кликабельный прототип из готовых экранов (идея — «Try the prototype» с портфолио klinaeva, код свой).
+   Шаг — экран, место нажатия в долях ширины и высоты экрана (0–1), что сделать и почему экран такой.
+   У последнего шага места нажатия нет: это результат, с него можно начать заново */
+export type ProtoStep = { image: CaseImage; spot?: [number, number]; action: string; why?: string };
+export type CasePrototype = { title: string; lead?: string; steps: ProtoStep[] };
 
 export type CaseStory = {
   id: string;
@@ -133,6 +138,8 @@ export type CaseStory = {
   flow?: { title: string; folded?: boolean; before:{ title: string; steps: FlowStep[]; summary: string }; after: { title: string; steps: FlowStep[]; summary: string } };
   /** film — ролик интерфейса (видео) после подводки к решениям: играет без звука, пока виден */
   decisions: { lead: string; items: Decision[]; film?: { src: string; poster: string; w: number; h: number; caption: string } };
+  /** прототип, который можно прокликать, — в главе «Готовый интерфейс», если у кейса нет ролика */
+  prototype?: CasePrototype;
   /** разделение человек/агент (GRIF) */
   split?: { title: string; left: { name: string; items: string[] }; right: { name: string; items: string[] }; why: string };
   /** широкие картинки-разделители между главами: фото и фирменные материалы продукта */

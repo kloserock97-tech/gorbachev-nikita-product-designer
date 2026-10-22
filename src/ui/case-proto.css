@@ -1,0 +1,80 @@
+/* v114: прототип из макетов (caseProto.ts) — тёмная плитка: слева шаги и «почему так», справа телефон.
+   Плитка красится чернилами кейса, как остальные тёмные плашки страницы (case-story.css, MONO). */
+.pt {
+  --pt-fg: #f4f4f1; --pt-soft: rgba(244, 244, 241, 0.62); --pt-line: rgba(244, 244, 241, 0.12);
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 380px); gap: clamp(28px, 5vw, 88px); align-items: center;
+  margin-top: 8px; padding: clamp(24px, 4vw, 56px); border-radius: 28px; color: var(--pt-fg);
+  background: radial-gradient(80% 90% at 85% 40%, color-mix(in srgb, var(--ink) 70%, #8b8f99) 0%, transparent 70%), var(--ink);
+}
+.pt-side { display: grid; align-content: center; gap: 18px; min-width: 0; }
+.pt-live { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--pt-soft); }
+.pt-live i { width: 8px; height: 8px; border-radius: 50%; background: #3fd07a; box-shadow: 0 0 0 0 rgba(63, 208, 122, 0.5); animation: pt-live 2s ease-out infinite; }
+@keyframes pt-live { 70% { box-shadow: 0 0 0 8px rgba(63, 208, 122, 0); } 100% { box-shadow: 0 0 0 0 rgba(63, 208, 122, 0); } }
+.pt-title { font-size: clamp(30px, 3.6vw, 48px); line-height: 1.05; letter-spacing: -0.03em; }
+.pt-lead { max-width: 44ch; color: var(--pt-soft); }
+
+.pt-steps { display: grid; gap: 4px; margin-top: 6px; }
+.pt-steps button {
+  display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: center; gap: 12px; width: 100%; padding: 10px 12px;
+  border: 0; border-radius: 14px; background: none; color: var(--pt-soft); font: inherit; font-size: 16px; line-height: 1.3; text-align: left; cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.pt-steps button:hover { color: var(--pt-fg); background: rgba(255, 255, 255, 0.05); }
+.pt-steps button.is-now { color: var(--pt-fg); background: rgba(255, 255, 255, 0.1); }
+.pt-steps button:focus-visible { outline: 2px solid var(--pt-fg); outline-offset: 2px; }
+.pt-k { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--pt-line); font-size: 13px; font-variant-numeric: tabular-nums; transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease; }
+.pt-steps .is-past .pt-k { border-color: transparent; background: rgba(255, 255, 255, 0.16); color: var(--pt-fg); }
+.pt-steps .is-now .pt-k { border-color: transparent; background: var(--pt-fg); color: var(--ink); }
+
+.pt-now { display: grid; gap: 10px; min-height: 132px; align-content: start; }
+.pt-count { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pt-soft); }
+.pt-why { padding: 14px 16px; border-left: 2px solid rgba(255, 255, 255, 0.3); border-radius: 0 14px 14px 0; background: rgba(255, 255, 255, 0.05); font-size: 15px; line-height: 1.45; }
+.pt-why[hidden] { display: none; }
+.pt-mini { margin-bottom: 4px; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pt-soft); }
+
+.pt-tools { display: flex; flex-wrap: wrap; gap: 8px; }
+.pt-btn { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px 0 10px; border: 1px solid var(--pt-line); border-radius: 999px; background: none; color: var(--pt-fg); font: inherit; font-size: 14px; cursor: pointer; transition: border-color 0.2s ease, background 0.2s ease, opacity 0.2s ease; }
+.pt-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.pt-btn:hover { border-color: rgba(255, 255, 255, 0.4); }
+.pt-btn:disabled { opacity: 0.35; cursor: default; }
+.pt-btn:focus-visible { outline: 2px solid var(--pt-fg); outline-offset: 2px; }
+.pt.is-done [data-again] { border-color: transparent; background: var(--pt-fg); color: var(--ink); }
+
+/* телефон: рамка, внутри экраны; у каждого экрана своя прокрутка */
+.pt-phone { position: relative; justify-self: center; width: 100%; max-width: 380px; padding: 10px; border-radius: 52px; background: #0b0b0c; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 40px 80px -30px rgba(0, 0, 0, 0.7); }
+.pt-screen { position: relative; aspect-ratio: 786 / 1704; overflow: hidden; border-radius: 42px; background: #fff; isolation: isolate; }
+.pt-page { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; background: #fff; }
+.pt-page::-webkit-scrollbar { display: none; }
+.pt-page[hidden] { display: none; }
+/* точка ставится в долях картинки, а не окна телефона: длинный экран выше окна */
+.pt-canvas { position: relative; }
+.pt-page img { display: block; width: 100%; height: auto; }
+/* переход как в приложении: новый экран въезжает справа, старый уходит влево и темнеет */
+.pt-page.is-in { z-index: 2; animation: pt-in 0.42s cubic-bezier(0.3, 0.8, 0.2, 1) both; box-shadow: -12px 0 30px rgba(0, 0, 0, 0.18); }
+.pt-page.is-out { z-index: 1; animation: pt-out 0.42s cubic-bezier(0.3, 0.8, 0.2, 1) both; }
+.pt-page.is-in-back { z-index: 1; animation: pt-out 0.42s cubic-bezier(0.3, 0.8, 0.2, 1) reverse both; }
+.pt-page.is-out-back { z-index: 2; animation: pt-in 0.42s cubic-bezier(0.3, 0.8, 0.2, 1) reverse both; }
+@keyframes pt-in { from { translate: 100% 0; } to { translate: 0 0; } }
+@keyframes pt-out { from { translate: 0 0; filter: brightness(1); } to { translate: -28% 0; filter: brightness(0.7); } }
+
+/* точка нажатия: кольцо пульсирует; нажали мимо — вспышка */
+.pt-spot { position: absolute; z-index: 3; width: 56px; height: 56px; margin: -28px 0 0 -28px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; }
+.pt-spot i { position: absolute; inset: 14px; border-radius: 50%; background: rgba(36, 120, 255, 0.35); box-shadow: 0 0 0 2px #2478ff; }
+.pt-spot::before { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid #2478ff; opacity: 0; animation: pt-ring 1.8s ease-out infinite; }
+.pt-spot:hover i { background: rgba(36, 120, 255, 0.5); }
+.pt-spot:focus-visible { outline: 3px solid #2478ff; outline-offset: 2px; }
+.pt-spot.is-hint i { animation: pt-hint 0.5s ease 2; }
+@keyframes pt-ring { 0% { scale: 0.4; opacity: 0.9; } 100% { scale: 1.3; opacity: 0; } }
+@keyframes pt-hint { 50% { scale: 1.6; background: rgba(36, 120, 255, 0.6); } }
+
+@media (max-width: 860px) {
+  .pt { grid-template-columns: 1fr; padding: 20px 16px 24px; border-radius: 22px; }
+  .pt-phone { order: -1; max-width: 300px; border-radius: 44px; padding: 8px; }
+  .pt-screen { border-radius: 36px; }
+  .pt-now { min-height: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pt-live i, .pt-spot::before { animation: none; }
+  .pt-spot::before { opacity: 0.6; scale: 1.1; }
+  .pt-page.is-in, .pt-page.is-out, .pt-page.is-in-back, .pt-page.is-out-back { animation: none; }
+}
