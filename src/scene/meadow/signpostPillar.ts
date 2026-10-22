@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import type { CaseItem } from "../../data/cases";
 import { getLang } from "../../i18n";
 
@@ -17,7 +18,7 @@ const TEX_W = 768;
 const TEX_H = Math.round((TEX_W * PILLAR.h) / PILLAR.w);
 
 export const fontsReady = () =>
-  Promise.all([document.fonts.load('600 120px "Oswald"', "АБВ ABC"), document.fonts.load('500 40px "Onest"', "АБВ ABC")]).catch(() => []);
+  Promise.all([document.fonts.load('700 120px "Ugol"', "АБВ ABC"), document.fonts.load('600 40px "Onest"', "АБВ ABC")]).catch(() => []);
 
 /* длинная строка — по словам, каждая не шире панели */
 function wrap(ctx: CanvasRenderingContext2D, text: string, maxW: number) {
@@ -52,11 +53,11 @@ export function paintFace(canvas: HTMLCanvasElement, c: CaseItem, i: number) {
   const left = W * 0.16;
   const maxW = W * 0.7;
 
-  /* стрелка — толстый уголок с прямыми концами, как на фото */
+  /* стрелка — толстый уголок, как на фото. v123 (Никита): концы и вершина слегка скруглены */
   ctx.strokeStyle = ink;
   ctx.lineWidth = W * 0.075;
-  ctx.lineCap = "butt";
-  ctx.lineJoin = "miter";
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
   ctx.miterLimit = 10;
   ctx.beginPath();
   const ax = W * 0.4, ay = H * 0.052, aw = W * 0.24, ah = H * 0.098;
@@ -67,10 +68,17 @@ export function paintFace(canvas: HTMLCanvasElement, c: CaseItem, i: number) {
 
   /* «направления», как «РЕСТОРАН / RESTAURANT»: крупно заглавными узким гротеском, вплотную ниже — мелкая строка */
   let y = H * 0.585;
-  const big = (px: number) => `600 ${px}px "Oswald", "Arial Narrow", sans-serif`;
-  const small = (px: number) => `500 ${px}px "Onest", sans-serif`;
+  /* v123 (Никита): надписи столба — Ugol, жирнее (было Oswald 600), чтобы читались издалека */
+  const big = (px: number) => `700 ${px}px "Ugol", "Onest", sans-serif`;
+  const small = (px: number) => `600 ${px}px "Onest", sans-serif`;
   ctx.fillStyle = ink;
   ctx.textBaseline = "alphabetic";
+  /* жирнее, чем даёт самое плотное начертание: обводка тем же цветом поверх заливки */
+  const heavy = (text: string, x: number, yy: number, px: number) => {
+    ctx.fillText(text, x, yy);
+    ctx.lineWidth = px * 0.045; ctx.lineJoin = "round"; ctx.strokeStyle = ctx.fillStyle as string;
+    ctx.strokeText(text, x, yy);
+  };
   const entry = (head: string, sub: string, maxPx: number) => {
     /* не больше двух строк: длинное название мельчает, а не теряет слово */
     let px = maxPx, lines: string[] = [];
@@ -80,12 +88,12 @@ export function paintFace(canvas: HTMLCanvasElement, c: CaseItem, i: number) {
       lines = wrap(ctx, head.toUpperCase(), maxW);
       if (lines.length <= 2 && lines.every((l) => ctx.measureText(l).width <= maxW)) break;
     }
-    for (const l of lines) { ctx.fillText(l, left, y); y += px * 0.98; }
+    for (const l of lines) { heavy(l, left, y, px); y += px * 0.98; }
     ctx.letterSpacing = "2px";
     ctx.font = small(40);
     const subs = wrap(ctx, sub.toUpperCase(), maxW).slice(0, 2);
     y -= px * 0.44;
-    for (const l of subs) { ctx.fillText(l, left + 3, y); y += 46; }
+    for (const l of subs) { heavy(l, left + 3, y, 26); y += 46; }
     y += px * 0.92;
   };
   entry(c.title, c.tag, 122);
@@ -102,7 +110,7 @@ export function paintFace(canvas: HTMLCanvasElement, c: CaseItem, i: number) {
   const wordW = ctx.measureText(word).width;
   const blockW = Math.max(wordW, tilesW);
   const bx = left + (maxW - blockW) * 0.5;
-  ctx.fillText(word, bx + (blockW - wordW) / 2, by - tile * 0.2);
+  heavy(word, bx + (blockW - wordW) / 2, by - tile * 0.2, 96);
   digits.forEach((d, n) => {
     const tx = bx + (blockW - tilesW) / 2 + n * (tile + gap);
     ctx.fillStyle = ink;
@@ -112,7 +120,7 @@ export function paintFace(canvas: HTMLCanvasElement, c: CaseItem, i: number) {
     ctx.fillStyle = "#ffffff";
     ctx.font = big(Math.round(tile * 0.84));
     const dw = ctx.measureText(d).width;
-    ctx.fillText(d, tx + (tile - dw) / 2, by + tile * 0.87);
+    heavy(d, tx + (tile - dw) / 2, by + tile * 0.87, tile * 0.84);
   });
 }
 
@@ -164,13 +172,15 @@ export function buildPillar(shadows: boolean, glow: number, res = 1): Pillar {
   face.anisotropy = 16;
 
   /* короб: лицо (+z) с панелью, остальные грани — ровный акрил; верх и низ — металл */
-  const box = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), [sideGlow, sideGlow, metal, metal, faceMaterial(face, glow), sideGlow]);
+  /* v123 (Никита): углы короба, стоек, крышки и цоколя слегка скруглены. RoundedBoxGeometry сохраняет шесть групп
+     граней BoxGeometry — материалы по граням те же */
+  const box = new THREE.Mesh(new RoundedBoxGeometry(w, h, d, 3, 0.06), [sideGlow, sideGlow, metal, metal, faceMaterial(face, glow), sideGlow]);
   box.position.y = base + h / 2;
   group.add(box);
 
   /* стойки: спереди — паз между лицом и боковой гранью (на фото тёмная полоса у края лица), сзади тонкие */
   const post = (pw: number, pd: number, x: number, z: number) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(pw, h + 0.012, pd), metal);
+    const m = new THREE.Mesh(new RoundedBoxGeometry(pw, h + 0.012, pd, 2, Math.min(pw, pd) * 0.45), metal);
     m.position.set(x, base + h / 2, z);
     group.add(m);
   };
@@ -180,10 +190,10 @@ export function buildPillar(shadows: boolean, glow: number, res = 1): Pillar {
   post(0.026, 0.026, -w / 2 + 0.009, -d / 2 + 0.009);
   post(0.026, 0.026, w / 2 - 0.009, -d / 2 + 0.009);
   /* крышка и цоколь; цоколь уходит в землю — на склоне не видно щели */
-  const cap = new THREE.Mesh(new THREE.BoxGeometry(w + 0.012, 0.028, d + 0.012), metal);
+  const cap = new THREE.Mesh(new RoundedBoxGeometry(w + 0.012, 0.028, d + 0.012, 2, 0.013), metal);
   cap.position.y = base + h + 0.011;
   group.add(cap);
-  const plinth = new THREE.Mesh(new THREE.BoxGeometry(w - 0.04, base + 0.45, d - 0.04), metal);
+  const plinth = new THREE.Mesh(new RoundedBoxGeometry(w - 0.04, base + 0.45, d - 0.04, 2, 0.03), metal);
   plinth.position.y = (base - 0.45) / 2;
   group.add(plinth);
 
