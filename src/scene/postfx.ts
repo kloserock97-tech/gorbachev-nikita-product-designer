@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { FullScreenQuad } from "three/examples/jsm/postprocessing/Pass.js";
 import { finalFragment, fullscreenVertex, godBlurFragment, godMaskFragment, quarterFragment } from "./shaders";
 import { TRANSITION } from "./story";
+import { wordsTexture } from "./bgWords";
 
 /* Постобработка — своя короткая цепочка вместо EffectComposer.
    Замеры на Intel Arc (экран 2.25, readPixels-бенчмарк) показали, что дороги
@@ -36,6 +37,8 @@ export type PostFx = {
     /* v17, светлая страница с глубиной (как oryzo): studio 0…1 — сила студийного фона,
        pcRect — прямоугольник компьютера в UV кадра (x0, y0, x1, y1), spot — центр светового пятна */
     studio: number; pcRect: THREE.Vector4; spot: THREE.Vector2; igloo: THREE.Vector4;
+    /* v121: размытые слова в тумане About (bgWords.ts): x — сила, y, z — курсор −1…1 */
+    words: THREE.Vector4;
     /* v18: бегущая строка за компьютером (текстура, доля ширины/высоты, сдвиг, центр по y, высота полосы) */
     kinetic: number; kineticTex: THREE.Texture | null; kineticRatio: number; kineticShift: number; kineticY: number; kineticH: number;
     /* v19: при превращении в заголовок остаётся только «Hi there!» копии N: (N, доля ширины, сила) */
@@ -165,6 +168,7 @@ export function createPostFx(
     pcRect: new THREE.Vector4(0.4, 0.3, 0.6, 0.7),
     spot: new THREE.Vector2(0.5, 0.55),
     igloo: new THREE.Vector4(0, 0, 0, 0),
+    words: new THREE.Vector4(0, 0, 0, 0),
     kinetic: 0,
     kineticTex: null as THREE.Texture | null,
     kineticRatio: 1,
@@ -214,6 +218,8 @@ export function createPostFx(
       uOverlay: { value: 0 },
       uStudio: { value: 0 },
       uIgloo: { value: new THREE.Vector4(0, 0, 0, 0) },
+      tWords: { value: wordsTexture() },
+      uWords: { value: params.words },
       uPCRect: { value: params.pcRect },
       uSpot: { value: params.spot },
       tKinetic: { value: null as THREE.Texture | null },

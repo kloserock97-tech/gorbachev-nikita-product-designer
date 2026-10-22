@@ -2,7 +2,7 @@ import { CASES, CHAPTER, CHAPTER2, FOOTER, STORY, STORY_FX, chapters, portalAt, 
 import { onTimeline, storyBounds } from "./storyScroll";
 import { cue } from "../audio/bus";
 import { onLang, t as tr } from "../i18n";
-import { initPcHud } from "./pcHud";
+import { decode, initPcHud } from "./pcHud";
 import { initCasesHud } from "./casesHud";
 
 /* DOM-слой скролл-истории: прогресс прокрутки → сцена, и тексты экрана About портфолио
@@ -241,11 +241,18 @@ export function initStory(scene: Scene) {
     };
   }
 
-  /* ── «and this is Kelly»: подпись над полароидом, пока открыт экран About ── */
+  /* ── «and this is Kelly»: подпись над полароидом, пока открыт экран About.
+     v121 (Никита): подпись-досье, как у компьютера (pcHud): от верха полароида линия уходит вверх наискосок и дальше
+     горизонтально под подписью; линия дорисовывается за 0,2 с, буквы перебираются 0,75 с. Если слева не помещается
+     (телефон) — линия уходит вправо ── */
   const note = document.querySelector<HTMLElement>(".kelly-note");
-  if (note) {
-    let noteOn = false;
-    let lastKey = "";
+  const tag = note?.querySelector<HTMLElement>(".kelly-tag");
+  const textEl = note?.querySelector<HTMLElement>("[data-kelly-text]");
+  const lead = note?.querySelector<SVGPathElement>(".kelly-lead path");
+  const source = note?.querySelector<HTMLElement>("[data-i18n='kelly.note']");
+  if (note && tag && textEl && lead && source) {
+    let noteOn = false, t0 = 0;
+    let lastKey = "", lastPath = "";
     const prevFrame = scene.onStoryFrame;
     scene.onStoryFrame = () => {
       prevFrame?.();
@@ -253,11 +260,30 @@ export function initStory(scene: Scene) {
       const want = s > STORY.textOn + 0.02 && c <= 0;
       const pt = want ? scene.kellyClientPoint?.() : null;
       const next = !!pt;
-      if (next !== noteOn) { noteOn = next; note.classList.toggle("is-on", noteOn); }
+      const now = performance.now();
+      if (next !== noteOn) {
+        noteOn = next;
+        note.classList.toggle("is-on", noteOn);
+        if (noteOn) { t0 = now; cue("hover", 0.3); }
+      }
       if (!pt) return;
-      /* стрелка упирается в верхний край карточки, чуть правее центра */
-      const key = `translate3d(${(pt.x + pt.w * 0.15).toFixed(0)}px, ${(pt.y - 4).toFixed(0)}px, 0)`;
+      const target = source.textContent ?? "";
+      const k = Math.min(1, Math.max(0, (now - t0 - 200) / 750));
+      const shown = decode(target, k, 11);
+      if (textEl.textContent !== shown) textEl.textContent = shown;
+      /* линия: наискосок вверх на d, потом горизонтально под подписью */
+      const d = Math.max(22, Math.min(40, pt.w * 0.35));
+      const w = tag.offsetWidth || 140;
+      const x0 = pt.x + pt.w * 0.15, y0 = pt.y - 2;
+      const side = x0 - d - w < 12 ? 1 : -1;
+      const key = `translate3d(${x0.toFixed(0)}px, ${y0.toFixed(0)}px, 0)`;
       if (key !== lastKey) { lastKey = key; note.style.transform = key; }
+      const path = `M0 0 L${side * d} ${-d} L${side * (d + w)} ${-d}`;
+      if (path !== lastPath) {
+        lastPath = path;
+        lead.setAttribute("d", path);
+        tag.style.transform = `translate(${side < 0 ? -(d + w) : d}px, ${-d - 6}px) translateY(-100%)`;
+      }
     };
   }
 

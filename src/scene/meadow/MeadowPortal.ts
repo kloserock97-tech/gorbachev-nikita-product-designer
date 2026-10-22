@@ -40,11 +40,13 @@ export class MeadowPortal {
   private readonly ring: PortalRing | null;
   private readonly ground: PortalGround;
   private readonly window = new THREE.ShaderMaterial({
-    uniforms: { tDestination: { value: null as THREE.Texture | null }, uOpacity: { value: 0 }, uTime: { value: 0 }, uProgress: { value: 0 } },
+    uniforms: { tDestination: { value: null as THREE.Texture | null }, uOpacity: { value: 0 }, uTime: { value: 0 }, uProgress: { value: 0 },
+      uCenter: { value: new THREE.Vector2(0.5, 0.5) }, uAspect: { value: 1 } },
     vertexShader: `varying vec4 vClip; varying vec2 vLocal;
       void main() { vLocal = position.xy;
         vClip = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = vClip; }`,
     fragmentShader: `uniform sampler2D tDestination; uniform float uOpacity; uniform float uTime; uniform float uProgress;
+      uniform vec2 uCenter; uniform float uAspect;
       varying vec4 vClip; varying vec2 vLocal;
       void main() {
         ${IVY ? `vec2 q = abs(vLocal) - vec2(${WIDTH / 2 - RADIUS}, ${HEIGHT / 2 - RADIUS});
@@ -60,6 +62,13 @@ export class MeadowPortal {
         vec2 uv = vClip.xy / vClip.w * 0.5 + 0.5;
         float membrane = exp(-abs(d) * 6.0) * (1.0 - smoothstep(0.5, 0.8, uProgress));
         uv += vec2(sin(vLocal.y * 9.0 + uTime * 0.65), cos(vLocal.x * 8.0 - uTime * 0.4)) * 0.002 * membrane;
+        ${IVY ? "" : `/* v121: у кромки картинку чуть затягивает внутрь и закручивает — воздух уходит в окно. К входу гаснет:
+           последний кадр портала совпадает с подвалом */
+        float pull = exp(min(d, 0.0) * 2.2) * (1.0 - smoothstep(0.55, 0.85, uProgress));
+        vec2 o = (uv - uCenter) * vec2(uAspect, 1.0);
+        float tw = pull * (0.07 + 0.02 * sin(uTime * 0.9));
+        o = mat2(cos(tw), sin(tw), -sin(tw), cos(tw)) * o * (1.0 + pull * 0.05);
+        uv = uCenter + o / vec2(uAspect, 1.0);`}
         vec3 destination = texture2D(tDestination, uv).rgb;
         vec3 col = mix(light * (rim + halo), destination + light * rim * 0.16, inside);
         ${IVY ? "" : `/* силовое поле: светлые кольца бегут к центру у кромки и гаснут, пока камера не вошла */
@@ -84,6 +93,11 @@ export class MeadowPortal {
   }
 
   setDestination(texture: THREE.Texture) { this.window.uniforms.tDestination.value = texture; }
+  /** v121: куда клонится трава — центр портала на земле (x, z) и сила тяги 0…1; null — портала нет */
+  sink(): { x: number; z: number; k: number } | null {
+    if (IVY || !this.anchored || !this.group.visible) return null;
+    return { x: this.group.position.x, z: this.group.position.z, k: smooth(0.08, 0.35, this.progress) * (1 - smooth(0.85, 0.97, this.progress)) };
+  }
   setSize(height: number, dpr: number) { this.garden?.setSize(height, dpr); this.ring?.setSize(height, dpr); }
 
   update(camera: THREE.PerspectiveCamera, progress: number, time: number, sea: number, windTime: number, pointer?: THREE.Vector2 | null) {
@@ -141,6 +155,9 @@ export class MeadowPortal {
     this.group.updateMatrixWorld(true);
     /* расстояние — после того как портал поставил камеру: луг каждый кадр сначала ставит её на свою дорожку, далеко */
     this.ring?.update(windTime, appear, camera.position.distanceTo(this.group.position));
+    this.point.copy(this.group.position).project(camera);
+    this.window.uniforms.uCenter.value.set(this.point.x * 0.5 + 0.5, this.point.y * 0.5 + 0.5);
+    this.window.uniforms.uAspect.value = camera.aspect;
   }
 
   /** The real DOM footer follows the rounded opening, inset from its living edge. */

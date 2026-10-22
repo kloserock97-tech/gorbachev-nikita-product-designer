@@ -303,10 +303,12 @@
   <span class="vf-label vf-label--bl" data-vf-size>000 × 000 px</span>
   <span class="vf-label vf-label--br" data-vf-coords>X 0000  Y 0000</span>
 </div>
-<!-- v23: рукописная подпись над полароидом Келли на мониторе; положение пишет storyHero по проекции карточки -->
-<div class="kelly-note" aria-hidden="true">
-  <span class="kelly-text"><span data-i18n="kelly.note">and this is Kelly</span> <svg class="kelly-smile" viewBox="0 0 40 40"><circle cx="20" cy="20" r="16"/><path d="M13.5 16.5v.5M26.5 16.5v.5"/><path d="M12.5 23.5c4 6 11 6 15 0"/></svg></span>
-  <svg class="kelly-arrow" viewBox="0 0 120 110"><path class="kelly-arc" d="M12 10 C 52 2, 104 26, 88 82"/><path class="kelly-head" d="M74 70 L 88 84 L 100 66"/></svg>
+<!-- v23: подпись над полароидом Келли на мониторе; положение пишет storyHero по проекции карточки.
+     v121 (Никита): вместо рукописной — подпись-досье, как у компьютера: моноширинная, с выносной линией к полароиду -->
+<div class="kelly-note kelly-note--dossier" aria-hidden="true">
+  <svg class="kelly-lead"><path pathLength="1"/></svg>
+  <span class="kelly-tag"><b>KELLY_01</b><b data-kelly-text></b></span>
+  <span hidden data-i18n="kelly.note">and this is Kelly</span>
 </div>
 <!-- v24: Келли спит клубочком на кресле в футере — «z z z» над головой; положение пишет storyHero по проекции -->
 <div class="kelly-zzz" aria-hidden="true"><i>z</i><i>z</i><i>z</i></div>

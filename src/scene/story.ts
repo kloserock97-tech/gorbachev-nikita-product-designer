@@ -266,7 +266,8 @@ export function casesCamera(c: number, pos: THREE.Vector3, look: THREE.Vector3) 
 }
 
 export const STORY_FX = {
-  kinetic: flags.get("kinetic") !== "0",
+  /* v121 (Никита): бегущая строка «Привет! Я Никита…» уступила место размытым словам в глубине (pcHud.ts), как у igloo; ?kinetic=1 — вернуть */
+  kinetic: flags.get("kinetic") === "1",
   finder: flags.get("finder") !== "0",
   spin: flags.get("spin") !== "0",
   hud: flags.get("hud") !== "0",

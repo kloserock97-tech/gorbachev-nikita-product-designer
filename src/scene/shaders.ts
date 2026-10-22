@@ -1454,6 +1454,9 @@ uniform vec2 uSpot;        /* центр светового пятна за ко
    мерцающих точек. x — сила, y — время, с, z — прокрутка истории (туман и точки сдвигаются с ней), w — спокойствие:
    на странице About туман светлее и ровнее, чтобы тёмный текст читался */
 uniform vec4 uIgloo;
+/* v121: размытые слова в глубине тумана — три слоя в каналах R, G, B (bgWords.ts); x — сила, yz — курсор −1…1 */
+uniform sampler2D tWords;
+uniform vec4 uWords;
 uniform sampler2D tKinetic; /* v18: бегущая строка за компьютером */
 uniform float uKinetic;
 uniform vec4 uKinetic2;    /* ширина/высота текстуры, сдвиг, центр полосы по y, высота полосы */
@@ -1750,18 +1753,30 @@ void main(){
         float ft = uIgloo.y * 0.05;
         /* два слоя шума плывут навстречу друг другу и вверх по прокрутке — облака светлого и тёмного воздуха */
         float n = vnoise(fq * 1.1 + vec2(ft, -uIgloo.z * 1.2)) * 0.65 + vnoise(fq * 2.2 + vec2(-ft * 1.4, ft * 0.6 - uIgloo.z * 0.8) + 11.3) * 0.35;
-        /* v116 (прожарка): туман чуть теплее холодного серо-голубого igloo — ближе к закату, из которого пришли */
-        vec3 fogLight = vec3(0.86, 0.855, 0.865), fogDark = vec3(0.47, 0.465, 0.49);
-        vec3 fog = mix(fogLight, mix(fogDark, fogLight, uIgloo.w * 0.6), smoothstep(0.28, 0.82, n));
-        /* сетка точек: ~26 рядов на кадр, каждая точка гаснет и загорается в своём ритме (треугольная волна от хэша
-           клетки); едет с прокруткой */
-        vec2 cu = fq * 30.0 + vec2(0.0, uIgloo.z * 10.0);
-        vec2 cf = fract(cu) - 0.5;
+        /* v121 (прожарка по igloo, Никита: «больше сходства»): вместо тёмных пятен — ровная диагональ, как у igloo:
+           слева внизу темнее, справа вверху светлее; шум лишь чуть гуляет по ней. Холоднее, чем в v116. Когда компьютер
+           встал и появились тексты, тёмный угол светлеет — «Привет!» слева внизу должен читаться */
+        float diag = clamp(uv.x * 0.62 + uv.y * 0.38 + (n - 0.5) * 0.5, 0.0, 1.0);
+        vec3 fogLight = vec3(0.875, 0.885, 0.91), fogDark = mix(vec3(0.43, 0.445, 0.49), vec3(0.74, 0.75, 0.775), uIgloo.w);
+        vec3 fog = mix(fogDark, fogLight, smoothstep(0.0, 0.95, diag));
+        /* сетка точек: редкая, как у igloo (~10 рядов на кадр), точки мелкие; каждая гаснет и загорается в своём ритме
+           (треугольная волна от хэша клетки); едет с прокруткой */
+        vec2 cu = fq * vec2(13.5, 10.0) + vec2(0.0, uIgloo.z * 3.5);
+        vec2 cf = (fract(cu) - 0.5) * vec2(10.0 / 13.5, 1.0);
         float id = hash21(floor(cu) + 17.0);
         float blink = 1.0 - abs(fract(id * 3.7 + uIgloo.y * 0.11) - 0.5) * 2.0;
         float r = length(cf);
-        float dotA = 1.0 - smoothstep(0.022, 0.022 + fwidth(r) * 1.2, r);
-        fog += dotA * blink * (0.5 - 0.2 * uIgloo.w);
+        float dotA = 1.0 - smoothstep(0.016, 0.016 + fwidth(r) * 1.2, r);
+        fog += dotA * blink * (0.55 - 0.2 * uIgloo.w);
+        /* слова светлее тумана, как у igloo: дальний слой почти стоит, ближний едет с прокруткой и курсором сильнее */
+        if (uWords.x > 0.001) {
+          vec2 wq = vec2(uv.x * aspect * 0.5, uv.y);
+          float wf = texture2D(tWords, wq + vec2(uIgloo.y * 0.003, -uIgloo.z * 0.35) + uWords.yz * 0.006).r;
+          float wm = texture2D(tWords, wq + vec2(0.37 - uIgloo.y * 0.005, 0.21 - uIgloo.z * 0.65) + uWords.yz * 0.013).g;
+          float wn = texture2D(tWords, wq + vec2(0.61 + uIgloo.y * 0.008, 0.53 - uIgloo.z * 1.05) + uWords.yz * 0.024).b;
+          float wl = wf * 0.24 + wm * 0.3 + wn * 0.34;
+          fog = mix(fog, vec3(0.975, 0.98, 0.995), wl * uWords.x);
+        }
         room = mix(room, fog, uIgloo.x);
       }
       room *= 1.0 - exp(-dot(cs, cs) * 1.4) * 0.2;

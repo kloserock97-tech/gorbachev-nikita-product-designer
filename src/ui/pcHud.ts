@@ -9,8 +9,8 @@
      человек за компьютером).
    · Вокруг — созвездие: точки-крестики на невидимом цилиндре вокруг компьютера медленно обходят его, соседние
      соединяются пунктиром, линия прорастает за 0,35 с и так же убирается.
-   · v115: размытые слова в глубине убраны (прожарка) — эту роль играет бегущая строка «Привет! Я Никита…», на ходу
-     она серая и стоит за компьютером, как фоновые слова igloo.
+   · v115: размытые слова в глубине убраны (прожарка) — эту роль играла бегущая строка «Привет! Я Никита…».
+     v121: строка выключена, размытые слова вернулись — уже в шейдере фона, за компьютером (bgWords.ts).
    Всё рисуется в DOM и одном 2D-холсте поверх сцены; читается из сцены только прямоугольник компьютера. */
 import { STORY, chapters, trap } from "../scene/story";
 import { cue } from "../audio/bus";
@@ -29,6 +29,22 @@ const SHOW: [number, number, number, number] = [0.3, 0.42, 0.84, 0.89];
 const AT = { title: 0.42, temp: 0.56, date: 0.7 };
 const GLYPHS_EN = "ABCDEFGHJKLMNPQRSTUVWXYZ0123456789#/_";
 const GLYPHS_RU = "АБВГДЕЖЗИКЛМНПРСТУФХЦЧШЭЯ0123456789#/_";
+const rnd = (i: number, k: number) => { const x = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); };
+const reducedMotion = typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+/** перебор букв: k 0…1 — волна слева направо, буква садится на место, когда волна дошла; до этого — случайные знаки,
+ *  меняются 20 раз в секунду. При «меньше движения» подпись просто проявляется. v121: общий для досье и Келли */
+export function decode(target: string, k: number, seed: number) {
+  if (k >= 1 || reducedMotion) return target;
+  const glyphs = getLang() === "ru" ? GLYPHS_RU : GLYPHS_EN;
+  let out = "";
+  for (let i = 0; i < target.length; i++) {
+    const ch = target[i];
+    const settle = (i / Math.max(1, target.length)) * 0.75 + 0.2;
+    if (ch === " " || k >= settle) out += ch;
+    else out += glyphs[Math.floor(rnd(i + seed, Math.floor(performance.now() / 50)) * glyphs.length)];
+  }
+  return out;
+}
 
 
 export function initPcHud(scene: Scene) {
@@ -59,28 +75,14 @@ export function initPcHud(scene: Scene) {
   resize();
   addEventListener("resize", resize);
 
-  const rnd = (i: number, k: number) => { const x = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); };
 
   /* тексты подписей: строка → перебор букв до места */
   const today = () => { const d = new Date(); const p = (n: number) => String(n).padStart(2, "0"); return `D ${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`; };
   const texts = () => ({ "0": "PORTFOLIO_NG_01", "1": t("hud.role"), d: today(), hint: t("hud.hint") } as Record<string, string>);
   let source = texts();
   onLang(() => { source = texts(); });
-  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const scramble = (target: string, k: number, seed: number) => {
-    /* при «меньше движения» буквы не перебираются — подпись просто проявляется */
-    if (k >= 1 || reduced) return target;
-    const glyphs = getLang() === "ru" ? GLYPHS_RU : GLYPHS_EN;
-    let out = "";
-    for (let i = 0; i < target.length; i++) {
-      const ch = target[i];
-      /* буква садится, когда волна дошла до её места; до этого — случайные знаки, меняются 20 раз в секунду */
-      const settle = (i / Math.max(1, target.length)) * 0.75 + 0.2;
-      if (ch === " " || k >= settle) out += ch;
-      else out += glyphs[Math.floor(rnd(i + seed, Math.floor(performance.now() / 50)) * glyphs.length)];
-    }
-    return out;
-  };
+  const reduced = reducedMotion;
+  const scramble = decode;
 
   /* текст пишется, только когда изменился: иначе браузер перекладывал бы подписи каждый кадр */
   const put = (el: HTMLElement, text: string) => { if (el.textContent !== text) el.textContent = text; };
@@ -206,8 +208,8 @@ export function initPcHud(scene: Scene) {
     });
     /* связи: только между точками перед компьютером (z > −0.2), ближе 0,7 R, не больше трёх на точку */
     const deg = new Array(N).fill(0);
-    ctx.setLineDash([4, 5]);
-    ctx.strokeStyle = "rgba(28, 32, 40, 0.38)";
+    /* v121: сплошные тонкие линии, как у igloo (был пунктир) */
+    ctx.strokeStyle = "rgba(28, 32, 40, 0.34)";
     for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
       const key = i * 64 + j;
       const [x1, y1, z1] = xy[i], [x2, y2, z2] = xy[j];

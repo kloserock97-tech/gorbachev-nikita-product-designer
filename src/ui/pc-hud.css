@@ -28,3 +28,21 @@
   .pc-dossier__label { font-size: 10px; }
 }
 @media (prefers-reduced-motion: reduce) { .pc-dossier__label { transition: none; } }
+
+/* v121 (Никита): «а это Келли» — подпись-досье у полароида, тем же языком, что и подписи компьютера (storyHero.ts) */
+.kelly-note.kelly-note--dossier {
+  font: 500 clamp(11px, 0.95vw, 15px) / 1.15 "Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  color: rgba(24, 27, 34, 0.86);
+}
+.kelly-note.kelly-note--dossier::before { content: ""; position: absolute; left: -1.5px; top: -1.5px; width: 3px; height: 3px; background: rgba(28, 32, 40, 0.8); }
+.kelly-lead { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; }
+.kelly-lead path { fill: none; stroke: rgba(28, 32, 40, 0.62); stroke-width: 1; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.kelly-note.is-on .kelly-lead path { stroke-dashoffset: 0; transition: stroke-dashoffset 0.2s linear; }
+.kelly-tag {
+  position: absolute; left: 0; top: 0; display: flex; flex-direction: column; gap: 2px;
+  white-space: pre; text-transform: uppercase; letter-spacing: 0.02em; opacity: 0;
+}
+.kelly-tag b { font-weight: 500; }
+.kelly-note.is-on .kelly-tag { opacity: 1; transition: opacity 0.4s linear 0.15s; }
+@media (max-width: 900px) { .kelly-note.kelly-note--dossier { font-size: 10px; } }
+@media (prefers-reduced-motion: reduce) { .kelly-note.is-on .kelly-lead path, .kelly-note.is-on .kelly-tag { transition: none; } }

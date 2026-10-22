@@ -87,6 +87,7 @@ const HERO_PULL = Number(new URLSearchParams(location.search).get("pull") ?? 1);
 const HERO_PULL_DIR = new THREE.Vector3(0.7, 0.53, 2.0);
 const HERO_PULL_OFF = new THREE.Vector3();
 const PC_BG = !/[?&]pcbg=0/.test(location.search);
+const WORDS = !/[?&]words=0/.test(location.search);
 const FOV_KICK = !/[?&]fovkick=0/.test(location.search);
 const BASE_FOV = 30;
 const TUMBLE = !/[?&]tumble=0/.test(location.search);
@@ -1495,6 +1496,8 @@ export class HillScene {
     fx.studio = studioMix;
     /* v113: фон вылета — туман и мерцающие точки (shaders.ts uIgloo); на странице About спокойнее. ?pcbg=0 — прежняя студия */
     fx.igloo.set(PC_BG ? studioMix : 0, this.uniforms.uTime.value, s, ramp(s, 0.84, 0.95));
+    /* v121: размытые слова в глубине (вместо бегущей строки); на странице с текстами бледнеют. ?words=0 — без них */
+    fx.words.set(PC_BG && WORDS ? studioMix * (1 - 0.65 * ramp(s, 0.84, 0.95)) : 0, this.pointerSmooth.x, this.pointerSmooth.y, 0);
     /* v19: бегущая строка «Hi there! I’m Nikita…» — едет за компьютером, тормозит и встаёт
        заголовком левой колонки (updateKinetic) */
     this.updateKinetic(s);

@@ -134,6 +134,8 @@ export class Meadow {
     uWaves: { value: Array.from({ length: 16 }, () => new THREE.Vector4(1e5, 0, 1e5, -1)) },
     uFieldBounds: { value: new THREE.Vector4(1e5, 1e5, -1e5, -1e5) },
     uDpr: { value: 1 },
+    /* v121: портал тянет воздух — трава вокруг клонится к нему (x, z центра, сила 0…1) */
+    uSink: { value: new THREE.Vector4(1e5, 1e5, 0, 0) },
   };
 
   /* прогулка */
@@ -363,7 +365,7 @@ export class Meadow {
           uHeight: U.uHeight, uCenter: U.uCenter, uSize: U.uSize, uTexel: U.uTexel,
           uGrassCenter: { value: center }, uGrassTile: { value: L.tile },
           uBladeH: { value: new THREE.Vector2(L.height[0], L.height[1]) }, uBladeW: { value: new THREE.Vector2(L.width[0], L.width[1]) },
-          uTime: U.uTime, uWindTime: U.uWindTime, uSea: U.uSea,
+          uTime: U.uTime, uWindTime: U.uWindTime, uSea: U.uSea, uSink: U.uSink,
           uHead: U.uHead, uWaves: U.uWaves, uFieldBounds: U.uFieldBounds, uCam: U.uCam,
         });
         sh.vertexShader = sh.vertexShader
@@ -374,7 +376,7 @@ export class Meadow {
             uniform vec3 uCam;
             attribute vec4 aSeed;
             uniform vec2 uGrassCenter; uniform float uGrassTile; uniform vec2 uBladeH; uniform vec2 uBladeW;
-            uniform float uTime; uniform float uWindTime; uniform float uSea;
+            uniform float uTime; uniform float uWindTime; uniform float uSea; uniform vec4 uSink;
             varying float vGrassY; varying float vGrassTint; varying float vFlower; varying float vGlow;`)
           .replace("#include <beginnormal_vertex>", "vec3 objectNormal = vec3(0.0, 1.0, 0.0);")
           .replace("#include <begin_vertex>", /* glsl */ `
@@ -422,6 +424,13 @@ export class Meadow {
                       + vec2(cos(r1 * 6.2832 + 1.3), sin(r1 * 6.2832 + 1.3)) * (0.08 + 0.14 * r3);
             vec3 field = cursorField(wxz);
             bend += field.xy * 1.6;
+            /* v121: у портала травинки клонятся к нему и чуть по кругу, порывами — воздух уходит в окно */
+            if (uSink.z > 0.001) {
+              vec2 toS = uSink.xy - wxz;
+              float ds = max(length(toS), 0.5);
+              float sk = uSink.z * exp(-ds * ds / 220.0) * (0.75 + 0.25 * sin(uWindTime * 2.3 + ds * 0.8 + r1 * 3.0));
+              bend += (toS / ds * 0.6 + vec2(-toS.y, toS.x) / ds * 0.2) * sk;
+            }
             float bl = length(bend);
             if (bl > 1.2) bend *= 1.2 / bl;
             float yy = position.y;
@@ -734,6 +743,8 @@ export class Meadow {
     this.camera.updateMatrixWorld();
 
     this.portal.update(this.camera, this.portalProgress, t, sea, U.uWindTime.value, this.hover ? this.pointer : null);
+    const sink = this.portal.sink();
+    U.uSink.value.set(sink?.x ?? 1e5, sink?.z ?? 1e5, sink?.k ?? 0, 0);
     if (this.portalProgress > 0) {
       x = this.camera.position.x;
       z = this.camera.position.z;

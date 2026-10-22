@@ -1,68 +1,148 @@
 import * as THREE from "three";
+import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 /* v113 (Никита, по мотивам портала igloo.inc; геометрия, шейдеры и числа свои): кольцо из расколотых «кирпичей» вместо
    рамки из плюща. Как устроено:
-   · Геометрия строится здесь: два слоя по радиусу, в каждом ~30 кирпичей случайной ширины со швами между ними;
-     каждый кирпич — призма из кольцевого сектора. У каждой вершины — центр её кирпича (aCentr) и случайный вектор
-     (aRand), по ним вершинный шейдер двигает кирпичи по отдельности.
-   · Пока камера далеко, кольцо «рассыпано»: кирпичи повёрнуты вокруг своих центров и отодвинуты наружу; по мере
-     подлёта собираются в ровное кольцо и только дышат.
-   · Внутренняя кромка светится, свет течёт шумом и уходит за единицу — ореол даёт отдельный плоский слой вокруг кромки
-     (блума в сцене луга нет).
-   · Пыль — короткие светлые штрихи, вытянутые вдоль пути камеры, медленно кружат в кольце. */
+   · У каждой вершины — центр её блока (aCentr) и случайный вектор (aRand), по ним вершинный шейдер двигает блоки по
+     отдельности: пока камера далеко, кольцо «рассыпано», на подлёте собирается в ровное и только дышит.
+   · Внутренняя кромка светится, свет течёт шумом и уходит за единицу — ореол даёт отдельный плоский слой вокруг кромки.
+   v121 (Никита: «блоки потолще, пофактурнее; у igloo воздух затягивается внутрь»):
+   · блоки — один ряд из ~14 крупных и толстых (глубина 1 м против 0,5), скруглённые, с выщербинами и сколами
+     (подразбитый брусок, шум сдвигает вершины), фактура камня в шейдере: зерно, раковины, светлые стёртые рёбра,
+     тень в швах, тёплый свет окна на внутренних гранях;
+   · втягивание — три слоя движутся к центру: штрихи-«воздух» по спирали снаружи в окно, ускоряясь (вместо кружащей
+     пыли); дымная воронка перед кольцом — шум бежит по логарифмической спирали внутрь; кольцо медленно
+     проворачивается на подлёте. Трава у портала клонится к нему (Meadow, uSink), картинка в окне у кромки слегка
+     закручивается (MeadowPortal). */
 
 export const RING_IN = 3.05;
-export const RING_OUT = 3.95;
-const DEPTH = 0.5;
+export const RING_OUT = 4.3;
+const DEPTH = 1.0;
 
 function rng(seed: number) {
   let s = seed >>> 0;
   return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; };
 }
 
+/* шум для сколов: значения в узлах решётки, плавная интерполяция */
+function hash3(x: number, y: number, z: number) {
+  const h = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453;
+  return h - Math.floor(h);
+}
+function vnoise(x: number, y: number, z: number) {
+  const ix = Math.floor(x), iy = Math.floor(y), iz = Math.floor(z);
+  const fx = x - ix, fy = y - iy, fz = z - iz;
+  const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy), sz = fz * fz * (3 - 2 * fz);
+  const l = (a: number, b: number, t: number) => a + (b - a) * t;
+  const c = (dx: number, dy: number, dz: number) => hash3(ix + dx, iy + dy, iz + dz);
+  return l(l(l(c(0, 0, 0), c(1, 0, 0), sx), l(c(0, 1, 0), c(1, 1, 0), sx), sy),
+           l(l(c(0, 0, 1), c(1, 0, 1), sx), l(c(0, 1, 1), c(1, 1, 1), sx), sy), sz);
+}
+
+/* грани бруска: нормаль и две оси в плоскости, u × v = n — обход против часовой снаружи */
+const FACES: [number, number, number][] = [[0, 1, 2], [0, 2, 1], [1, 2, 0], [1, 0, 2], [2, 0, 1], [2, 1, 0]];
+const SIGNS = [1, -1, 1, -1, 1, -1];
+
 function buildBricks() {
   const random = rng(40213);
-  const pos: number[] = [], cen: number[] = [], rnd: number[] = [];
-  const layers: [number, number][] = [[RING_IN, (RING_IN + RING_OUT) / 2 + 0.02], [(RING_IN + RING_OUT) / 2 - 0.02, RING_OUT]];
-  layers.forEach(([r0, r1], li) => {
-    let a = random() * 0.2 + li * 0.11;
-    const end = a + Math.PI * 2;
-    while (a < end - 0.05) {
-      const w = Math.min(end - a, 0.15 + random() * 0.17);
-      const a0 = a + 0.012, a1 = a + w - 0.012;
-      /* неровные края: радиусы и глубина у каждого кирпича свои */
-      const ri = r0 + 0.02 + random() * 0.05, ro = r1 - 0.02 - random() * 0.06;
-      const z0 = -DEPTH / 2 + random() * 0.12, z1 = DEPTH / 2 - random() * 0.12;
-      const steps = 3;
-      const ring = (r: number, z: number) => Array.from({ length: steps + 1 }, (_, i) => {
-        const t = a0 + ((a1 - a0) * i) / steps;
-        return new THREE.Vector3(Math.cos(t) * r, Math.sin(t) * r, z);
-      });
-      const fi = ring(ri, z1), fo = ring(ro, z1), bi = ring(ri, z0), bo = ring(ro, z0);
-      const quad = (p: THREE.Vector3, q: THREE.Vector3, r: THREE.Vector3, s: THREE.Vector3) => { pos.push(...p.toArray(), ...q.toArray(), ...r.toArray(), ...p.toArray(), ...r.toArray(), ...s.toArray()); };
-      const start = pos.length;
-      for (let i = 0; i < steps; i++) {
-        quad(fi[i], fo[i], fo[i + 1], fi[i + 1]); // перед
-        quad(bi[i + 1], bo[i + 1], bo[i], bi[i]); // зад
-        quad(bi[i], fi[i], fi[i + 1], bi[i + 1]); // внутренняя кромка
-        quad(fo[i], bo[i], bo[i + 1], fo[i + 1]); // наружная
+  const pos: number[] = [], cen: number[] = [], rnd: number[] = [], box: number[] = [];
+  const seg = [12, 7, 6]; // вдоль дуги, по радиусу, в глубину
+  let a = random() * 0.3;
+  const end = a + Math.PI * 2;
+  while (a < end - 0.1) {
+    const w = Math.min(end - a, 0.38 + random() * 0.16);
+    const gap = 0.022 + random() * 0.012;
+    const a0 = a + gap / 2, a1 = a + w - gap / 2, mid = (a0 + a1) / 2;
+    /* у каждого блока свои радиусы и глубина: кольцо неровное, как сложенное руками */
+    const ri = RING_IN + random() * 0.06, ro = RING_OUT - random() * 0.14;
+    const rm = (ri + ro) / 2;
+    const hx = (rm * (a1 - a0)) / 2, hy = (ro - ri) / 2, hz = DEPTH / 2 - random() * 0.1;
+    const zc = -0.12 + (random() - 0.5) * 0.12;
+    const b = 0.1 + random() * 0.04; // фаска
+    const seed = random() * 50;
+    const inner = [hx - b, hy - b, hz - b];
+    const half = [hx, hy, hz];
+    const rv = [random(), random(), random()];
+    const c = [Math.cos(mid) * rm, Math.sin(mid) * rm, zc];
+    const vert = (s: number[]) => {
+      /* точка на кубе [-1,1]³ → скруглённый брусок → неровности по нормали → изгиб по дуге кольца */
+      const pb = s.map((v, k) => v * half[k]);
+      const q = pb.map((v, k) => Math.max(-inner[k], Math.min(inner[k], v)));
+      let n = pb.map((v, k) => v - q[k]);
+      const nl = Math.hypot(n[0], n[1], n[2]) || 1;
+      n = n.map((v) => v / nl);
+      const p = q.map((v, k) => v + n[k] * b);
+      const nx = p[0] * 1.3 + seed, ny = p[1] * 1.3, nz = p[2] * 1.3;
+      /* крупные волны поверхности, мелкое зерно и сколы — вмятины там, где шум выше порога */
+      const chip = Math.max(0, vnoise(nx * 1.4, ny * 1.4, nz * 1.4) - 0.6) / 0.4;
+      const d = (vnoise(nx * 2.2, ny * 2.2, nz * 2.2) - 0.5) * 0.06 + (vnoise(nx * 7, ny * 7, nz * 7) - 0.5) * 0.018 - chip * chip * 0.16;
+      for (let k = 0; k < 3; k++) p[k] += n[k] * d;
+      const ang = mid - p[0] / rm, rad = rm + p[1];
+      pos.push(Math.cos(ang) * rad, Math.sin(ang) * rad, zc + p[2]);
+      cen.push(...c); rnd.push(...rv); box.push(...s);
+    };
+    FACES.forEach(([ni, ui, vi], f) => {
+      const sg = SIGNS[f];
+      const nu = seg[ui], nv = seg[vi];
+      /* для отрицательных граней оси поменяны местами в FACES, знак нормали — здесь */
+      const at = (i: number, j: number) => { const s = [0, 0, 0]; s[ni] = sg; s[ui] = -1 + (2 * i) / nu; s[vi] = -1 + (2 * j) / nv; return s; };
+      for (let i = 0; i < nu; i++) for (let j = 0; j < nv; j++) {
+        const A = at(i, j), B = at(i + 1, j), C = at(i + 1, j + 1), D = at(i, j + 1);
+        [A, B, C, A, C, D].forEach(vert);
       }
-      quad(bi[0], bo[0], fo[0], fi[0]); // торцы
-      quad(fi[steps], fo[steps], bo[steps], bi[steps]);
-      const mid = (a0 + a1) / 2, rm = (ri + ro) / 2;
-      const c = [Math.cos(mid) * rm, Math.sin(mid) * rm, (z0 + z1) / 2];
-      const rv = [random(), random(), random()];
-      for (let k = start; k < pos.length; k += 3) { cen.push(...c); rnd.push(...rv); }
-      a += w;
-    }
-  });
-  const geo = new THREE.BufferGeometry();
+    });
+    a += w;
+  }
+  let geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute("aCentr", new THREE.Float32BufferAttribute(cen, 3));
   geo.setAttribute("aRand", new THREE.Float32BufferAttribute(rnd, 3));
+  geo.setAttribute("aBox", new THREE.Float32BufferAttribute(box, 3));
+  geo = mergeVertices(geo, 1e-5);
   geo.computeVertexNormals();
   return geo;
 }
+
+/* штрих — четырёхугольник: x поперёк (−1…1), y от хвоста (0) к голове (1) */
+function buildStreaks(count: number) {
+  const random = rng(9127);
+  const geo = new THREE.InstancedBufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute([-1, 0, 0, 1, 0, 0, 1, 1, 0, -1, 1, 0], 3));
+  geo.setIndex([0, 1, 2, 0, 2, 3]);
+  const seed = new Float32Array(count * 4);
+  for (let i = 0; i < seed.length; i++) seed[i] = random();
+  geo.setAttribute("aSeed", new THREE.InstancedBufferAttribute(seed, 4));
+  geo.instanceCount = count;
+  return geo;
+}
+
+/* воронка: кольцевая поверхность, внешний край ближе к зрителю — воздух сходится к окну конусом */
+const FUNNEL_OUT = RING_OUT + 4.5;
+function buildFunnel() {
+  const rs = 28, as = 120;
+  const pos: number[] = [], idx: number[] = [];
+  for (let i = 0; i <= rs; i++) {
+    const r = RING_IN * 0.62 + (FUNNEL_OUT - RING_IN * 0.62) * Math.pow(i / rs, 1.4);
+    const z = 0.18 + Math.pow(Math.max(0, r - RING_IN) / (FUNNEL_OUT - RING_IN), 1.3) * 2.8;
+    for (let j = 0; j <= as; j++) { const t = (j / as) * Math.PI * 2; pos.push(Math.cos(t) * r, Math.sin(t) * r, z); }
+  }
+  for (let i = 0; i < rs; i++) for (let j = 0; j < as; j++) {
+    const a = i * (as + 1) + j, b = a + as + 1;
+    idx.push(a, a + 1, b, a + 1, b + 1, b);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  geo.setIndex(idx);
+  return geo;
+}
+
+const NOISE3 = /* glsl */ `
+  float h31(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+  float vn3(vec3 x) {
+    vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(mix(h31(i), h31(i + vec3(1, 0, 0)), f.x), mix(h31(i + vec3(0, 1, 0)), h31(i + vec3(1, 1, 0)), f.x), f.y),
+               mix(mix(h31(i + vec3(0, 0, 1)), h31(i + vec3(1, 0, 1)), f.x), mix(h31(i + vec3(0, 1, 1)), h31(i + vec3(1, 1, 1)), f.x), f.y), f.z);
+  }`;
 
 export class PortalRing {
   private readonly geometries: THREE.BufferGeometry[] = [];
@@ -72,6 +152,11 @@ export class PortalRing {
   private readonly glow = { value: 0 };
   private readonly pixelScale = { value: 1200 };
   private readonly disperse = { value: 0 };
+  private readonly near = { value: 1 };
+  private readonly centerW = { value: new THREE.Vector3() };
+  private readonly facing = { value: new THREE.Vector3(0, 0, 1) };
+  private readonly ringMesh: THREE.Mesh;
+  private readonly tmpQ = new THREE.Quaternion();
   /* v116 (прожарка по igloo): ядро портала — облако светлых искр в центре кольца. Издалека оно плотное и кружит, на
      подлёте разлетается наружу и гаснет, открывая окно. Искры ярче белого — их подхватывает ореол (блум портала) */
   private readonly core = new THREE.ShaderMaterial({
@@ -99,40 +184,66 @@ export class PortalRing {
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false,
   });
   private readonly bricks = new THREE.ShaderMaterial({
-    uniforms: { uTime: this.time, uOpacity: this.opacity, uChaos: this.chaos, uGlow: this.glow },
-    vertexShader: `attribute vec3 aCentr; attribute vec3 aRand;
+    uniforms: { uTime: this.time, uOpacity: this.opacity, uChaos: this.chaos, uGlow: this.glow, uCenterW: this.centerW, uFacing: this.facing },
+    vertexShader: `attribute vec3 aCentr; attribute vec3 aRand; attribute vec3 aBox;
       uniform float uTime; uniform float uChaos;
-      varying vec3 vN; varying vec3 vLocal; varying vec3 vView; varying float vRand;
+      varying vec3 vN; varying vec3 vLocal; varying vec3 vView; varying vec3 vW; varying vec3 vBox; varying float vRand;
       vec3 turn(vec3 v, vec3 axis, float a) { float c = cos(a), s = sin(a); return v * c + cross(axis, v) * s + axis * dot(axis, v) * (1.0 - c); }
       void main() {
         vec3 axis = normalize(aRand - 0.5 + vec3(0.001));
-        /* рассыпанное кольцо: поворот вокруг центра кирпича и отход наружу; собранное — только дыхание */
-        float a = uChaos * (aRand.x * 2.0 - 1.0) * 1.0 + sin(uTime * 0.5 + aRand.y * 6.28) * 0.03;
+        /* рассыпанное кольцо: поворот вокруг центра блока и отход наружу; собранное — только дыхание */
+        float a = uChaos * (aRand.x * 2.0 - 1.0) * 1.0 + sin(uTime * 0.5 + aRand.y * 6.28) * 0.02;
         vec3 p = turn(position - aCentr, axis, a);
         vec3 out2 = normalize(vec3(aCentr.xy, 0.0));
-        vec3 c = aCentr + out2 * (uChaos * (0.25 + aRand.z * 0.8) + 0.02 * sin(uTime * 0.6 + aRand.x * 9.0))
-               + vec3(0.0, 0.0, uChaos * (aRand.y - 0.5) * 1.2);
+        vec3 c = aCentr + out2 * (uChaos * (0.3 + aRand.z * 0.9) + 0.025 * sin(uTime * 0.6 + aRand.x * 9.0))
+               + vec3(0.0, 0.0, uChaos * (aRand.y - 0.5) * 1.4);
         vec4 wp = modelMatrix * vec4(c + p, 1.0);
         vN = normalize(mat3(modelMatrix) * turn(normal, axis, a));
-        vLocal = position; vRand = aRand.x;
+        vLocal = position; vRand = aRand.x; vBox = aBox; vW = wp.xyz;
         vView = cameraPosition - wp.xyz;
         gl_Position = projectionMatrix * viewMatrix * wp;
       }`,
-    fragmentShader: `uniform float uTime; uniform float uOpacity; uniform float uGlow;
-      varying vec3 vN; varying vec3 vLocal; varying vec3 vView; varying float vRand;
+    fragmentShader: `uniform float uTime; uniform float uOpacity; uniform float uGlow; uniform vec3 uCenterW; uniform vec3 uFacing;
+      varying vec3 vN; varying vec3 vLocal; varying vec3 vView; varying vec3 vW; varying vec3 vBox; varying float vRand;
+      ${NOISE3}
       void main() {
-        vec3 n = normalize(vN), v = normalize(vView);
-        /* матовый светлый камень-лёд: свет сверху-спереди, кромки к зрителю светлее (скользящий угол) */
-        /* v113.1: в ночном луге светлые кирпичи читались белыми кубиками — камень темнее, свет даёт кромка и кант */
-        float lit = 0.3 + 0.7 * max(dot(n, normalize(vec3(0.2, 0.8, 0.6))), 0.0);
-        float rim = pow(1.0 - max(dot(n, v), 0.0), 3.0);
-        vec3 col = mix(vec3(0.07, 0.075, 0.085), vec3(0.3, 0.31, 0.33), lit) * (0.85 + 0.3 * vRand) + rim * vec3(0.35, 0.33, 0.3);
-        /* свечение внутренней кромки течёт по кругу */
+        vec3 p = vLocal * 1.7 + vRand * 20.0;
+        float big = vn3(p) * 0.6 + vn3(p * 2.3) * 0.4;
+        float grain = vn3(p * 11.0);
+        float h = big * 0.55 + grain * 0.3 + vn3(p * 27.0) * 0.15;
+        /* рельеф камня: нормаль наклоняется по производным высоты на экране — зерно и раковины без текстур */
+        vec3 n = normalize(vN);
+        vec3 dpx = dFdx(vW), dpy = dFdy(vW);
+        vec3 r1 = cross(dpy, n), r2 = cross(n, dpx);
+        float det = dot(dpx, r1);
+        vec2 dh = vec2(dFdx(h), dFdy(h)) * 0.06;
+        n = normalize(abs(det) * n - sign(det) * (dh.x * r1 + dh.y * r2));
+        vec3 v = normalize(vView);
+        /* камень: пятна светлее и темнее, раковины, стёртые светлые рёбра */
+        vec3 stone = mix(vec3(0.13, 0.135, 0.145), vec3(0.29, 0.29, 0.295), big) * (0.88 + 0.24 * vRand);
+        float pits = smoothstep(0.74, 0.86, vn3(p * 3.0 + 7.3));
+        stone *= 1.0 - pits * 0.35;
+        vec3 ab = abs(vBox);
+        float mx = max(ab.x, max(ab.y, ab.z)), mn = min(ab.x, min(ab.y, ab.z));
+        float mid = ab.x + ab.y + ab.z - mx - mn;
+        float worn = smoothstep(0.78, 0.97, mid) * (0.45 + 0.55 * grain);
+        stone = mix(stone, stone * 1.35 + 0.02, worn);
+        /* тень в швах (торцы блоков) и на тыльной стороне */
+        float ao = mix(0.5, 1.0, smoothstep(1.0, 0.72, ab.x)) * mix(0.55, 1.0, smoothstep(-1.0, -0.4, vBox.z));
+        /* свет: небо сверху, тёплый отсвет луга снизу, ночной ключ сверху-спереди, тёплый свет окна изнутри */
+        vec3 amb = mix(vec3(0.07, 0.06, 0.035), vec3(0.2, 0.22, 0.28), n.y * 0.5 + 0.5);
+        vec3 key = vec3(0.62, 0.64, 0.72) * max(dot(n, normalize(vec3(0.0, 0.85, 0.0) + uFacing * 0.55)), 0.0);
+        vec3 toC = uCenterW + uFacing * 0.9 - vW;
         float r = length(vLocal.xy);
-        float edge = 1.0 - smoothstep(${RING_IN.toFixed(2)}, ${(RING_IN + 0.5).toFixed(2)}, r);
+        float fall = exp(-max(r - ${RING_IN.toFixed(2)}, 0.0) * 1.15);
+        vec3 win = vec3(1.5, 0.98, 0.52) * max(dot(n, normalize(toC)), 0.0) * fall * fall * (0.3 + 0.7 * uGlow);
+        float rim = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+        vec3 col = stone * (amb + key * 0.7 + win) * ao * 1.15 + rim * vec3(0.16, 0.15, 0.13) * ao;
+        /* свечение внутренней кромки течёт по кругу */
+        float edge = 1.0 - smoothstep(${RING_IN.toFixed(2)}, ${(RING_IN + 0.4).toFixed(2)}, r);
         float ang = atan(vLocal.y, vLocal.x);
         float flow = 0.62 + 0.38 * sin(ang * 5.0 + uTime * 0.9 + sin(ang * 3.0 - uTime * 0.4) * 1.5);
-        col += vec3(1.5, 1.2, 0.75) * edge * edge * flow * uGlow;
+        col += vec3(1.5, 1.2, 0.75) * edge * edge * flow * uGlow * 0.85 * (0.6 + 0.4 * grain);
         gl_FragColor = vec4(col, uOpacity);
       }`,
     transparent: true, toneMapped: false,
@@ -150,26 +261,69 @@ export class PortalRing {
       }`,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false,
   });
-  private readonly dust = new THREE.ShaderMaterial({
-    uniforms: { uTime: this.time, uOpacity: this.opacity, uPixelScale: this.pixelScale },
-    vertexShader: `attribute vec3 aSeed; uniform float uTime; uniform float uPixelScale; varying float vA;
+  /* штрихи-«воздух»: каждый живёт по кругу жизни — родится снаружи и перед кольцом, по спирали и с ускорением уходит
+     в окно и гаснет у кромки. Хвост — та же траектория чуть раньше, четырёхугольник растянут между ними на экране */
+  private readonly streaks = new THREE.ShaderMaterial({
+    uniforms: { uTime: this.time, uOpacity: this.opacity, uPixelScale: this.pixelScale, uNear: this.near },
+    vertexShader: `attribute vec4 aSeed; uniform float uTime; uniform float uPixelScale; uniform float uNear; varying float vA; varying vec2 vQ;
+      vec3 path(float t) {
+        float e = t * t;
+        float r = mix(${RING_OUT.toFixed(2)} * (1.0 + aSeed.z * 0.9), ${(RING_IN * 0.55).toFixed(2)}, e);
+        /* закрутка растёт к центру — как вода в сливе */
+        float a = aSeed.w * 6.2832 + e * (2.6 + aSeed.y * 1.4) + uTime * 0.04;
+        float z = mix(0.4 + aSeed.y * 1.8, 0.0, e);
+        return vec3(cos(a) * r, sin(a) * r, z);
+      }
       void main() {
-        float t = uTime * (0.05 + aSeed.x * 0.06) + aSeed.y * 6.28;
-        float r = ${(RING_IN * 0.55).toFixed(2)} + aSeed.z * ${(RING_OUT * 0.7).toFixed(2)};
-        vec3 p = vec3(cos(t) * r, sin(t) * r, position.z + sin(uTime * 0.3 + aSeed.x * 9.0) * 0.6);
-        vec4 mv = modelViewMatrix * vec4(p, 1.0);
-        vA = (0.5 + 0.5 * sin(uTime * 0.8 + aSeed.y * 17.0)) * smoothstep(0.6, 2.5, -mv.z);
-        gl_Position = projectionMatrix * mv;
-        gl_PointSize = clamp(0.06 * uPixelScale / max(0.3, -mv.z), 1.0, 24.0);
+        float life = fract(aSeed.x + uTime * (0.07 + aSeed.y * 0.07));
+        vec3 head = path(life), tail = path(max(0.0, life - 0.04 - aSeed.z * 0.04));
+        vec4 ch = projectionMatrix * modelViewMatrix * vec4(head, 1.0);
+        vec4 ct = projectionMatrix * modelViewMatrix * vec4(tail, 1.0);
+        float aspect = projectionMatrix[1][1] / projectionMatrix[0][0];
+        vec2 d = (ch.xy / ch.w - ct.xy / ct.w) * vec2(aspect, 1.0);
+        vec2 perp = normalize(vec2(-d.y, d.x) + 1e-6);
+        float depth = max(0.3, ch.w);
+        float px = clamp(0.015 * uPixelScale / depth, 0.9, 2.4);
+        vec2 off = perp * px * 2.0 / (uPixelScale * 0.728) / vec2(aspect, 1.0);
+        vec4 c = mix(ct, ch, position.y);
+        c.xy += off * position.x * c.w;
+        gl_Position = c;
+        float r = length(head.xy);
+        vA = smoothstep(0.0, 0.18, life) * smoothstep(${(RING_IN * 0.62).toFixed(2)}, ${(RING_IN * 1.02).toFixed(2)}, r)
+           * (0.3 + 0.7 * life) * smoothstep(1.0, 3.0, depth) * uNear;
+        vQ = position.xy;
       }`,
-    fragmentShader: `uniform float uOpacity; varying float vA;
+    fragmentShader: `uniform float uOpacity; varying float vA; varying vec2 vQ;
       void main() {
-        vec2 q = gl_PointCoord - 0.5;
-        /* штрих: узкий по горизонтали, вытянутый по вертикали */
-        float s = exp(-q.x * q.x * 180.0) * pow(1.0 - min(1.0, abs(q.y) * 2.0), 2.0);
-        gl_FragColor = vec4(vec3(1.0, 0.95, 0.85) * s, s) * vA * uOpacity * 0.9;
+        float s = exp(-vQ.x * vQ.x * 3.0) * vQ.y * vQ.y;
+        gl_FragColor = vec4(vec3(1.0, 0.9, 0.74) * s, s) * vA * uOpacity * 1.0;
       }`,
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false,
+    /* обход четырёхугольника зависит от направления штриха на экране — рисуем обе стороны */
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, side: THREE.DoubleSide,
+  });
+  /* воронка: шум в полярных координатах бежит по логарифмической спирали к центру — дымка, которую тянет в окно;
+     у кромки — лента светлой «плазмы», текущая по кругу */
+  private readonly funnel = new THREE.ShaderMaterial({
+    uniforms: { uTime: this.time, uOpacity: this.opacity, uGlow: this.glow, uNear: this.near },
+    vertexShader: `varying vec3 vP; void main() { vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `uniform float uTime; uniform float uOpacity; uniform float uGlow; uniform float uNear; varying vec3 vP;
+      ${NOISE3}
+      void main() {
+        float r = length(vP.xy), ang = atan(vP.y, vP.x);
+        float s = log(r);
+        float a = ang + s * 2.4 - uTime * 0.05;
+        vec2 cs = vec2(cos(a), sin(a));
+        float t = uTime * 0.22;
+        /* три слоя шума перемножены — остаются редкие тонкие пряди, как у дыма на ветру */
+        float w = vn3(vec3(cs * 2.0, s * 3.0 + t)) * vn3(vec3(cs * 3.4 + 5.0, s * 5.0 + t * 1.3)) * vn3(vec3(cs * 5.5 + 9.0, s * 8.0 + t * 1.7));
+        /* без насыщения: пряди не вспыхивают яркими дугами, остаются дымкой */
+        w = smoothstep(0.06, 0.3, w);
+        float fade = smoothstep(${(RING_IN * 0.62).toFixed(2)}, ${(RING_IN * 1.05).toFixed(2)}, r) * (1.0 - smoothstep(${(RING_OUT + 1.2).toFixed(2)}, ${FUNNEL_OUT.toFixed(2)}, r));
+        float plasma = exp(-abs(r - ${(RING_IN + 0.05).toFixed(2)}) * 5.0) * (0.55 + 0.45 * sin(ang * 6.0 - uTime * 1.3 + sin(ang * 3.0 + uTime * 0.5) * 2.0));
+        float v = w * fade * 0.1 + plasma * vn3(vec3(cs * 4.0, uTime * 0.6)) * 0.22 * uGlow;
+        gl_FragColor = vec4(vec3(1.0, 0.86, 0.66) * v, v) * uOpacity * uNear;
+      }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, side: THREE.DoubleSide,
   });
 
   constructor(group: THREE.Group, centreY: number) {
@@ -180,6 +334,7 @@ export class PortalRing {
     ring.renderOrder = 2;
     ring.frustumCulled = false;
     group.add(ring);
+    this.ringMesh = ring;
 
     const haloGeo = new THREE.PlaneGeometry(RING_OUT * 2 + 3, RING_OUT * 2 + 3);
     this.geometries.push(haloGeo);
@@ -187,6 +342,14 @@ export class PortalRing {
     halo.position.set(0, centreY, 0.05);
     halo.renderOrder = 3;
     group.add(halo);
+
+    const funnelGeo = buildFunnel();
+    this.geometries.push(funnelGeo);
+    const funnel = new THREE.Mesh(funnelGeo, this.funnel);
+    funnel.position.y = centreY;
+    funnel.renderOrder = 4;
+    funnel.frustumCulled = false;
+    group.add(funnel);
 
     const crand = rng(5531);
     const nc = 1600, cs = new Float32Array(nc * 4);
@@ -201,18 +364,13 @@ export class PortalRing {
     core.renderOrder = 5;
     group.add(core);
 
-    const random = rng(9127);
-    const n = 260, p = new Float32Array(n * 3), s = new Float32Array(n * 3);
-    for (let i = 0; i < n; i++) { p[i * 3 + 2] = (random() - 0.3) * 6; s.set([random(), random(), random()], i * 3); }
-    const dustGeo = new THREE.BufferGeometry();
-    dustGeo.setAttribute("position", new THREE.BufferAttribute(p, 3));
-    dustGeo.setAttribute("aSeed", new THREE.BufferAttribute(s, 3));
-    this.geometries.push(dustGeo);
-    const dust = new THREE.Points(dustGeo, this.dust);
-    dust.position.y = centreY;
-    dust.frustumCulled = false;
-    dust.renderOrder = 4;
-    group.add(dust);
+    const streakGeo = buildStreaks(typeof innerWidth !== "undefined" && innerWidth < 700 ? 260 : 480);
+    this.geometries.push(streakGeo);
+    const streaks = new THREE.Mesh(streakGeo, this.streaks);
+    streaks.position.y = centreY;
+    streaks.frustumCulled = false;
+    streaks.renderOrder = 4;
+    group.add(streaks);
   }
 
   setSize(height: number, dpr: number) { this.pixelScale.value = height * dpr / (2 * Math.tan(THREE.MathUtils.degToRad(20))); }
@@ -225,9 +383,15 @@ export class PortalRing {
     this.chaos.value = k * k;
     this.glow.value = 0.35 + 0.65 * (1 - THREE.MathUtils.smoothstep(distance, 3, 20));
     this.disperse.value = 1 - THREE.MathUtils.smoothstep(distance, 5, 13);
+    /* у самого входа воздух и воронка гаснут: последний кадр портала — чистое окно в подвал */
+    this.near.value = THREE.MathUtils.smoothstep(distance, 1.6, 5);
+    /* кольцо проворачивается по мере подлёта — вместе с закруткой воздуха читается водоворотом */
+    this.ringMesh.rotation.z = (1 - THREE.MathUtils.smoothstep(distance, 2, 26)) * 0.55;
+    this.ringMesh.getWorldPosition(this.centerW.value);
+    this.facing.value.set(0, 0, 1).applyQuaternion(this.ringMesh.getWorldQuaternion(this.tmpQ));
   }
   dispose() {
     this.geometries.forEach((g) => g.dispose());
-    this.bricks.dispose(); this.halo.dispose(); this.dust.dispose(); this.core.dispose();
+    this.bricks.dispose(); this.halo.dispose(); this.streaks.dispose(); this.core.dispose(); this.funnel.dispose();
   }
 }
