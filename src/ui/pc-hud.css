@@ -7,6 +7,10 @@
 .pc-dossier.is-on { visibility: visible; }
 .pc-dossier-on .vf { display: none; }
 .pc-dossier__lines { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pc-dossier__ripple { mix-blend-mode: soft-light; }
+/* v116: подписи у столба кейса на тёмном лугу — белые, с мягкой тенью */
+.pc-dossier--light .pc-dossier__label { color: rgba(255, 255, 255, 0.92); text-shadow: 0 1px 10px rgba(10, 14, 6, 0.45); }
+.case-open .pc-dossier--light { display: none; }
 
 .pc-dossier__label {
   position: absolute; left: 0; top: 0; display: flex; flex-direction: column; gap: 2px;

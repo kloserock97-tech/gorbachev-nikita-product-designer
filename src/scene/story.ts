@@ -57,7 +57,7 @@ const tune = (name: string, fallback: number) => (flags.has(name) && Number.isFi
 export const TRANSITION = {
   blur: tune("tblur", 0.55), // CONFIG.transition.blur; ?tblur= — подобрать
   /* разъезд каналов у края кадра в долях кадра на пике (igloo: 0.0004…0.003 × 22 с прижимом к краям) */
-  aberration: tune("taberr", 0.03), // ?taberr= — подобрать
+  aberration: tune("taberr", 0), // v116: цветные каёмки на переходах убраны (Никита: «неоновое свечение по краям») // ?taberr= — подобрать
   /* центр кадра остаётся чистым: аберрация включается с этой доли радиуса (CONFIG.effects.aberrationRadial) */
   aberrationRadial: 0.35,
   /* на какой доле перехода аберрация выходит на полную. У igloo это самый конец, но там кадр к тому

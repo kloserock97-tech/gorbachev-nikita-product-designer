@@ -71,6 +71,33 @@ export class PortalRing {
   private readonly chaos = { value: 1 };
   private readonly glow = { value: 0 };
   private readonly pixelScale = { value: 1200 };
+  private readonly disperse = { value: 0 };
+  /* v116 (прожарка по igloo): ядро портала — облако светлых искр в центре кольца. Издалека оно плотное и кружит, на
+     подлёте разлетается наружу и гаснет, открывая окно. Искры ярче белого — их подхватывает ореол (блум портала) */
+  private readonly core = new THREE.ShaderMaterial({
+    uniforms: { uTime: this.time, uOpacity: this.opacity, uPixelScale: this.pixelScale, uDisperse: this.disperse },
+    vertexShader: `attribute vec4 aSeed; uniform float uTime; uniform float uPixelScale; uniform float uDisperse; varying float vA;
+      void main() {
+        float r = pow(aSeed.x, 1.6) * 1.15;
+        float th = aSeed.y * 6.2831 + uTime * (0.25 + aSeed.w * 0.5) * (aSeed.z > 0.5 ? 1.0 : -1.0);
+        float ph = acos(aSeed.z * 2.0 - 1.0);
+        vec3 p = vec3(sin(ph) * cos(th), sin(ph) * sin(th), cos(ph) * 0.45) * r;
+        p += vec3(sin(uTime * 1.7 + aSeed.y * 40.0), cos(uTime * 1.3 + aSeed.x * 31.0), 0.0) * 0.04;
+        p *= 1.0 + uDisperse * (2.2 + aSeed.w * 2.5);
+        p.z += 0.35;
+        vec4 mv = modelViewMatrix * vec4(p, 1.0);
+        vA = (0.55 + 0.45 * sin(uTime * 3.0 + aSeed.w * 50.0)) * (1.0 - uDisperse) * (1.0 - aSeed.x * 0.5);
+        gl_Position = projectionMatrix * mv;
+        gl_PointSize = clamp((0.05 + aSeed.w * 0.05) * uPixelScale / max(0.3, -mv.z), 1.5, 16.0);
+      }`,
+    fragmentShader: `uniform float uOpacity; varying float vA;
+      void main() {
+        float d = length(gl_PointCoord - 0.5) * 2.0;
+        float g = exp(-d * d * 4.0) * (1.0 - smoothstep(0.7, 1.0, d));
+        gl_FragColor = vec4(vec3(2.2, 2.0, 1.7) * g, g) * vA * uOpacity;
+      }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false,
+  });
   private readonly bricks = new THREE.ShaderMaterial({
     uniforms: { uTime: this.time, uOpacity: this.opacity, uChaos: this.chaos, uGlow: this.glow },
     vertexShader: `attribute vec3 aCentr; attribute vec3 aRand;
@@ -161,6 +188,19 @@ export class PortalRing {
     halo.renderOrder = 3;
     group.add(halo);
 
+    const crand = rng(5531);
+    const nc = 1600, cs = new Float32Array(nc * 4);
+    for (let i = 0; i < nc * 4; i++) cs[i] = crand();
+    const coreGeo = new THREE.BufferGeometry();
+    coreGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(nc * 3), 3));
+    coreGeo.setAttribute("aSeed", new THREE.BufferAttribute(cs, 4));
+    this.geometries.push(coreGeo);
+    const core = new THREE.Points(coreGeo, this.core);
+    core.position.y = centreY;
+    core.frustumCulled = false;
+    core.renderOrder = 5;
+    group.add(core);
+
     const random = rng(9127);
     const n = 260, p = new Float32Array(n * 3), s = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) { p[i * 3 + 2] = (random() - 0.3) * 6; s.set([random(), random(), random()], i * 3); }
@@ -184,9 +224,10 @@ export class PortalRing {
     const k = THREE.MathUtils.smoothstep(distance, 9, 25);
     this.chaos.value = k * k;
     this.glow.value = 0.35 + 0.65 * (1 - THREE.MathUtils.smoothstep(distance, 3, 20));
+    this.disperse.value = 1 - THREE.MathUtils.smoothstep(distance, 5, 13);
   }
   dispose() {
     this.geometries.forEach((g) => g.dispose());
-    this.bricks.dispose(); this.halo.dispose(); this.dust.dispose();
+    this.bricks.dispose(); this.halo.dispose(); this.dust.dispose(); this.core.dispose();
   }
 }

@@ -37,6 +37,7 @@ export function initPcHud(scene: Scene) {
   root.setAttribute("aria-hidden", "true");
   root.innerHTML = `
     <canvas class="pc-dossier__lines"></canvas>
+    <canvas class="pc-dossier__lines pc-dossier__ripple"></canvas>
     <div class="pc-dossier__label pc-dossier__label--title"><b data-l="0"></b><b data-l="1"></b></div>
     <div class="pc-dossier__label pc-dossier__label--temp"><b><i>TEMP</i><span data-l="f"></span></b><b><i></i><span data-l="c"></span></b></div>
     <div class="pc-dossier__label pc-dossier__label--date"><b data-l="d"></b><b data-l="hint"></b></div>`;
@@ -45,6 +46,10 @@ export function initPcHud(scene: Scene) {
 
   const canvas = root.querySelector<HTMLCanvasElement>(".pc-dossier__lines")!;
   const ctx = canvas.getContext("2d")!;
+  /* v116: рябь — свой холст со смешиванием «мягкий свет» (pc-hud.css): белый на нём лишь чуть высветляет то, что
+     под ним, поэтому на синем экране и на бежевом корпусе рябь одинаково еле заметна */
+  const rippleCanvas = root.querySelector<HTMLCanvasElement>(".pc-dossier__ripple")!;
+  const rctx = rippleCanvas.getContext("2d")!;
   const labels = {
     title: root.querySelector<HTMLElement>(".pc-dossier__label--title")!,
     temp: root.querySelector<HTMLElement>(".pc-dossier__label--temp")!,
@@ -53,8 +58,7 @@ export function initPcHud(scene: Scene) {
   let dpr = 1;
   const resize = () => {
     dpr = Math.min(2, devicePixelRatio || 1);
-    canvas.width = Math.round(innerWidth * dpr);
-    canvas.height = Math.round(innerHeight * dpr);
+    for (const cv of [canvas, rippleCanvas]) { cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr); }
   };
   resize();
   addEventListener("resize", resize);
@@ -108,6 +112,7 @@ export function initPcHud(scene: Scene) {
   /* v115 (по мотивам igloo): под курсором на компьютере расходится рябь из светлых треугольников и гаснет за ~0,8 с;
      ведёшь мышью — за ней тянется след. Только мышь, не палец */
   const ripples: { x: number; y: number; t0: number }[] = [];
+  let rippleDirty = false;
   let lastRip = 0, rx = 0, ry = 0, rect: { x: number; y: number; w: number; h: number } | null = null;
   if (matchMedia("(hover: hover) and (pointer: fine)").matches && !reduced) {
     addEventListener("pointermove", (e) => {
@@ -147,6 +152,7 @@ export function initPcHud(scene: Scene) {
         root.classList.remove("is-on");
         (Object.keys(labels) as (keyof typeof labels)[]).forEach((k) => setShown(k, false, now));
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        rctx.clearRect(0, 0, rippleCanvas.width, rippleCanvas.height);
       }
       return;
     }
@@ -223,25 +229,23 @@ export function initPcHud(scene: Scene) {
 
     rect = r;
     /* рябь на компьютере: сетка треугольников внутри растущего круга, кромка ярче */
-    if (ripples.length) {
-      ctx.save();
-      ctx.globalCompositeOperation = "lighter";
-      ctx.lineWidth = 1;
+    if (ripples.length || rippleDirty) {
+      rctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      rctx.clearRect(0, 0, innerWidth, innerHeight);
+      rippleDirty = ripples.length > 0;
+      rctx.lineWidth = 1;
+      rctx.strokeStyle = "#ffffff";
       for (let i = ripples.length - 1; i >= 0; i--) {
         const p = ripples[i];
         const k = (now - p.t0) / 800;
         if (k >= 1) { ripples.splice(i, 1); continue; }
         const rad = 40 + 80 * Math.min(1, k / 0.4);
         const fade = (1 - k) * (1 - k) * a;
-        ctx.globalAlpha = fade * 0.6;
-        ctx.strokeStyle = "#ffffff";
-        ctx.beginPath(); tri(ctx, p.x, p.y, rad); ctx.stroke();
-        ctx.globalAlpha = fade;
-        ctx.beginPath(); ctx.arc(p.x, p.y, rad, 0, Math.PI * 2); ctx.stroke();
+        rctx.globalAlpha = fade * 0.45;
+        rctx.beginPath(); tri(rctx, p.x, p.y, rad); rctx.stroke();
+        rctx.globalAlpha = fade * 0.7;
+        rctx.beginPath(); rctx.arc(p.x, p.y, rad, 0, Math.PI * 2); rctx.stroke();
       }
-      ctx.restore();
-      ctx.globalAlpha = a;
-      ctx.strokeStyle = "rgba(28, 32, 40, 0.62)";
     }
     const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
     const R = Math.max(r.w, r.h) * 0.72;

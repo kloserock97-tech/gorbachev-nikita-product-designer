@@ -230,6 +230,8 @@ export function createSignpost3d(o: { shadows: boolean; heightGLSL: string; U: H
 
   let active: Slot | null = null;
   const tmpV = new THREE.Vector3();
+  const box = new THREE.Box3();
+  let clock = 0;
 
   /* Полёт к столбу. Новый кейс — новый столб далеко впереди и в стороне (40–55 м), камера сама долетает до него за
      несколько секунд: мягкий разгон, дуга над холмами, мягкая посадка. Прокрутка только запускает полёт. */
@@ -307,6 +309,19 @@ export function createSignpost3d(o: { shadows: boolean; heightGLSL: string; U: H
 
   return {
     root,
+    /** v116: столб текущего кейса на экране — прямоугольник в NDC и доля подъёма; для подписей (ui/casesHud.ts) */
+    screenBox(camera: THREE.Camera) {
+      if (!active || active.k < 0.02) return null;
+      box.setFromObject(active.p.group);
+      if (box.isEmpty()) return null;
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+      for (let c = 0; c < 8; c++) {
+        tmpV.set(c & 1 ? box.max.x : box.min.x, c & 2 ? box.max.y : box.min.y, c & 4 ? box.max.z : box.min.z).project(camera);
+        if (tmpV.z > 1) return null;
+        x0 = Math.min(x0, tmpV.x); x1 = Math.max(x1, tmpV.x); y0 = Math.min(y0, tmpV.y); y1 = Math.max(y1, tmpV.y);
+      }
+      return { x0, y0, x1, y1, k: active.k, i: active.caseIdx, settled: !travel.on || clock - travel.start > travel.dur * 0.85 };
+    },
     /** хоть один столб над землёй — есть чему светиться */
     get shown() { return slots.some((s) => s.k > 0.001); },
     /** поза камеры у столба (во время полёта и после); false — столба ещё нет */
@@ -346,6 +361,7 @@ export function createSignpost3d(o: { shadows: boolean; heightGLSL: string; U: H
     },
     /** i — номер кейса (−1 — столба нет), on — глава кейсов на экране; camera и look — итоговые за этот кадр */
     update(dt: number, now: number, i: number, on: boolean, camera: THREE.Camera, look: THREE.Vector3, ground: Ground, sea: number) {
+      clock = now;
       lastCam = (lastCam ?? new THREE.Vector3()).copy(camera.position);
       lastLook = (lastLook ?? new THREE.Vector3()).copy(look);
       if (!on || i < 0) { if (active) { active.dir = -1; active = null; travel.on = false; } segs.length = 0; }

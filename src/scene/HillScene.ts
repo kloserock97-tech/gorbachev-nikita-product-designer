@@ -1418,13 +1418,7 @@ export class HillScene {
     const tearAir = c > 0 && !this.reduced ? ramp(c, ...CASES.tear) : 0;
     fx.radial = this.reduced ? 0 : Math.max(zoomBlur(fu), zoomBlur(tearAir) * 0.7);
     fx.aberration = this.reduced ? 0 : Math.max(aberrationAt(fu), tearAir > 0 && tearAir < 1 ? aberrationAt(Math.sin(tearAir * Math.PI)) * 0.8 : 0);
-    /* v113 (по мотивам igloo): пролёт сквозь кольцо портала — короткий смаз от центра и разъезд каналов */
-    const ringPass = viaPortal && !this.reduced ? Math.max(0, 1 - Math.abs(pk - 0.9) / 0.075) : 0;
-    if (ringPass > 0) {
-      const k = ringPass * ringPass * (3 - 2 * ringPass);
-      fx.radial = Math.max(fx.radial, k * 0.55);
-      fx.aberration = Math.max(fx.aberration, k * 0.7);
-    }
+    /* v116: смаз и разъезд каналов на пролёте кольца (v113) убраны по просьбе Никиты — в конце портала читались глитчем */
     fx.whiteBalance.set(1, 1, 1).lerp(this.coolWB, g);
     /* v73.1: в «Кейсах» баланс белого чуть теплее — солнечный луч сквозь лес */
     if (fx.alt > 0) fx.whiteBalance.lerp(HillScene.OVERCAST_WB, fx.alt);
@@ -1553,7 +1547,8 @@ export class HillScene {
       const up = this.storyTmp2.setFromMatrixColumn(cam.matrixWorld, 1);
       const d = Math.max(0.5, cam.position.distanceTo(pose.pos));
       const h = 2 * Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2) * d;
-      pose.pos.addScaledVector(up, (this.storyTear + 0.12) * h);
+      /* v116 (прожарка): компьютер уходит чуть быстрее края страницы — раньше под конец его низ висел у верхней кромки */
+      pose.pos.addScaledVector(up, (this.storyTear + 0.12) * h * 1.45);
     }
     this.pc.position.copy(pose.pos);
     this.pc.rotation.set(pose.pitch, pose.yaw, pose.roll, "YXZ");
@@ -2299,6 +2294,14 @@ export class HillScene {
      ?signpost=0 — прежняя карточка */
   readonly signpost = !/[?&]signpost=0/.test(location.search);
   private signCase = -1;
+  /** v116: столб текущего кейса в координатах окна — для подписей (ui/casesHud.ts); null — луга или столба нет */
+  caseClientRect() {
+    if (!this.walk || this.fx.params.alt < 0.99) return null;
+    const b = this.walk.signBox();
+    if (!b) return null;
+    const c = this.canvasRect;
+    return { x: c.left + (b.x0 * 0.5 + 0.5) * c.width, y: c.top + (0.5 - b.y1 * 0.5) * c.height, w: (b.x1 - b.x0) * 0.5 * c.width, h: (b.y1 - b.y0) * 0.5 * c.height, k: b.k, i: b.i, settled: b.settled };
+  }
   setSignCase(i: number) {
     this.signCase = i;
   }

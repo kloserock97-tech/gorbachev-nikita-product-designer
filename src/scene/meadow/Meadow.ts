@@ -661,6 +661,8 @@ export class Meadow {
     this.bloom = createBloom(this.renderer, 0.05);
   }
   /** номер кейса для столба и видна ли глава кейсов */
+  /** v116: столб кейса на экране, NDC */
+  signBox() { return this.sign?.screenBox(this.camera) ?? null; }
   setSign(i: number, on: boolean) {
     this.signCase = i;
     this.signOn = on;
