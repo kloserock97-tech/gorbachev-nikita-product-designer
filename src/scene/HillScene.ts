@@ -1403,6 +1403,13 @@ export class HillScene {
     const tearAir = c > 0 && !this.reduced ? ramp(c, ...CASES.tear) : 0;
     fx.radial = this.reduced ? 0 : Math.max(zoomBlur(fu), zoomBlur(tearAir) * 0.7);
     fx.aberration = this.reduced ? 0 : Math.max(aberrationAt(fu), tearAir > 0 && tearAir < 1 ? aberrationAt(Math.sin(tearAir * Math.PI)) * 0.8 : 0);
+    /* v113 (по мотивам igloo): пролёт сквозь кольцо портала — короткий смаз от центра и разъезд каналов */
+    const ringPass = viaPortal && !this.reduced ? Math.max(0, 1 - Math.abs(pk - 0.9) / 0.075) : 0;
+    if (ringPass > 0) {
+      const k = ringPass * ringPass * (3 - 2 * ringPass);
+      fx.radial = Math.max(fx.radial, k * 0.55);
+      fx.aberration = Math.max(fx.aberration, k * 0.7);
+    }
     fx.whiteBalance.set(1, 1, 1).lerp(this.coolWB, g);
     /* v73.1: в «Кейсах» баланс белого чуть теплее — солнечный луч сквозь лес */
     if (fx.alt > 0) fx.whiteBalance.lerp(HillScene.OVERCAST_WB, fx.alt);

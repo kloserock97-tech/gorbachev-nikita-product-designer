@@ -2,6 +2,16 @@ import * as THREE from "three";
 import { terrainHeight } from "./noise";
 import { PortalGarden, portalOutline } from "./PortalGarden";
 import { PortalGround } from "./PortalGround";
+import { PortalRing, RING_IN } from "./PortalRing";
+
+/* v113 (Никита, по мотивам портала igloo.inc): вместо проёма в плюще — кольцо из расколотых кирпичей (PortalRing.ts),
+   окно круглое, у кромки — бегущие кольца «силового поля». ?portal=ivy — прежний проём */
+const IVY = typeof location !== "undefined" && /[?&]portal=ivy/.test(location.search);
+const R = RING_IN - 0.06;
+function circleOutline(radius: number, steps = 64) {
+  /* по часовой, как portalOutline: clip() проверяет обход */
+  return Array.from({ length: steps }, (_, i) => { const a = Math.PI / 2 - (i / steps) * Math.PI * 2; return new THREE.Vector3(Math.cos(a) * radius, Math.sin(a) * radius, 0.02); });
+}
 
 const WIDTH = 5.2;
 const HEIGHT = 8;
@@ -23,8 +33,9 @@ export class MeadowPortal {
   private anchored = false;
   private progress = 0;
   private readonly plane = new THREE.PlaneGeometry(WIDTH + 2, HEIGHT + 2);
-  private readonly outline = portalOutline(WIDTH - 0.18, HEIGHT - 0.18, RADIUS - 0.09);
-  private readonly garden: PortalGarden;
+  private readonly outline = IVY ? portalOutline(WIDTH - 0.18, HEIGHT - 0.18, RADIUS - 0.09) : circleOutline(R - 0.1);
+  private readonly garden: PortalGarden | null;
+  private readonly ring: PortalRing | null;
   private readonly ground: PortalGround;
   private readonly window = new THREE.ShaderMaterial({
     uniforms: { tDestination: { value: null as THREE.Texture | null }, uOpacity: { value: 0 }, uTime: { value: 0 }, uProgress: { value: 0 } },
@@ -34,21 +45,24 @@ export class MeadowPortal {
     fragmentShader: `uniform sampler2D tDestination; uniform float uOpacity; uniform float uTime; uniform float uProgress;
       varying vec4 vClip; varying vec2 vLocal;
       void main() {
-        vec2 q = abs(vLocal) - vec2(${WIDTH / 2 - RADIUS}, ${HEIGHT / 2 - RADIUS});
+        ${IVY ? `vec2 q = abs(vLocal) - vec2(${WIDTH / 2 - RADIUS}, ${HEIGHT / 2 - RADIUS});
         float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - ${RADIUS};
         d += sin(vLocal.y * 12.0 + sin(vLocal.x * 9.0)) * 0.022
-          + sin(vLocal.x * 17.0 + vLocal.y * 8.0 + uTime * 0.45) * 0.012;
+          + sin(vLocal.x * 17.0 + vLocal.y * 8.0 + uTime * 0.45) * 0.012;` : `float d = length(vLocal) - ${R.toFixed(3)};`}
         float aa = max(fwidth(d), 0.006);
         float inside = 1.0 - smoothstep(-aa, aa, d);
         float pulse = 0.7 + 0.3 * sin(vLocal.y * 4.0 - vLocal.x * 2.0 - uTime * 0.9);
         float rim = exp(-abs(d) * 20.0) * pulse;
         float halo = exp(-abs(d) * 5.0) * 0.22;
-        vec3 light = mix(vec3(0.48, 1.1, 0.25), vec3(1.6, 1.3, 0.55), pulse);
+        vec3 light = ${IVY ? "mix(vec3(0.48, 1.1, 0.25), vec3(1.6, 1.3, 0.55), pulse)" : "mix(vec3(1.05, 0.95, 0.8), vec3(1.5, 1.25, 0.85), pulse)"};
         vec2 uv = vClip.xy / vClip.w * 0.5 + 0.5;
         float membrane = exp(-abs(d) * 6.0) * (1.0 - smoothstep(0.5, 0.8, uProgress));
         uv += vec2(sin(vLocal.y * 9.0 + uTime * 0.65), cos(vLocal.x * 8.0 - uTime * 0.4)) * 0.002 * membrane;
         vec3 destination = texture2D(tDestination, uv).rgb;
         vec3 col = mix(light * (rim + halo), destination + light * rim * 0.16, inside);
+        ${IVY ? "" : `/* силовое поле: светлые кольца бегут к центру у кромки и гаснут, пока камера не вошла */
+        float field = (0.5 + 0.5 * sin(d * 14.0 + uTime * 2.2)) * exp(d * 1.6) * (1.0 - smoothstep(0.55, 0.85, uProgress));
+        col += light * field * inside * 0.08;`}
         gl_FragColor = vec4(col, max(inside, (rim * 0.65 + halo)) * uOpacity);
       }`,
     transparent: true, depthWrite: false, toneMapped: false,
@@ -60,14 +74,15 @@ export class MeadowPortal {
     window.position.z = 0.02;
     window.renderOrder = 1;
     this.group.add(window);
-    this.garden = new PortalGarden(this.group, WIDTH, HEIGHT, RADIUS);
+    this.garden = IVY ? new PortalGarden(this.group, WIDTH, HEIGHT, RADIUS) : null;
+    this.ring = IVY ? null : new PortalRing(this.group, 0);
     this.ground = new PortalGround(this.group);
     this.group.visible = false;
     scene.add(this.group);
   }
 
   setDestination(texture: THREE.Texture) { this.window.uniforms.tDestination.value = texture; }
-  setSize(height: number, dpr: number) { this.garden.setSize(height, dpr); }
+  setSize(height: number, dpr: number) { this.garden?.setSize(height, dpr); this.ring?.setSize(height, dpr); }
 
   update(camera: THREE.PerspectiveCamera, progress: number, time: number, sea: number, windTime: number) {
     this.progress = progress;
@@ -95,7 +110,7 @@ export class MeadowPortal {
     }
     this.group.visible = progress < 1;
     const appear = smooth(0.055, 0.18, progress);
-    this.garden.update(windTime, appear, progress);
+    this.garden?.update(windTime, appear, progress);
     this.ground.update(windTime, appear);
     this.window.uniforms.uTime.value = windTime;
     this.window.uniforms.uOpacity.value = appear;
@@ -113,6 +128,8 @@ export class MeadowPortal {
     camera.quaternion.slerpQuaternions(this.startRotation, this.targetRotation, smooth(0, 0.18, progress));
     camera.updateMatrixWorld();
     this.group.updateMatrixWorld(true);
+    /* расстояние — после того как портал поставил камеру: луг каждый кадр сначала ставит её на свою дорожку, далеко */
+    this.ring?.update(windTime, appear, camera.position.distanceTo(this.group.position));
   }
 
   /** The real DOM footer follows the rounded opening, inset from its living edge. */
@@ -140,6 +157,6 @@ export class MeadowPortal {
 
   dispose() {
     this.group.removeFromParent();
-    this.garden.dispose(); this.ground.dispose(); this.plane.dispose(); this.window.dispose();
+    this.garden?.dispose(); this.ring?.dispose(); this.ground.dispose(); this.plane.dispose(); this.window.dispose();
   }
 }
