@@ -364,7 +364,6 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
   <article class="cs" data-case="${esc(s.id)}" style="${lookVars(card, "mono")};--case:${card.look.accent};--case-ink:${card.look.ink}">
     <div class="cs-top">
       <button type="button" class="cs-back"><span aria-hidden="true">←</span> ${t("cs.back")}</button>
-      <div class="cs-top-title" aria-hidden="true"><b>${esc(card.title)}</b><i class="cs-progress"></i></div>
       <div class="cs-top-nav">
         <span class="cs-top-count">${pad(i + 1)} / ${pad(n)}</span>
         <a class="cs-top-arrow" href="#/work/${esc(prevId)}" aria-label="${t("cs.prevcase")}"><span aria-hidden="true">←</span></a>
@@ -447,7 +446,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
         </section>` : ""}
         ${brk("approach")}
 
-        <section class="cs-sec cs-sec--research cs-zone">
+        <section class="cs-sec cs-sec--research">
           ${head(++sec, "research", t("cs.research"), r.lead)}
           ${r.hypotheses?.first ? hypothesesBlock(r.hypotheses) : ""}
           <div class="cs-methods">${r.methods.map(methodCard).join("")}</div>
@@ -548,10 +547,51 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
 }
 
 /** поведение: scroll-spy, прогресс, разборы по адресу, галереи, лайтбокс, нижний лист */
+/* v115: листы, наезжающие друг на друга, — как на портфолио klinaeva. Главы страницы собираются в листы: тёмная
+   витрина «Готовый интерфейс» и серые «Ошибки» — каждая свой лист (.cs-zone), всё между ними — светлые листы.
+   Лист прилипает к экрану со сдвигом «окно минус его высота»: дочитали его до низа — он стоит, а следующий
+   (выше по z-index, со скруглённым верхом) наезжает поверх. Сдвиг пересчитывается при изменении размеров. */
+function stackLayers(root: HTMLElement, scroller: HTMLElement) {
+  const body = root.querySelector<HTMLElement>(".cs-body");
+  if (!body) return () => {};
+  const layers: HTMLElement[] = [];
+  let open: HTMLElement | null = null;
+  const start = (kind: string) => {
+    const el = document.createElement("div");
+    el.className = `cs-layer cs-layer--${kind}`;
+    el.style.setProperty("--z", String(layers.length + 1));
+    layers.push(el);
+    return el;
+  };
+  for (const node of [...body.children] as HTMLElement[]) {
+    if (node.classList.contains("cs-zone")) {
+      const kind = node.classList.contains("cs-sec--interface") ? "dark" : "grey";
+      const el = start(kind);
+      body.insertBefore(el, node);
+      el.append(node);
+      open = null;
+    } else {
+      if (!open) { open = start("light"); body.insertBefore(open, node); }
+      open.append(node);
+    }
+  }
+  layers[0]?.classList.add("is-first");
+  const fit = () => {
+    const vh = scroller.clientHeight;
+    layers.forEach((el) => { el.style.top = `${Math.min(0, vh - el.offsetHeight)}px`; });
+  };
+  const ro = new ResizeObserver(fit);
+  layers.forEach((el) => ro.observe(el));
+  ro.observe(scroller);
+  fit();
+  return () => ro.disconnect();
+}
+
 export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onClose: () => void; track: string | null; go: (to: string, replace?: boolean) => void }) {
   const stops: (() => void)[] = [];
   const article = root.querySelector<HTMLElement>(".cs")!;
   const id = article.dataset.case!;
+  stops.push(stackLayers(root, scroller));
 
   root.querySelector(".cs-back")!.addEventListener("click", opts.onClose);
 
@@ -599,7 +639,8 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
   const sectionAt = (edge: number) => {
     let sec = "";
     for (const el of targets) {
-      if (el.getBoundingClientRect().top > edge) break;
+      /* v115: без break — заголовок прилипшего листа под наехавшим листом стоит ниже линии, но раздел уже пройден */
+      if (el.getBoundingClientRect().top > edge) continue;
       if (el.classList.contains("cs-deep")) { if ((el as HTMLDetailsElement).open) sec = `dd-${el.dataset.dive}`; }
       else sec = el.id.replace("cs-", "");
     }
@@ -617,7 +658,8 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
   const nowN = root.querySelector<HTMLElement>(".cs-toc-now b");
   const nowL = root.querySelector<HTMLElement>(".cs-toc-now em");
   const tocBtn = root.querySelector<HTMLElement>(".cs-toc-btn");
-  const progress = root.querySelector<HTMLElement>(".cs-progress")!;
+  /* v115: название кейса с линией прогресса сверху убраны — прогресс показывает кольцо капсулы оглавления внизу */
+  const progress = root.querySelector<HTMLElement>(".cs-progress");
   const top = root.querySelector<HTMLElement>(".cs-top")!;
   const hero = root.querySelector<HTMLElement>(".cs-hero")!;
   const films = [...root.querySelectorAll<HTMLElement>(".cs-film-pin")].map((pin) => ({ pin, over: 0 }));
@@ -642,7 +684,7 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
       /* записи */
       const read = max > 0 ? st / max : 0;
       const p = read.toFixed(4);
-      if (p !== lastP) { lastP = p; progress.style.setProperty("--p", p); }
+      if (p !== lastP) { lastP = p; progress?.style.setProperty("--p", p); }
       /* кольцо капсулы перерисовывается целиком (conic-gradient) — менять его только на заметный шаг */
       const ring = read.toFixed(3);
       if (ring !== lastRing) { lastRing = ring; tocBtn?.style.setProperty("--p", ring); }

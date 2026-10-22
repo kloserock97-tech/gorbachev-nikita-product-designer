@@ -31,23 +31,19 @@
 .cs-nw { white-space: nowrap; }
 
 /* ── панель сверху ─────────────────────────────────────────────────────── */
+/* v115: без полосы-фрейма во всю ширину — она закрывала верх экрана. Остались отдельные кнопки с лёгким размытием;
+   пустое место между ними пропускает нажатия к странице. Название кейса с линией прогресса убраны: прогресс — кольцо
+   капсулы оглавления внизу */
 .cs-top {
-  position: sticky; top: 0; z-index: 6; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px;
-  padding: 12px 0;
+  position: sticky; top: 0; z-index: 40; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 16px;
+  padding: 12px 0; pointer-events: none;
 }
-.cs-top::before {
-  content: ""; position: absolute; z-index: -1; inset: 0 calc(50% - 50vw); opacity: 0; transition: opacity 0.35s var(--ease);
-  background: color-mix(in srgb, var(--paper) 76%, transparent); border-bottom: 1px solid var(--line);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8); backdrop-filter: blur(20px) saturate(1.8);
-}
-.cs-top.is-scrolled::before { opacity: 1; }
-/* v104: когда под шапкой проявилась размытая полоса, кнопки и название лежат уже на ней — их собственное размытие
-   размывало размытое, а это проход на каждый кадр прокрутки ради почти непрозрачных (78–88 %) капсул */
-.cs-top.is-scrolled :is(.cs-back, .cs-top-arrow, .cs-top-title) { -webkit-backdrop-filter: none; backdrop-filter: none; }
-.cs-back, .cs-top-arrow {
+.cs-top :is(a, button) { pointer-events: auto; }
+.cs-back, .cs-top-arrow, .cs-top-count {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 17px; border: 0; border-radius: 999px;
-  background: color-mix(in srgb, #fff 78%, transparent); color: var(--ink); font: 500 14px/1 var(--font);
-  -webkit-backdrop-filter: blur(18px) saturate(1.6); backdrop-filter: blur(18px) saturate(1.6);
+  background: color-mix(in srgb, #fff 86%, transparent); color: #1d1d1f; font: 500 14px/1 var(--font);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 6px 18px -10px rgba(0, 0, 0, 0.35);
+  -webkit-backdrop-filter: blur(8px) saturate(1.4); backdrop-filter: blur(8px) saturate(1.4);
   text-decoration: none; cursor: pointer; transition: background 0.25s var(--ease), scale 0.25s var(--ease);
 }
 .cs-back { justify-self: start; }
@@ -55,18 +51,7 @@
 .cs-back:active, .cs-top-arrow:active { scale: 0.97; }
 .cs-top-arrow { width: 40px; padding: 0; }
 .cs-top-nav { justify-self: end; display: flex; align-items: center; gap: 8px; }
-.cs-top-count { margin-right: 6px; font-size: 14px; font-weight: 500; color: var(--soft); font-variant-numeric: tabular-nums; }
-/* название кейса и линия прогресса появляются, когда герой ушёл вверх */
-.cs-top-title {
-  position: relative; display: grid; gap: 7px; min-width: min(340px, 40vw); padding: 10px 20px 10px; border-radius: 999px;
-  background: color-mix(in srgb, var(--ink) 88%, transparent); color: #fff; text-align: center; opacity: 0; translate: 0 -8px; pointer-events: none;
-  -webkit-backdrop-filter: blur(18px) saturate(1.6); backdrop-filter: blur(18px) saturate(1.6);
-  transition: opacity 0.4s var(--ease), translate 0.5s var(--ease);
-}
-.cs-top.is-past .cs-top-title { opacity: 1; translate: 0 0; }
-.cs-top-title b { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cs-progress { display: block; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, 0.2); overflow: hidden; }
-.cs-progress::after { content: ""; display: block; height: 100%; width: 100%; background: var(--s2); transform-origin: 0 50%; transform: scaleX(var(--p, 0)); }
+.cs-top-count { padding: 0 14px; cursor: default; color: #6e6e73; font-variant-numeric: tabular-nums; }
 
 /* ── раскладка ─────────────────────────────────────────────────────────── */
 .cs-layout { display: block; }
@@ -591,8 +576,7 @@ body.case-open .lite-bar { opacity: 0; pointer-events: none; }
 }
 @media (max-width: 760px) {
   .cs { font-size: 16px; }
-  .cs-top { grid-template-columns: auto 1fr auto; gap: 8px; padding: 10px 0; }
-  .cs-top-title { min-width: 0; padding: 8px 14px 9px; }
+  .cs-top { gap: 8px; padding: 10px 0; }
   .cs-top-count { display: none; }
   .cs-back { padding: 0 14px; }
   .cs-hero-stage { border-radius: 26px; padding: 26px 22px 0; }
@@ -642,7 +626,7 @@ body.case-open .lite-bar { opacity: 0; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) {
   .cs-spot-dot::before { animation: none; }
   .cs-deep-body, .cs-sheet, .cs-sheet-panel { animation: none; }
-  .cs-stack-fan .cs-stack-phone, .cs-stage-media, .cs-method, .cs-top-title, .cs-next-obj, .cs-toc-btn { transition: none; }
+  .cs-stack-fan .cs-stack-phone, .cs-stage-media, .cs-method, .cs-next-obj, .cs-toc-btn { transition: none; }
 }
 
 /* ── сетка раздела (широкий экран) ───────────────────────────────────────

@@ -1,48 +1,102 @@
-/* v114: прототип из макетов (caseProto.ts) — тёмная плитка: слева шаги и «почему так», справа телефон.
-   Плитка красится чернилами кейса, как остальные тёмные плашки страницы (case-story.css, MONO). */
+/* Прототип на странице кейса (caseProto.ts). v115: оформление в языке AI-продуктов — почти чёрный фон, тонкие обводки,
+   шаги как цепочка рассуждения с точками-статусами, «почему так» — пузырь ответа, внизу пилюля-«поле ввода» с текущим
+   шагом и круглой кнопкой «сделать шаг» (по мотивам Grok и Gemini; знаки и фирменные градиенты не берём).
+   За рамкой — подсветка, как у телевизора: цвета берутся с краёв экрана (--am-l/r/t/b, ambientLight в caseProto.ts). */
+/* шрифты макетов живых прототипов (все OFL, лежат в public/fonts, качаются, только когда нужны): Golos Text — «Плати
+   частями», Inter и Manrope — GRIF AI */
+@font-face { font-family: "Golos Text"; font-style: normal; font-weight: 400 900; font-display: swap; src: url("/fonts/golos-cyrillic.woff2") format("woff2"); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "Golos Text"; font-style: normal; font-weight: 400 900; font-display: swap; src: url("/fonts/golos-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2000-206F, U+20AC, U+2122, U+2190-2199, U+2212; }
+
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 400 700; font-display: swap; src: url("/fonts/inter-cyrillic.woff2") format("woff2"); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 400 700; font-display: swap; src: url("/fonts/inter-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2190-2199, U+2212, U+FEFF, U+FFFD; }
+@font-face { font-family: "Manrope"; font-style: normal; font-weight: 400 800; font-display: swap; src: url("/fonts/manrope-cyrillic.woff2") format("woff2"); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "Manrope"; font-style: normal; font-weight: 400 800; font-display: swap; src: url("/fonts/manrope-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2190-2199, U+2212, U+FEFF, U+FFFD; }
+
+@property --am-l { syntax: "<color>"; inherits: true; initial-value: #3b4257; }
+@property --am-r { syntax: "<color>"; inherits: true; initial-value: #3b4257; }
+@property --am-t { syntax: "<color>"; inherits: true; initial-value: #3b4257; }
+@property --am-b { syntax: "<color>"; inherits: true; initial-value: #3b4257; }
+
 .pt {
-  --pt-fg: #f4f4f1; --pt-soft: rgba(244, 244, 241, 0.62); --pt-line: rgba(244, 244, 241, 0.12);
+  --pt-fg: #f4f4f1; --pt-soft: rgba(244, 244, 241, 0.6); --pt-faint: rgba(244, 244, 241, 0.38); --pt-line: rgba(255, 255, 255, 0.1);
+  --pt-panel: #19191b; --pt-accent: #5b8cff;
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 380px); gap: clamp(28px, 5vw, 88px); align-items: center;
-  margin-top: 8px; padding: clamp(24px, 4vw, 56px); border-radius: 28px; color: var(--pt-fg);
-  background: radial-gradient(80% 90% at 85% 40%, color-mix(in srgb, var(--ink) 70%, #8b8f99) 0%, transparent 70%), var(--ink);
+  margin-top: 8px; color: var(--pt-fg);
+  transition: --am-l 1.2s ease, --am-r 1.2s ease, --am-t 1.2s ease, --am-b 1.2s ease;
 }
-.pt-side { display: grid; align-content: center; gap: 18px; min-width: 0; }
-.pt-mode { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--pt-soft); }
-.pt-mode i { width: 8px; height: 8px; border-radius: 50%; background: #3fd07a; box-shadow: 0 0 0 0 rgba(63, 208, 122, 0.5); animation: pt-live 2s ease-out infinite; }
-@keyframes pt-live { 70% { box-shadow: 0 0 0 8px rgba(63, 208, 122, 0); } 100% { box-shadow: 0 0 0 0 rgba(63, 208, 122, 0); } }
-.pt-title { font-size: clamp(30px, 3.6vw, 48px); line-height: 1.05; letter-spacing: -0.03em; }
-.pt-lead { max-width: 44ch; color: var(--pt-soft); }
+/* minmax(0, 1fr): длинный шаг в «поле ввода» (без переноса) не распирает панель под окно прототипа */
+.pt-side { display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; gap: 20px; min-width: 0; }
 
-.pt-steps { display: grid; gap: 4px; margin-top: 6px; }
+/* метка: пилюля с тонкой обводкой */
+.pt-badge { display: inline-flex; align-items: center; gap: 8px; width: fit-content; margin: 0; padding: 7px 14px 7px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.04); box-shadow: inset 0 0 0 1px var(--pt-line); font-size: 13px; color: var(--pt-soft); }
+.pt-badge--mock i { width: 7px; height: 7px; margin-left: 3px; border-radius: 50%; background: #3fd07a; }
+.pt-spark { width: 17px; height: 17px; flex: none; fill: none; stroke: color-mix(in oklab, var(--am-r) 55%, #f08a5d); stroke-width: 2; stroke-linecap: round; animation: pt-spark 8s linear infinite; }
+@keyframes pt-spark { to { rotate: 360deg; } }
+
+/* заголовок светлым весом; к концу строки — отсвет цвета экрана */
+.pt-title { margin: 0; font-size: clamp(30px, 3.4vw, 50px); font-weight: 500; line-height: 1.06; letter-spacing: -0.03em; text-wrap: balance;
+  background: linear-gradient(100deg, #fff 45%, color-mix(in oklab, var(--am-r) 60%, #fff)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.pt-lead { margin: 0; max-width: 46ch; font-size: 16px; line-height: 1.5; color: var(--pt-soft); }
+
+/* шаги — цепочка рассуждения: «думает» и счётчик, ниже пункты с точками на общей нити */
+.pt-trace { display: grid; gap: 6px; }
+.pt-trace-head { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; font-size: 13px; color: var(--pt-soft); }
+.pt-think { display: inline-flex; gap: 3px; }
+.pt-think i { width: 5px; height: 5px; border-radius: 50%; background: var(--pt-soft); animation: pt-think 1.2s ease-in-out infinite; }
+.pt-think i:nth-child(2) { animation-delay: 0.15s; }
+.pt-think i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes pt-think { 0%, 60%, 100% { opacity: 0.25; translate: 0 0; } 30% { opacity: 1; translate: 0 -2px; } }
+.pt.is-done .pt-think i { animation: none; opacity: 1; background: #3fd07a; }
+.pt-count { font-variant-numeric: tabular-nums; }
+.pt-steps { position: relative; display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.pt-steps::before { content: ""; position: absolute; left: 13px; top: 18px; bottom: 18px; width: 1px; background: var(--pt-line); }
 .pt-steps button {
-  display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: center; gap: 12px; width: 100%; padding: 10px 12px;
-  border: 0; border-radius: 14px; background: none; color: var(--pt-soft); font: inherit; font-size: 16px; line-height: 1.3; text-align: left; cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
+  position: relative; display: grid; grid-template-columns: 26px minmax(0, 1fr); align-items: center; gap: 14px; width: 100%; padding: 9px 12px 9px 1px;
+  border: 0; border-radius: 12px; background: none; color: var(--pt-faint); font: inherit; font-size: 15.5px; line-height: 1.35; text-align: left; cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
 }
-.pt-steps button:hover { color: var(--pt-fg); background: rgba(255, 255, 255, 0.05); }
-.pt-steps button.is-now { color: var(--pt-fg); background: rgba(255, 255, 255, 0.1); }
+.pt-steps button:hover { color: var(--pt-fg); }
+.pt-steps button.is-past { color: var(--pt-soft); }
+.pt-steps button.is-now { color: var(--pt-fg); }
 .pt-steps button:focus-visible { outline: 2px solid var(--pt-fg); outline-offset: 2px; }
-.pt-k { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--pt-line); font-size: 13px; font-variant-numeric: tabular-nums; transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease; }
-.pt-steps .is-past .pt-k { border-color: transparent; background: rgba(255, 255, 255, 0.16); color: var(--pt-fg); }
-.pt-steps .is-now .pt-k { border-color: transparent; background: var(--pt-fg); color: var(--ink); }
+.pt-k { position: relative; z-index: 1; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #0f0f10; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18); font-size: 12px; font-variant-numeric: tabular-nums; transition: background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease; }
+.pt-k svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.pt-steps .is-past .pt-k { background: #232325; box-shadow: none; color: var(--pt-fg); }
+.pt-steps .is-now .pt-k { background: var(--pt-fg); box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08), 0 0 18px color-mix(in oklab, var(--am-l) 60%, transparent); color: #0f0f10; }
 
-.pt-now { display: grid; gap: 10px; min-height: 132px; align-content: start; }
-.pt-count { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pt-soft); }
-.pt-why { padding: 14px 16px; border-left: 2px solid rgba(255, 255, 255, 0.3); border-radius: 0 14px 14px 0; background: rgba(255, 255, 255, 0.05); font-size: 15px; line-height: 1.45; }
+/* «почему так» — пузырь ответа */
+.pt-why { display: grid; gap: 6px; padding: 16px 18px; border-radius: 20px; background: rgba(255, 255, 255, 0.045); box-shadow: inset 0 0 0 1px var(--pt-line); font-size: 15px; line-height: 1.5; }
 .pt-why[hidden] { display: none; }
-.pt-mini { margin-bottom: 4px; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pt-soft); }
+.pt-why p { margin: 0; }
+.pt-mini { display: flex; align-items: center; gap: 7px; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--pt-soft); }
+.pt-mini .pt-spark { width: 14px; height: 14px; animation: none; }
 
-.pt-tools { display: flex; flex-wrap: wrap; gap: 8px; }
-.pt-btn { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px 0 10px; border: 1px solid var(--pt-line); border-radius: 999px; background: none; color: var(--pt-fg); font: inherit; font-size: 14px; cursor: pointer; transition: border-color 0.2s ease, background 0.2s ease, opacity 0.2s ease; }
-.pt-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-.pt-btn:hover { border-color: rgba(255, 255, 255, 0.4); }
-.pt-btn:disabled { opacity: 0.35; cursor: default; }
-.pt-btn:focus-visible { outline: 2px solid var(--pt-fg); outline-offset: 2px; }
-.pt.is-done [data-again] { border-color: transparent; background: var(--pt-fg); color: var(--ink); }
+/* пилюля-«поле ввода»: текущий шаг как набранный запрос, справа назад / заново / сделать шаг */
+.pt-composer { display: flex; align-items: center; gap: 10px; min-height: 58px; padding: 8px 8px 8px 20px; border-radius: 30px; background: var(--pt-panel); box-shadow: inset 0 0 0 1px var(--pt-line), 0 18px 40px -24px rgba(0, 0, 0, 0.8); }
+.pt-prompt { flex: 1; min-width: 0; margin: 0; overflow: hidden; font-size: 15px; color: var(--pt-fg); white-space: nowrap; text-overflow: ellipsis; }
+.pt-ctrls { display: flex; align-items: center; gap: 4px; flex: none; }
+.pt-icon, .pt-send { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; transition: background 0.2s ease, opacity 0.2s ease, scale 0.2s ease; }
+.pt-icon { background: none; color: var(--pt-soft); }
+.pt-icon:hover { background: rgba(255, 255, 255, 0.08); color: var(--pt-fg); }
+.pt-send { background: var(--pt-fg); color: #0f0f10; }
+.pt-send:hover { scale: 1.06; }
+.pt-icon:disabled, .pt-send:disabled { opacity: 0.3; cursor: default; scale: 1; }
+.pt-icon svg, .pt-send svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.pt-icon:focus-visible, .pt-send:focus-visible { outline: 2px solid var(--pt-fg); outline-offset: 2px; }
+.pt.is-done [data-again] { background: var(--pt-fg); color: #0f0f10; }
 
-/* телефон: рамка, внутри экраны; у каждого экрана своя прокрутка */
-.pt-device { display: grid; justify-items: center; gap: 12px; min-width: 0; }
-.pt-phone { position: relative; width: 100%; max-width: 380px; padding: 10px; border-radius: 52px; background: #0b0b0c; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 40px 80px -30px rgba(0, 0, 0, 0.7); }
+/* рамка и подсветка за ней */
+.pt-device { position: relative; isolation: isolate; display: grid; justify-items: center; gap: 12px; min-width: 0; }
+.pt-amb {
+  position: absolute; z-index: -1; inset: -16% -26%; pointer-events: none; opacity: 1; filter: blur(64px) saturate(1.45);
+  background:
+    radial-gradient(34% 44% at 20% 50%, var(--am-l), transparent 72%),
+    radial-gradient(34% 44% at 80% 50%, var(--am-r), transparent 72%),
+    radial-gradient(44% 30% at 50% 14%, var(--am-t), transparent 72%),
+    radial-gradient(44% 30% at 50% 86%, var(--am-b), transparent 72%);
+}
+/* рамка телефона влезает в окно и по высоте: на 1280×800 и 1024×768 она была выше экрана (поля — кнопки сверху и капсула снизу) */
+.pt-phone { position: relative; width: 100%; max-width: min(380px, calc((100svh - 150px) * 786 / 1704 + 20px)); padding: 10px; border-radius: 52px; background: #0b0b0c; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 40px 80px -30px rgba(0, 0, 0, 0.8); }
 .pt-screen { position: relative; aspect-ratio: 786 / 1704; overflow: hidden; border-radius: 42px; background: #fff; isolation: isolate; }
 .pt-page { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; background: #fff; }
 .pt-page::-webkit-scrollbar { display: none; }
@@ -58,7 +112,7 @@
 @keyframes pt-in { from { translate: 100% 0; } to { translate: 0 0; } }
 @keyframes pt-out { from { translate: 0 0; filter: brightness(1); } to { translate: -28% 0; filter: brightness(0.7); } }
 
-/* точка нажатия: кольцо пульсирует; нажали мимо — вспышка */
+/* точка нажатия (прототип из картинок): кольцо пульсирует; нажали мимо — вспышка */
 .pt-spot { position: absolute; z-index: 3; width: 56px; height: 56px; margin: -28px 0 0 -28px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; }
 .pt-spot i { position: absolute; inset: 14px; border-radius: 50%; background: rgba(36, 120, 255, 0.35); box-shadow: 0 0 0 2px #2478ff; }
 .pt-spot::before { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid #2478ff; opacity: 0; animation: pt-ring 1.8s ease-out infinite; }
@@ -67,59 +121,59 @@
 .pt-spot.is-hint i { animation: pt-hint 0.5s ease 2; }
 @keyframes pt-ring { 0% { scale: 0.4; opacity: 0.9; } 100% { scale: 1.3; opacity: 0; } }
 @keyframes pt-hint { 50% { scale: 1.6; background: rgba(36, 120, 255, 0.6); } }
-
-@media (max-width: 860px) {
-  .pt { grid-template-columns: 1fr; padding: 20px 16px 24px; border-radius: 22px; }
-  .pt-device { order: -1; }
-  .pt-phone { max-width: 300px; border-radius: 44px; padding: 8px; }
-  .pt-screen { border-radius: 36px; }
-  .pt-now { min-height: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .pt-mode i, .pt-spot::before { animation: none; }
-  .pt-spot::before { opacity: 0.6; scale: 1.1; }
-  .pt-page.is-in, .pt-page.is-out, .pt-page.is-in-back, .pt-page.is-out-back { animation: none; }
-}
-
-/* веб-продукт: окно браузера вместо телефона, шире; текст слева уже */
-.pt--browser { grid-template-columns: minmax(240px, 0.72fr) minmax(0, 1.6fr); gap: clamp(24px, 3.6vw, 56px); }
-.pt-window { max-width: none; padding: 0; border-radius: 16px; background: #1b1c1f; overflow: hidden; }
-.pt-bar { display: flex; gap: 7px; height: 32px; align-items: center; padding: 0 14px; background: #26272b; }
-.pt-bar i { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, 0.22); }
-.pt-window .pt-screen { aspect-ratio: 16 / 10; border-radius: 0; }
-.pt-window .pt-spot { width: 48px; height: 48px; margin: -24px 0 0 -24px; }
-.pt-window .pt-spot i { inset: 12px; }
 /* плашка-итог поверх экрана, когда отдельного экрана «готово» в макетах нет */
 .pt-toast { position: absolute; z-index: 3; left: 50%; top: 9%; translate: -50% 0; display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px 12px 14px; border-radius: 14px; background: #141512; color: #fff; font-size: 15px; font-weight: 500; white-space: nowrap; box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.5); animation: pt-toast 0.5s 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .pt-toast svg { width: 20px; height: 20px; flex: none; padding: 2px; border-radius: 50%; background: #2fbf6b; fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 @keyframes pt-toast { from { opacity: 0; translate: -50% -12px; } }
-@media (max-width: 860px) {
-  .pt--browser { grid-template-columns: 1fr; }
-  .pt-window { max-width: none; border-radius: 12px; padding: 0; }
-  .pt-bar { height: 24px; }
-  .pt-toast { font-size: 13px; padding: 9px 14px 9px 11px; }
-}
-@media (prefers-reduced-motion: reduce) { .pt-toast { animation: none; } }
 
-/* v115: живой прототип (src/ui/live) — метка «собран в Claude Code», строка «демо», подсказка-кольцо */
-.pt-badge { display: inline-flex; align-items: center; gap: 8px; width: fit-content; padding: 6px 12px 6px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14); font-size: 13px; color: var(--pt-fg); }
-.pt-spark { width: 18px; height: 18px; fill: none; stroke: #f08a5d; stroke-width: 2; stroke-linecap: round; animation: pt-spark 6s linear infinite; }
-@keyframes pt-spark { to { rotate: 360deg; } }
-.pt-window { width: 100%; }
+/* веб-продукт: окно браузера 16:10 вместо телефона, шире; текст слева уже */
+.pt--browser { grid-template-columns: minmax(250px, 0.72fr) minmax(0, 1.6fr); gap: clamp(24px, 3.6vw, 56px); }
+.pt-window { width: 100%; max-width: none; padding: 0; border-radius: 16px; background: #1b1c1f; overflow: hidden; }
+.pt-bar { display: flex; gap: 7px; height: 32px; align-items: center; margin: 0; padding: 0 14px; background: #232427; }
+.pt-bar i { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); }
+.pt-window .pt-screen { aspect-ratio: 16 / 10; border-radius: 0; }
+.pt-window .pt-spot { width: 48px; height: 48px; margin: -24px 0 0 -24px; }
+.pt-window .pt-spot i { inset: 12px; }
+.pt--browser .pt-amb { inset: -14% -10%; }
+
+/* живой прототип (src/ui/live): корень в дизайн-ширине модуля, строка «демо», подсказка-кольцо */
 .pt-live-root { position: relative; overflow: hidden; background: #fff; color: #141512; font-family: Onest, "Segoe UI", system-ui, sans-serif; text-align: left; }
 .pt-live-root :where(button, input, textarea, select) { font: inherit; color: inherit; }
 .pt-loading { display: grid; place-items: center; height: 100%; margin: 0; font-size: 15px; color: #8a8b85; }
-.pt-demo { margin: 0; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pt-soft); text-align: center; }
+.pt-demo { margin: 0; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pt-faint); text-align: center; }
 /* куда нажать: модуль вешает .pt-hint на нужный элемент — вокруг него пульсирует синее кольцо */
 .pt-live-root .pt-hint { animation: pt-hint-ring 1.8s ease-out infinite; }
 @keyframes pt-hint-ring { 0% { box-shadow: 0 0 0 0 rgba(36, 120, 255, 0.55); } 70% { box-shadow: 0 0 0 12px rgba(36, 120, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(36, 120, 255, 0); } }
-@media (prefers-reduced-motion: reduce) {
-  .pt-spark { animation: none; }
-  .pt-live-root .pt-hint { animation: none; box-shadow: 0 0 0 3px rgba(36, 120, 255, 0.6); }
-}
-
-/* узкий экран: окно браузера выше, широкий интерфейс прокручивается внутри по горизонтали */
-@media (max-width: 860px) { .pt--live.pt--browser .pt-window .pt-screen { aspect-ratio: 3 / 4; } }
+/* узкий экран: окно браузера не мельче 0,5 — широкий интерфейс листается внутри по горизонтали */
 .pt-screen.is-pan { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; }
 .pt-pan { display: none; margin: 0; font-size: 13px; color: var(--pt-fg); }
 .pt-device:has(.pt-screen.is-pan) .pt-pan { display: block; }
+
+@media (max-width: 1100px) and (min-width: 861px) {
+  .pt--browser { grid-template-columns: minmax(0, 1fr); }
+  .pt--browser .pt-side { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 32px; align-items: start; }
+  .pt--browser .pt-side > :is(.pt-badge, .pt-title, .pt-lead) { grid-column: 1; }
+  .pt--browser .pt-side > :is(.pt-trace, .pt-why, .pt-composer) { grid-column: 2; }
+  .pt--browser .pt-side > .pt-trace { grid-row: 1 / span 3; }
+}
+@media (max-width: 860px) {
+  /* minmax(0, 1fr): колонка не распирается содержимым — на 390 панель была шире экрана */
+  .pt, .pt--browser { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .pt-device { order: -1; }
+  .pt-phone { max-width: 300px; border-radius: 44px; padding: 8px; }
+  .pt-screen { border-radius: 36px; }
+  .pt-window { max-width: none; border-radius: 12px; padding: 0; }
+  .pt-bar { height: 24px; }
+  .pt-toast { font-size: 13px; padding: 9px 14px 9px 11px; }
+  .pt-amb { inset: -6% -10%; filter: blur(40px) saturate(1.15); }
+  .pt-composer { min-height: 52px; padding-left: 16px; }
+  .pt-prompt { font-size: 14px; }
+}
+@media (max-width: 600px) { .pt--live.pt--browser .pt-window .pt-screen { aspect-ratio: 3 / 4; } }
+@media (prefers-reduced-motion: reduce) {
+  .pt { transition: none; }
+  .pt-spark, .pt-think i, .pt-spot::before { animation: none; }
+  .pt-spot::before { opacity: 0.6; scale: 1.1; }
+  .pt-page.is-in, .pt-page.is-out, .pt-page.is-in-back, .pt-page.is-out-back, .pt-toast { animation: none; }
+  .pt-live-root .pt-hint { animation: none; box-shadow: 0 0 0 3px rgba(36, 120, 255, 0.6); }
+}
