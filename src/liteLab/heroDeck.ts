@@ -7,9 +7,8 @@ import { t, type Key } from "../i18n";
 
 type Item = { kind: "case"; c: CaseItem } | { kind: "note"; n: Note };
 
-/* обложки как в 3D-карточке: у кейсов с роликом — его кадр, у мобильных концептов — диорама на цветах кейса */
+/* обложки как в 3D-карточке: у кейсов с роликом — его кадр; v111: у остальных — обложка из плиток ниже (lite/cards) */
 const CARD: Record<string, string> = { "grif-ai": "ui/card-grif-ai.webp", community: "ui/card-community.webp" };
-const FIT: Record<string, string> = { "plati-chastyami": "ui/card-plati-chastyami.webp", "restaurant-guru": "ui/card-restaurant-guru.webp" };
 const BASE = import.meta.env.BASE_URL;
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -36,10 +35,9 @@ export function mountHeroDeck(root: HTMLElement, label: (k: string) => string) {
     count.innerHTML = `<b>${pad(index + 1)}</b>/${pad(items.length)}`;
     if (isCase) {
       const c = it.c;
-      const fit = FIT[c.id];
-      img.src = `${BASE}${CARD[c.id] ?? fit ?? c.look.screen?.src ?? ""}`;
-      img.classList.toggle("is-fit", !!fit);
-      img.style.background = fit ? `linear-gradient(150deg, ${c.look.stage[0]}, ${c.look.stage[1]})` : "";
+      img.src = `${BASE}${CARD[c.id] ?? `lite/cards/${c.id}.webp`}`;
+      img.classList.remove("is-fit");
+      img.style.background = "";
       title.textContent = c.title;
       meta.textContent = c.tag;
       link.href = `./?lite=1#/work/${c.id}`;

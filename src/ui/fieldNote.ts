@@ -14,7 +14,7 @@ import "./hero/note-card.css";
 import { bodyHas, onBodyState } from "../lib/bodyState";
 import { pad2 as pad } from "../lib/format";
 import notes, { type Note } from "../data/notes";
-import { caseObject, getCases, type CaseItem } from "../data/cases";
+import { getCases, type CaseItem } from "../data/cases";
 import { caseCard } from "../data/caseCards";
 import { cue } from "../audio/bus";
 import { onLang, t, type Key } from "../i18n";
@@ -36,15 +36,10 @@ const CASE_CLIP: Record<string, { image: string; video: NonNullable<Note["video"
   "grif-ai": { image: "ui/card-grif-ai.webp", video: { webm: "ui/card-grif-ai.webm", mp4: "ui/card-grif-ai.mp4" } },
   community: { image: "ui/card-community.webp", video: { webm: "ui/card-community.webm", mp4: "ui/card-community.mp4" } },
 };
-/* v100: у мобильных концептов экран телефона высокий, а окно карточки широкое — cover увеличивал его и оставлял
-   одну верхушку. Вместо экрана им показывается их диорама (телефон в сцене, кадр горизонтальный) целиком, на фоне
-   цветов кейса: лёгкие копии cases/<id>/diorama.webp на 560 px с прозрачностью */
-const CASE_FIT: Record<string, string> = {
-  "plati-chastyami": "ui/card-plati-chastyami.webp",
-  "restaurant-guru": "ui/card-restaurant-guru.webp",
-};
-const itemFit = (it: Item) => (it.kind === "case" ? CASE_FIT[it.c.id] : undefined);
-const itemImage = (it: Item) => (it.kind === "case" ? CASE_CLIP[it.c.id]?.image ?? CASE_FIT[it.c.id] ?? it.c.look.screen?.src ?? caseObject(it.c.id, "webp") : it.n.image);
+/* v111 (Никита): у кейсов без ролика — обложка из лёгкой версии (экран продукта на цветах кейса, public/lite/cards),
+   во всю карточку; диорамы мобильных концептов (v100) больше не показываются */
+const itemFit = (_it: Item): string | undefined => undefined;
+const itemImage = (it: Item) => (it.kind === "case" ? CASE_CLIP[it.c.id]?.image ?? `lite/cards/${it.c.id}.webp` : it.n.image);
 const itemVideo = (it: Item) => (it.kind === "case" ? CASE_CLIP[it.c.id]?.video : it.n.video);
 
 export function initFieldNote() {

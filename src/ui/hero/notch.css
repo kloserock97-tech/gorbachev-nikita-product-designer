@@ -108,3 +108,40 @@ body:not([data-section="home"]) .top-tools { opacity: 0; translate: 0 -10px; poi
   .top-lite span { display: none; }
   .sound-fab { --h: 34px; top: calc(env(safe-area-inset-top) + 46px + 8px); }
 }
+
+/* ── v111 (картинка Никиты 22.10): на широком экране — строка во всю ширину вместо чёлки. Слева знак и разделы со
+   значками и подписями, справа язык и меню (.m-bar, mobile-nav.css). Взято расположение элементов, вид — свой:
+   на первом экране строка прозрачная поверх неба, в главах разделы и кнопки справа собираются в светлые плашки,
+   чтобы читаться и на тёмном лугу «Кейсов». Звук и лёгкая версия — в меню ── */
+@media (min-width: 901px) {
+  .dock-wrap {
+    left: 0; right: 0; translate: none; justify-content: flex-start;
+    padding: 18px clamp(24px, 4.6vw, 88px) 0;
+  }
+  .dock {
+    --notch: transparent;
+    gap: 6px; padding: 4px; border-radius: 16px;
+    background: transparent; box-shadow: none;
+    transition: background 0.4s ease, box-shadow 0.4s ease;
+  }
+  .dock::before, .dock::after { display: none; }
+  .dock .dock-item {
+    height: 40px; padding: 0 12px; gap: 8px; border-radius: 12px;
+    color: #2a2923; letter-spacing: 0; text-transform: none;
+    font: 500 15px/1 var(--font);
+  }
+  .dock .dock-item > span:not(.glyph), .dock[data-section] .dock-item > span:not(.glyph) { max-width: none; opacity: 1; margin: 0; }
+  .dock .dock-item .glyph { width: 16px; height: 16px; opacity: 0.85; }
+  .dock .dock-item[data-nav="lab"], .dock .dock-item--enter, .dock .dock-item--enter:not([data-near="true"]) { color: #2a2923; }
+  .dock .dock-item:hover, .dock .dock-item[data-near="true"], .dock .dock-item:focus-visible { color: #11110f; background: rgba(255, 255, 255, 0.5); }
+  .dock .dock-item:focus-visible { outline: 2px solid #11110f; }
+  .dock .dock-item.is-active { color: #11110f; background: rgba(255, 255, 255, 0.72); }
+  .dock .dock-mark, .dock .dock-mark[data-near="true"] {
+    width: 40px; height: 40px; padding: 0; margin-right: 28px; border-radius: 11px;
+    background: #11110f; color: #fff;
+  }
+  .dock .dock-mark:hover { background: #2a2923; color: #fff; }
+  /* в главах — светлая плашка под разделами */
+  body:not([data-section="home"]) .dock { background: rgba(248, 246, 240, 0.9); box-shadow: 0 10px 30px rgba(24, 20, 10, 0.16); }
+  body:not([data-section="home"]) .dock .dock-mark { margin-right: 10px; }
+}

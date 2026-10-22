@@ -631,7 +631,12 @@ void main(){
   vec3 light = shIrradiance(N) * uAmbient * 0.6 * mix(1.0, 0.3, shadow) * occ.x
              + uSunCol * max(dot(N, uSunDir), 0.0) * (1.0 - shadow) * cloudShade(vW) * occ.y;
   vec3 c = soil * light * mix(1.0, 0.7, uWet);
-  c = mix(c, fogTint(vW), airFog(vW, vDist));
+  /* v111: за краем травы земля холма переходит в луг равнины (plainFragment) — тот же цвет и та же лёгкая дымка;
+     иначе между склоном и лугом лежала бежевая полоса низинного тумана */
+  float edge = smoothstep(9.0, 16.0, length(vW.xz));
+  vec3 upL = max(vec3(0.0), uSH[0] * 0.886227 + uSH[1] * 1.023328) * uAmbient;
+  c = mix(c, vec3(0.075, 0.115, 0.03) * upL * 0.85, edge);
+  c = mix(c, fogTint(vW), airFog(vW, vDist) * mix(1.0, 0.4, edge));
   gl_FragColor = vec4(c, 1.0);
 }
 `;
@@ -840,13 +845,20 @@ void main(){
   float cosA = max(dot(d, uSunDir), 0.0);
   sky += uSunCol * (pow(cosA, 90.0) * 0.3 + pow(cosA, 12.0) * 0.06) + skyMie(d);
   vec3 up = max(vec3(0.0), uSH[0] * 0.886227 + uSH[1] * 1.023328) * uAmbient;
-  vec3 soil = vec3(0.045, 0.062, 0.018) * up * 0.6;
+  /* v111: равнина — продолжение луга (зелень травы холма), уходит в дымку к горизонту */
+  vec3 soil = vec3(0.075, 0.115, 0.03) * up * 0.85;
+  /* пятна луга: светлее и темнее полосами, без сетки шума (сумма синусоид) — равнина не читается ровным полем */
+  vec2 pq = vW.xz * 0.045;
+  float meadowK = 0.5 + 0.28 * sin(pq.x * 1.7 + pq.y * 0.6) + 0.14 * sin(-pq.x * 0.9 + pq.y * 2.3 + 1.3) + 0.08 * sin(pq.x * 4.1 - pq.y * 3.2 + 2.2);
+  soil *= mix(0.78, 1.18, meadowK);
+  soil = mix(soil, soil * vec3(1.15, 1.05, 0.7), smoothstep(0.62, 0.85, meadowK) * 0.5);
   /* у края земли — её же дымка, к первой гряде — цвет неба, как в тумане у её подножия */
   /* v107: равнина вокруг холма — облачное море в цвете тумана гор (mistTone), без оранжевой полосы у подножия */
   vec3 fogc = mix(mix(uSkyHorizon, mistTone(sky), 0.9), mistTone(sky), smoothstep(24.0, 40.0, dist));
   /* к первой гряде дымка густеет до конца: у её подножия равнина — ровно цвет неба, как и сама гряда там */
   /* v109: у подножия холма — тоже туман облачного моря, а не дёрн в дымке (оранжевая полоса слева от склона) */
-  float fog = clamp(0.9 + 0.1 * smoothstep(22.0, 43.0, dist), 0.0, 1.0);
+  float fog = clamp(0.2 + 0.72 * smoothstep(25.0, 340.0, dist), 0.0, 1.0);
+  fogc = mix(fogc, sky, smoothstep(80.0, 340.0, dist) * 0.6);
   gl_FragColor = vec4(mix(soil, fogc, fog), 1.0);
 }
 `;

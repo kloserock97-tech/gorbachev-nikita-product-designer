@@ -9,6 +9,7 @@ import { initCasesSignpost } from "./ui/casesSignpost";
 import "./ui/hero/hero-mobile.css";
 import "./ui/hero/mobile-nav.css";
 import { initMobileNav } from "./ui/hero/mobileNav";
+import { initLabMenu } from "./ui/labMenu";
 import { HillScene, type HillSceneOptions } from "./scene/HillScene";
 import { initHeroUi } from "./ui/hero/heroUi";
 import { initWorkMenu } from "./ui/workMenu";
@@ -331,6 +332,14 @@ function start3d(caseView?: CaseView) {
       if (body.classList.contains("lite")) return document.getElementById("work")?.scrollIntoView({ behavior: "smooth" });
       closePc();
       story?.toCases();
+    },
+  });
+  /* v111: у «Пэт-проектов» тоже выпадающий список; кнопка внизу — к главе пэт-проектов */
+  initLabMenu({
+    onAll: () => {
+      if (body.classList.contains("lite")) return document.querySelector("#notes")?.scrollIntoView({ behavior: "smooth" });
+      closePc();
+      story?.toNotes();
     },
   });
   /* v24: остальные пункты дока вели в никуда (клик гасился ради анимации пилюли) — теперь Hill к холму,

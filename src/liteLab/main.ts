@@ -23,8 +23,6 @@ const OWN: Record<"ru" | "en", Record<string, string>> = {
     "hero.alt": "Холм на закате: кресло, ретро-компьютер, собака и дерево над долиной в тумане",
     "brand.sber": "Сбер",
     "facts.label": "Коротко в цифрах",
-    "facts.cases": "Кейсов на сайте",
-    "facts.teams": "Размер команд",
     "work.title": "Кейсы",
     "work.filter": "Показать кейсы",
     "filter.all": "Все",
@@ -56,8 +54,6 @@ const OWN: Record<"ru" | "en", Record<string, string>> = {
     "hero.alt": "A hill at sunset: an armchair, a retro computer, a dog and a tree above a misty valley",
     "brand.sber": "Sber",
     "facts.label": "In numbers",
-    "facts.cases": "Case studies here",
-    "facts.teams": "Team size",
     "work.title": "Work",
     "work.filter": "Filter the work",
     "filter.all": "All",
@@ -164,8 +160,6 @@ function render() {
   document.querySelectorAll<HTMLButtonElement>("[data-lang-set]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.langSet === getLang())));
   statement();
   const cases = getCases();
-  const count = document.querySelector("[data-facts-cases]");
-  if (count) count.textContent = String(cases.length);
   const exp = document.querySelector("[data-exp]");
   if (exp) exp.innerHTML = JOBS[getLang()].map(jobCard).join("");
   const grid = document.querySelector("[data-cases]");

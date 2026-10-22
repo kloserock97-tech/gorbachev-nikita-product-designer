@@ -24,6 +24,8 @@ const en = {
   "nav.menu": "Menu",
   "nav.menu.close": "Close menu",
   "nav.down": "Scroll down",
+  "lab.note": "My own WebGL demos and tools — they open in a new tab",
+  "lab.all": "All pet projects",
 
   /* компьютер на столике */
   "pc.tip": "Read the magazine",

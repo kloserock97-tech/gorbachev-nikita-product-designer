@@ -3,6 +3,52 @@
    кружок со стрелкой внизу; подпись «Продукты для ясного завтра» и «Заглянуть внутрь» убраны, карточка кейса — за
    первым экраном. Поведение — mobileNav.ts. Подключается после hero-mobile.css. */
 .m-bar, .m-menu, .m-down { display: none; }
+.m-bar__lang svg { display: none; }
+
+/* v111: на широком экране панель телефона даёт правую часть строки — язык и меню; знак и разделы — в доке
+   (notch.css). Звук и лёгкая версия — в меню, отдельные кнопки спрятаны */
+@media (min-width: 901px) {
+  .top-tools, .sound-fab { display: none !important; }
+  .m-bar {
+    display: flex; align-items: center; gap: 6px; position: fixed; z-index: 31;
+    top: 18px; right: clamp(24px, 4.6vw, 88px); padding: 4px; border-radius: 16px;
+    opacity: 0; pointer-events: none; transition: opacity 0.5s ease, background 0.4s ease, box-shadow 0.4s ease;
+  }
+  .is-ready .m-bar { opacity: 1; pointer-events: auto; transition-delay: 0.4s, 0s, 0s; }
+  .no-ui .m-bar, .lite .m-bar, .case-open .m-bar, .pc-focus .m-bar { opacity: 0; pointer-events: none; }
+  body:not([data-section="home"]) .m-bar { background: rgba(248, 246, 240, 0.9); box-shadow: 0 10px 30px rgba(24, 20, 10, 0.16); }
+  .m-bar__mark { display: none; }
+  .m-bar__lang, .m-bar__burger {
+    height: 40px; border: 0; border-radius: 12px; background: transparent; color: #2a2923; cursor: pointer;
+    font: 500 15px/1 var(--font); transition: background 0.2s ease;
+  }
+  .m-bar__lang { display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; transition: background 0.2s ease, opacity 0.3s ease; }
+  /* язык — только на первом экране (v106) */
+  body:not([data-section="home"]) .m-bar__lang { opacity: 0; pointer-events: none; width: 0; padding: 0; overflow: hidden; }
+  .m-bar__lang svg { display: block; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+  .m-bar__lang:hover, .m-bar__burger:hover, .m-menu-open .m-bar__burger { background: rgba(255, 255, 255, 0.55); }
+  .m-bar__burger { position: relative; width: 44px; padding: 0; }
+  .m-bar__burger i { position: absolute; left: 11px; width: 22px; height: 1.6px; border-radius: 2px; background: currentColor; transition: translate 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), rotate 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease, width 0.3s ease; }
+  .m-bar__burger i:nth-child(1) { top: 13px; }
+  .m-bar__burger i:nth-child(2) { top: 19px; }
+  .m-bar__burger i:nth-child(3) { top: 25px; width: 14px; left: 19px; }
+  .m-menu-open .m-bar__burger i:nth-child(1) { translate: 0 6px; rotate: 45deg; }
+  .m-menu-open .m-bar__burger i:nth-child(2) { opacity: 0; }
+  .m-menu-open .m-bar__burger i:nth-child(3) { width: 22px; left: 11px; translate: 0 -6px; rotate: -45deg; }
+  .m-bar__lang:focus-visible, .m-bar__burger:focus-visible { outline: 2px solid #11110f; outline-offset: 2px; }
+  /* меню — небольшая панель под кнопкой: звук и лёгкая версия; разделы и так в строке */
+  .m-menu { display: block; position: fixed; z-index: 30; top: 74px; right: clamp(24px, 4.6vw, 88px); width: 300px;
+    opacity: 0; visibility: hidden; translate: 0 -6px; transition: opacity 0.2s ease, translate 0.25s ease, visibility 0s 0.25s; }
+  .m-menu-open .m-menu { opacity: 1; visibility: visible; translate: none; transition: opacity 0.2s ease, translate 0.25s ease; }
+  .m-menu__in { padding: 10px; border-radius: 18px; background: #f6f3ec; box-shadow: 0 20px 50px rgba(40, 34, 18, 0.22); }
+  .m-menu__in > a { display: none; }
+  .m-menu__row { display: flex; flex-direction: column; gap: 6px; }
+  .m-menu__sound, .m-menu__lite {
+    height: 44px; display: flex; align-items: center; padding: 0 16px; border: 1px solid rgba(40, 36, 26, 0.12); border-radius: 12px;
+    background: #fffdf8; color: #23221d; font: 500 14px/1 var(--font); text-decoration: none; cursor: pointer;
+  }
+  .m-menu__sound[aria-pressed="true"] { background: #23221d; border-color: #23221d; color: #f7f4ec; }
+}
 
 @media (max-width: 900px) {
   .dock-wrap, .top-tools, .sound-fab { display: none !important; }

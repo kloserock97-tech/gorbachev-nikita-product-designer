@@ -31,12 +31,13 @@ type Ridge = {
 /* Высоты подобраны под кадр: ближняя гряда поднимается над горизонтом на пару градусов, дальние — выше, но
    не выше нижней трети неба, где заголовок. Зелень — тёмная оливка травы, к дали холоднее и синее */
 const q = new URLSearchParams(location.search);
+/* v111 (Никита): ближний лес и облачное море между слоями убраны — луг холма продолжается равниной (createPlain), а
+   вдали переходит в одну большую гору слева; она спускается к краю холма (VALLEY_T) и уходит под солнцем в седловину */
 const MID_RIDGES: Ridge[] = q.get("mid") === "0" ? [] : [
-  { r: 100, base: -6, lo: 4, hi: 11, freq: 4.2, forest: 0, crown: 1, tint: "#45424a", aerial: 0.48, mist: 1.5, seed: 4.3, saddle: true, ridged: true, cool: 0.5, sea: [1.6, 1.1] },
-  { r: 170, base: -8, lo: 7, hi: 17, freq: 3.4, forest: 0, crown: 1, tint: "#4d4954", aerial: 0.62, mist: 2, seed: 8.1, saddle: true, ridged: true, cool: 0.5, sea: [4.2, 1.8] },
+  { r: 190, base: -10, lo: 8, hi: 19, freq: 1.9, forest: 0, crown: 1, tint: "#4a4750", aerial: 0.68, mist: 6, seed: 4.3, saddle: true, ridged: true, cool: 0.5 },
 ];
 const RIDGES: Ridge[] = [
-  { r: 44, base: -1.2, lo: 0.4, hi: 2.4, freq: 3.2, forest: 1.1, crown: 1.1, tint: "#2c3a1c", aerial: 0.36, mist: 2.2, seed: 1.7 },
+  /* v111: ближняя лесистая гряда (r 44) убрана по просьбе Никиты — вместо неё луг до самой горы */
   /* v102: средняя (r 80) и дальняя (r 140) гряды убраны по просьбе Никиты — с горами слоёв рельефа было слишком
      много. Остался ближний лес, за ним сразу горы; солнце садится на их предгорья (mountains.ts, uFoot) */
   /* v78: самая дальняя гряда (горы, r 240, до 42 м) убрана по просьбе Никиты — она закрывала солнце у горизонта */
@@ -130,7 +131,9 @@ export function createVista(shared: {
 /* v80: равнина вокруг земли холма до гряд (shaders.ts, plainFragment). У края земли — тот же рельеф, чуть ниже:
    под краем земли равнина не выглядывает, а зазора между ними нет; дальше она уходит в долину */
 function createPlain(shared: { sky: Record<string, THREE.IUniform>; sh: THREE.IUniform; ambient: THREE.IUniform; horizon: THREE.IUniform }) {
-  const size = 120, seg = 80;
+  /* v111: равнина — луг до самой горы и дальше, почти до дальней плоскости камеры (400 м): было 120 м, и за краем
+     светлой полосой («озером») проступало небо под горизонтом */
+  const size = 740, seg = 160;
   const geo = new THREE.PlaneGeometry(size, size, seg, seg);
   geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position as THREE.BufferAttribute;

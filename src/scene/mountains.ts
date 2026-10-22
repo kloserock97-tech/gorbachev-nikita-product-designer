@@ -188,6 +188,7 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
       /* v107 (пример Никиты 22.10): x — доля холодного серо-сиреневого тона в воздухе перед теневыми склонами (горы
          стоят против солнца, к камере повёрнута тень), y — высота тумана в долинах, м; ?mcool=0.42,420 */
       uCool: { value: new THREE.Vector2(...((q.get("mcool") ?? "0.42,420").split(",").map(Number) as [number, number])) },
+      uLower: { value: new THREE.Vector2(...((q.get("mmid") ?? "0.5,2500").split(",").map(Number) as [number, number])) },
       tMap: { value: mapRT.texture },
     },
     vertexShader: /* glsl */ `
@@ -196,6 +197,7 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
       uniform float uSaddle;
       uniform float uFoot;
       uniform float uPush;
+      uniform vec2 uLower;
       uniform vec3 uSunDir;
       uniform sampler2D tMap;
       varying vec3 vReal;
@@ -218,6 +220,11 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
         float foot = uFoot * (0.8 + 0.14 * sin(u * 0.0019 + 1.3) + 0.08 * sin(u * 0.0053 + 0.4) + 0.04 * sin(u * 0.013))
           * smoothstep(3300.0, 5200.0, d) * (1.0 - smoothstep(6800.0, 9000.0, d));
         p.y = max(p.y, foot * (1.0 - smoothstep(0.22, 0.5, off)));
+        /* v111 (Никита): средние горы — между солнцем и левым краем кадра — ниже и дальше; горы у солнца как были.
+           uLower: x — насколько ниже, y — насколько дальше, м (до SCALE); ?mmid=0.5,2500 */
+        float mid = smoothstep(0.22, 0.3, off) * (1.0 - smoothstep(0.6, 0.72, off));
+        p.y *= 1.0 - mid * uLower.x;
+        p.z -= mid * uLower.y;
         p.z -= uPush;
         vReal = p;
         vWorld = (modelMatrix * vec4(p, 1.0)).xyz;

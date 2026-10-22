@@ -22,6 +22,11 @@ type Filter = "all" | "web" | "mobile";
 const FILTERS: Filter[] = ["all", "web", "mobile"];
 
 const kindOf = (c: CaseItem): Filter[] => c.kind;
+/* v111 (Никита): у GRIF AI и «Сообщества» — мокап в перспективе, у остальных — обложка из лёгкой версии */
+const BASE = import.meta.env.BASE_URL;
+const thumb = (c: CaseItem) => (c.id === "grif-ai" || c.id === "community"
+  ? caseArt(c, { mode: "thumb" })
+  : `<img class="work-menu__cover" src="${BASE}lite/cards/${c.id}.webp" alt="" width="960" height="600" loading="lazy" decoding="async" draggable="false">`);
 
 const arrow = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8.5 7H17v8.5"/></svg>`;
 
@@ -50,7 +55,7 @@ export function initWorkMenu(opts: { onOpenComputer?: () => void; onAllCases?: (
         ${all.map((c, i) => `
           <li style="--i:${i}" data-kinds="${kindOf(c).join(" ")}">
             <a class="work-menu__card" href="#/work/${c.id}">
-              <span class="work-menu__thumb">${caseArt(c, { mode: "thumb" })}<span class="work-menu__go">${arrow}</span></span>
+              <span class="work-menu__thumb">${thumb(c)}<span class="work-menu__go">${arrow}</span></span>
               <span class="work-menu__name"></span>
               <span class="work-menu__sub"></span>
             </a>

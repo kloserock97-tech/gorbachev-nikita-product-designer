@@ -7,7 +7,8 @@
 <meta name="description" content="Портфолио продуктового дизайнера Никиты Горбачева: кейсы, пэт-проекты и контакты.">
 <meta name="theme-color" content="#f3f2ee">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="preload" as="image" href="lite/hero/hill.avif" type="image/avif" fetchpriority="high">
+<!-- v111: кадр холма в двух размерах — 1672 и 3344 px (апскейл Real-ESRGAN x4plus из оригинала Никиты), ретина берёт второй -->
+<link rel="preload" as="image" imagesrcset="lite/hero/hill.avif 1672w, lite/hero/hill@2x.avif 3344w" imagesizes="(min-width: 1440px) 1360px, 100vw" type="image/avif" fetchpriority="high">
 </head>
 <body>
 <a class="ll-skip" href="#work" data-ll="skip"></a>
@@ -48,8 +49,8 @@
 
     <figure class="hero__frame">
       <picture>
-        <source srcset="lite/hero/hill.avif" type="image/avif">
-        <img src="lite/hero/hill.webp" alt="" data-ll-alt="hero.alt" width="1672" height="941" fetchpriority="high">
+        <source srcset="lite/hero/hill.avif 1672w, lite/hero/hill@2x.avif 3344w" sizes="(min-width: 1440px) 1360px, 100vw" type="image/avif">
+        <img src="lite/hero/hill.webp" srcset="lite/hero/hill.webp 1672w, lite/hero/hill@2x.webp 3344w" sizes="(min-width: 1440px) 1360px, 100vw" alt="" data-ll-alt="hero.alt" width="1672" height="941" fetchpriority="high">
       </picture>
       <!-- колода, как в карточке 3D-версии: кейсы, потом пэт-проекты (heroDeck.ts) -->
       <div class="hero__deck" role="group" tabindex="0" data-ll-label="deck.label">
@@ -90,15 +91,6 @@
       <p class="ll-fact__label" data-ll="about.fact.years.sub"></p>
       <p class="ll-fact__text" data-ll="about.p2"></p>
       <p class="ll-fact__num" data-ll="about.fact.years"></p>
-    </article>
-    <article class="ll-fact">
-      <img class="ll-fact__thumb" src="cases/community/diorama.webp" alt="" width="120" height="80" loading="lazy">
-      <p class="ll-fact__label" data-ll="facts.cases"></p>
-      <p class="ll-fact__num" data-facts-cases></p>
-    </article>
-    <article class="ll-fact ll-fact--photo">
-      <p class="ll-fact__label" data-ll="facts.teams"></p>
-      <p class="ll-fact__num" data-ll="about.fact.teams.sub"></p>
     </article>
   </section>
 

@@ -162,24 +162,14 @@ a:hover > .ll-round, a:focus-visible > .ll-round { rotate: 45deg; }
 @media (max-width: 760px) { .ll-statement { grid-template-columns: 1fr; } }
 
 /* ── цифры карточками ── */
-.ll-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; max-width: var(--max); margin: 0 auto; padding: 0 var(--pad); }
-@media (max-width: 1000px) { .ll-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 520px) { .ll-facts { grid-template-columns: 1fr; } .ll-fact { min-height: 180px; } }
-.ll-fact { position: relative; display: flex; flex-direction: column; min-height: 260px; padding: 20px; border-radius: var(--r-l); background: var(--card); overflow: hidden; }
-.ll-fact__label { margin: auto 0 0; font-size: 13px; color: var(--muted); }
-.ll-fact__num { margin: 4px 0 0; font-size: clamp(40px, 4vw, 56px); line-height: 1; font-weight: 500; letter-spacing: -0.045em; }
-.ll-fact__text { margin: 8px 0 0; font-size: 14px; line-height: 1.45; color: rgba(243, 242, 238, 0.72); max-width: 28ch; }
-.ll-fact--dark { background: var(--dark); color: #f3f2ee; }
-.ll-fact--dark .ll-fact__label { margin: 0; color: rgba(243, 242, 238, 0.56); }
-.ll-fact--dark .ll-fact__num { margin-top: auto; }
-.ll-fact__logos { display: grid; grid-template-columns: repeat(4, 44px); gap: 8px; }
-.ll-fact__logos img { width: 44px; height: 44px; border-radius: 12px; }
-.ll-fact__thumb { width: 132px; height: 88px; object-fit: contain; border-radius: 14px; background: linear-gradient(150deg, #fcefe6, #f6d9c6); }
-/* карточка с кадром холма: тот же закат, что на первом экране, — цифра белым поверх */
-.ll-fact--photo { color: #fff; background: #b7a27c url("/lite/hero/hill.webp") 18% 70% / 340% auto no-repeat; }
-.ll-fact--photo::before { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(30, 24, 10, 0.5), transparent 70%); }
-.ll-fact--photo > * { position: relative; }
-.ll-fact--photo .ll-fact__label { color: rgba(255, 255, 255, 0.82); }
+/* v111 (Никита): карточки «Кейсов на сайте» и «Размер команд» убраны — осталась одна полоса: слева подпись и текст,
+   справа крупная цифра */
+.ll-facts { max-width: var(--max); margin: 0 auto; padding: 0 var(--pad); }
+.ll-fact { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 6px 40px; padding: 26px 28px; border-radius: var(--r-l); background: var(--dark); color: #f3f2ee; }
+.ll-fact__label { grid-column: 1; margin: 0; font-size: 13px; color: rgba(243, 242, 238, 0.56); }
+.ll-fact__text { grid-column: 1; margin: 0; font-size: 15px; line-height: 1.45; color: rgba(243, 242, 238, 0.78); max-width: 52ch; }
+.ll-fact__num { grid-column: 2; grid-row: 1 / span 2; margin: 0; font-size: clamp(44px, 5vw, 72px); line-height: 1; font-weight: 500; letter-spacing: -0.045em; white-space: nowrap; }
+@media (max-width: 600px) { .ll-fact { grid-template-columns: 1fr; padding: 22px 20px; } .ll-fact__num { grid-column: 1; grid-row: auto; margin-top: 14px; } }
 
 /* ── разделы ── */
 .ll-sec { max-width: var(--max); margin: 0 auto; padding: clamp(72px, 9vw, 128px) var(--pad) 0; scroll-margin-top: 64px; }
@@ -266,3 +256,30 @@ a:hover > .ll-round, a:focus-visible > .ll-round { rotate: 45deg; }
 /* обложки кейсов (tools/render-case-cards.mjs) — во всю плитку */
 .ll-tile__art img.is-cover { width: 100%; height: 100%; object-fit: cover; }
 .ll-tile a:hover .ll-tile__art img.is-cover { scale: 1.03; }
+
+/* v111 (картинка Никиты): шапка на широком экране — как в 3D (ui/hero/notch.css): строка во всю ширину, слева знак и
+   разделы со значками и подписями, справа язык и переход в 3D. При прокрутке разделы собираются в светлую плашку */
+@media (min-width: 901px) {
+  .ll-notch {
+    left: clamp(24px, 4.6vw, 88px); translate: none; top: 18px;
+    gap: 6px; padding: 4px; border-radius: 16px; background: transparent; box-shadow: none;
+    transition: background 0.4s ease, box-shadow 0.4s ease;
+  }
+  .ll-notch::before, .ll-notch::after { display: none; }
+  .ll-notch__item { height: 40px; border-radius: 12px; color: #2a2923; font: 500 15px/1 Onest, sans-serif; letter-spacing: 0; text-transform: none; }
+  .ll-notch__item > span, .ll-notch[data-section] .ll-notch__item > span { max-width: none; opacity: 1; margin-left: 8px; }
+  .ll-notch__item:hover, .ll-notch__item:focus-visible { color: #11110f; background: rgba(255, 255, 255, 0.55); }
+  .ll-notch__item:focus-visible { outline: 2px solid #11110f; }
+  .ll-notch__hi { color: #2a2923; }
+  .ll-notch__item.is-active { color: #11110f; background: rgba(255, 255, 255, 0.75); }
+  .ll-notch__mark, .ll-notch__mark:hover { width: 40px; height: 40px; margin-right: 28px; border-radius: 11px; background: #11110f; color: #fff; }
+  .ll-notch__mark > span { display: none; }
+  body.is-scrolled .ll-notch { background: rgba(248, 246, 240, 0.92); box-shadow: 0 10px 30px rgba(24, 20, 10, 0.12); }
+  body.is-scrolled .ll-notch__mark { margin-right: 10px; }
+  .ll-tools { top: 22px; left: auto; right: clamp(24px, 4.6vw, 88px); gap: 6px; }
+  .ll-lang, .ll-3d { height: 40px; border: 0; border-radius: 12px; background: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .ll-lang { padding: 3px; }
+  .ll-lang button { border-radius: 9px; font-size: 13px; }
+  .ll-3d { padding: 0 12px; font-size: 15px; color: #2a2923; }
+  .ll-3d:hover { background: rgba(255, 255, 255, 0.55); }
+}
