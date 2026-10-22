@@ -117,6 +117,7 @@ export function createPostFx(
   const introRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
   const clear = new THREE.Color();
   const bloomOn = q.get("bloom") !== "0";
+  const lookSun = q.get("look") === "0" ? 0 : 0.28;
 
   const sunUv = new THREE.Vector2(0.5, 0.5);
   const flat = { depthTest: false, depthWrite: false, vertexShader: fullscreenVertex };
@@ -227,6 +228,8 @@ export function createPostFx(
       tIntro: { value: introRT.texture },
       tBloom: { value: introRT.texture },
       uBloom: { value: 0 },
+      uLook: { value: q.get("look") === "0" ? new THREE.Vector3(0, 0, 1) : new THREE.Vector3(0.28, 0.6, 0.35) },
+      uSunUv: { value: sunUv },
       uIntro: { value: 0 },
       /* v105: ?introfx=tilt|glass|prism|orton — эффект заставки. По умолчанию Ортон — выбор Никиты из четырёх (21.10) */
       uIntroFx: { value: ((i) => (i < 0 ? 3 : i))(["tilt", "glass", "prism", "orton"].indexOf(new URLSearchParams(location.search).get("introfx") ?? "orton")) },
@@ -435,6 +438,8 @@ export function createPostFx(
       final.uniforms.uRays.value = params.rays * raysVisible;
       final.uniforms.uExposure.value = params.exposure;
       final.uniforms.uVignette.value = params.vignette;
+      /* затемнение от солнца — только у холма: солнце в кадре луга и портала другое */
+      final.uniforms.uLook.value.x = lookSun * (1 - Math.min(1, params.alt)) * (portalOn ? 0 : 1);
       final.uniforms.uVibrance.value = params.vibrance;
       final.uniforms.uContrast.value = params.contrast;
       final.uniforms.uFocus.value = params.focus * (portalOn ? THREE.MathUtils.smoothstep(params.portal, 0.8, 1) : 1);

@@ -29,6 +29,7 @@ import {
   groundVertex,
   pollenFragment,
   pollenVertex,
+  SCREEN_SPILL,
   skyFragment,
   skyVertex,
 } from "./shaders";
@@ -155,6 +156,12 @@ export class HillScene {
     uHaze: { value: /[?&]haze=0/.test(location.search) ? 0 : 1 },
     /* v80: дымка теплее к солнцу и прохладнее в стороне (shaders.ts, fogTint); ?aerial=0 — прежняя ровная */
     uSkyHorizon: { value: new THREE.Color("#f2c98a") },
+    uScreenLight: { value: new THREE.Vector4(0, 0, 0, 0) },
+    uScreenDir: { value: new THREE.Vector3(0, 0, 1) },
+    uScreenT: { value: 0 },
+    uGrow: { value: 999 },
+    uPropBase: { value: 0 },
+    uFogKeep: { value: /[?&]fogkeep=0/.test(location.search) ? 0 : 0.55 },
     uAerial: { value: /[?&]aerial=0/.test(location.search) ? new THREE.Vector2(0, 0) : new THREE.Vector2(0.5, 1) },
     /* v72: насколько дальше обычного стоит камера (телефон) — на столько же отодвигается дымка */
     uFogShift: { value: 0 },
@@ -230,6 +237,7 @@ export class HillScene {
     this.buildGround();
     this.buildGrass();
     this.buildPollen();
+    this.buildMotes();
     this.buildWisps();
     this.buildLights();
     /* Кресло, компьютер и собака — стандартные материалы, airFog из шейдеров травы до них не
@@ -880,6 +888,57 @@ export class HillScene {
   }
   private pollenAttr!: { pos: Float32Array; vel: Float32Array; birth: Float32Array; rnd: Float32Array };
 
+  /* v117 (по мотивам снежинок igloo, код свой): пыльца в воздухе над холмом. Вытянутые искры медленно плывут по ветру и
+     кувыркаются: вспыхивают, когда повёрнуты к солнцу, и ярче всего в его стороне — там, где лучи. Положение считает
+     вершинный шейдер (ветер и обход по кругу), из JS — только время. ?motes=0 — без неё */
+  private motes?: THREE.Points;
+  private buildMotes() {
+    if (/[?&]motes=0/.test(location.search)) return;
+    const n = Math.min(window.innerWidth, window.innerHeight) < 700 ? 180 : 320;
+    const seed = new Float32Array(n * 4);
+    let r = 7331;
+    for (let i = 0; i < n * 4; i++) { r = (Math.imul(r, 1664525) + 1013904223) >>> 0; seed[i] = r / 4294967296; }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+    g.setAttribute("aSeed", new THREE.BufferAttribute(seed, 4));
+    const U = this.uniforms;
+    this.motes = new THREE.Points(g, new THREE.ShaderMaterial({
+      uniforms: { uTime: U.uTime, uWindDir: U.uWindDir, uSunDir: U.uSunDir, uSunCol: U.uSunCol, uScale: { value: 900 * this.dpr } },
+      vertexShader: `attribute vec4 aSeed; uniform float uTime; uniform vec2 uWindDir; uniform vec3 uSunDir; uniform float uScale;
+        varying float vA; varying float vAng;
+        void main() {
+          /* коробка вокруг холма перед камерой; ветер сносит, по краю — обход по кругу */
+          vec3 p = vec3(aSeed.x * 26.0 - 13.0, 2.2 + aSeed.y * 4.5, aSeed.z * 13.0 - 4.0);
+          p.xz += uWindDir * uTime * (0.18 + aSeed.w * 0.2);
+          p.x = mod(p.x + 13.0, 26.0) - 13.0;
+          p.z = mod(p.z + 4.0, 13.0) - 4.0;
+          p += vec3(sin(uTime * 0.31 + aSeed.w * 30.0), sin(uTime * 0.23 + aSeed.x * 20.0) * 0.6, cos(uTime * 0.27 + aSeed.y * 25.0)) * 0.35;
+          float tumble = uTime * (0.7 + aSeed.w * 1.6) + aSeed.y * 40.0;
+          vAng = tumble * 0.37 + aSeed.x * 6.28;
+          vec4 mv = modelViewMatrix * vec4(p, 1.0);
+          vec3 V = normalize((modelMatrix * vec4(p, 1.0)).xyz - cameraPosition);
+          float toSun = pow(max(dot(V, uSunDir), 0.0), 6.0);
+          float glint = pow(abs(sin(tumble)), 6.0);
+          vA = (0.08 + 0.92 * glint) * (0.25 + 1.6 * toSun) * smoothstep(1.0, 3.0, -mv.z) * (1.0 - smoothstep(16.0, 26.0, -mv.z));
+          gl_Position = projectionMatrix * mv;
+          gl_PointSize = clamp((0.035 + aSeed.x * 0.03) * uScale / max(0.3, -mv.z), 1.0, 9.0);
+        }`,
+      fragmentShader: `uniform vec3 uSunCol; varying float vA; varying float vAng;
+        void main() {
+          vec2 q = gl_PointCoord - 0.5;
+          float c = cos(vAng), s = sin(vAng);
+          q = vec2(c * q.x - s * q.y, s * q.x + c * q.y);
+          float d = length(q * vec2(1.0, 3.0)) * 2.0;
+          float a = exp(-d * d * 3.0) * vA;
+          if (a < 0.01) discard;
+          gl_FragColor = vec4(uSunCol * vec3(0.55, 0.5, 0.4) * a, a);
+        }`,
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    }));
+    this.motes.frustumCulled = false;
+    this.motes.renderOrder = 6;
+    this.scene.add(this.motes);
+  }
   private buildPollen() {
     const N = this.POLLEN_N;
     const pos = new Float32Array(N * 3), vel = new Float32Array(N * 3), birth = new Float32Array(N).fill(-999), rnd = new Float32Array(N * 2);
@@ -1046,6 +1105,7 @@ export class HillScene {
       const props = gltf.scene;
       props.rotation.y = PROPS_YAW;
       props.position.set(0, heightAt(0, 0) - 0.015, 0);
+      this.uniforms.uPropBase.value = heightAt(0, 0);
       props.traverse((o) => {
         const mesh = o as THREE.Mesh;
         if (!mesh.isMesh) return;
@@ -1060,6 +1120,7 @@ export class HillScene {
           if (m.map === null || m.color.getHSL({ h: 0, s: 0, l: 0 }).l > 0.8) m.color.multiplyScalar(0.86);
           /* голубое небо HDRI остужало ткань — возвращаем кремовый тон референса */
           if (m.name === "Cushion") m.color.multiply(new THREE.Color(1.16, 1.0, 0.78));
+          this.propLook(m);
         }
       });
       this.scene.add(props);
@@ -1306,6 +1367,7 @@ export class HillScene {
     /* главы: s — холм → About, c — «Кейсы» (story.ts, CHAPTER) */
     const { s, c, f } = chapters(this.storyS);
     this.storyCh1 = s;
+    if (this.motes) this.motes.visible = (s < 0.3 && c <= 0) || f > 0.6;
     this.storyCh2 = c;
     this.storyCh3 = f;
     this.onStory?.(this.storyS);
@@ -1704,6 +1766,72 @@ export class HillScene {
 
   private pc?: THREE.Object3D;
   private screenMesh?: THREE.Mesh;
+  /* v117: отсвет экрана на траве и реквизите (shaders.ts screenSpill) — пока компьютер стоит на столике. В сумерках
+     и под облаками его видно сильнее, в About и дальше он гаснет. ?spill=0 — без него */
+  private readonly spillOn = !/[?&]spill=0/.test(location.search);
+  private updateScreenLight() {
+    const u = this.uniforms;
+    u.uScreenT.value = u.uTime.value;
+    const m = this.screenMesh;
+    if (!m || !this.spillOn || this.storyCh1 > 0.15 || this.focusOn) { u.uScreenLight.value.w = 0; return; }
+    m.getWorldPosition(this.spillTmp);
+    m.getWorldDirection(u.uScreenDir.value);
+    const dusk = this.weather.kind === "dusk" ? 1.8 : this.weather.kind === "clear" ? 1 : 1.3;
+    u.uScreenLight.value.set(this.spillTmp.x, this.spillTmp.y, this.spillTmp.z, 0.6 * dusk * (1 - this.storyCh1 / 0.15));
+  }
+  private spillTmp = new THREE.Vector3();
+  /* v117 (по мотивам интро igloo): пока заставка держит кадр размытым, трава стоит срезанной у кресла; когда расфокус
+     начинает уходить, она вырастает волной до горизонта за ~3 с, у фронта — тёплая кромка. Без заставки — сразу вся.
+     ?grow=0 — без этого */
+  private growState = { peak: 0, t0: -1 };
+  private updateGrow() {
+    const u = this.uniforms.uGrow;
+    if (/[?&]grow=0/.test(location.search) || this.reduced) { u.value = 999; return; }
+    const iv = this.fx.params.intro, now = this.uniforms.uTime.value, g = this.growState;
+    /* заставка держит размытие на своём уровне (focusLoader BLUR); рост начинается, когда оно пошло вниз */
+    g.peak = Math.max(g.peak, iv);
+    if (g.peak < 0.05) { u.value = 999; return; }
+    if (g.t0 < 0) { if (iv < g.peak * 0.9) g.t0 = now; else { u.value = 0.6; return; } }
+    const k = Math.min(1, (now - g.t0) / 3.2);
+    u.value = k >= 1 ? 999 : 0.6 + 38 * (1 - Math.pow(1 - k, 2.2));
+  }
+  /* v117 (по мотивам igloo, код свой): свет реквизита. Снизу — отражённый от травы зеленоватый свет (нижние ~0,5 м);
+     отсвет экрана компьютера; ткань подушки на просвет против солнца — светится там, где солнце за ней, как шерсть
+     Келли (dog.ts). ?proplook=0 — без этого */
+  private propLook(m: THREE.MeshStandardMaterial) {
+    if (/[?&]proplook=0/.test(location.search)) return;
+    const fabric = m.name === "Cushion";
+    const U = this.uniforms;
+    m.customProgramCacheKey = () => (fabric ? "prop-fabric" : "prop-solid");
+    m.onBeforeCompile = (sh) => {
+      Object.assign(sh.uniforms, { uPropBase: U.uPropBase, uScreenLight: U.uScreenLight, uScreenDir: U.uScreenDir, uScreenT: U.uScreenT });
+      sh.vertexShader = sh.vertexShader
+        .replace("#include <common>", `#include <common>
+varying vec3 vPW;`)
+        .replace("#include <project_vertex>", `#include <project_vertex>
+  vPW = (modelMatrix * vec4(transformed, 1.0)).xyz;`);
+      sh.fragmentShader = sh.fragmentShader
+        .replace("#include <common>", `#include <common>
+varying vec3 vPW;
+uniform float uPropBase;
+${SCREEN_SPILL}`)
+        .replace("#include <opaque_fragment>", `{
+    float hgt = vPW.y - uPropBase;
+    outgoingLight += diffuseColor.rgb * vec3(0.07, 0.1, 0.03) * (1.0 - smoothstep(0.0, 0.5, hgt));
+    outgoingLight += diffuseColor.rgb * screenSpill(vPW) * 2.2;
+    ${fabric ? `vec3 Vv = normalize(vViewPosition);
+    #if NUM_DIR_LIGHTS > 0
+    for (int i = 0; i < NUM_DIR_LIGHTS; i++) {
+      vec3 L = directionalLights[i].direction;
+      float back = pow(saturate(dot(-Vv, L)), 3.0);
+      float thin = pow(1.0 - saturate(dot(normal, Vv)), 1.5);
+      outgoingLight += directionalLights[i].color * back * (0.25 + 0.75 * thin) * diffuseColor.rgb * vec3(1.0, 0.85, 0.6) * 0.35;
+    }
+    #endif` : ""}
+  }
+  #include <opaque_fragment>`);
+    };
+  }
   private focus = 0;
   private focusOn = false;
   private focusDirty = false;
@@ -2136,6 +2264,8 @@ export class HillScene {
     const dt = Math.min(this.timer.getDelta(), 0.05);
     this.uniforms.uTime.value += dt;
     this.screen?.update(this.uniforms.uTime.value, dt);
+    this.updateScreenLight();
+    this.updateGrow();
     /* v79: холм не виден — под белой страницей About или в «Кейсах», где вместо него луг. Тогда не считаем то,
        что живёт только на холме: собаку, поиск точки под курсором (сотни шагов по рельефу на кадр) и семена */
     const hillShown = !this.hillHidden();

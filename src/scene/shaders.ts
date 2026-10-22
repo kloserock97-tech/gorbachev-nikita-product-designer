@@ -9,6 +9,28 @@ export const TRAIL_SLOTS = 6;
 
 /* общий свет: для травы считается в вершинах (её полмиллиона, фрагменты
    перекрываются в несколько слоёв), для земли — во фрагментах */
+export const SCREEN_SPILL = /* glsl */ `
+/* v117 (по мотивам igloo, код свой): отсвет экрана компьютера на траве, земле и реквизите. «Дыхание» яркости — та же
+   функция, что у самого экрана (portfolioScreen.ts, screenPulse), поэтому экран и его свет на траве дышат в одной фазе.
+   uScreenLight: xyz — центр экрана (мир), w — сила; uScreenDir — куда смотрит экран */
+uniform vec4 uScreenLight;
+uniform vec3 uScreenDir;
+/* v117 (по мотивам интро igloo, код свой): трава вырастает волной от кресла, пока заставка проявляется. uGrow — радиус
+   фронта, м (большой — всё выросло); у фронта тёплая светящаяся кромка */
+uniform float uGrow;
+float growAt(vec3 p){ return 1.0 - smoothstep(uGrow - 2.2, uGrow - 0.3, length(p.xz)); }
+float growBand(vec3 p){ float d = uGrow - length(p.xz); return uGrow > 60.0 ? 0.0 : smoothstep(0.0, 0.6, d) * (1.0 - smoothstep(0.6, 2.4, d)); }
+uniform float uScreenT;  /* время экрана — то же, что uTime сцены (объявлен ниже в FIELD_PARS) */
+float screenPulse(float t){ return 0.9 + 0.07 * sin(t * 1.7) + 0.03 * sin(t * 5.3 + 1.1); }
+vec3 screenSpill(vec3 w){
+  if (uScreenLight.w <= 0.0) return vec3(0.0);
+  vec3 d = w - uScreenLight.xyz;
+  float r2 = dot(d, d);
+  float front = smoothstep(-0.15, 0.5, dot(d * inversesqrt(max(r2, 1e-4)), uScreenDir));
+  return vec3(0.5, 0.72, 1.0) * uScreenLight.w * screenPulse(uScreenT) * front / (1.0 + r2 * 4.0);
+}
+`;
+
 const LIGHT_PARS = /* glsl */ `
 uniform float uBackLight;
 /* v80: свет травы в духе Unreal: x — просвет (Two Sided Foliage), y — доля неба внутри дёрна, z — сила затенения
@@ -113,6 +135,19 @@ vec3 fogTint(vec3 w){
   float hl = dot(uSkyHorizon, vec3(0.3, 0.59, 0.11));
   vec3 farc = mix(uSkyHorizon, vec3(hl * 1.08) * vec3(1.0, 0.97, 0.93), 0.55);
   return mix(fog, farc + uSunCol * hg * 0.16 * uAerial.x, smoothstep(14.0, 30.0, length(w - cameraPosition)) * uAerial.y);
+}
+${SCREEN_SPILL}
+/* v117 (по мотивам igloo, код свой): дымка не гасит яркое — то, что светлее воздуха (трава и цветы в контровом свете,
+   кромки на просвет), частично проступает сквозь неё. Кадр остаётся воздушным, а освещённое не тонет в молоке.
+   ?fogkeep=0 — прежнее смешивание */
+uniform float uFogKeep;
+vec3 applyFog(vec3 c, vec3 w, float f){
+  vec3 fg = fogTint(w);
+  /* трава у нас темнее дымки (у igloo — белый снег ярче неё), поэтому не «возвращаем превышение», а снимаем часть
+     дымки с того, что ярко освещено: цветы и травинки на просвет остаются чёткими в воздухе, тени тонут как прежде */
+  float lc = dot(c, vec3(0.3, 0.59, 0.11)), lf = dot(fg, vec3(0.3, 0.59, 0.11));
+  f *= 1.0 - uFogKeep * smoothstep(0.35, 0.9, lc / max(lf, 1e-3));
+  return mix(c, fg, f) + max(c - fg, vec3(0.0)) * f * uFogKeep;
 }
 
 /* облучённость из SH9 — та же формула, что shGetIrradianceAt в three */
@@ -266,6 +301,7 @@ attribute float aClump;  /* тон кочки: крупный шум + ячей�
 attribute vec2 aLean;    /* наклон кончика к центру кочки, в долях длины */
 
 varying float vT;
+varying float vGrowB;
 varying float vTone;
 varying float vClump;
 varying float vPress;
@@ -283,7 +319,8 @@ void main(){
   float t = uv.y;
   vT = t;
   vEdge = uv.x;
-  float len = aRnd.y;
+  float len = aRnd.y * max(growAt(aOffset), 0.001);
+  vGrowB = growBand(aOffset);
 
   /* трава растёт скорее вверх, чем по нормали склона */
   vec3 up = normalize(mix(vec3(0.0, 1.0, 0.0), aNormal, 0.3));
@@ -391,6 +428,7 @@ void main(){
 export const grassFragment = /* glsl */ `
 ${LIGHT_PARS}
 varying float vT;
+varying float vGrowB;
 varying float vTone;
 varying float vClump;
 varying float vPress;
@@ -443,7 +481,9 @@ void main(){
      изнанкой — по лугу бегут серебристые пятна */
   c += vec3(0.075, 0.085, 0.05) * vGust * vGust * vT * uAmbient;
   c *= 1.0 - vPress * 0.15;
-  c = mix(c, fogTint(vW), vFog);
+  c += col * screenSpill(vW) * (0.4 + 0.6 * vT) * 1.6;
+  c += vec3(1.0, 0.72, 0.35) * vGrowB * vT * 0.6;
+  c = applyFog(c, vW, vFog);
   float coverage = 1.0;
   if (uA2C > 0.5) {
     /* uv.x: 0 — левый край, 1 — правый; у кончика края сходятся, fwidth это учитывает */
@@ -491,7 +531,7 @@ void main(){
     float yaw = atan(-d.x, -d.y) + (aPlant.w - 0.5) * 1.05;
     c = cos(yaw); s = sin(yaw);
   }
-  vec3 lp = position * aPlant.y;
+  vec3 lp = position * aPlant.y * max(growAt(aOffset), 0.001);
   lp.xz = mat2(c, -s, s, c) * lp.xz;
 
   /* качаются верхушки: сила растёт с высотой над землёй */
@@ -585,7 +625,7 @@ void main(){
   col *= mix(1.0, 0.8, uWet);
   vec3 c = col * vLight * ao * mix(1.0, 0.45, shadow);
   c += col * uSunCol * vBackP * translucency * (1.0 - shadow);
-  c = mix(c, fogTint(vW), vFog);
+  c = applyFog(c, vW, vFog);
   /* без MSAA alphaToCoverage ничего не делает, и венчик рисовался целым квадратом — «цветы квадратиками» */
   if (uNoMsaa > 0.5 && alpha < 0.5) discard;
   gl_FragColor = vec4(c, alpha);
@@ -631,12 +671,13 @@ void main(){
   vec3 light = shIrradiance(N) * uAmbient * 0.6 * mix(1.0, 0.3, shadow) * occ.x
              + uSunCol * max(dot(N, uSunDir), 0.0) * (1.0 - shadow) * cloudShade(vW) * occ.y;
   vec3 c = soil * light * mix(1.0, 0.7, uWet);
+  c += soil * screenSpill(vW) * 3.0;
   /* v111: за краем травы земля холма переходит в луг равнины (plainFragment) — тот же цвет и та же лёгкая дымка;
      иначе между склоном и лугом лежала бежевая полоса низинного тумана */
   float edge = smoothstep(9.0, 16.0, length(vW.xz));
   vec3 upL = max(vec3(0.0), uSH[0] * 0.886227 + uSH[1] * 1.023328) * uAmbient;
   c = mix(c, vec3(0.1, 0.108, 0.036) * upL * 0.86, edge);
-  c = mix(c, fogTint(vW), airFog(vW, vDist) * mix(1.0, 0.4, edge));
+  c = applyFog(c, vW, airFog(vW, vDist) * mix(1.0, 0.4, edge));
   gl_FragColor = vec4(c, 1.0);
 }
 `;
@@ -1090,7 +1131,7 @@ void main(){
   vec3 light = shIrradiance(N) * uAmbient * 0.7 * ao + uSunCol * max(dot(N, uSunDir), 0.0) * sunVis;
   float rim = pow(1.0 - max(dot(N0, V), 0.0), 4.0) * pow(max(dot(-V, uSunDir), 0.0), 4.0) * mix(0.25, 1.0, ridge) * sunVis;
   vec3 c = bark * light + uSunCol * vec3(0.20, 0.14, 0.06) * rim;
-  c = mix(c, fogTint(vW), airFog(vW, vDist) * 0.6);
+  c = applyFog(c, vW, airFog(vW, vDist) * 0.6);
   gl_FragColor = vec4(c, 1.0);
 }
 `;
@@ -1169,7 +1210,7 @@ void main(){
   vec3 c = albedo * light + trans * uLeafTrans;
   /* дерево стоит дальше кресла, но воздух на нём слабее, чем на траве той же дали: тёмная крона держит
      глубину кадра, а бледная сливалась с небом */
-  c = mix(c, fogTint(vW), airFog(vW, vDist) * 0.6);
+  c = applyFog(c, vW, airFog(vW, vDist) * 0.6);
   gl_FragColor = vec4(c, a);
 }
 `;
@@ -1269,7 +1310,7 @@ void main(){
   /* контровая кайма против солнца; мох по кромке светится зеленью, как трава на просвет */
   float rim = pow(1.0 - max(dot(N0, V), 0.0), 4.0) * pow(max(dot(-V, uSunDir), 0.0), 3.0) * (1.0 - wet);
   vec3 c = alb * light + uSunCol * mix(vec3(0.12, 0.09, 0.05), vec3(0.10, 0.17, 0.03), mossMask) * rim;
-  c = mix(c, fogTint(vW), airFog(vW, vDist));
+  c = applyFog(c, vW, airFog(vW, vDist));
   gl_FragColor = vec4(c, 1.0);
 }
 `;
@@ -1419,6 +1460,10 @@ uniform float uTear;       /* v19: нижний край оторванной с
 uniform float uBgBlur;     /* v19: размытие сцены-фона в главе «Кейсы» (само размытие — в четвертном проходе) */
 uniform sampler2D tIntro;  /* v95: расфокус заставки — кадр, размытый двумя четвертными проходами */
 uniform sampler2D tBloom;  /* v114: ореол ярких мест портала (два четвертных прохода) */
+/* v117 (по мотивам igloo, код и значения свои): x — затемнение от солнца вместо круглой виньетки, y — «плёночный» тон:
+   тени чуть холоднее и лиловее, света теплее; z — доля прежней круглой виньетки; ?look=0 — как было */
+uniform vec3 uLook;
+uniform vec2 uSunUv;
 uniform float uBloom;
 uniform float uIntro;      /* доля размытого кадра, 0 — резко */
 uniform float uIntroFx;    /* v105: эффект заставки — 0 tilt-shift, 1 матовое стекло, 2 призма, 3 Ортон (по умолчанию) */
@@ -1525,6 +1570,11 @@ vec3 grade(vec3 hdr){
   float lum = dot(c, LUMA);
   float sat = max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b));
   c = max(mix(vec3(lum), c, 1.0 + uVibrance * (1.0 - sat)), 0.0);
+  if (uLook.y > 0.0) {
+    float l = dot(c, LUMA);
+    c *= mix(vec3(1.0), vec3(0.94, 0.95, 1.06), (1.0 - smoothstep(0.0, 0.35, l)) * uLook.y);
+    c *= mix(vec3(1.0), vec3(1.04, 1.01, 0.95), smoothstep(0.45, 0.95, l) * uLook.y);
+  }
   return toSrgb(c);
 }
 
@@ -1652,7 +1702,12 @@ void main(){
   if (uBloom > 0.001) e += texture2D(tBloom, uv).rgb * uBloom;
   vec3 c = grade((e + rays) * uExposure * uWhiteBalance);
   vec2 q = vUv - 0.5;
-  c *= 1.0 - dot(q, q) * uVignette;
+  c *= 1.0 - dot(q, q) * uVignette * uLook.z;
+  /* затемнение растёт от солнца к дальнему углу кадра — свет «приходит» со стороны солнца, как у igloo по диагонали */
+  if (uLook.x > 0.0) {
+    vec2 ds = (vUv - uSunUv) * vec2(uTexel.y / uTexel.x, 1.0);
+    c *= 1.0 - smoothstep(0.35, 1.7, length(ds)) * uLook.x;
+  }
   /* заливка поднимается снизу: наклон и два слоя шума рвут край, как облако (igloo);
      «бумага» с мелким зерном — как фон экрана About на Tilda */
   float paperMask = 0.0;

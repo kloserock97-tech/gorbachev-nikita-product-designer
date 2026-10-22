@@ -130,6 +130,8 @@ void main() {
   col *= 1.0 - uScan * 1.6 * smoothstep(0.55, 1.0, row);
   /* мерцание из двух несоизмеримых частот, чтобы не читалось как ровная пульсация */
   col *= 1.0 + (sin(uTime * 9.7) * 0.6 + sin(uTime * 23.3) * 0.4) * uFlicker;
+  /* v117: то же «дыхание», что у отсвета экрана на траве (shaders.ts screenPulse) — экран и свет от него в одной фазе */
+  col *= (0.9 + 0.07 * sin(uTime * 1.7) + 0.03 * sin(uTime * 5.3 + 1.1)) / 0.9;
   /* виньетка по эллипсу экрана, а не по кругу */
   float ell = length((w - 0.5) * vec2(1.0, 1.0 / max(uAspect, 0.01)) * 1.08);
   col *= 1.0 - smoothstep(uVignette - uVignetteSoft, uVignette + uVignetteSoft, ell);
