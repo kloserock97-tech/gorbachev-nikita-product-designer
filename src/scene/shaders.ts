@@ -1302,6 +1302,16 @@ void main(){
       acc += textureLod(tInput, vUv + vec2(cos(a) * r / uAspect, sin(a) * r), 0.0).rgb;
     }
     gl_FragColor = vec4(acc / 16.0, 1.0);
+  } else if (uMode == 2) {
+    /* v114: блум портала — только то, что ярче белого (светящаяся кромка кольца), размытое на радиусе uR */
+    vec3 acc = vec3(0.0);
+    for (int k = 0; k < 16; k++) {
+      float a = float(k) * 2.39996 + rot;
+      float r = uR * sqrt((float(k) + 0.5) / 16.0);
+      vec3 s = textureLod(tInput, vUv + vec2(cos(a) * r / uAspect, sin(a) * r), 0.0).rgb;
+      acc += max(s - vec3(0.95), 0.0);
+    }
+    gl_FragColor = vec4(acc / 16.0, 1.0);
   } else {
     float sh = 0.0;
     for (int k = 0; k < 16; k++) {
@@ -1408,6 +1418,8 @@ uniform vec3 uKinKeep;     /* v19: копия N, доля «Hi there!», сил�
 uniform float uTear;       /* v19: нижний край оторванной страницы About (доли высоты кадра) */
 uniform float uBgBlur;     /* v19: размытие сцены-фона в главе «Кейсы» (само размытие — в четвертном проходе) */
 uniform sampler2D tIntro;  /* v95: расфокус заставки — кадр, размытый двумя четвертными проходами */
+uniform sampler2D tBloom;  /* v114: ореол ярких мест портала (два четвертных прохода) */
+uniform float uBloom;
 uniform float uIntro;      /* доля размытого кадра, 0 — резко */
 uniform float uIntroFx;    /* v105: эффект заставки — 0 tilt-shift, 1 матовое стекло, 2 призма, 3 Ортон (по умолчанию) */
 uniform sampler2D tShadow; /* v22.1: мягкая тень компьютера, посчитанная на четверти разрешения */
@@ -1637,6 +1649,7 @@ void main(){
   }
   /* глава «Кейсы»: tScene уже размытый задник из четвертного прохода (quarterFragment) */
   /* контраст до тонмаппинга — в лог-пространстве вокруг средне-серого (см. grade) */
+  if (uBloom > 0.001) e += texture2D(tBloom, uv).rgb * uBloom;
   vec3 c = grade((e + rays) * uExposure * uWhiteBalance);
   vec2 q = vUv - 0.5;
   c *= 1.0 - dot(q, q) * uVignette;
@@ -1684,12 +1697,12 @@ void main(){
         vec3 fog = mix(fogLight, mix(fogDark, fogLight, uIgloo.w * 0.6), smoothstep(0.28, 0.82, n));
         /* сетка точек: ~26 рядов на кадр, каждая точка гаснет и загорается в своём ритме (треугольная волна от хэша
            клетки); едет с прокруткой */
-        vec2 cu = fq * 26.0 + vec2(0.0, uIgloo.z * 9.0);
+        vec2 cu = fq * 30.0 + vec2(0.0, uIgloo.z * 10.0);
         vec2 cf = fract(cu) - 0.5;
         float id = hash21(floor(cu) + 17.0);
         float blink = 1.0 - abs(fract(id * 3.7 + uIgloo.y * 0.11) - 0.5) * 2.0;
         float r = length(cf);
-        float dotA = 1.0 - smoothstep(0.045, 0.045 + fwidth(r) * 1.5, r);
+        float dotA = 1.0 - smoothstep(0.022, 0.022 + fwidth(r) * 1.2, r);
         fog += dotA * blink * (0.5 - 0.2 * uIgloo.w);
         room = mix(room, fog, uIgloo.x);
       }

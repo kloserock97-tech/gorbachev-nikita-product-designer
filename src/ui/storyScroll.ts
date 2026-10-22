@@ -3,7 +3,7 @@
    Длина истории больше не записана в CSS числом. Её считает story.ts (layoutTimeline) от числа кейсов и заметок
    и от шага ленты, а сюда приходит результат: высота .story в экранах. Так один кейс занимает одинаковую
    дистанцию прокрутки на любом экране, а добавленный кейс сам удлиняет историю. */
-import { CHAPTER, TIMELINE, layoutTimeline, type TimelineInput } from "../scene/story";
+import { CASES, CHAPTER, CHAPTER2, TIMELINE, layoutTimeline, type TimelineInput } from "../scene/story";
 
 const story = () => document.querySelector<HTMLElement>(".story");
 
@@ -82,8 +82,10 @@ function progressNow() {
 }
 
 let lastKey = "";
+let counts = { cases: 0, notes: 0 };
 /** Пересчитать доли глав и высоту .story. Позиция читателя сохраняется: та же глава, та же доля. */
 export function applyTimeline(input: TimelineInput) {
+  counts = { cases: input.cases, notes: input.notes };
   const el = story();
   if (!el) return;
   const lead = leadPx(el.offsetTop) / Math.max(1, viewH());
@@ -114,21 +116,50 @@ let stopY = -1;
 let holdUntil = 0;
 let lastInput = -1e9;
 let lastY = typeof window === "undefined" ? 0 : scrollY;
+let snapStops: number[] = [];
 function placeStops() {
-  if (document.body.classList.contains("lite") || !story()) { stopY = -1; return; }
+  if (document.body.classList.contains("lite") || !story()) { stopY = -1; snapStops = []; return; }
   /* 0.985: абзац слева проявляется по словам до 0.975 главы (STORY.words) — останавливаемся, когда он весь */
   stopY = topFor(CHAPTER * 0.985);
+  /* v114 (по мотивам igloo): точки доводки — About, каждый кейс в ленте, каждый пэт-проект */
+  const at = (c: number) => topFor(CHAPTER + (CHAPTER2 - CHAPTER) * c);
+  const run = ([a, b]: readonly [number, number], n: number) => Array.from({ length: n }, (_, i) => at(a + (b - a) * (i / Math.max(1, n - 1))));
+  snapStops = [stopY, ...run(CASES.strip, counts.cases), ...run(CASES.notesRun, counts.notes)];
+}
+
+/* v114 (по мотивам igloo.inc): доводка. Через 1,4 с после последнего жеста, если страница остановилась рядом с кейсом,
+   пэт-проектом или страницей About (ближе 40 % шага ленты), она плавно доезжает до него — человек не застревает
+   между двумя кейсами. Дальше от точки — не трогаем (глава между ними, футер, первый экран). ?snap=0 — без доводки */
+const SNAP = typeof location === "undefined" || !/[?&]snap=0/.test(location.search);
+let snapTimer = 0;
+let lastScrollAt = 0;
+function scheduleSnap() {
+  clearTimeout(snapTimer);
+  if (!SNAP || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  snapTimer = window.setTimeout(() => {
+    const b = document.body.classList;
+    if (b.contains("lite") || b.contains("case-open") || b.contains("pc-focus") || b.contains("m-menu-open") || !snapStops.length) return;
+    /* страница ещё катится (инерция пальца на телефоне) — подождать, пока встанет */
+    if (performance.now() - lastScrollAt < 250) { scheduleSnap(); return; }
+    const bounds = storyBounds();
+    const reach = (bounds.end - bounds.start) * (CHAPTER2 - CHAPTER) * (CASES.strip[1] - CASES.strip[0]) / Math.max(1, counts.cases - 1) * 0.4;
+    let best = -1, dist = Infinity;
+    for (const y of snapStops) { const d = Math.abs(y - scrollY); if (d < dist) { dist = d; best = y; } }
+    if (best < 0 || dist < 2 || dist > reach) return;
+    scrollTo({ top: best, behavior: "smooth" });
+  }, 1400);
 }
 if (typeof window !== "undefined") {
   onViewport(() => requestAnimationFrame(placeStops));
-  const input = () => { lastInput = performance.now(); };
+  const input = () => { lastInput = performance.now(); scheduleSnap(); };
   /* инерция пальца продолжается после отпускания — окно «жеста» после touchend длиннее */
-  addEventListener("touchend", () => { lastInput = performance.now() + 900; }, { passive: true });
+  addEventListener("touchend", () => { lastInput = performance.now() + 900; scheduleSnap(); }, { passive: true });
   addEventListener("keydown", input);
   const hold = (e: Event) => { if (performance.now() < holdUntil && e.cancelable) e.preventDefault(); };
   addEventListener("wheel", (e) => { input(); hold(e); }, { passive: false });
   addEventListener("touchmove", (e) => { input(); hold(e); }, { passive: false });
   addEventListener("scroll", () => {
+    lastScrollAt = performance.now();
     const y = scrollY;
     const now = performance.now();
     if (stopY > 0 && now < holdUntil && Math.abs(y - stopY) > 1) {

@@ -1354,6 +1354,8 @@ export class HillScene {
     const waiting = c > 0.01 && f <= 0 && !this.walkReady && !this.walkOff;
     if (waiting !== this.walkWaiting) { this.walkWaiting = waiting; document.body.classList.toggle("walk-wait", waiting); }
     fx.portal = viaPortal ? pk : 0;
+    /* v114: ореол у кольца портала — пока оно на экране, гаснет на проходе */
+    fx.bloom = viaPortal ? THREE.MathUtils.smoothstep(pk, 0.06, 0.2) * (1 - THREE.MathUtils.smoothstep(pk, 0.9, 0.99)) * 1.1 : 0;
     this.walk?.setPortal(viaPortal ? pk : 0);
     // Establish the chair/hill inside the small opening, then settle into the
     // wider footer composition. Both position and framing meet the final view.

@@ -75,8 +75,10 @@ export function initPcHud(scene: Scene) {
   const texts = () => ({ "0": "PORTFOLIO_NG_01", "1": t("hud.role"), d: today(), hint: t("hud.hint") } as Record<string, string>);
   let source = texts();
   onLang(() => { source = texts(); });
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const scramble = (target: string, k: number, seed: number) => {
-    if (k >= 1) return target;
+    /* при «меньше движения» буквы не перебираются — подпись просто проявляется */
+    if (k >= 1 || reduced) return target;
     const glyphs = getLang() === "ru" ? GLYPHS_RU : GLYPHS_EN;
     let out = "";
     for (let i = 0; i < target.length; i++) {
@@ -136,7 +138,7 @@ export function initPcHud(scene: Scene) {
 
     /* размытые слова плывут вверх по прокрутке (ближние быстрее) и по кругу возвращаются снизу */
     for (const w of wordState) {
-      const y = ((w.y - s * 160 * (0.35 + w.depth) - now * 0.0012 * (0.3 + w.depth)) % 130 + 130) % 130 - 15;
+      const y = ((w.y - s * 160 * (0.35 + w.depth) - (reduced ? 0 : now * 0.0012 * (0.3 + w.depth))) % 130 + 130) % 130 - 15;
       const flick = 0.55 + 0.45 * Math.sin(now * 0.0004 + w.phase);
       w.el.style.transform = `translate3d(${w.x.toFixed(2)}vw, ${y.toFixed(2)}vh, 0)`;
       w.el.style.opacity = (flick * a * 0.55).toFixed(3);
@@ -206,7 +208,7 @@ export function initPcHud(scene: Scene) {
     /* к центру созвездие гаснет — поверх компьютера ни пунктира, ни крестиков, они видны только вокруг */
     const edgeK = (x: number, y: number) => { const d = Math.hypot((x - cx) / (r.w * 0.5), (y - cy) / (r.h * 0.5)); return Math.min(1, Math.max(0, (d - 0.85) / 0.45)); };
     const xy: [number, number, number][] = pts.map((p) => {
-      p.th += p.w * dt;
+      if (!reduced) p.th += p.w * dt;
       const z = Math.sin(p.th);
       return [cx + Math.cos(p.th) * R * p.rr, cy + p.hy * r.h * 0.62 + z * R * 0.06, z];
     });

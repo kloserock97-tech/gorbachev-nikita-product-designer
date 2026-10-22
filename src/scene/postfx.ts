@@ -31,6 +31,7 @@ export type PostFx = {
   params: { rays: number; raysEnabled: boolean;
     /* Scroll progress of the world-space doorway in Meadow, 0…1. */
     portal: number;
+    bloom: number;
     bgCheap: boolean; exposure: number; vignette: number; vibrance: number; contrast: number; focus: number; whiteBalance: THREE.Vector3; glitch: number; glitchSeed: number; black: number; radial: number; aberration: number; fill: number; overlay: boolean;
     /* v17, светлая страница с глубиной (как oryzo): studio 0…1 — сила студийного фона,
        pcRect — прямоугольник компьютера в UV кадра (x0, y0, x1, y1), spot — центр светового пятна */
@@ -115,6 +116,7 @@ export function createPostFx(
   /* второй проход расфокуса заставки: шестнадцать выборок одного прохода на большом радиусе дают зерно, второй его сглаживает */
   const introRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
   const clear = new THREE.Color();
+  const bloomOn = q.get("bloom") !== "0";
 
   const sunUv = new THREE.Vector2(0.5, 0.5);
   const flat = { depthTest: false, depthWrite: false, vertexShader: fullscreenVertex };
@@ -140,6 +142,7 @@ export function createPostFx(
     raysEnabled: true,
     bgCheap: false,
     portal: 0,
+    bloom: 0,
     exposure: renderer.toneMappingExposure,
     vignette: 0.55,
     /* выбрано сравнением кадров: Neutral + vibrance 0.35 + контраст 1.12 держит тёплое
@@ -222,6 +225,8 @@ export function createPostFx(
       tAlt: { value: altBlurRT.texture },
       uAlt: { value: 0 },
       tIntro: { value: introRT.texture },
+      tBloom: { value: introRT.texture },
+      uBloom: { value: 0 },
       uIntro: { value: 0 },
       /* v105: ?introfx=tilt|glass|prism|orton — эффект заставки. По умолчанию Ортон — выбор Никиты из четырёх (21.10) */
       uIntroFx: { value: ((i) => (i < 0 ? 3 : i))(["tilt", "glass", "prism", "orton"].indexOf(new URLSearchParams(location.search).get("introfx") ?? "orton")) },
@@ -349,6 +354,20 @@ export function createPostFx(
       /* v95.2: мягкий фокус (выбор Никиты) — размытый кадр поверх резкого примерно наполовину: детали холма
          видны сквозь свечение */
       final.uniforms.uIntro.value = intro <= 0 ? 0 : 1 - (1 - intro) * (1 - intro);
+      /* v114: блум у портала (по мотивам igloo): яркое выше белого → размытие → ещё шире; в финале подмешивается к кадру.
+         Буферы заставки к этому времени свободны. ?bloom=0 — без него */
+      const bloomK = portalOn && !intro && bloomOn ? params.bloom : 0;
+      if (bloomK > 0.001) {
+        quarter.uniforms.uMode.value = 2;
+        quarter.uniforms.tInput.value = altRT.texture;
+        quarter.uniforms.uR.value = 0.018;
+        draw(quarter, bgBlurRT);
+        quarter.uniforms.uMode.value = 0;
+        quarter.uniforms.tInput.value = bgBlurRT.texture;
+        quarter.uniforms.uR.value = 0.05;
+        draw(quarter, introRT);
+      }
+      final.uniforms.uBloom.value = bloomK;
       final.uniforms.tScene.value = low ? bgBlurRT.texture : altFull || portalOn ? altRT.texture : sceneRT.texture;
       final.uniforms.uAlt.value = altMix ? params.alt : 0;
       /* резкость CAS считает соседей полноразмерным текселем — на половинном буфере она ни к чему */
