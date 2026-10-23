@@ -2,7 +2,8 @@
    Разделы с пометкой «ждёт ответа владельца» на Tilda сюда не перенесены: публикуем только известное.
    v56: тексты переписаны простым языком. Факты те же; технический термин остаётся рядом с объяснением.
    v86: вслед за русской версией по ревью Никиты. Места с пометкой [TO FILL] Никита заполнит сам.
-   23.10: тексты почищены вслед за русской версией (тройки, морали, антитезы, шаблонные лиды). */
+   23.10: тексты почищены вслед за русской версией (тройки, морали, антитезы, шаблонные лиды).
+   23.10 (позже): кейс перестроен в цепочку вслед за русской версией — абзац в абзац. */
 import type { CaseStory, CaseImage } from "../caseStory";
 
 const img = (src: string, w: number, h: number, caption: string, kind = "screen"): CaseImage => ({ src, w, h, caption, kind });
@@ -29,16 +30,37 @@ export const en: CaseStory = {
     { value: "3 wk → 5 d", label: "time-to-market for a new feature, from idea to code" },
     { value: "87%", label: "unassisted task success rate in usability tests" },
   ],
+  /* 23.10: the case is one chain, mirroring the Russian version: problem → journey → goals → findings → decisions
+     (each answers a finding) → before/after → validation → numbers. [TO FILL] and [check] mark Nikita's facts */
   context: {
-    lead: "The main question: when should an assistant speak first.",
+    lead: "People switch off an assistant that speaks first after a couple of misses.",
     text:
-      "GRIF is a personal assistant that comes to you first. It connects to your mail, messengers, calendar and finances, notices when something needs doing and brings a ready solution. The person only agrees or declines.\n\nBut services have taught people the opposite habit: the person asks, the system answers. When an assistant shows up with something that matters, people are glad. When it shows up with a trifle or at the wrong moment, it gets annoying.",
+      "GRIF is a personal assistant that comes to you first. It connects to your mail, messengers, calendar and finances, notices when something needs doing and brings a ready solution. The person only agrees or declines.\n\nBut services have taught people the opposite habit: the person asks, the system answers. When an assistant shows up with something that matters, people are glad. When it shows up with a trifle or at the wrong moment, they switch it off. So the main job of the interface is to make a person trust GRIF with a whole task: hand over the meeting notes and send an email they did not write.",
+    goals: [
+      "A person finds what the assistant can do without a hint.",
+      "You can see what the system is doing right now and what the answer is built from.",
+      "Nothing goes out without a confirmation, and everything can be taken back.",
+      "Text is readable: contrast meets WCAG AA.",
+      "An investor understands how the product works within a few minutes.",
+    ],
     constraints: [
       { title: "An abstract idea at the start", text: "No research, and the market is only taking shape." },
       { title: "A limited budget", text: "Until the investment came, there was little money for research or a team." },
       { title: "No design system and no shared settings", text: "Only wishes about the look and a couple of generated screens." },
       { title: "A real team and a deadline", text: "Development needed regular, clear deliveries, and investment rounds were already on the calendar." },
     ],
+  },
+  journey: {
+    title: "A follow-up after a meeting",
+    lead: "The main scenario I tested the chat on: the meeting is over and the agreements need to go out in an email.",
+    steps: [
+      { kicker: "Before", title: "The meeting is over", note: "A call with Sergey from AcmeCorp, the notes are in the calendar and the threads", outside: true },
+      { kicker: "Step 1", title: "Hand over the task", note: "One sentence in the input or the “Send a follow-up email” chip" },
+      { kicker: "Step 2", title: "GRIF gathers context", note: "Calendar, threads and notes. The person waits but sees what is happening" },
+      { kicker: "Step 3", title: "Check the brief and the email", note: "The sources are listed under the brief, the email comes as a draft" },
+      { kicker: "Step 4", title: "Send or take back", note: "The email will not go out without a confirmation, and it can be taken back after sending" },
+    ],
+    measured: "I counted unassisted task success on steps 1, 3 and 4: find an action, launch it and undo it. GRIF does step 2 on its own.",
   },
   approach: {
     lead: "I wrote down the product's character in a form an agent can work from.",
@@ -62,52 +84,139 @@ export const en: CaseStory = {
     { after: "brief", focus: "50% 62%", image: { src: "cases/grif-ai/brand-visual.webp", w: 1100, h: 1100, caption: "The product's key visual: a query line and prompts over a metal wing", kind: "brand" } },
     { after: "approach", image: { src: "cases/grif-ai/atmosphere.webp", w: 1172, h: 1580, caption: "Dark fabric and a narrow band of blue light", kind: "photo" } },
   ],
+  /* 23.10: the nine hypotheses are no longer a separate list. Four about the chat moved into the decisions,
+     two about investors moved into validation, three about the feed were dropped: the case covers the chat only */
   research: {
-    lead: "There were nine hypotheses, and each one is labelled with how I tested it.",
-    /* v87: hypotheses come before the methods and are labelled with the method that tested them */
-    hypotheses: {
-      first: true,
-      items: [
-        { text: "Everyone has a chat, so a feed where the system brings tasks itself can set us apart.", verdict: "Competitor analysis" },
-        { text: "A feed needs no explaining: people know it from email and banking.", verdict: "Competitor analysis" },
-        { text: "A ready scenario is worth more than a suggestion button.", verdict: "Competitor analysis" },
-        { text: "If an action has an entry point (the input, the chips, a card in the feed), people find it without a hint.", verdict: "Tests and interviews" },
-        { text: "If you can see the system reading, people double-check the answer less.", verdict: "Tests and interviews" },
-        { text: "\"I won't send this without asking\" removes the fear that it will get it wrong and send.", verdict: "Tests and interviews" },
-        { text: "If a sent action can be undone, people confirm more boldly.", verdict: "Tests and interviews" },
-        { text: "An investor backs a product they want to use themselves.", verdict: "Investor run" },
-        { text: "If the product's logic is clear within minutes, people try it on their own tasks.", verdict: "Investor run" },
-      ],
-    },
+    lead: "First I looked at how assistants talk to people, then I showed people the first versions of the chat.",
     methods: [
       {
         kind: "Competitor analysis",
         question: "Which AI assistants are on the market, how do they talk to people, and what do reviews say?",
         sample: "ChatGPT, Gemini, Alexa+, Lindy, Martin, alfred_. In Russia: Alice, GigaChat and the T-Bank and MTS \"Secretary\" assistants. Store and published reviews",
-        finding:
-          "Almost all of them lead with a chat: the person asks, the system answers. Reviews complain about misread context and badly timed suggestions, which people end up switching off. A feed where the system suggests things itself is familiar from email and banking, yet AI assistants barely use it. So GRIF has a feed: an inbox of tasks with ready scenarios that take the job straight to the result.",
+        finding: "Almost all of them lead with a chat: the person asks, the system answers.",
+        insights: [
+          { id: "F1", text: "Reviews complain about misread context and badly timed suggestions. People switch those suggestions off, and the assistant goes back to waiting for a question." },
+        ],
       },
       {
         kind: "Tests and interviews",
-        question: "Does a person understand what the companion can do, find the entry points, and manage and undo its actions?",
-        sample: "Tests and interviews on the finished parts of the product",
-        finding:
-          "Trust dropped over small things: an inaccuracy in an answer here, misread context there. People were also scared that a process, once started, could not be stopped. So every answer shows its source, and an action is visible before it runs and can be undone at any step. I put the entry points where people already look: the input, the chips and the feed.",
-      },
-      {
-        kind: "Investor run",
-        question: "Will someone who has seen many startups invest, and, as part of our audience, want to use the product themselves?",
-        sample: "Investors went through real tasks in the finished part of the product",
-        finding:
-          "Wanting to invest and wanting to use it yourself went together. Interest came when the product's logic was clear within minutes and people recognised their own tasks, like meeting briefs and sorting email. So the interface explains itself through captions: \"Gathered context, 4 sources\" and \"I won't send this without your OK\".",
+        question: "Does a person understand what the assistant can do, find the entry points, and manage and undo its actions?",
+        sample: "Tests and interviews on the first versions of the chat. [TO FILL: how many people and who]",
+        finding: "Trust dropped over small things, not over big mistakes.",
+        insights: [
+          { id: "F2", text: "An action with no entry point does not exist for a person. People looked where they already look: in the input and in the suggestions under it." },
+          { id: "F3", text: "While the system thinks in silence, a person cannot tell whether it is working or stuck. A finished answer with no source got checked by hand." },
+          { id: "F4", text: "People were scared the assistant would get it wrong and send the email itself, and that a started action could not be stopped." },
+        ],
       },
     ],
   },
-  /* v90: the interface film from Claude Design, rendered frame by frame into a video (see the Russian version) */
+  /* v90: the interface film stays below the decisions as the full view. 23.10: one decision per finding */
   decisions: {
-    lead: "Here is how the GRIF chat works, shown in one film: the main input with a live border, a greeting that follows the day's context, prompt chips, the thinking steps, the artefacts left after an answer, and accessibility.",
-    items: [],
+    lead: "Four decisions in the chat. Each one answers its own finding, and I adjusted each one after testing.",
+    items: [
+      {
+        id: "entry",
+        insight: "F2",
+        title: "Entry points where people already look",
+        found: "If an action has an entry point in the input or in the suggestions under it, people find it without a hint.",
+        did: "The input sits in the middle of a new chat and grows downwards, from the tenth line the text scrolls inside. Under it are three chips with today's tasks: “Send a follow-up email”, “Meeting summary”, “Book a flight to Tokyo”. Files line up above the text, and a cross removes the ones you do not need.",
+        changed: "[check] In the first version the suggestion cards had a two-line description that got cut off with an ellipsis. Now a chip is one line with an action.",
+        demo: "grif-entry",
+      },
+      {
+        id: "reading",
+        insight: "F3",
+        title: "You can see GRIF reading and where the answer comes from",
+        found: "If you can see the system reading and the answer names its source, people double-check it less.",
+        did: "While GRIF works, a line of steps runs above the answer: “Opened the calendar and the thread with the meeting attendee, collecting what we agreed”. When it is done, the line folds into “Gathered context, 4 sources, 1 min 47 s”, and the steps can be opened. Under the brief there is a “Based on” line with Telegram, Gmail and Notion labels.",
+        changed: "[check] The draft had a spinner with the word “Checking…” in place of the steps. It was replaced with steps because a spinner does not tell you what is going on.",
+        demo: "grif-reading",
+      },
+      {
+        id: "confirm",
+        insight: "F4",
+        title: "Nothing goes out without a confirmation",
+        found: "If the interface says “I won't send this without your confirmation”, the fear that it will get it wrong and send goes away.",
+        did: "The email arrives as a draft card: recipient, subject and the start of the text. At the bottom is the line “I won't send this without your confirmation” and three buttons: Edit, Decline and Send. Edit opens the whole email in a side panel.",
+        changed: "[TO FILL: what changed in the email card after testing]",
+        demo: "grif-confirm",
+      },
+      {
+        id: "undo",
+        insight: "F4",
+        title: "A sent email can be taken back",
+        found: "If a sent action can be undone, people confirm more boldly.",
+        did: "After sending, a toast “Email sent · Undo” appears at the top, and the chat shows “Email sent to Sergey via Gmail, today, 10:42” with an Undo button. Memory works the same way: “Remembered: don't mention competitor X around Sergey” comes with “Don't remember”.",
+        changed: "[TO FILL: what changed after testing]",
+        demo: "grif-undo",
+      },
+    ],
     film: { src: G + "film.mp4", poster: G + "film-poster.webp", w: 1920, h: 1080, caption: "GRIF interface film: input, greeting, chips, thinking steps, artefacts and accessibility" },
+  },
+  /* 23.10: contrast measured on the Figma export pixels, see the Russian version for frame ids.
+     In the final mock-up the placeholder is 3.67, the warning 3.90 and the profile email 3.40, also under 4.5 */
+  compare: {
+    title: "A new chat: the first version and the final one",
+    lead: "The first version of the new chat failed the WCAG contrast check. Hover a note to see its spot on the screen.",
+    before: {
+      title: "First version",
+      image: img(G + "compare-before.webp", 1440, 900, "The first version of a new chat: an orb, a Hi, there greeting, three cards and the input"),
+      notes: [
+        { id: "a-nav", kind: "about", side: "left", text: "Sidebar", extra: "Feed, chat, memory, sources and settings", rects: [[0.004, 0.004, 0.183, 0.992]] },
+        { id: "a-hello", kind: "about", side: "left", text: "Orb and greeting", extra: "The assistant's image and a note on what it has already done", rects: [[0.38, 0.305, 0.42, 0.275]] },
+        { id: "a-cards", kind: "about", side: "left", text: "Suggestion cards", extra: "Ready tasks for today", rects: [[0.287, 0.613, 0.582, 0.108]] },
+        { id: "a-input", kind: "about", side: "right", text: "Input", extra: "File, voice and send", rects: [[0.287, 0.738, 0.582, 0.152]] },
+        { id: "a-warn", kind: "about", side: "right", text: "Warning", extra: "The assistant can be wrong, check what matters", rects: [[0.425, 0.925, 0.325, 0.04]] },
+        { id: "m-warn", kind: "mine", side: "right", text: "The “may be inaccurate” warning is the palest text on the screen", extra: "Contrast 4.17 : 1 against the 4.5 required by WCAG AA", rects: [[0.425, 0.925, 0.325, 0.04]] },
+        { id: "m-placeholder", kind: "mine", side: "right", text: "The hint in the input and in search is barely visible", extra: "4.07 : 1 in the input, 3.05 : 1 in search", rects: [[0.29, 0.775, 0.095, 0.04], [0.525, 0.022, 0.19, 0.045]] },
+        { id: "m-badge", kind: "mine", side: "right", text: "A white number on a red badge", extra: "4.21 : 1", rects: [[0.744, 0.012, 0.04, 0.055]] },
+        { id: "m-above", kind: "mine", side: "left", text: "The caption points to suggestions “above”, but they are below", rects: [[0.38, 0.517, 0.425, 0.062]] },
+        { id: "m-cards", kind: "mine", side: "left", text: "Two of the three cards share the same text, and it is cut off with an ellipsis", rects: [[0.287, 0.613, 0.582, 0.108]] },
+        { id: "m-orb", kind: "mine", side: "left", text: "The orb is bigger than the greeting and pulls the eye, though the assistant talks in text", rects: [[0.552, 0.305, 0.08, 0.13]] },
+        { id: "m-header", kind: "mine", side: "right", text: "Search and notifications in the header of an empty screen", extra: "There is nothing to search yet, and the badge distracts from the first question", rects: [[0.52, 0.015, 0.27, 0.06]] },
+      ],
+    },
+    after: {
+      title: "Final",
+      image: img(G + "compare-after.webp", 1440, 900, "The final new chat: a greeting by name, the input in the middle, three chips"),
+      notes: [
+        { id: "m-orb", kind: "mine", side: "left", text: "No orb: a greeting by name and the question “How can I help you today?”", rects: [[0.49, 0.248, 0.235, 0.095]] },
+        { id: "m-above", kind: "mine", side: "left", text: "The suggestions sit under the input, so the caption about them is gone", rects: [[0.287, 0.36, 0.63, 0.24]] },
+        { id: "m-cards", kind: "mine", side: "left", text: "A chip is one line with an action, each one different", rects: [[0.29, 0.52, 0.625, 0.08]] },
+        { id: "m-header", kind: "mine", side: "left", text: "No header, chat history lives in the sidebar: Favourites and Recent", rects: [[0.012, 0.41, 0.17, 0.2]] },
+        { id: "m-placeholder", kind: "mine", side: "right", text: "[TO FILL: the input hint is 3.67 : 1 in the final mock-up]", rects: [[0.302, 0.388, 0.135, 0.032]] },
+        { id: "m-warn", kind: "mine", side: "right", text: "[TO FILL: the warning is 3.90 : 1 in the final mock-up]", rects: [[0.47, 0.952, 0.27, 0.036]] },
+        { id: "m-badge", kind: "mine", side: "right", text: "There is no badge on a new chat screen" },
+      ],
+    },
+    versions: [
+      { image: img(G + "v1-orb.webp", 960, 600, "The version with an orb"), label: "Orb", note: "Failed contrast, the orb pulls attention" },
+      { image: img(G + "v2-navy.webp", 960, 600, "A dark blue version with no orb"), label: "No orb", note: "The input in the middle, files in a row" },
+      { image: img(G + "v3-light.webp", 960, 600, "A light theme try"), label: "Light theme", note: "[TO FILL: why I dropped it]" },
+      { image: img(G + "compare-after.webp", 1440, 900, "The final new chat"), label: "Final", note: "Neutral dark, one blue accent" },
+    ],
+  },
+  /* 23.10: the investor run moved here from research: it tested the finished product */
+  validation: {
+    lead: "I tested it in three rounds.",
+    stages: [
+      {
+        kicker: "Round 1",
+        title: "A usability test of the main flow",
+        text: "[TO FILL: how many people and who]. Tasks: find an action, launch it and undo it. Where people stumbled: [TO FILL].",
+      },
+      {
+        kicker: "Round 2",
+        title: "An investor run",
+        text: "Investors went through real tasks in the finished part of the product. Wanting to invest and wanting to use it yourself went together: interest came when the product's logic was clear within minutes and people recognised their own tasks, like meeting briefs and sorting email. So the interface explains itself through captions: “Gathered context, 4 sources” and “I won't send this without your confirmation”.",
+      },
+      {
+        kicker: "Round 3",
+        title: "Fixes and a second test",
+        text: "[check] Chips became one line, and reasoning steps replaced “Checking…”. [TO FILL: changes in the email card and in undo]. After the second test, [TO FILL: what held up].",
+      },
+    ],
   },
   /* 23.10: Никита оставил две метрики: task success rate 87% и time-to-market 3 нед → 5 дн, остальные убраны */
   results: {

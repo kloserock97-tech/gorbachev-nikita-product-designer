@@ -232,15 +232,26 @@ function mountOne(fig: HTMLElement, scroller: HTMLElement) {
   const nEl = fig.querySelector<HTMLElement>("[data-dd-n]")!;
   const capEl = fig.querySelector<HTMLElement>("[data-dd-cap]")!;
   const btn = fig.querySelector<HTMLButtonElement>("[data-dd-btn]")!;
-  const [cx, cy, cw] = d.crop;
+  const [cx, cy, cw, ch] = d.crop;
   let inst: LiveInstance | null = null;
   let scale = 1;
   let visible = false, userPaused = false, dead = false, loop = 0;
   let k = 0;
+  /* узкий экран: весь кадр в ширину телефона — это мелко до нечитаемого. Тогда окно камеры уже (NARROW px
+     дизайна) и едет за курсором в пределах кадра */
+  const NARROW = 460;
+  let focus: [number, number] = [cx + cw / 2, cy + ch / 2];
 
   const fit = () => {
-    scale = view.clientWidth / cw;
-    cam.style.transform = `scale(${scale}) translate(${-cx}px, ${-cy}px)`;
+    const narrow = view.clientWidth < 560;
+    const w = narrow ? Math.min(NARROW, cw) : cw;
+    const h = narrow ? Math.min(Math.round(w * 0.82), ch) : ch;
+    view.style.aspectRatio = `${w} / ${h}`;
+    scale = view.clientWidth / w;
+    const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi));
+    const left = narrow ? clamp(focus[0] - w / 2, cx, cx + cw - w) : cx;
+    const top = narrow ? clamp(focus[1] - h / 2, cy, cy + ch - h) : cy;
+    cam.style.transform = `scale(${scale}) translate(${-left}px, ${-top}px)`;
   };
   const ro = new ResizeObserver(fit);
   ro.observe(view);
@@ -271,6 +282,8 @@ function mountOne(fig: HTMLElement, scroller: HTMLElement) {
     point: async (el, fx, fy) => {
       const [x, y] = at(el, fx, fy);
       cursor.style.transform = `translate(${x}px, ${y}px)`;
+      focus = [x, y];
+      fit();
       cursor.classList.add("is-on");
       if (!calm) await wait(650);
     },
