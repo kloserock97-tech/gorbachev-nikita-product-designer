@@ -263,6 +263,7 @@ const en = {
   "cs.goals": "Goals",
   "cs.journey": "User journey",
   "cs.validation": "Validation",
+  "cs.compare": "Before and after",
   "cs.results": "Outcome",
   "cs.x": "What I achieved",
   "cs.y": "How it is measured",

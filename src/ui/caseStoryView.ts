@@ -23,6 +23,7 @@ import { demoBlock, hasDemo, mountDemos } from "./caseDemos";
 import { mountProto, protoBlock } from "./caseProto";
 import { marks, mountNotes, notesBlock } from "./caseNotes";
 import { decisionDemoBlock, hasDecisionDemo, mountDecisionDemos } from "./decisionDemos";
+import { mountOpener, openerBlock } from "./filmOpener";
 import { mockupsHead, mountMockups } from "./mockupsTitle";
 import { icon, type IconName } from "./icons";
 import { smoothWheel } from "./smoothScroll";
@@ -91,7 +92,7 @@ const interlude = (g: CaseImage, focus = "50% 47%") =>
   `<div class="cs-interlude cs-interlude--${esc(g.kind)}" data-reveal aria-hidden="true" style="--focus:${esc(focus)}"><img src="${BASE}${g.src}" alt="" width="${g.w}" height="${g.h}" loading="lazy" decoding="async"${hi(g, "100vw")} draggable="false"></div>`;
 
 /* ── куски ─────────────────────────────────────────────────────────────────── */
-const SEC_ICON: Record<string, IconName> = { brief: "brief", context: "context", approach: "approach", research: "research", flow: "flow", decisions: "decisions", split: "split", mistakes: "mistakes", results: "results", screens: "screens", roadmap: "roadmap", takeaways: "takeaways", steps: "decisions", more: "list", interface: "screens", journey: "flow", validation: "research" };
+const SEC_ICON: Record<string, IconName> = { brief: "brief", context: "context", approach: "approach", research: "research", flow: "flow", decisions: "decisions", split: "split", mistakes: "mistakes", results: "results", screens: "screens", roadmap: "roadmap", takeaways: "takeaways", steps: "decisions", more: "list", interface: "screens", journey: "flow", validation: "research", compare: "screens" };
 const head = (n: number, id: string, label: string, lead?: string) => `
   <header class="cs-head" id="cs-${id}">
     <p class="cs-num">${icon(SEC_ICON[id] ?? "brief")}<span>${pad(n)}</span>${esc(label)}</p>
@@ -161,7 +162,21 @@ const methodCard = (m: Method, k: number) => `
     ${m.image ? fig(m.image) : ""}
   </article>`;
 
-const decision = (d: Decision, k: number, dives: CaseTrack[]) => {
+/* 23.10: плотная карточка решения (CaseStory.compact): демо сверху, под ним заголовок и строки «подпись слева — текст
+   справа» с тонкими разделителями. Метка находки — в подписи гипотезы. Так три абзаца не расползаются по высоте */
+const decisionCompact = (d: Decision) => `
+  <article class="cs-decision cs-decision--row" id="cs-d-${esc(d.id)}" data-reveal>
+    ${hasDecisionDemo(d.demo) ? decisionDemoBlock(d.demo!, d.title) : d.image ? fig(d.image, "cs-decision-img") : ""}
+    <h3>${esc(d.title)}</h3>
+    <dl class="cs-dl">
+      <div><dt>${t(d.insight ? "cs.hypothesis" : "cs.found")}${d.insight ? ` <a class="cs-insight" href="#cs-in-${esc(d.insight)}" data-insight="${esc(d.insight)}" aria-label="${t("cs.insight")} ${esc(d.insight)}">${esc(d.insight)}</a>` : ""}</dt><dd>${marks(esc(d.found))}</dd></div>
+      <div><dt>${t("cs.did")}</dt><dd>${marks(esc(d.did))}</dd></div>
+      ${d.changed ? `<div class="is-changed"><dt>${t("cs.aftertest")}</dt><dd>${marks(esc(d.changed))}</dd></div>` : ""}
+    </dl>
+  </article>`;
+
+const decision = (d: Decision, k: number, dives: CaseTrack[], compact = false) => {
+  if (compact) return decisionCompact(d);
   const dive = d.deepDive ? dives.find((x) => x.id === d.deepDive) : null;
   /* 23.10: решение со ссылкой на находку — found читается как гипотеза, под текстом «после теста поменял» */
   const demo = hasDecisionDemo(d.demo);
@@ -346,6 +361,7 @@ export function sectionsOf(s: CaseStory): Section[] {
   if (s.approach) list.push({ id: "approach", label: t("cs.approach") });
   list.push({ id: "research", label: t("cs.research") });
   if (s.flow && !s.flow.folded) list.push({ id: "flow", label: t("cs.flow") });
+  if (s.compare) list.push({ id: "compare", label: t("cs.compare") });
   list.push({ id: "decisions", label: t("cs.decisions"), children: s.deepDives.map((d) => ({ id: `dd-${d.id}`, label: d.chip })) });
   if (s.validation) list.push({ id: "validation", label: t("cs.validation") });
   if (s.split) list.push({ id: "split", label: t("cs.split") });
@@ -401,6 +417,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
         </header>
 
         ${s.steps?.length ? compactBody(s) : `
+        ${s.compact && s.decisions.film ? openerBlock(s.decisions.film) : ""}
         ${s.kpis.length ? `<section class="cs-kpis" aria-label="${t("cs.results")}">${s.kpis.map((m, k) => `<div class="cs-kpi${m.value.length > 7 ? " cs-kpi--long" : ""}" data-reveal style="--rd:${k}"><b data-count="${esc(m.value)}">${esc(m.value)}</b><span>${esc(m.label)}</span></div>`).join("")}</section>` : ""}
 
         <section class="cs-sec">
@@ -411,7 +428,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
         ${s.decisions.film || s.prototype || hasDemo(s.id) ? `<section class="cs-sec cs-sec--interface cs-zone">
           ${head(++sec, "interface", t("cs.interface"))}
           ${s.prototype ? protoBlock(s.prototype) : ""}
-          ${s.decisions.film ? filmBlock(s.decisions.film) : s.prototype ? "" : demoBlock(s.id)}
+          ${s.decisions.film && !s.compact ? filmBlock(s.decisions.film) : s.prototype ? "" : demoBlock(s.id)}
         </section>` : ""}
 
         ${s.gallery.length ? `<section class="cs-sec cs-sec--screens">
@@ -492,6 +509,11 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
         </section>
         ${brk("research")}
 
+        ${s.compare ? `<section class="cs-sec cs-sec--compare cs-zone">
+          ${head(++sec, "compare", t("cs.compare"), s.compare.title)}
+          ${notesBlock(s.compare, true)}
+        </section>` : ""}
+
         ${s.flow && !s.flow.folded ? `<section class="cs-sec">
           ${head(++sec, "flow", t("cs.flow"), s.flow.title)}
           ${flowBody(s.flow)}
@@ -500,12 +522,11 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
         <section class="cs-sec cs-sec--decisions">
           ${head(++sec, "decisions", t("cs.decisions"))}
           <p class="cs-text cs-text--lead" data-reveal>${runIn(s.decisions.lead)}</p>
-          ${s.compare ? notesBlock(s.compare) : ""}
           ${s.flow?.folded ? `<details class="cs-fold" data-reveal>
             <summary><span class="cs-deep-title"><b>${esc(s.flow.title)}</b></span><span class="cs-deep-toggle" aria-hidden="true"><i></i></span></summary>
             <div class="cs-fold-body">${flowBody(s.flow)}</div>
           </details>` : ""}
-          <div class="cs-decisions">${s.decisions.items.map((d, k) => decision(d, k, s.deepDives)).join("")}</div>
+          <div class="cs-decisions">${s.decisions.items.map((d, k) => decision(d, k, s.deepDives, !!s.compact)).join("")}</div>
           ${s.deepDives.length ? `<div class="cs-deeps">${mini(t("cs.deep"))}${s.deepDives.map(deepDive).join("")}</div>` : ""}
         </section>
         ${brk("decisions")}
@@ -592,7 +613,7 @@ function stackLayers(root: HTMLElement, scroller: HTMLElement) {
   };
   for (const node of [...body.children] as HTMLElement[]) {
     if (node.classList.contains("cs-zone")) {
-      const kind = node.classList.contains("cs-sec--interface") ? "dark" : "grey";
+      const kind = node.classList.contains("cs-sec--interface") ? "dark" : node.classList.contains("cs-sec--compare") ? "compare" : "grey";
       const el = start(kind);
       body.insertBefore(el, node);
       el.append(node);
@@ -611,7 +632,27 @@ function stackLayers(root: HTMLElement, scroller: HTMLElement) {
   layers.forEach((el) => ro.observe(el));
   ro.observe(scroller);
   fit();
-  return () => ro.disconnect();
+  /* 23.10, плотная вёрстка: лист, на который наезжает следующий, уходит вглубь (--cover: 0 — следующий ещё внизу
+     окна, 1 — закрыл окно целиком; стили в case-compact.css) */
+  if (!root.querySelector(".cs--compact") || matchMedia("(prefers-reduced-motion: reduce)").matches) return () => ro.disconnect();
+  let raf = 0;
+  const depth = () => {
+    raf = 0;
+    const vh = scroller.clientHeight, top0 = scroller.getBoundingClientRect().top;
+    /* при монтировании высота прокрутки бывает ещё нулевой: деление на ноль дало бы масштаб листа NaN → 0 */
+    if (!vh) return;
+    layers.forEach((el, i) => {
+      const next = layers[i + 1];
+      const cover = next ? Math.min(1, Math.max(0, 1 - (next.getBoundingClientRect().top - top0) / vh)) : 0;
+      el.style.setProperty("--cover", cover.toFixed(3));
+    });
+  };
+  const onScroll = () => { if (!raf) raf = requestAnimationFrame(depth); };
+  scroller.addEventListener("scroll", onScroll, { passive: true });
+  const ro2 = new ResizeObserver(onScroll);
+  ro2.observe(scroller);
+  depth();
+  return () => { ro.disconnect(); ro2.disconnect(); scroller.removeEventListener("scroll", onScroll); cancelAnimationFrame(raf); };
 }
 
 export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onClose: () => void; track: string | null; go: (to: string, replace?: boolean) => void }) {
@@ -902,6 +943,7 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
   stops.push(mountProto(root));
   stops.push(mountNotes(root));
   stops.push(mountDecisionDemos(root, scroller));
+  stops.push(mountOpener(root, scroller));
   stops.push(mountFilms(root, scroller));
   stops.push(mountMockups(root, scroller));
   stops.push(mountHero(root, scroller));

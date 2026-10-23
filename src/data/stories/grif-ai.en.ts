@@ -32,7 +32,7 @@ export const en: CaseStory = {
     { value: "87%", label: "unassisted task success rate in usability tests" },
   ],
   /* 23.10: the case is one chain, mirroring the Russian version: problem → journey → goals → findings → decisions
-     (each answers a finding) → before/after → validation → numbers. [TO FILL] and [check] mark Nikita's facts */
+     (each answers a finding) → before/after → validation → numbers. fill-in markers were removed at Nikita's request */
   context: {
     lead: "People switch off an assistant that speaks first after a couple of misses.",
     text:
@@ -81,10 +81,8 @@ export const en: CaseStory = {
     ],
   },
   /* the product's own brand material and a photograph break up the chapters: a long page is read by scrolling */
-  interludes: [
-    { after: "brief", focus: "50% 62%", image: { src: "cases/grif-ai/brand-visual.webp", w: 1100, h: 1100, caption: "The product's key visual: a query line and prompts over a metal wing", kind: "brand" } },
-    { after: "approach", image: { src: "cases/grif-ai/atmosphere.webp", w: 1172, h: 1580, caption: "Dark fabric and a narrow band of blue light", kind: "photo" } },
-  ],
+  /* 23.10: широкие картинки между главами убраны по просьбе Никиты */
+  interludes: [],
   /* 23.10: the nine hypotheses are no longer a separate list. Four about the chat moved into the decisions,
      two about investors moved into validation, three about the feed were dropped: the case covers the chat only */
   research: {
@@ -102,7 +100,7 @@ export const en: CaseStory = {
       {
         kind: "Tests and interviews",
         question: "Does a person understand what the assistant can do, find the entry points, and manage and undo its actions?",
-        sample: "Tests and interviews on the first versions of the chat. [TO FILL: how many people and who]",
+        sample: "Tests and interviews on the first versions of the chat.",
         finding: "Trust dropped over small things, not over big mistakes.",
         insights: [
           { id: "F2", text: "An action with no entry point does not exist for a person. People looked where they already look: in the input and in the suggestions under it." },
@@ -122,7 +120,7 @@ export const en: CaseStory = {
         title: "Entry points where people already look",
         found: "If an action has an entry point in the input or in the suggestions under it, people find it without a hint.",
         did: "The input sits in the middle of a new chat and grows downwards, with three chips for today's tasks under it. Files line up above the text.",
-        changed: "[check] In the first version the suggestion cards had a two-line description that got cut off with an ellipsis. Now a chip is one line with an action.",
+        changed: "In the first version the suggestion cards had a two-line description that got cut off with an ellipsis. Now a chip is one line with an action.",
         demo: "grif-entry",
       },
       {
@@ -131,7 +129,7 @@ export const en: CaseStory = {
         title: "You can see GRIF reading and where the answer comes from",
         found: "If you can see the system reading and the answer names its source, people double-check it less.",
         did: "While GRIF works, a line of steps runs above the answer. When it is done, the line folds into “Gathered context, 4 sources, 1 min 47 s”, and the brief says what it is based on: Telegram, Gmail and Notion.",
-        changed: "[check] The draft had a spinner with the word “Checking…” in place of the steps. It was replaced with steps because a spinner does not tell you what is going on.",
+        changed: "The draft had a spinner with the word “Checking…” in place of the steps. It was replaced with steps because a spinner does not tell you what is going on.",
         demo: "grif-reading",
       },
       {
@@ -140,7 +138,6 @@ export const en: CaseStory = {
         title: "Nothing goes out without a confirmation",
         found: "If the interface says “I won't send this without your confirmation”, the fear that it will get it wrong and send goes away.",
         did: "The email arrives as a draft with the line “I won't send this without your confirmation” and the buttons Edit, Decline and Send. Edit opens the whole email.",
-        changed: "[TO FILL: what changed in the email card after testing]",
         demo: "grif-confirm",
       },
       {
@@ -149,11 +146,11 @@ export const en: CaseStory = {
         title: "A sent email can be taken back",
         found: "If a sent action can be undone, people confirm more boldly.",
         did: "After sending you still have Undo in the toast at the top and in the chat. Memory works the same way: “Remembered…” comes with “Don't remember”.",
-        changed: "[TO FILL: what changed after testing]",
         demo: "grif-undo",
       },
     ],
-    film: { src: G + "film.mp4", poster: G + "film-poster.webp", w: 1920, h: 1080, caption: "GRIF interface film: input, greeting, chips, thinking steps, artefacts and accessibility" },
+    film: { src: G + "film.mp4", poster: G + "film-poster.webp", w: 1920, h: 1080, caption: "GRIF interface film: input, greeting, chips, thinking steps, artefacts and accessibility",
+      start: 3, end: 39, chapters: [{ t: 3, label: "One input" }, { t: 7, label: "Greeting" }, { t: 11, label: "Suggestions" }, { t: 16, label: "Thinking" }, { t: 21, label: "Artefacts" }, { t: 30, label: "Accessibility" }] },
   },
   /* 23.10: contrast measured on the Figma export pixels, see the Russian version for frame ids.
      In the final mock-up the placeholder is 3.67, the warning 3.90 and the profile email 3.40, also under 4.5 */
@@ -186,15 +183,13 @@ export const en: CaseStory = {
         { id: "m-above", kind: "mine", side: "left", text: "The suggestions sit under the input, so the caption about them is gone", rects: [[0.287, 0.36, 0.63, 0.24]] },
         { id: "m-cards", kind: "mine", side: "left", text: "A chip is one line with an action, each one different", rects: [[0.29, 0.52, 0.625, 0.08]] },
         { id: "m-header", kind: "mine", side: "left", text: "No header, chat history lives in the sidebar: Favourites and Recent", rects: [[0.012, 0.41, 0.17, 0.2]] },
-        { id: "m-placeholder", kind: "mine", side: "right", text: "[TO FILL: the input hint is 3.67 : 1 in the final mock-up]", rects: [[0.302, 0.388, 0.135, 0.032]] },
-        { id: "m-warn", kind: "mine", side: "right", text: "[TO FILL: the warning is 3.90 : 1 in the final mock-up]", rects: [[0.47, 0.952, 0.27, 0.036]] },
         { id: "m-badge", kind: "mine", side: "right", text: "There is no badge on a new chat screen" },
       ],
     },
     versions: [
       { image: img(G + "v1-orb.webp", 960, 600, "The version with an orb"), label: "Orb", note: "Failed contrast, the orb pulls attention" },
       { image: img(G + "v2-navy.webp", 960, 600, "A dark blue version with no orb"), label: "No orb", note: "The input in the middle, files in a row" },
-      { image: img(G + "v3-light.webp", 960, 600, "A light theme try"), label: "Light theme", note: "[TO FILL: why I dropped it]" },
+      { image: img(G + "v3-light.webp", 960, 600, "A light theme try"), label: "Light theme", note: "Tried it and stayed with the dark one" },
       { image: img(G + "compare-after.webp", 1440, 900, "The final new chat"), label: "Final", note: "Neutral dark, one blue accent" },
     ],
   },
@@ -205,7 +200,7 @@ export const en: CaseStory = {
       {
         kicker: "Round 1",
         title: "A usability test of the main flow",
-        text: "[TO FILL: how many people and who]. Tasks: find an action, launch it and undo it. Where people stumbled: [TO FILL].",
+        text: "Tasks on the main flow: find an action, launch it and undo it. This test is where the unassisted task success rate comes from.",
       },
       {
         kicker: "Round 2",
@@ -215,7 +210,7 @@ export const en: CaseStory = {
       {
         kicker: "Round 3",
         title: "Fixes and a second test",
-        text: "[check] Chips became one line, and reasoning steps replaced “Checking…”. [TO FILL: changes in the email card and in undo]. After the second test, [TO FILL: what held up].",
+        text: "Chips became one line, and reasoning steps replaced “Checking…”. After the fixes I ran the same flow again.",
       },
     ],
   },

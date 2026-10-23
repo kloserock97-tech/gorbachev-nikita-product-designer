@@ -171,7 +171,9 @@ export type CaseStory = {
   /** folded — схема не отдельной главой, а свёрнутым блоком в «Решениях»; title тогда подпись этого блока */
   flow?: { title: string; folded?: boolean; before:{ title: string; steps: FlowStep[]; summary: string }; after: { title: string; steps: FlowStep[]; summary: string } };
   /** film — ролик интерфейса (видео) после подводки к решениям: играет без звука, пока виден */
-  decisions: { lead: string; items: Decision[]; film?: { src: string; poster: string; w: number; h: number; caption: string } };
+  /** film.start/end — какой отрезок крутить (без заставок), chapters — главы ролика с секунды начала: в плотной вёрстке
+      ролик открывает кейс и раскрывается на прокрутке (filmOpener.ts) */
+  decisions: { lead: string; items: Decision[]; film?: { src: string; poster: string; w: number; h: number; caption: string; start?: number; end?: number; chapters?: { t: number; label: string }[] } };
   /** прототип, который можно прокликать, — в главе «Готовый интерфейс», если у кейса нет ролика */
   prototype?: CasePrototype;
   /** разделение человек/агент (GRIF) */

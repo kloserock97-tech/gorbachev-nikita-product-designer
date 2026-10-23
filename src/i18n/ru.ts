@@ -266,6 +266,7 @@ const ru: Record<keyof typeof en, string> = {
   "cs.goals": "Цели",
   "cs.journey": "Путь пользователя",
   "cs.validation": "Проверка",
+  "cs.compare": "До и после",
   "cs.results": "Результат",
   "cs.x": "Чего добился",
   "cs.y": "Чем меряется",

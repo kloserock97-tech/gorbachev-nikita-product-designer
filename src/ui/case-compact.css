@@ -49,23 +49,54 @@
 .cs--compact .cn-card-foot b { font-size: 15.5px; }
 .cs--compact .cn-card-open { padding: 6px 12px; font-size: 13.5px; }
 
-/* решения: по два в ряд, демо сверху, без плашки и номера; «поменял после теста» — строкой с чертой слева */
-.cs--compact .cs-decisions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(36px, 5vh, 56px) clamp(20px, 2.4vw, 32px); }
-.cs--compact .cs-decision { display: flex; flex-direction: column; gap: 12px; padding: 0; border-radius: 0; background: none; }
-/* демо сверху и во всю ширину колонки: в колонке-флексе align-self: start из decision-demos.css сжал бы его */
-.cs--compact .cs-decision .dd { order: -1; align-self: stretch; width: 100%; }
-.cs--compact .cs-decision .cs-num--s { display: none; }
-.cs--compact .cs-decision h3 { margin-top: 6px; max-width: none; font-size: clamp(21px, 1.7vw, 25px); line-height: 1.18; }
-.cs--compact .cs-insight { align-self: flex-start; margin: 0; }
-.cs--compact .cs-decision .cs-fdw { grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 2px; }
-.cs--compact .cs-decision .cs-fdw p:not(.cs-mini) { font-size: 15px; line-height: 1.5; }
-.cs--compact .cs-decision .cs-fdw .cs-mini { margin-bottom: 2px; font-size: 13px; }
-.cs--compact .cs-basis-row:empty { display: none; }
-.cs--compact .cs-changed { margin-top: 2px; padding: 2px 0 2px 14px; border-radius: 0; background: none; color: var(--ink); box-shadow: inset 2px 0 0 var(--ink); }
-.cs--compact .cs-changed .cs-mini { color: var(--ink); font-size: 13px; }
-.cs--compact .cs-changed p:not(.cs-mini) { font-size: 15px; }
+/* решения: по два в ряд, демо сверху, под ним заголовок и строки «подпись слева — текст справа» (decisionCompact) */
+.cs--compact .cs-decisions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(40px, 6vh, 64px) clamp(20px, 2.4vw, 32px); }
+.cs--compact .cs-decision--row { display: flex; flex-direction: column; gap: 0; padding: 0; border-radius: 0; background: none; }
+.cs--compact .cs-decision--row .dd { align-self: stretch; width: 100%; margin-bottom: 20px; }
+.cs--compact .cs-decision--row h3 { margin: 0 0 14px; max-width: none; font-size: clamp(20px, 1.6vw, 24px); line-height: 1.2; letter-spacing: -0.012em; }
+.cs-dl { margin: 0; border-top: 1px solid var(--line); }
+.cs-dl > div { display: grid; grid-template-columns: 112px minmax(0, 1fr); column-gap: 16px; padding: 12px 0 13px; border-bottom: 1px solid var(--line); }
+.cs-dl dt { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; font-size: 13.5px; font-weight: 600; line-height: 1.5; color: var(--ink); }
+.cs-dl dd { margin: 0; font-size: 15px; line-height: 1.5; color: color-mix(in srgb, var(--ink) 78%, transparent); text-wrap: pretty; }
+.cs-dl .is-changed dd { color: var(--ink); }
+.cs--compact .cs-dl .cs-insight { margin: 0; padding: 1px 7px; border-radius: 6px; font-size: 12px; font-weight: 600; line-height: 1.5; }
+@media (max-width: 600px) { .cs-dl > div { grid-template-columns: minmax(0, 1fr); row-gap: 2px; } }
 .cs--compact .dd { gap: 8px; }
 .cs--compact .dd-view { border-radius: 14px; }
 .cs--compact .dd-step { font-size: 14px; }
 .cs--compact .dd-btn { width: 34px; height: 34px; }
 @media (max-width: 900px) { .cs--compact .cs-decisions { grid-template-columns: minmax(0, 1fr); } }
+
+/* ── «До и после» — своя глава-лист (stackLayers: .cs-layer--compare). Тёмно-синяя среда в цвет GRIF отделяет
+   блок от рассказа вокруг: на него наезжает следующий лист, как на витрину прототипа ── */
+.cs-layer--compare { --layer-bg: radial-gradient(120% 70% at 50% 0%, #1b2a6b 0%, #0d1433 46%, #080a14 100%); }
+.cs-sec--compare {
+  --ink: #f4f5fb; --soft: rgba(244, 245, 251, 0.7); --faint: rgba(244, 245, 251, 0.5); --line: rgba(244, 245, 251, 0.14);
+  color: var(--ink);
+}
+.cs--compact .cs-sec--compare { margin-top: 0; padding-top: 0; border-top: 0; }
+.cs-sec--compare .cn-lead { color: var(--soft); }
+.cs-sec--compare .cn-card { box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.8); }
+.cs-sec--compare .cn-card--before { background: #15161c; }
+/* подъезд карточек: встают из наклона, пока глава въезжает в окно; «До» и «После» сходятся с разных сторон.
+   Отдельные свойства translate/rotate/scale, а не transform — transform остаётся наведению */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .cs-sec--compare .cn-card { animation: cn-rise linear both; animation-timeline: view(); animation-range: entry 5% cover 38%; transform-origin: 50% 100%; }
+    .cs-sec--compare .cn-card--before { --cn-x: -6%; }
+    .cs-sec--compare .cn-card--after { --cn-x: 6%; }
+  }
+}
+@keyframes cn-rise {
+  from { translate: var(--cn-x, 0) 22%; rotate: x 24deg; scale: 0.9; opacity: 0.2; }
+  to { translate: 0 0; rotate: x 0deg; scale: 1; opacity: 1; }
+}
+
+/* глубина: лист, на который наезжает следующий, чуть уходит вглубь и темнеет (--cover 0…1 ставит stackLayers) */
+@media (prefers-reduced-motion: no-preference) {
+  .cs--compact .cs-layer { scale: calc(1 - var(--cover, 0) * 0.04); transform-origin: 50% calc(100% - 50svh); }
+  .cs--compact .cs-layer::after {
+    content: ""; position: absolute; z-index: 3; inset-block: 0; inset-inline: calc(50% - 50cqw - var(--sx));
+    background: #05060a; opacity: calc(var(--cover, 0) * 0.45); pointer-events: none;
+  }
+}

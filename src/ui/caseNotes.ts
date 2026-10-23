@@ -48,12 +48,13 @@ const card = (side: "before" | "after", s: CompareSide) => `<button type="button
     <span class="cn-card-foot"><span><em>${tr(T[side])}</em><b>${esc(s.title)}</b></span><span class="cn-card-open">${ICON.open}${tr(T.open)}</span></span>
   </button>`;
 
-export function notesBlock(c: CaseCompare) {
+/** inSection — блок стоит в своей главе (её заголовок уже назвал блок), своё название не нужно */
+export function notesBlock(c: CaseCompare, inSection = false) {
   /* строки JSON проходят ту же типографику, что и остальной текст страницы; «</» не даст закрыть script раньше */
   const clean = (n: CompareNote) => ({ ...n, text: tidy(n.text), extra: n.extra ? tidy(n.extra) : undefined });
   const data = { ...c, before: { ...c.before, notes: c.before.notes.map(clean) }, after: { ...c.after, notes: c.after.notes.map(clean) } };
   return `<div class="cn" data-cn data-reveal>
-    <p class="cn-title">${esc(c.title)}</p>
+    ${inSection ? "" : `<p class="cn-title">${esc(c.title)}</p>`}
     ${c.lead ? `<p class="cn-lead">${marks(esc(c.lead))}</p>` : ""}
     <div class="cn-cards">${card("before", c.before)}${card("after", c.after)}</div>
     <script type="application/json" class="cn-data">${JSON.stringify(data).replace(/</g, "\\u003c")}</script>
