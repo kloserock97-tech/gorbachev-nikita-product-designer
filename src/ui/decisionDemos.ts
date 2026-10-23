@@ -2,9 +2,10 @@
    klinaeva: кусок интерфейса сам проигрывает действие, внизу подпись шага «1 из 3 · …» и пауза. Код свой.
 
    Демо не рисует интерфейс заново: внутри — тот же живой прототип, что в главе «Готовый интерфейс» (src/ui/live),
-   без сайдбара и в ширину кадра: вёрстка чата перестраивается под неё (чипсы и кнопки переносятся), поэтому
-   ничего не обрезается. Ширина — сколько влезает при масштабе не меньше 0,9 (на телефоне 0,68), высота — своя у демо. Сценарий — три шага: каждый ставит прототип в нужное состояние, двигает нарисованный курсор и обводит
-   элемент кольцом. Демо только показывает: нажать внутри нельзя, для этого есть прототип выше.
+   целиком, как полный экран продукта (окно 1200 × 750 с сайдбаром), уменьшенный под ширину блока: видно всё окно
+   и как в нём меняется состояние. Ничего не кадрируется и не приближается. Курсор и кольцо подсветки рисуются
+   в обратном масштабе, чтобы в уменьшенном окне их было видно. Сценарий — три шага: каждый ставит прототип
+   в нужное состояние, двигает курсор и обводит элемент кольцом. Демо только показывает: нажать внутри нельзя, для этого есть прототип выше.
 
    Играет, пока блок на экране; ушёл с экрана — пауза. «Меньше движения» — без автопроигрывания: шаги листаются
    кнопкой, курсор не едет. Модуль прототипа грузится своим чанком, когда блок подъехал к экрану. */
@@ -32,11 +33,10 @@ type Scene = {
   top: (el: HTMLElement, middle?: boolean) => void;
 };
 type Beat = { cap: L; run: (s: Scene) => Promise<void>; hold?: number };
-/** h — высота окна в пикселях вёрстки; ширина подстраивается под блок (fit) */
-type Demo = { live: string; h: number; beats: Beat[] };
+type Demo = { live: string; beats: Beat[] };
 
-/** пределы ширины вёрстки чата в демо: уже 420 px строка ввода не помещается, шире 760 px — это уже десктоп */
-const MIN_W = 420, MAX_W = 760;
+/** демо показывает окно продукта целиком, как полный экран (дизайн-ширина живого прототипа), уменьшенным под блок */
+const FULL_W = 1200, FULL_H = 750;
 const tr = (x: L) => (getLang() === "ru" ? x.ru : x.en);
 const T = {
   of: { ru: "из", en: "of" },
@@ -51,7 +51,6 @@ const TYPED: L = { ru: "Напиши Сергею follow-up по вчерашн�
 const DEMOS: Record<string, Demo> = {
   "grif-entry": {
     live: "grif-ai",
-    h: 470,
     beats: [
       {
         cap: { ru: "Поле ввода стоит в центре нового чата", en: "The input sits in the middle of a new chat" },
@@ -86,7 +85,6 @@ const DEMOS: Record<string, Demo> = {
   },
   "grif-reading": {
     live: "grif-ai",
-    h: 470,
     beats: [
       {
         cap: { ru: "Пока GRIF работает, видно, что именно он делает", en: "While GRIF works, you can see what exactly it is doing" },
@@ -129,7 +127,6 @@ const DEMOS: Record<string, Demo> = {
   },
   "grif-confirm": {
     live: "grif-ai",
-    h: 560,
     beats: [
       {
         cap: { ru: "Письмо приходит черновиком", en: "The email arrives as a draft" },
@@ -169,7 +166,6 @@ const DEMOS: Record<string, Demo> = {
   },
   "grif-undo": {
     live: "grif-ai",
-    h: 520,
     beats: [
       {
         cap: { ru: "Нажали «Отправить»: письмо ушло", en: "Hit “Send”: the email is out" },
@@ -211,8 +207,7 @@ const DEMOS: Record<string, Demo> = {
 export const hasDecisionDemo = (id?: string) => !!id && id in DEMOS;
 
 export function decisionDemoBlock(id: string, alt: string) {
-  const d = DEMOS[id];
-  const w = MAX_W, h = d.h;
+  const w = FULL_W, h = FULL_H;
   const esc = (s: string) => tidy(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   return `<figure class="dd" data-dd="${id}" style="--dd-ar:${w} / ${h}" aria-label="${esc(alt)}">
     <div class="dd-view" aria-hidden="true"><div class="dd-cam"><div class="dd-root"></div><i class="dd-cursor"></i></div></div>
@@ -246,15 +241,13 @@ function mountOne(fig: HTMLElement, scroller: HTMLElement) {
 
   /* ширина вёрстки — по блоку: интерфейс не мельче 0,9 (на телефоне 0,68, иначе чат не поместится) */
   const fit = () => {
-    const vw = view.clientWidth || MAX_W;
-    const minScale = vw < 560 ? 0.68 : 0.9;
-    const w = Math.round(Math.min(MAX_W, Math.max(MIN_W, vw / minScale)));
-    /* чем уже вёрстка, тем больше строк переносится вниз — кадр растёт вместе с ней */
-    const h = Math.round(d.h + (MAX_W - w) * 0.3);
-    for (const el of [cam, root]) { el.style.width = `${w}px`; el.style.height = `${h}px`; }
-    view.style.aspectRatio = `${w} / ${h}`;
-    scale = vw / w;
+    const vw = view.clientWidth || FULL_W;
+    for (const el of [cam, root]) { el.style.width = `${FULL_W}px`; el.style.height = `${FULL_H}px`; }
+    view.style.aspectRatio = `${FULL_W} / ${FULL_H}`;
+    scale = vw / FULL_W;
     cam.style.transform = `scale(${scale})`;
+    /* курсор и кольцо — в экранных пикселях, а не в уменьшенных */
+    view.style.setProperty("--dd-k", String(1 / scale));
   };
   const ro = new ResizeObserver(fit);
   ro.observe(view);
