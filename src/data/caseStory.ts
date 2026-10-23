@@ -73,8 +73,10 @@ export type JourneyStep = { kicker: string; title: string; note: string; outside
 
 /* 23.10: окно «До / После» с заметками. about — серая заметка «что это за блок», mine — синяя «мой комментарий».
    Заметка mine с тем же id есть и в after: в «После» она переезжает туда, где правка сделана.
-   rect — место на снимке в долях (x, y, ширина, высота), его обводит рамка при наведении */
-export type CompareNote = { id: string; kind: "about" | "mine"; side: "left" | "right"; text: string; extra?: string; rect?: [number, number, number, number] };
+   rects — места на снимке в долях (x, y, ширина, высота), их обводит рамка при наведении; заметка встаёт
+   на высоте первого места. Без rects заметка просто стоит в колонке (у правки нет места на экране) */
+export type CompareRect = [number, number, number, number];
+export type CompareNote = { id: string; kind: "about" | "mine"; side: "left" | "right"; text: string; extra?: string; rects?: CompareRect[] };
 export type CompareSide = { title: string; image: CaseImage; notes: CompareNote[] };
 export type CaseCompare = { title: string; lead?: string; before: CompareSide; after: CompareSide; versions?: { image: CaseImage; label: string; note: string }[] };
 

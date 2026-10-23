@@ -21,6 +21,7 @@ import { heroStage, mountHero } from "./caseHero";
 import { brandMark, goArrow, lookVars, objectPicture } from "./caseLook";
 import { demoBlock, hasDemo, mountDemos } from "./caseDemos";
 import { mountProto, protoBlock } from "./caseProto";
+import { mountNotes, notesBlock } from "./caseNotes";
 import { mockupsHead, mountMockups } from "./mockupsTitle";
 import { icon, type IconName } from "./icons";
 import { smoothWheel } from "./smoothScroll";
@@ -481,6 +482,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
         <section class="cs-sec cs-sec--decisions">
           ${head(++sec, "decisions", t("cs.decisions"))}
           <p class="cs-text cs-text--lead" data-reveal>${runIn(s.decisions.lead)}</p>
+          ${s.compare ? notesBlock(s.compare) : ""}
           ${s.flow?.folded ? `<details class="cs-fold" data-reveal>
             <summary><span class="cs-deep-title"><b>${esc(s.flow.title)}</b></span><span class="cs-deep-toggle" aria-hidden="true"><i></i></span></summary>
             <div class="cs-fold-body">${flowBody(s.flow)}</div>
@@ -867,6 +869,7 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
 
   stops.push(mountDemos(root, scroller));
   stops.push(mountProto(root));
+  stops.push(mountNotes(root));
   stops.push(mountFilms(root, scroller));
   stops.push(mountMockups(root, scroller));
   stops.push(mountHero(root, scroller));
