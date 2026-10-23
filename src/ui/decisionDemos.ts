@@ -2,8 +2,8 @@
    klinaeva: кусок интерфейса сам проигрывает действие, внизу подпись шага «1 из 3 · …» и пауза. Код свой.
 
    Демо не рисует интерфейс заново: внутри — тот же живой прототип, что в главе «Готовый интерфейс» (src/ui/live),
-   в своей дизайн-ширине. «Камера» кадрирует нужный участок (crop в пикселях дизайна) и увеличивает его под ширину
-   блока. Сценарий — три шага: каждый ставит прототип в нужное состояние, двигает нарисованный курсор и обводит
+   без сайдбара и в ширину кадра: вёрстка чата перестраивается под неё (чипсы и кнопки переносятся), поэтому
+   ничего не обрезается. Ширина — сколько влезает при масштабе не меньше 0,9 (на телефоне 0,68), высота — своя у демо. Сценарий — три шага: каждый ставит прототип в нужное состояние, двигает нарисованный курсор и обводит
    элемент кольцом. Демо только показывает: нажать внутри нельзя, для этого есть прототип выше.
 
    Играет, пока блок на экране; ушёл с экрана — пауза. «Меньше движения» — без автопроигрывания: шаги листаются
@@ -29,11 +29,14 @@ type Scene = {
   /** дождаться, пока элемент покажется (прототип сам ведёт свои паузы) */
   until: (sel: string, ms?: number) => Promise<void>;
   /** поставить элемент к верху прокрутки чата */
-  top: (el: HTMLElement) => void;
+  top: (el: HTMLElement, middle?: boolean) => void;
 };
 type Beat = { cap: L; run: (s: Scene) => Promise<void>; hold?: number };
-type Demo = { live: string; crop: [number, number, number, number]; beats: Beat[] };
+/** h — высота окна в пикселях вёрстки; ширина подстраивается под блок (fit) */
+type Demo = { live: string; h: number; beats: Beat[] };
 
+/** пределы ширины вёрстки чата в демо: уже 420 px строка ввода не помещается, шире 760 px — это уже десктоп */
+const MIN_W = 420, MAX_W = 760;
 const tr = (x: L) => (getLang() === "ru" ? x.ru : x.en);
 const T = {
   of: { ru: "из", en: "of" },
@@ -48,7 +51,7 @@ const TYPED: L = { ru: "Напиши Сергею follow-up по вчерашн�
 const DEMOS: Record<string, Demo> = {
   "grif-entry": {
     live: "grif-ai",
-    crop: [282, 150, 918, 490],
+    h: 470,
     beats: [
       {
         cap: { ru: "Поле ввода стоит в центре нового чата", en: "The input sits in the middle of a new chat" },
@@ -83,7 +86,7 @@ const DEMOS: Record<string, Demo> = {
   },
   "grif-reading": {
     live: "grif-ai",
-    crop: [290, 40, 900, 560],
+    h: 470,
     beats: [
       {
         cap: { ru: "Пока GRIF работает, видно, что именно он делает", en: "While GRIF works, you can see what exactly it is doing" },
@@ -93,6 +96,9 @@ const DEMOS: Record<string, Demo> = {
           s.ring(s.q("[data-think]"));
           /* прототип сам докручивает чат вниз, пока дописывает ответ: шаг длится до конца ответа */
           await s.until("[data-card]:not([hidden])", 8000);
+          /* после письма прототип ещё раз доводит чат до кнопки «Отправить» — даём ему закончить */
+          await s.until("[data-more]:not([hidden])", 2000);
+          await s.wait(700);
         },
         hold: 300,
       },
@@ -112,7 +118,8 @@ const DEMOS: Record<string, Demo> = {
         cap: { ru: "Под ответом подписано, из чего он собран", en: "Under the answer: what it was built from" },
         run: async (s) => {
           const based = s.q("[data-based]");
-          s.top(s.q("[data-brief]"));
+          /* на узкой вёрстке бриф длинный, и строку источников у верха брифа прикрыло бы поле ввода */
+          s.top(based, true);
           s.ring(based);
           await s.point(based, 0.55, 0.5);
         },
@@ -122,7 +129,7 @@ const DEMOS: Record<string, Demo> = {
   },
   "grif-confirm": {
     live: "grif-ai",
-    crop: [282, 0, 918, 750],
+    h: 560,
     beats: [
       {
         cap: { ru: "Письмо приходит черновиком", en: "The email arrives as a draft" },
@@ -162,7 +169,7 @@ const DEMOS: Record<string, Demo> = {
   },
   "grif-undo": {
     live: "grif-ai",
-    crop: [290, 0, 910, 600],
+    h: 520,
     beats: [
       {
         cap: { ru: "Нажали «Отправить»: письмо ушло", en: "Hit “Send”: the email is out" },
@@ -205,7 +212,7 @@ export const hasDecisionDemo = (id?: string) => !!id && id in DEMOS;
 
 export function decisionDemoBlock(id: string, alt: string) {
   const d = DEMOS[id];
-  const [, , w, h] = d.crop;
+  const w = MAX_W, h = d.h;
   const esc = (s: string) => tidy(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   return `<figure class="dd" data-dd="${id}" style="--dd-ar:${w} / ${h}" aria-label="${esc(alt)}">
     <div class="dd-view" aria-hidden="true"><div class="dd-cam"><div class="dd-root"></div><i class="dd-cursor"></i></div></div>
@@ -232,27 +239,22 @@ function mountOne(fig: HTMLElement, scroller: HTMLElement) {
   const nEl = fig.querySelector<HTMLElement>("[data-dd-n]")!;
   const capEl = fig.querySelector<HTMLElement>("[data-dd-cap]")!;
   const btn = fig.querySelector<HTMLButtonElement>("[data-dd-btn]")!;
-  const [cx, cy, cw, ch] = d.crop;
   let inst: LiveInstance | null = null;
   let scale = 1;
   let visible = false, userPaused = false, dead = false, loop = 0;
   let k = 0;
-  /* весь кадр в узкий блок — мелко до нечитаемого (на телефоне, в решениях по два в ряд). Поэтому интерфейс не
-     ужимается сильнее MIN_SCALE: окно камеры становится меньше кадра и едет за курсором в его пределах.
-     Пропорция окна — 16 : 10, а если кадр ниже, то его высота */
-  let focus: [number, number] = [cx + cw / 2, cy + ch / 2];
 
+  /* ширина вёрстки — по блоку: интерфейс не мельче 0,9 (на телефоне 0,68, иначе чат не поместится) */
   const fit = () => {
-    const vw = view.clientWidth || cw;
+    const vw = view.clientWidth || MAX_W;
     const minScale = vw < 560 ? 0.68 : 0.9;
-    const w = Math.min(cw, vw / minScale);
-    const h = Math.min(Math.round(w * 0.625), ch);
-    view.style.aspectRatio = `${Math.round(w)} / ${h}`;
+    const w = Math.round(Math.min(MAX_W, Math.max(MIN_W, vw / minScale)));
+    /* чем уже вёрстка, тем больше строк переносится вниз — кадр растёт вместе с ней */
+    const h = Math.round(d.h + (MAX_W - w) * 0.3);
+    for (const el of [cam, root]) { el.style.width = `${w}px`; el.style.height = `${h}px`; }
+    view.style.aspectRatio = `${w} / ${h}`;
     scale = vw / w;
-    const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi));
-    const left = clamp(focus[0] - w / 2, cx, cx + cw - w);
-    const top = clamp(focus[1] - h / 2, cy, cy + ch - h);
-    cam.style.transform = `scale(${scale}) translate(${-left}px, ${-top}px)`;
+    cam.style.transform = `scale(${scale})`;
   };
   const ro = new ResizeObserver(fit);
   ro.observe(view);
@@ -283,8 +285,6 @@ function mountOne(fig: HTMLElement, scroller: HTMLElement) {
     point: async (el, fx, fy) => {
       const [x, y] = at(el, fx, fy);
       cursor.style.transform = `translate(${x}px, ${y}px)`;
-      focus = [x, y];
-      fit();
       cursor.classList.add("is-on");
       if (!calm) await wait(650);
     },
@@ -308,12 +308,12 @@ function mountOne(fig: HTMLElement, scroller: HTMLElement) {
     until: async (sel, ms = 4000) => {
       for (let t = 0; t < ms && !root.querySelector(sel); t += 100) await wait(100);
     },
-    top: (el) => {
+    top: (el, middle = false) => {
       const sc = root.querySelector<HTMLElement>("[data-scroll]");
       if (!sc || !sc.contains(el)) return;
       let y = 0;
       for (let n: HTMLElement | null = el; n && n !== sc; n = n.offsetParent as HTMLElement | null) y += n.offsetTop;
-      sc.scrollTop = Math.max(0, y - 16);
+      sc.scrollTop = Math.max(0, middle ? y - (sc.clientHeight - el.offsetHeight) / 2 : y - 16);
     },
   });
 
