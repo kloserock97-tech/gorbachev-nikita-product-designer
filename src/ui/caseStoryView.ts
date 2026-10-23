@@ -306,10 +306,10 @@ function compactBody(s: CaseStory) {
           <div class="cs-decisions cs-steps-list">${(s.steps ?? []).map((st, k) => stepBlock(st, k, s)).join("")}</div>
         </section>
 
-        <section class="cs-sec cs-sec--takeaways">
+        ${s.takeaways.length ? `<section class="cs-sec cs-sec--takeaways">
           ${head(++sec, "takeaways", t("cs.takeaway"))}
-          <p class="cs-takeaway" data-reveal>${esc(s.takeaways[0] ?? "")}</p>
-        </section>
+          <p class="cs-takeaway" data-reveal>${esc(s.takeaways[0])}</p>
+        </section>` : ""}
 
         ${s.more?.length ? `<section class="cs-sec cs-sec--more">
           <details class="cs-fold cs-more" id="cs-more" data-reveal>
@@ -322,7 +322,8 @@ function compactBody(s: CaseStory) {
 /* ── оглавление ───────────────────────────────────────────────────────────── */
 export function sectionsOf(s: CaseStory): Section[] {
   if (s.steps?.length) {
-    const list: Section[] = [{ id: "brief", label: t("cs.outcome") }, { id: "steps", label: t("cs.steps") }, { id: "takeaways", label: t("cs.takeaway") }];
+    const list: Section[] = [{ id: "brief", label: t("cs.outcome") }, { id: "steps", label: t("cs.steps") }];
+    if (s.takeaways.length) list.push({ id: "takeaways", label: t("cs.takeaway") });
     if (s.more?.length) list.push({ id: "more", label: t("cs.more") });
     return list;
   }
@@ -339,7 +340,8 @@ export function sectionsOf(s: CaseStory): Section[] {
   if (s.split) list.push({ id: "split", label: t("cs.split") });
   if (s.mistakes) list.push({ id: "mistakes", label: t("cs.mistakes") });
   if (s.roadmap) list.push({ id: "roadmap", label: t("cs.roadmap") });
-  list.push({ id: "takeaways", label: t("cs.takeaways") });
+  /* выводов может не быть (GRIF, 23.10): тогда и раздела нет */
+  if (s.takeaways.length || s.quote) list.push({ id: "takeaways", label: t("cs.takeaways") });
   return list;
 }
 
@@ -517,12 +519,12 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           <div class="cs-roadmap">${s.roadmap.map((x, k) => `<article data-reveal style="--rd:${k}"><p class="cs-mini">${esc(x.kicker)}</p><b>${esc(x.title)}</b><p>${esc(x.text)}</p></article>`).join("")}</div>
         </section>` : ""}
 
-        <section class="cs-sec">
+        ${s.takeaways.length || s.quote ? `<section class="cs-sec">
           ${head(++sec, "takeaways", t("cs.takeaways"))}
-          <p class="cs-takeaway" data-reveal>${esc(s.takeaways[0] ?? "")}</p>
+          ${s.takeaways.length ? `<p class="cs-takeaway" data-reveal>${esc(s.takeaways[0])}</p>` : ""}
           ${s.takeaways.length > 1 ? `<ul class="cs-learn" data-reveal style="--rd:1">${s.takeaways.slice(1).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
           ${s.quote ? `<blockquote class="cs-quote cs-quote--big" data-reveal style="--rd:2">${esc(s.quote)}</blockquote>` : ""}
-        </section>
+        </section>` : ""}
 `}
 
         <a class="cs-next" href="#/work/${esc(next.id)}" style="${lookVars(next, "mono")}" data-reveal>

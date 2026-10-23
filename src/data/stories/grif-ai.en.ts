@@ -17,7 +17,7 @@ export const en: CaseStory = {
     summary:
       "We started with an idea, a couple of screens and a small budget, so agents did most of the design. I prepared the design system and the instructions, connected Figma to Claude through MCP and set up a pipeline to GitHub and Storybook. Agents built prototypes, screens and components, I owned the vision, fixes, animations and identity, and development checked and assembled the final interface.",
     facts: [
-      ["Role", "Head of Design"],
+      ["Role", "Founding Product Designer"],
       ["Company", "GRIF AI"],
       ["Timeline", "2025–2026"],
       ["Platform", "Web and desktop app"],
@@ -137,11 +137,8 @@ export const en: CaseStory = {
       { image: img(G + "06.webp", 1438, 1084, "The email is sent"), action: "Done: the email is sent and can be taken back", why: "Changed your mind? You can still cancel the send." },
     ],
   },
-  takeaways: [
-    "With a team of agents, the time goes elsewhere: phrasing a rule so it cannot be read two ways, and deciding what counts as a good result.",
-    "An agent does not argue. A human designer asks \"what for?\", and some bad ideas die on that question. Without that filter, everything depends on how clearly you describe your expectations: how it should and shouldn't be, what is good and what is bad. This project taught me a lot about that.",
-    "Agents build screens by the rules. Deciding what would hit the audience's pain was still my job, and I did it from the tests and interviews.",
-  ],
+  /* 23.10: раздел «Что забрал с собой» Никита попросил убрать */
+  takeaways: [],
   gallery: [
     {
       kind: "bento",
