@@ -3,7 +3,9 @@
    v56: тексты переписаны простым языком, факты и цифры те же.
    v86: вслед за русской версией по ревью Никиты: дизайн-метрики наверху, повторы вычищены,
    места с пометкой [TO FILL] Никита заполнит сам или уберёт.
-   v89: сокращён вслед за русской версией по docs/prompts/case-copy-edit.md. */
+   v89: сокращён вслед за русской версией по docs/prompts/case-copy-edit.md.
+   23.10: метрики утвердил Никита: −38% AHT с живого кабинета и 4.3 of 5 на тесте после запуска;
+   −38% шагов, −32% времени и пункты [TO FILL] убраны. Тексты вслед за русской версией. */
 import type { CaseStory, CaseImage } from "../caseStory";
 
 const img = (src: string, w: number, h: number, caption: string, kind = "screen"): CaseImage => ({ src, w, h, caption, kind });
@@ -26,11 +28,10 @@ export const en: CaseStory = {
     ],
     tags: ["B2B", "GovTech", "Research", "Usability test"],
   },
-  /* design metrics from a moderated test on the prototype */
+  /* 23.10: metrics approved by Nikita: AHT from the live dashboard after the update, ease of use from the post-launch test */
   kpis: [
-    { value: "−38%", label: "steps to check one comment" },
-    { value: "−32%", label: "time on the same task" },
-    { value: "4.3 of 5", label: "ease of use rated by moderators in the test" },
+    { value: "−38%", label: "average handling time (AHT) per item after the update" },
+    { value: "4.3 of 5", label: "ease of use rated by moderators in the post-launch test" },
   ],
   context: {
     lead: "The site grew faster than one person could keep up.",
@@ -41,7 +42,7 @@ export const en: CaseStory = {
     ],
   },
   research: {
-    lead: "Two prototypes on opposite ideas, eight moderators and an unexpected conclusion.",
+    lead: "I built two prototypes that worked in different ways and tested them with eight moderators.",
     methods: [
       {
         kind: "Admin panel audit",
@@ -61,7 +62,7 @@ export const en: CaseStory = {
         question: "What leads to a decision faster: a detailed comment page or buttons right in the list?",
         sample: "8 moderators, 2 prototypes, 10 hypotheses (seven and three)",
         finding:
-          "Neither idea won on its own. Both together did: a moderator settles the obvious in the list and opens the doubtful in full.",
+          "It turned out both ideas were needed. A moderator settles an obvious comment right in the list and opens a doubtful one in full.",
       },
     ],
     hypotheses: {
@@ -75,7 +76,7 @@ export const en: CaseStory = {
     },
   },
   decisions: {
-    lead: "Four decisions, each tested with moderators.",
+    lead: "The dashboard rests on four decisions. Three came from hypotheses in the test, the fourth from a talk with the developers.",
     items: [
       {
         id: "registry",
@@ -83,16 +84,16 @@ export const en: CaseStory = {
         found: "It was unclear where to start.",
         did: "Tabs: \"Awaiting review\", \"Reviewed\", \"Unwanted\", \"Reported\", \"Sent to manager\".",
         effect: "In the test the right group of comments was found on the first try.",
-        why: "A moderator opens the dashboard asking \"what is waiting for me now\". Shneiderman: overview first, details later.",
+        why: "A moderator opens the dashboard with one question: what is waiting for me now. So they see the lists by status first and go into the details later, just as Shneiderman suggests.",
         basis: "Hypothesis 01, prototype 2.",
       },
       {
         id: "inline",
         title: "A decision right in the list",
         found: "An obvious comment needed a page of its own.",
-        did: "The decision buttons sit in the list itself: one click where there used to be five.",
-        effect: "Most of the saved steps and time came from here.",
-        why: "Fitts's law: the button sits where the person is already looking.",
+        did: "The decision buttons sit right in the list row. An obvious comment now takes one click, it used to take five.",
+        effect: "In the test moderators settled short, clear comments right in the list, without leaving it.",
+        why: "The moderator is already reading the comment in the list, so the buttons sit next to the text and the mouse has only a short way to go (that is Fitts's law).",
         basis: "Hypothesis 02, prototype 2.",
       },
       {
@@ -101,7 +102,7 @@ export const en: CaseStory = {
         found: "Context was gathered by hand.",
         did: "One page with the post, a note on the author and their karma, the reply thread, the history of work on the comment and the complaints. Sorting by popular comments and by authors with low reputation.",
         effect: "A hard comment gets decided on one screen.",
-        why: "When context has to be hunted across tabs, people decide by guesswork.",
+        why: "You can't judge a disputed comment apart from its post, its thread and the author's history, so all of that sits right next to it.",
         basis: "Hypothesis 03, prototype 1.",
         image: img(M + "01.webp", 1600, 1200, "Comment page"),
       },
@@ -111,44 +112,37 @@ export const en: CaseStory = {
         found: "In the general admin panel each type works its own way.",
         did: "The same order of actions, shared statuses and rejection reasons. A new type is added to the same template.",
         effect: "A moderator learns once, and the team does not invent an interface for every new section.",
-        why: "Consistency, after Nielsen: people recognise one order of actions without having to recall it.",
+        why: "The same moderator handles all five sections. If the order of actions is the same everywhere, they don't have to remember how the next section works. Nielsen calls this consistency.",
       },
     ],
   },
   results: {
-    lead: "Fewer steps and less time on every check.",
-    intro: "The design metrics come from a moderated test on the prototype. The dashboard went into development based on these mock-ups.",
+    lead: "After the update one item takes noticeably less time.",
+    intro: "The dashboard was built from these mock-ups. Handling time was measured on the live dashboard before and after the update, and moderators rated ease of use in a test after launch.",
     outcomes: [
-      { x: "Steps to check a comment: −38%", y: "Steps to a decision in the test scenario.", z: "A decision in the list and tabs by status." },
-      { x: "Time on the same task: −32%", y: "Scenario time in the test.", z: "The obvious gets closed without leaving the list." },
-      { x: "Ease of use: 4.3 of 5", y: "Rated by eight moderators. The most common praise was \"you don't have to dive in anywhere\".", z: "Routine in the list, the doubtful on a detailed page." },
+      { x: "Average handling time (AHT): −38%", y: "How long moderating one item takes on average in the live dashboard, before the update and after.", z: "The obvious gets closed right in the list, and the context for a doubtful case no longer has to be dug up across the admin panel." },
+      { x: "Ease of use: 4.3 of 5", y: "Rated by moderators in the post-launch test. The most common praise was \"you don't have to dive in anywhere\".", z: "Routine in the list, the doubtful on a detailed page." },
     ],
-    /* [TO FILL] product metrics after launch: add values or drop a line if there is no data */
-    points: [
-      "[TO FILL] Average time to moderate one item on the live site",
-      "[TO FILL] Review queue: how many items wait and for how long",
-      "[TO FILL] Share of decisions made right in the list",
-      "[TO FILL] Share of complaints handled on time",
-    ],
+    points: [],
   },
   /* v114: prototype from the mock-ups — the "Take into work and approve" scenario from Figma TsqIZDg5rUgbxPNV5ghDZB (section 2494:85199): queue → profile → confirm → in work → approved */
   prototype: {
     title: "Check a user and approve",
-    lead: "A moderator's path: from the queue to a decision about a user. These are my Figma mock-ups; the dot shows where to tap.",
+    lead: "You take a user from the queue into work and approve their profile, the way a moderator does it in my mock-ups.",
     device: "browser",
     steps: [
-      { image: img(F + "moderator-queue.webp", 1440, 1156, "The user queue"), spot: [0.453, 0.33], action: "Open a user from the queue", why: "The list is split by status: moderators open the dashboard asking \"what is waiting for me now\"." },
-      { image: img(F + "moderator-profile.webp", 1440, 861, "The user profile"), spot: [0.142, 0.205], action: "Press \"Take into work\"", why: "A detailed page for disputed cases: when context has to be gathered across tabs, decisions become guesses." },
-      { image: img(F + "moderator-confirm.webp", 1440, 861, "Confirmation before taking the case"), spot: [0.5, 0.574], action: "Confirm", why: "Taking a case is a meaningful action, so it gets one confirmation." },
-      { image: img(F + "moderator-inwork.webp", 1440, 861, "The profile in work"), spot: [0.127, 0.204], action: "Press Approve", why: "Fitts's law: every decision — approve, freeze, send to a manager, block — sits where the moderator is already looking." },
-      { image: img(F + "moderator-approved.webp", 1440, 861, "The profile is approved"), action: "Done: the profile is approved", why: "\"Take the next one\" leads straight to a new case, with no trip back to the queue. One way of working for five types of objects: moderators learn it once." },
+      { image: img(F + "moderator-queue.webp", 1440, 1156, "The user queue"), spot: [0.453, 0.33], action: "Open a user from the queue", why: "This is the queue of the Users section. The tabs at the top split it by status." },
+      { image: img(F + "moderator-profile.webp", 1440, 861, "The user profile"), spot: [0.142, 0.205], action: "Press \"Take into work\"", why: "The profile holds everything known about the user. To make a decision, the case is taken into work first." },
+      { image: img(F + "moderator-confirm.webp", 1440, 861, "Confirmation before taking the case"), spot: [0.5, 0.574], action: "Confirm", why: "The dashboard asks once more, so nobody takes a case by an accidental click." },
+      { image: img(F + "moderator-inwork.webp", 1440, 861, "The profile in work"), spot: [0.127, 0.204], action: "Press Approve", why: "The case is in work, and the decision buttons have appeared at the top: approve, freeze, send to a manager or block." },
+      { image: img(F + "moderator-approved.webp", 1440, 861, "The profile is approved"), action: "Done: the profile is approved", why: "The \"Take the next one\" button opens a new case straight away, with no trip back to the queue." },
     ],
   },
   takeaways: [
-    "Two prototypes on opposite ideas gave more than one \"average\" prototype would: the test showed where the line between routine and a doubtful case runs.",
-    "Learn the engineering limits before the mock-ups: here that conversation produced the main decision.",
+    "Two prototypes with different approaches helped more than one \"average\" prototype would have: the test showed where routine ends for a moderator and a doubtful case begins.",
+    "I asked about the engineering limits before the mock-ups, and that conversation gave us one way of working for all five sections.",
   ],
-  quote: "A decision right in the list saves clicks. And clicks are what a moderator's working day is made of.",
+  quote: "A moderator checks comments all day long, so an extra click in one check repeats in every check after it.",
   gallery: [
     {
       kind: "spot",
@@ -163,7 +157,7 @@ export const en: CaseStory = {
     },
     {
       kind: "compare",
-      title: "Profile and confirmation of an important action",
+      title: "Profile and confirmation before taking a case",
       before: img(F + "moderator-profile.webp", 1440, 861, "User profile"),
       after: img(F + "moderator-confirm.webp", 1440, 861, "Confirmation before taking a request into work"),
       labels: ["Context", "Confirmation"],

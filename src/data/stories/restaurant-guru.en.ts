@@ -32,10 +32,10 @@ export const en: CaseStory = {
   context: {
     lead: "The screen showed one restaurant and hid the feature the product wanted to push.",
     text:
-      "A discovery app's home screen has three jobs. One person knows the place and searches for it by name. Another has no idea and scrolls collections. A third is ready to describe it, \"somewhere quiet with a terrace, for two, under two thousand\", and expects an answer.\n\nThe old screen mixed all three together, and the guide lived as an icon in the top corner where a thumb doesn't reach.",
+      "A discovery app's home screen has three jobs. One person knows the place and searches for it by name. Another has no idea and scrolls collections. A third is ready to describe it, \"somewhere quiet with a terrace, for two, under two thousand\", and expects an answer.\n\nThe old screen mixed all three together, and the guide hid behind an icon in the top corner, out of thumb reach.",
     constraints: [
       { title: "No users of its own", text: "There were no interviews and no testing, so every decision leans on a published study with a number and a link." },
-      { title: "The brand already exists", text: "The brand's deep red is kept for actions, because the red family is where errors live." },
+      { title: "The brand already exists", text: "The brand's deep red can only go on actions. People read red as an error, so it can't be spread across the screen." },
     ],
   },
   research: {
@@ -53,14 +53,14 @@ export const en: CaseStory = {
         question: "What do I stand on when I have no numbers of my own?",
         sample: "27 sources: McKinsey, Baymard, NN/g, Yelp, Tripadvisor",
         finding:
-          "Hidden navigation slows people by up to 39% and cuts discoverability by 20% (NN/g). With mediocre lists and filters 67–90% abandon the task, against 17–33% where they are done well (Baymard). 75% of phone interactions happen with a thumb, so what matters lives at the bottom.",
+          "Hidden navigation slows people by up to 39% and cuts discoverability by 20% (NN/g). With mediocre lists and filters 67–90% abandon the task, against 17–33% where they are done well (Baymard). 75% of phone interactions happen with a thumb, so the important things belong in the lower half of the screen.",
       },
       {
         kind: "Benchmark",
-        question: "Is the guide an icon in a corner or a level of navigation?",
+        question: "Is an icon in the corner enough for the guide, or does it need its own tab?",
         sample: "Yelp, Google Maps, Tripadvisor",
         finding:
-          "After a 400% rise in leads Yelp moved its assistant into its own bottom tab. Google put \"Ask Maps\" right under the search field. At Tripadvisor, users of AI features bring two to three times the revenue. The guide is a level of navigation.",
+          "After a 400% rise in leads Yelp moved its assistant into its own bottom tab. Google put \"Ask Maps\" right under the search field. At Tripadvisor, users of AI features bring two to three times the revenue. So I moved the guide out of the corner and into the main navigation.",
       },
       {
         kind: "Study",
@@ -73,37 +73,37 @@ export const en: CaseStory = {
     hypotheses: {
       intro: "Three assumptions shaped the structure of the screen.",
       items: [
-        { text: "People need to see several places at once, without paging through them one by one.", verdict: "Dense cards and a compact list" },
-        { text: "A ready-made intent in one tap beats an empty search field.", verdict: "Labelled chips replace icon puzzles" },
-        { text: "A feature the product is pushing cannot live in a blind spot.", verdict: "The guide in the centre tab and as a line in the feed" },
+        { text: "People need to see several places at once to have something to choose from.", verdict: "Dense cards and a compact list" },
+        { text: "A ready-made intent in one tap beats an empty search field.", verdict: "A row of labelled chips" },
+        { text: "A feature the product is pushing cannot sit in a blind spot.", verdict: "The guide in the centre tab and as a line in the feed" },
       ],
     },
   },
   decisions: {
-    lead: "Six decisions, each closing a zone from the audit.",
+    lead: "Six changes, from the way into the guide to what it is called.",
     items: [
       {
         id: "entry",
-        title: "One way into the guide, where there were two unnamed ones",
+        title: "The guide got a name and a place in the tab bar",
         found: "A \"✦\" icon in the header and a \"✦+\" in the tab bar led to the same place and explained nothing.",
         did: "Two connected entries under one name: a line in the feed with a live example query, and a raised \"Guide\" tab in the centre of the tab bar. The header icon is gone.",
-        effect: "The example query is both the promo and the lesson in how to phrase things.",
-        why: "The bottom bar is the most reachable zone, so that's where you put what you promote.",
+        effect: "The example query in the feed shows right away that you can write to the guide in plain words.",
+        why: "A thumb reaches the bottom bar without shifting your grip on the phone, so that's where you put what you want to promote.",
         basis: "NN/g on hidden navigation, Hoober on thumbs, Yelp Assistant.",
         image: img(R + "01-home.webp", 786, 1704, "Home screen", "hero"),
       },
       {
         id: "chips",
-        title: "Labelled intents replace icon puzzles",
+        title: "Categories are labelled with words",
         found: "Category circles with no labels, the outer ones cut off, and \"Filters\" where there was nothing to filter yet.",
         did: "A row of labelled chips (\"For you\", \"Dinner\", \"Bars\", \"Coffee\") plus a separate filters button. The order of the chips follows the time of day.",
-        effect: "You read the category, so there's nothing to guess. Filters moved into the results.",
-        why: "Recognition beats recall: a label is read faster than an icon is decoded.",
+        effect: "You can tell the category at a glance now. Filters moved into the results, where there is something to filter.",
+        why: "A label is read faster than an icon is decoded. Nielsen has a heuristic about this: it's easier to recognise a word than to remember what a picture means.",
         basis: "Baymard on lists and filtering; four to six options in a set.",
       },
       {
         id: "density",
-        title: "Three or four places in view, up from one",
+        title: "Three or four places in view",
         found: "A huge card and the \"#59 of 2524\" line left one restaurant in view.",
         did: "A \"For you\" shelf with two cards in frame and a compact \"Open now nearby\" list: photo on the left, facts on the right. The ranking line moved into the place page.",
         effect: "There is a choice where there used to be a single option.",
@@ -121,12 +121,12 @@ export const en: CaseStory = {
       },
       {
         id: "guide",
-        title: "The guide is a stage with one answer",
+        title: "The guide answers with a single place card",
         found: "A message thread has nothing to fill it: one question, one answer, and the person leaves for the restaurant.",
-        did: "Three states: invitation, searching, answer. While it searches, the guide shows an object and says the request back in place of a spinner. The answer is a place card with a photo, the facts and a booking button.",
-        effect: "The wait stopped being empty, and the answer is something you act on.",
+        did: "Three states: invitation, searching, answer. While it searches, the screen shows an object and the request said back, with no spinner. The answer is a place card with a photo, the facts and a booking button.",
+        effect: "While you wait, you can see the guide understood the request, and from the answer card you can book a table straight away.",
         why: "A chat screen promises a conversation that will not happen.",
-        basis: "A teardown of the Drinkit interface; suggestion chips in place of free input.",
+        basis: "A teardown of the Drinkit interface: suggested answers you can pick without typing anything.",
         image: img(R + "05-guide-answer.webp", 786, 1704, "The guide's answer", "hero"),
       },
       {
@@ -134,7 +134,7 @@ export const en: CaseStory = {
         title: "The interface never says \"AI\"",
         found: "\"AI\" on a button promises technology, and the person wants dinner.",
         did: "The tab is called \"Guide\", the heading promises an outcome, and the mark is a compass. Transparency stays: the guide lists what it's looking through and shows what the answer rests on.",
-        effect: "The feature reads as help. It doesn't feel like a technology demo.",
+        effect: "The interface dropped the word that lowered people's intention to use the feature in the Cicek study.",
         why: "The name describes the role or the action, like Google's \"Help me write\" and Spotify's \"DJ\".",
         basis: "Cicek, Gursoy & Lu (2024).",
       },
@@ -143,18 +143,18 @@ export const en: CaseStory = {
   /* v114: prototype from the mock-ups — the main flow: home → guide → picking → the place */
   prototype: {
     title: "Find somewhere to go tonight",
-    lead: "From the home screen to a table: the guide picks a place to match the mood. These are my Figma mock-ups; the dot shows where to tap.",
+    lead: "You're looking for a quiet place for two, and you'll go from the home screen through the guide to a booked table.",
     steps: [
-      { image: img(R + "01-home.webp", 786, 1704, "Home screen"), spot: [0.5, 0.935], action: "Open the Guide in the middle of the tab bar", why: "The bottom navigation is the easiest zone to reach, so that is where the things you promote go." },
-      { image: img(R + "03-guide-invite.webp", 786, 1704, "Invitation"), spot: [0.333, 0.757], action: "Pick \"quiet, for two\"", why: "A sample request works both as a promo and as a lesson in the format." },
-      { image: img(R + "04-guide-thinking.webp", 786, 1704, "Picking"), wait: 2200, action: "The guide is picking a place", why: "While it searches, the guide repeats the request and shows an object instead of a spinner. The wait is no longer empty." },
-      { image: img(R + "05-guide-answer.webp", 786, 1704, "Answer"), spot: [0.5, 0.477], action: "Open \"Ronin\"", why: "The answer is a place card with a photo, facts and booking, not a chat message: a chat screen promises a conversation that won't happen." },
-      { image: img(R + "09-place-card.webp", 786, 1704, "Place card"), action: "Done: everything for the decision on one screen", why: "The answer became an action: the table, the route and the 19:30 booking side by side." },
+      { image: img(R + "01-home.webp", 786, 1704, "Home screen"), spot: [0.5, 0.935], action: "Open the Guide in the middle of the tab bar", why: "The Guide tab sits raised above the others, so you spot it right away." },
+      { image: img(R + "03-guide-invite.webp", 786, 1704, "Invitation"), spot: [0.333, 0.757], action: "Pick \"quiet, for two\"", why: "The chips under the field are ready-made requests, so there's nothing to type." },
+      { image: img(R + "04-guide-thinking.webp", 786, 1704, "Picking"), wait: 2200, action: "The guide is picking a place", why: "A couple of seconds of waiting. The guide says your request back so you can see it understood." },
+      { image: img(R + "05-guide-answer.webp", 786, 1704, "Answer"), spot: [0.5, 0.477], action: "Open \"Ronin\"", why: "The guide suggests one place. The card already has a photo, the key facts and a booking button." },
+      { image: img(R + "09-place-card.webp", 786, 1704, "Place card"), action: "Done: everything for the decision on one screen", why: "The route and a 19:30 table booking are side by side. All that's left is leaving the house." },
     ],
   },
   takeaways: [
     "With no users of your own, other people's research is a reasonable foundation. The rules are to name the source behind every number and never pass someone else's result off as your own.",
-    "The word on a button moves behaviour as much as the feature does. \"Guide\" and \"AI assistant\" are two different products to someone deciding where to have dinner.",
+    "To someone deciding where to have dinner, \"Guide\" and \"AI assistant\" are two different products, even though the feature behind them is the same.",
   ],
   gallery: [
     {

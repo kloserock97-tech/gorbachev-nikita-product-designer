@@ -2,7 +2,8 @@
    Таблицу конкурентов даём картинкой из кейса: отметок по ячейкам в тексте нет, и досочинять их нельзя.
    v56: тексты переписаны простым языком. Факты и цифры те же; термин остаётся в скобках после объяснения.
    v86: вслед за русской версией по ревью Никиты: акцент на участии жителей и дизайн-метриках, повторы вычищены.
-   v89: сокращён вслед за русской версией по docs/prompts/case-copy-edit.md. */
+   v89: сокращён вслед за русской версией по docs/prompts/case-copy-edit.md.
+   23.10: метрики утвердил Никита: 250+ историй, отказы около 26 %, возвращаемость 12–15 % за неделю; CSI, комментарии, просмотры и время на сайте убраны. */
 import type { CaseStory, CaseImage } from "../caseStory";
 
 const img = (src: string, w: number, h: number, caption: string, kind = "screen"): CaseImage => ({ src, w, h, caption, kind });
@@ -24,32 +25,31 @@ export const en: CaseStory = {
     ],
     tags: ["GovTech", "B2C", "Design system", "MVP launch"],
   },
-  /* residents taking part is the product's goal; first-try success and CSI are the design metrics */
+  /* 23.10: metrics approved by Nikita: residents' stories, bounce rate and return visits */
   kpis: [
     { value: "250+", label: "residents' stories passed moderation in the first three months" },
-    { value: "~3K", label: "comments under the pieces" },
-    { value: "9 of 10", label: "followed and unfollowed on the first try in usability testing" },
-    { value: "78.9%", label: "are happy with the site in the survey (CSI)" },
+    { value: "~26%", label: "bounce rate after launch" },
+    { value: "12–15%", label: "of readers come back to the site within a week" },
   ],
   context: {
     lead: "Residents had nowhere left to talk about their city.",
     text:
-      "In two years almost every outlet about city life in Moscow shut down. The news was left with politics and economics, and there was no place to tell a story or discuss a neighbourhood.\n\nSo I framed the job as making people want to take part in city life again. The hard part: texts come from two sides, the editorial team and the residents, and each has to be checked before it goes live.",
+      "In two years almost every outlet about city life in Moscow shut down. The news was left with politics and economics, and there was no place to tell a story or discuss a neighbourhood.\n\nI wanted to give residents a place to tell their own story and discuss other people's. The hard part is that texts come from two sides, the editorial team and the residents, and each one has to be checked before it goes live.",
     team: [
-      { who: "Clients and managers", how: "Before the first mock-up we agreed to build a place where residents take part, and we did not need a news shop window. The first version got a feed, stories and comments, while groups and events had to wait." },
+      { who: "Clients and managers", how: "Before the first mock-up we agreed on the goal: a place where residents write and discuss things themselves. The first version got a feed, stories and comments, and groups and events had to wait." },
       { who: "Editorial and moderation", how: "One publishing path for two sources: an editorial piece and a resident's story land in the same review queue. Every text shows its status, and a rejected author gets the reason. That queue later grew into the Moderator Dashboard case." },
       { who: "Engineering", how: "I built our own design system, separate from the one Mos.ru used: buttons, fields and cards in every state. I handed off mock-ups in parts, one release at a time." },
     ],
   },
   research: {
-    lead: "First I found out what services like this must have and where all of them are weak.",
+    lead: "I looked at two things: what every service like this has, and where they all confuse people in the same way.",
     methods: [
       {
         kind: "Competitor analysis",
         question: "What does a site like this need to make sense at all, and where can it stand out?",
         sample: "A handful of key competitors, eleven features",
         finding:
-          "Everyone lets you write a post and discuss it. That is the required minimum, and those actions have to lead the screen.",
+          "Every competitor lets you write a post and discuss it. That is the minimum a site like this needs before people get what it is for.",
         image: img(C + "07.webp", 1820, 1010, "Competitors compared on eleven features", "detail"),
       },
       {
@@ -64,7 +64,7 @@ export const en: CaseStory = {
         question: "Who will read and write, and what gets in their way?",
         sample: "Two target groups: 24 to 35 and 55+",
         finding:
-          "Most people are tired of the news stream and want things to find them.",
+          "People are tired of information noise and want simpler navigation. Most people in the research were like that, and Oleg is built from them.",
       },
       {
         kind: "Usability testing",
@@ -76,46 +76,43 @@ export const en: CaseStory = {
     persona: {
       name: "Oleg",
       age: "30",
-      note: "A composite of most people in the research.",
+      note: "A composite portrait from the research.",
       pains: ["The news is politics and economics, with almost nothing about the city", "Complex filters and crowded screens"],
-      needs: ["Navigation where you find what you need on the first click", "A place where you can write as well as read"],
+      needs: ["Navigation where you find what you need on the first click", "A place where you can write something yourself when you have a story to tell"],
     },
   },
   decisions: {
-    lead: "Four decisions, each grown out of the research.",
+    lead: "Here is what I changed in the mock-ups after the research.",
     /* v91: the interface film from Claude Design in place of the live demo */
     film: { src: C + "film.mp4", poster: C + "film-poster.webp", w: 1920, h: 1080, caption: "Community interface film: feed, topics, audio, story map, profile, events and the story form" },
     items: [
       {
         id: "pattern",
         title: "One action looks the same everywhere",
-        found: "At competitors you have to look for follow and unfollow again on every screen.",
+        found: "The same mistake from the review: at competitors you have to look for follow and unfollow again on every screen.",
         did: "Follow, unfollow and reactions sit in the same place on every page and work the same way.",
-        why: "Consistency, after Nielsen: one action keeps one place and one look.",
+        why: "Once people learn where Follow is, they never have to look for it again. Nielsen calls this consistency.",
       },
       {
         id: "posts",
-        title: "The centre of the screen: write and discuss",
-        found: "Without writing and discussing a service like this does not work, and the rest is secondary.",
+        title: "Writing and discussing come first",
+        found: "In the competitor comparison this was the one thing everyone had.",
         did: "The interface is built around two actions: write a story and reply to one. The form has a title, text and up to ten images, and then the story goes to review.",
         effect: "The first residents' stories arrived in week one.",
-        why: "An action people have to hunt for is an action they skip.",
         image: img(C + "03.webp", 876, 862, "The \"Tell your story\" form"),
       },
       {
         id: "older",
-        title: "Easy for people over 55 too",
-        found: "City stories are more often told by older people, and they get lost in complex filters and on crowded screens.",
-        did: "I removed the extras, put topics in one row in place of a filter panel, added hints, wrote the texts in plain words and kept only familiar gestures.",
-        effect: "In the survey older readers rated navigation as easy as younger ones did.",
-        why: "Hick's law: the more options, the longer the choice.",
+        title: "What brings people back",
+        found: "Next we worked out what would bring people back to the platform. City stories are more often told by older people, though, and they get lost in complex filters and on crowded screens.",
+        did: "We added achievements, a rating and ways to form communities, plan time out and invite friends to events on top of follows and reactions. Take the feed. We assumed that the easier it is to find an interesting topic, the more likely a person is to stay. So I put the topics in one row and kept only the filters people need. For older readers I added hints and wrote the texts in plain words.",
+        why: "Every extra filter is one more option, and the more options there are, the longer people take to choose (Hick's law).",
       },
       {
         id: "ds",
         title: "A look made for long reading",
         found: "People read for ten minutes at a stretch, including people over 55.",
-        did: "Golos Text, a screen typeface that stays legible even when small. Calm contrast following WCAG, black for trust and a soft pink #FFECF9 for lightness.",
-        effect: "Eyes do not tire, and the interface stays out of the story's way.",
+        did: "I chose Golos Text, a typeface made for screens that stays legible even at small sizes. Contrast follows WCAG, and the palette is black, working greys and one pink accent, #FFECF9.",
         image: img(C + "06.webp", 1600, 1598, "The type scale", "detail"),
       },
     ],
@@ -123,39 +120,33 @@ export const en: CaseStory = {
   results: {
     lead: "The first three months after launch.",
     outcomes: [
-      { x: "Residents take part: 250+ stories and about 3K comments", y: "Stories after moderation and comments over three months.", z: "An interface built around writing and discussing, and one publishing path." },
-      { x: "The main action on the first try: 9 of 10", y: "Usability test of the prototype, ten participants.", z: "Every action keeps one place and one look." },
-      { x: "Happy with the site: 78.9% (CSI), older readers no lower than younger ones", y: "A survey on the live stories.mos.ru.", z: "Simple navigation and a look made for long reading." },
+      { x: "250+ residents' stories in the first three months", y: "Stories that passed moderation and went live.", z: "An interface built around writing and discussing, and one publishing path." },
+      { x: "Bounce rate about 26%, so roughly three in four visits did not bounce", y: "After launch we tracked the bounce rate.", z: "Topics in one row and only the filters people need in the feed." },
+      { x: "12–15% of readers come back to the site within a week", y: "Next we looked at retention through return visits.", z: "Follows, reactions and a feed where an interesting topic is easy to find." },
     ],
-    points: [
-      "Roughly one reader in four comes back within a week",
-      "169.4K views from zero",
-      "Bounce rate 26.25%: three out of four stay to read",
-      "3 min 20 s per visit on average, enough to finish one or two pieces",
-      "Both target groups use the site: 24 to 35 and 55+",
-    ],
+    points: [],
   },
   /* v114: prototype from the mock-ups — the main flow: a reader becomes an author (feed → story → form → published). Full pages from Figma LdUrYy9cNus6q7005xnmXo: 2103:12251, 2109:18727, 2202:7956, 2128:33091 */
   prototype: {
     title: "Read a story, then tell your own",
-    lead: "The path of a reader who becomes an author: the feed, a story, the form and publishing. It is a working interface built from my mock-ups; the ring shows where to tap.",
+    lead: "Walk the path of a reader who finishes someone else's story and decides to tell their own.",
     live: "community",
     device: "browser",
     steps: [
-      { image: img(C + "s1-feed.webp", 1440, 3058, "The story feed"), spot: [0.719, 0.727], action: "Open \"The mysterious Dangauerovka\"", why: "One action looks the same everywhere: Listen, comments and topics sit in the same place on every card." },
-      { image: img(C + "s1-article.webp", 1440, 4011, "A story page"), spot: [0.817, 0.0092], action: "Want to tell yours? Press \"Tell a story\"", why: "Built for long reading: the eyes don't tire and the interface doesn't compete with the story." },
-      { image: img(C + "s1-story.webp", 1440, 1064, "The \"Tell a story\" form"), spot: [0.295, 0.697], action: "Write the story and press Send", why: "If the main action has to be searched for, nobody takes it. The form is short: a title, text and up to ten images, and then the story goes to review." },
-      { image: img(C + "s1-profile.webp", 1440, 1884, "The author's profile: activity"), action: "Done: the story is published", why: "After moderation a story appears in Community and in the author's profile. The first residents' stories arrived in the very first week." },
+      { image: img(C + "s1-feed.webp", 1440, 3058, "The story feed"), spot: [0.719, 0.727], action: "Open \"The mysterious Dangauerovka\"", why: "Look at the cards: Listen, comments and topics sit in the same place on each one." },
+      { image: img(C + "s1-article.webp", 1440, 4011, "A story page"), spot: [0.817, 0.0092], action: "Want to tell yours? Press \"Tell a story\"", why: "The button is in the header, top right." },
+      { image: img(C + "s1-story.webp", 1440, 1064, "The \"Tell a story\" form"), spot: [0.295, 0.697], action: "Write the story and press Send", why: "The fields are a title, text and pictures. Once you send it, the story goes to a moderator." },
+      { image: img(C + "s1-profile.webp", 1440, 1884, "The author's profile: activity"), action: "Done: the story is published", why: "When a moderator approves the story, it shows up in the shared feed and in the author's profile." },
     ],
   },
   takeaways: [
     "Agree on the goal before the first mock-up. The phrase \"a place where residents take part\" gave us both the contents of the first version and the success metrics.",
-    "An MVP is a decision about what to put off. Smart search and podcasts went to the roadmap, and the first version shipped sooner.",
+    "We moved smart search and podcasts to the roadmap right away, and the first version shipped sooner.",
   ],
   gallery: [
     {
       kind: "spot",
-      title: "The feed: editorial and residents in one stream",
+      title: "Editorial and residents in one feed",
       image: img(C + "01.webp", 1440, 788, "The first-version feed", "hero"),
       spots: [
         { x: 46.3, y: 15.5, text: "Topics in one row", decision: "older" },

@@ -35,7 +35,7 @@ const OWN: Record<"ru" | "en", Record<string, string>> = {
     "lab.closed": "Закрытый проект",
     "lab.demo": "Открыть демо",
     "case.open": "Открыть кейс",
-    "contact.title": "Давайте сделаем сложное понятным",
+    "contact.title": "Расскажите, что не работает",
     "foot.nav": "Разделы",
     "foot.social": "Где ещё найти",
     "foot.word": "Designer",
@@ -72,7 +72,7 @@ const OWN: Record<"ru" | "en", Record<string, string>> = {
     "lab.closed": "Private project",
     "lab.demo": "Open the demo",
     "case.open": "Open the case",
-    "contact.title": "Let's make the complex clear",
+    "contact.title": "Tell me what's not working",
     "foot.nav": "Sections",
     "foot.social": "Elsewhere",
     "foot.word": "Designer",
@@ -106,15 +106,15 @@ type Job = { logo?: string; mark?: string; co: string; when: string; role: strin
 const JOBS: Record<"ru" | "en", Job[]> = {
   ru: [
     { logo: "grif", co: "GRIF AI", when: "авг 2025 – авг 2026", role: "Founding Product Designer", result: "От идеи до кода: 3 недели → 5 дней" },
-    { logo: "sber", co: "Сбер", when: "июл 2025 – май 2026", role: "Senior Product Designer", result: "Агент на оценку рисков: 2+ часа → 20–30 минут" },
-    { logo: "mos", co: "Цифровые сервисы Москвы", when: "янв 2023 – июл 2025", role: "Senior Product Designer", result: "«Сообщество»: от гипотез до MVP за 9 месяцев, 78,9% довольны" },
-    { mark: "JD", co: "JustDev", when: "авг 2021 – янв 2023", role: "Product Designer", result: "Приложения iOS и Android, сайты, B2B-кабинеты и CRM под ключ" },
+    { logo: "sber", co: "Сбер", when: "июл 2025 – май 2026", role: "Senior Product Designer", result: "Оценка рисков ИИ-агентов: 6 ручных передач → 0" },
+    { logo: "mos", co: "Цифровые сервисы Москвы", when: "янв 2023 – июл 2025", role: "Senior Product Designer", result: "«Сообщество»: от гипотез до MVP за 9 месяцев, 250+ историй жителей за три месяца" },
+    { mark: "JD", co: "JustDev", when: "авг 2021 – янв 2023", role: "Product Designer", result: "Приложения iOS и Android, сайты, B2B-кабинеты и CRM" },
   ],
   en: [
     { logo: "grif", co: "GRIF AI", when: "Aug 2025 – Aug 2026", role: "Founding Product Designer", result: "Idea to code: 3 weeks → 5 days" },
-    { logo: "sber", co: "Sber", when: "Jul 2025 – May 2026", role: "Senior Product Designer", result: "Getting an agent risk-assessed: 2+ hours → 20–30 minutes" },
-    { logo: "mos", co: "Moscow Digital Services", when: "Jan 2023 – Jul 2025", role: "Senior Product Designer", result: "Community: from first hypotheses to MVP in 9 months, 78.9% satisfied" },
-    { mark: "JD", co: "JustDev", when: "Aug 2021 – Jan 2023", role: "Product Designer", result: "iOS and Android apps, sites, B2B dashboards and CRMs end to end" },
+    { logo: "sber", co: "Sber", when: "Jul 2025 – May 2026", role: "Senior Product Designer", result: "Agent risk review: 6 manual handoffs → 0" },
+    { logo: "mos", co: "Moscow Digital Services", when: "Jan 2023 – Jul 2025", role: "Senior Product Designer", result: "Community: from first hypotheses to MVP in 9 months, 250+ residents' stories in three months" },
+    { mark: "JD", co: "JustDev", when: "Aug 2021 – Jan 2023", role: "Product Designer", result: "iOS and Android apps, sites, B2B dashboards and CRMs" },
   ],
 };
 const jobCard = (j: Job) => `<li class="ll-exp__card">
@@ -167,13 +167,13 @@ function noteRow(n: (typeof notes)[number]) {
 }
 
 /* «о себе»: первая фраза тёмная, продолжение светлее. Фразу о последней должности (Head of Product Design) Никита
-   попросил не писать — она выпадает; если остаётся мало, добавляется «что лучше всего умею» */
+   попросил не писать — она выпадает; если остаётся мало, добавляется about.p2 (about.p1 уже стоит в hero.lead) */
 function statement() {
-  const parts = t("about.intro").match(/[^.!?]+[.!?]+/g) ?? [t("about.intro")];
+  const parts = t("about.intro").split(/(?<=[.!?])\s+/);
   const kept = parts.map((s) => s.trim()).filter((s) => !/Head of|Последняя роль|Most recently/i.test(s));
   const lead = kept.shift() ?? "";
   let rest = kept.join(" ");
-  if (rest.length < 120) rest = `${rest} ${t("about.p1")}`.trim();
+  if (rest.length < 120) rest = `${rest} ${t("about.p2")}`.trim();
   const put = (k: string, s: string) => { const el = document.querySelector(`[data-statement="${k}"]`); if (el) el.textContent = s; };
   put("lead", lead);
   put("rest", rest);

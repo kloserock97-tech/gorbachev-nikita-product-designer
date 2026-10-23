@@ -37,7 +37,7 @@ const me = {
   ],
 
   now: [
-    "Today I'm a product designer. I make products for regular people, sometimes with AI inside, and I build them in code myself. I look at the whole product: a screen is just one piece, and what's interesting is why someone came and whether they'll come back tomorrow.",
+    "Today I'm a product designer. I make products for regular people, sometimes with AI inside, and I build them in code myself. Besides the screens, I care about why someone came and whether they'll come back tomorrow.",
     "Last stop: GRIF AI. Open to product design roles.",
   ],
 
@@ -45,18 +45,18 @@ const me = {
   principlesIntro: "Over five-plus years in product I've settled on three principles. They keep me from getting bored and from shipping nonsense.",
   principles: [
     { title: "Always experiment.", text: "Experiments are how I learn. Unreal Engine, three.js, AI agents: when something new comes out, I want to get my hands on it. Some of these experiments live in my pet projects." },
-    { title: "Check, don't guess.", text: "A good-looking screen is half the job. I want to know it worked: people got to the end, came back, did it faster. The fun part starts after release." },
-    { title: "Design as a life's work.", text: "It started as a hobby, became a dream and turned into a job. I truly care about where design is going." },
+    { title: "Check with numbers.", text: "A good-looking screen proves nothing yet. I want to know it worked: people got to the end, came back, did it faster. So after release I look at the numbers." },
+    { title: "In design for good.", text: "I left criminal investigation for design and haven't regretted it once. I really do care where the profession is going." },
   ],
 
   hobbies: [
     { icon: "music" as HobbyIcon, text: "I take drum lessons and play electric guitar. Loudly." },
     { icon: "game" as HobbyIcon, text: "I love Unreal Engine: I try to make my own games and I've worked on games released on Steam." },
     { icon: "cube" as HobbyIcon, text: "3D in Blender, ever since school. This hill is one of those builds." },
-    { icon: "spark" as HobbyIcon, text: "Working out what keeps a person interested, beyond where a button goes. Fine, that one is my actual job." },
+    { icon: "spark" as HobbyIcon, text: "Working out what will hook a person so they come back. Fine, that one is my actual job." },
   ],
 
-  quote: "A designer without numbers is an illustrator.",
+  quote: "Did it work? Show me the numbers.",
 
   contacts: [
     ["E-mail", "kloserock97@gmail.com"],

@@ -2,8 +2,8 @@
    иначе сборка не пройдёт. Тексты — те же, что стояли в разметке до v27. */
 const en = {
   "doc.title": "Nikita Gorbachev — Product Designer",
-  "doc.desc": "Nikita Gorbachev, product designer. Consumer and AI products, from research to launch.",
-  "doc.og": "Nikita Gorbachev, product designer. Consumer and AI products, from research to launch.",
+  "doc.desc": "Nikita Gorbachev, product designer. Internal products at Sber, a city service for Mos.ru, the AI startup GRIF. Case studies with before and after numbers.",
+  "doc.og": "Nikita Gorbachev, product designer. Internal products at Sber, a city service for Mos.ru, the AI startup GRIF. Case studies with before and after numbers.",
   "scene.alt": "A chair on a grassy hill at sunset",
 
   /* док */
@@ -27,7 +27,7 @@ const en = {
   "lab.note": "My own WebGL demos and tools — they open in a new tab",
   "lab.all": "All pet projects",
   "hud.role": "PRODUCT DESIGNER",
-  "hud.hint": "SCROLL TO MEET",
+  "hud.hint": "SCROLL DOWN",
 
   /* компьютер на столике */
   "pc.tip": "Read the magazine",
@@ -42,8 +42,8 @@ const en = {
   "hero.explore": "See the work",
   "hero.tag.strategy": "Web and mobile apps",
   "hero.tag.ai": "AI assistants",
-  "hero.tag.systems": "From research to launch",
-  "hero.tagline": "Products<br>for a clear<br>tomorrow",
+  "hero.tag.systems": "Design systems",
+  "hero.tagline": "I design it<br>and build it<br>in code",
   "hero.wind": "Wind",
   "hero.gust": "Call the wind",
   "hero.weather.change": "Change",
@@ -86,7 +86,7 @@ const en = {
   "notes.drift.alt": "A cloud of white particles torn into shreds by a flow field",
   "notes.drift.p1": "A cloud of 80,000 points drifts like smoke in a draught (a curl-noise field). The graphics card works out every point from scratch in every frame.",
   "notes.drift.p2": "The demo does not remember past frames, so you can stop time and rewind it like a video. The shape holds.",
-  "notes.drift.p3": "Background blur like in a camera, with a real f-stop (the thin-lens formula). You can play with everything on a panel.",
+  "notes.drift.p3": "Background blur like in a camera, with a real f-stop (the thin-lens formula).",
   "notes.drift.kind": "A cloud that drifts like smoke",
   "notes.drift.s1v": "80k",
   "notes.drift.s1l": "points",
@@ -112,7 +112,7 @@ const en = {
   "notes.meadow.alt": "Dark hills covered in dense grass under a low sun",
   "notes.meadow.p1": "An endless flight over a windy meadow. The graphics card places half a million blades of grass and bends them in the wind.",
   "notes.meadow.p2": "The cursor sends soft waves through the field. Pebbles and dust ride the crest and settle back.",
-  "notes.meadow.p3": "Hills, grass and shadows take their height from one shared map that updates every frame. You can play with everything on a panel.",
+  "notes.meadow.p3": "Hills, grass and shadows take their height from one shared map that updates every frame.",
   "notes.meadow.kind": "A flight over a windy meadow",
   "notes.meadow.s1v": "500k",
   "notes.meadow.s1l": "blades of grass",
@@ -124,7 +124,7 @@ const en = {
   "notes.shelf.alt": "The Shelf mark: two things standing on a plank and one below it",
   "notes.shelf.p1": "My own shelf of ready-made interface pieces. Each one has a live preview and code in a few flavours: HTML, React, Vue, three.js.",
   "notes.shelf.p2": "Pieces are sorted by type and by task, with taste collections and a “goes well with” hint.",
-  "notes.shelf.p3": "I fill it together with Claude: I write a short brief, an agent builds the piece. It's public, so go ahead and poke around.",
+  "notes.shelf.p3": "I fill it together with Claude: I write a short brief, an agent builds the piece. The shelf is private for now.",
   "notes.shelf.kind": "A shelf of ready-made interface pieces",
   "notes.shelf.s1v": "140",
   "notes.shelf.s1l": "pieces",
@@ -134,7 +134,7 @@ const en = {
   "notes.shelf.s3l": "languages",
   "notes.marathon.title": "Marathon",
   "notes.marathon.alt": "The Marathon mark: a ceramic track with an apricot ball on blue",
-  "notes.marathon.p1": "Job hunting is a marathon, and it's easier to run with someone. You can invite a second person to Marathon: a shared list of companies, your own applications, and you see how the other one is doing. Hard to quit when someone's running next to you.",
+  "notes.marathon.p1": "Job hunting is a marathon, and it's easier to run with someone. You can invite a second person to Marathon: a shared list of companies, your own applications, and you see how the other one is doing.",
   "notes.marathon.p2": "The week shows as rings, like Activity on a watch. Applications sit on a drag-and-drop board, and results add up to a 12-week funnel.",
   "notes.marathon.p3": "You can drop a note to the Telegram bot, even by voice. It figures out what you said and turns it into a card. Built together with AI agents.",
   "notes.marathon.kind": "A job search tracker for two",
@@ -157,15 +157,15 @@ const en = {
   "about.hi": "Hi there!",
   "about.marquee": "I’m Nikita, a product designer",
   "about.intro": "I'm Nikita, a product designer. At Sber I led design on internal products, and for Mos.ru I built a service for city stories.",
-  "about.p1": "My work mixes product design, systems thinking and AI",
+  "about.p1": "My favourite problems are the tangled ones, full of rules and data, like risk review at a bank or moderation for a city service.",
   "about.lead": "How I lead a team, and what I do in my first six months somewhere new",
-  "about.p2": "Research and product structure come first. Then launch, numbers and growing what works.",
+  "about.p2": "I start by talking to users. After release I look at the numbers and decide what to fix next.",
   "about.fact.years": "5+ years",
   "about.fact.years.sub": "in product",
   "about.fact.teams": "Teams",
   "about.fact.teams.sub": "from 3 to 50+",
   "about.fact.kinds": "B2B, B2C, AI",
-  "about.fact.kinds.sub": "from idea to launch",
+  "about.fact.kinds.sub": "bank, city, startup",
   "about.logos": "Companies I've worked for",
   "about.logo.ozon": "Ozon, 2022",
   "about.logo.mos": "Mos.ru, 2023 to 2025",
@@ -190,8 +190,8 @@ const en = {
 
   /* v32: заставка главы «Кейсы» над лугом и заметки после ленты */
   "walk.kicker": "Case studies · 2024–2026",
-  "walk.title": "Five products and two concepts",
-  "walk.sub": "Internal tools, city services and AI products. Each case tells what was there, what I did and what came of it.",
+  "walk.title": "Four products and two concepts",
+  "walk.sub": "Sber, Mos.ru and GRIF AI, plus two concepts for a bank and a restaurant guide. Every case has before and after numbers.",
   "shelf.title": "Pet projects",
 
   /* меню Work в доке */
@@ -200,7 +200,7 @@ const en = {
   "work.all": "All",
   "work.web": "Web",
   "work.mobile": "Mobile",
-  "work.note": "Six case studies, 2024 to 2026: web, mobile, AI products and leading a team",
+  "work.note": "Six case studies, 2024 to 2026: web, mobile and AI products",
   "work.allCases": "All case studies",
 
   /* страница кейса */
@@ -283,8 +283,8 @@ const en = {
 
   /* футер */
   "footer.kicker": "Open to new projects",
-  "footer.title1": "Let's make something",
-  "footer.title2": 'complex feel <em class="serif-accent">simple.</em>',
+  "footer.title1": "Tell me what's",
+  "footer.title2": '<em class="serif-accent">not working.</em>',
   "footer.mail": "Write an e-mail",
   "footer.tg": "Telegram",
   "footer.copy": "Copy the address",
