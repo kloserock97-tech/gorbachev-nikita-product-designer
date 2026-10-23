@@ -237,20 +237,21 @@ function mountOne(fig: HTMLElement, scroller: HTMLElement) {
   let scale = 1;
   let visible = false, userPaused = false, dead = false, loop = 0;
   let k = 0;
-  /* узкий экран: весь кадр в ширину телефона — это мелко до нечитаемого. Тогда окно камеры уже (NARROW px
-     дизайна) и едет за курсором в пределах кадра */
-  const NARROW = 460;
+  /* весь кадр в узкий блок — мелко до нечитаемого (на телефоне, в решениях по два в ряд). Поэтому интерфейс не
+     ужимается сильнее MIN_SCALE: окно камеры становится меньше кадра и едет за курсором в его пределах.
+     Пропорция окна — 16 : 10, а если кадр ниже, то его высота */
   let focus: [number, number] = [cx + cw / 2, cy + ch / 2];
 
   const fit = () => {
-    const narrow = view.clientWidth < 560;
-    const w = narrow ? Math.min(NARROW, cw) : cw;
-    const h = narrow ? Math.min(Math.round(w * 0.82), ch) : ch;
-    view.style.aspectRatio = `${w} / ${h}`;
-    scale = view.clientWidth / w;
+    const vw = view.clientWidth || cw;
+    const minScale = vw < 560 ? 0.68 : 0.9;
+    const w = Math.min(cw, vw / minScale);
+    const h = Math.min(Math.round(w * 0.625), ch);
+    view.style.aspectRatio = `${Math.round(w)} / ${h}`;
+    scale = vw / w;
     const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi));
-    const left = narrow ? clamp(focus[0] - w / 2, cx, cx + cw - w) : cx;
-    const top = narrow ? clamp(focus[1] - h / 2, cy, cy + ch - h) : cy;
+    const left = clamp(focus[0] - w / 2, cx, cx + cw - w);
+    const top = clamp(focus[1] - h / 2, cy, cy + ch - h);
     cam.style.transform = `scale(${scale}) translate(${-left}px, ${-top}px)`;
   };
   const ro = new ResizeObserver(fit);

@@ -30,6 +30,7 @@ import { tidy } from "../lib/typograph";
 import "./case-story.css";
 import "./case-zones.css";
 import "./case-chain.css";
+import "./case-compact.css";
 
 const BASE = import.meta.env.BASE_URL;
 /* всё, что уходит в разметку, проходит типограф показа: неразрывные пробелы после предлогов, у чисел и перед тире */
@@ -373,7 +374,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
   /** фото-разделитель встаёт после названной главы, если он у кейса есть */
   const brk = (after: string) => (s.interludes ?? []).filter((x) => x.after === after).map((x) => interlude(x.image, x.focus)).join("");
   const html = `
-  <article class="cs" data-case="${esc(s.id)}" style="${lookVars(card, "mono")};--case:${card.look.accent};--case-ink:${card.look.ink}">
+  <article class="cs${s.compact ? " cs--compact" : ""}" data-case="${esc(s.id)}" style="${lookVars(card, "mono")};--case:${card.look.accent};--case-ink:${card.look.ink}">
     <div class="cs-top">
       <button type="button" class="cs-back"><span aria-hidden="true">←</span> ${t("cs.back")}</button>
       <div class="cs-top-nav">
@@ -414,7 +415,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
         </section>` : ""}
 
         ${s.gallery.length ? `<section class="cs-sec cs-sec--screens">
-          ${s.mockups === false ? head(++sec, "screens", t("cs.screens")) : mockupsHead(icon("screens"), pad(++sec), shotCount(s.gallery))}
+          ${s.mockups === false || s.compact ? head(++sec, "screens", t("cs.screens")) : mockupsHead(icon("screens"), pad(++sec), shotCount(s.gallery))}
           <div class="cs-gallery">${s.gallery.map(gallery).join("")}</div>
         </section>` : ""}
 

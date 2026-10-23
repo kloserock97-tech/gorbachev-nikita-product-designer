@@ -1,0 +1,71 @@
+/* 23.10: плотная вёрстка страницы кейса (CaseStory.compact). Образец — кейс CRM с портфолио klinaeva: та же страница
+   на 1440 там 8,5 тыс. px против наших 18,5 тыс. Причины, по замеру: подпись раздела мелкая и стоит слева, справа
+   фраза умеренного размера; разделы разделены линией, а не полуэкраном воздуха; текст 16 px с интерлиньяжем 1,4–1,5;
+   решения идут по два в ряд, демо сверху и невысокие; текст лежит на белом, без толстых плашек.
+   Здесь всё это переопределено поверх case-story.css только для кейсов с флагом. */
+.cs--compact .cs-sec { margin-top: clamp(52px, 7vh, 84px); padding-top: 26px; border-top: 1px solid var(--line); }
+.cs--compact .cs-sec > * + * { margin-top: clamp(16px, 2.2vh, 24px); }
+.cs--compact .cs-num { gap: 8px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); }
+.cs--compact .cs-num .ic { width: 18px; height: 18px; }
+.cs--compact .cs-lead { margin-top: 12px !important; max-width: 24em; font-size: clamp(26px, 2.3vw, 34px); line-height: 1.16; letter-spacing: -0.016em; }
+.cs--compact .cs-text { font-size: 16px; line-height: 1.5; }
+.cs--compact .cs-text--lead { font-size: clamp(17px, 1.3vw, 19px); line-height: 1.45; }
+.cs--compact .cs-summary { font-size: clamp(19px, 1.6vw, 23px); }
+.cs--compact .cs-break { margin-top: clamp(40px, 6vh, 72px); font-size: clamp(19px, 1.6vw, 24px); }
+/* широкий экран: подпись раздела в левой колонке, фраза — в правой, на одной строке с ней */
+@media (min-width: 1100px) {
+  .cs--compact .cs-sec > .cs-head { display: grid; grid-template-columns: subgrid; align-items: baseline; }
+  .cs--compact .cs-head > .cs-num { grid-column: 1; }
+  .cs--compact .cs-head > .cs-lead { grid-column: 2; margin-top: 0 !important; }
+}
+
+/* блоки с подложками — тоньше */
+.cs--compact .cs-constraints li, .cs--compact .cs-rules div { padding: 13px 0; }
+.cs--compact .cs-constraints b { font-size: 16.5px; }
+.cs--compact .cs-constraints p, .cs--compact .cs-rules dd { font-size: 15px; line-height: 1.5; }
+.cs--compact .cs-rules dt { font-size: 16.5px; }
+.cs--compact .cs-refusals li { padding: 14px 16px 14px 46px; border-radius: 16px; font-size: 15px; }
+.cs--compact .cs-refusals li::before { left: 16px; top: 17px; }
+.cs--compact .cs-method { gap: 12px; padding: 22px; border-radius: 22px; }
+.cs--compact .cs-method dl div { padding: 9px 0; font-size: 14.5px; }
+.cs--compact .cs-method-finding { font-size: 15px; }
+.cs--compact .cs-insights li { padding: 11px 14px; border-radius: 14px; }
+.cs--compact .cs-insights span { font-size: 15px; }
+.cs--compact .cs-goals li { gap: 6px; padding: 14px 16px; border-radius: 16px; }
+.cs--compact .cs-goals p { font-size: 15px; }
+.cs--compact .cs-journey li { padding: 15px 16px 17px; border-radius: 16px; }
+.cs--compact .cs-journey b { font-size: 16px; }
+.cs--compact .cs-journey p:not(.cs-mini) { font-size: 14px; }
+.cs--compact .cs-stages li { padding: 20px; border-radius: 20px; }
+.cs--compact .cs-stages b { font-size: 18px; }
+.cs--compact .cs-stages p:not(.cs-mini) { font-size: 15px; }
+
+/* «До / После»: карточки ниже и проще — снимок и строка под ним */
+.cs--compact .cn { margin: 0; }
+.cs--compact .cn-title { font-size: 19px; }
+.cs--compact .cn-lead { margin-bottom: 14px; font-size: 15.5px; }
+.cs--compact .cn-card { gap: 10px; padding: 8px 8px 10px; border-radius: 18px; }
+.cs--compact .cn-card-shot { border-radius: 11px; }
+.cs--compact .cn-card-foot b { font-size: 15.5px; }
+.cs--compact .cn-card-open { padding: 6px 12px; font-size: 13.5px; }
+
+/* решения: по два в ряд, демо сверху, без плашки и номера; «поменял после теста» — строкой с чертой слева */
+.cs--compact .cs-decisions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(36px, 5vh, 56px) clamp(20px, 2.4vw, 32px); }
+.cs--compact .cs-decision { display: flex; flex-direction: column; gap: 12px; padding: 0; border-radius: 0; background: none; }
+/* демо сверху и во всю ширину колонки: в колонке-флексе align-self: start из decision-demos.css сжал бы его */
+.cs--compact .cs-decision .dd { order: -1; align-self: stretch; width: 100%; }
+.cs--compact .cs-decision .cs-num--s { display: none; }
+.cs--compact .cs-decision h3 { margin-top: 6px; max-width: none; font-size: clamp(21px, 1.7vw, 25px); line-height: 1.18; }
+.cs--compact .cs-insight { align-self: flex-start; margin: 0; }
+.cs--compact .cs-decision .cs-fdw { grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 2px; }
+.cs--compact .cs-decision .cs-fdw p:not(.cs-mini) { font-size: 15px; line-height: 1.5; }
+.cs--compact .cs-decision .cs-fdw .cs-mini { margin-bottom: 2px; font-size: 13px; }
+.cs--compact .cs-basis-row:empty { display: none; }
+.cs--compact .cs-changed { margin-top: 2px; padding: 2px 0 2px 14px; border-radius: 0; background: none; color: var(--ink); box-shadow: inset 2px 0 0 var(--ink); }
+.cs--compact .cs-changed .cs-mini { color: var(--ink); font-size: 13px; }
+.cs--compact .cs-changed p:not(.cs-mini) { font-size: 15px; }
+.cs--compact .dd { gap: 8px; }
+.cs--compact .dd-view { border-radius: 14px; }
+.cs--compact .dd-step { font-size: 14px; }
+.cs--compact .dd-btn { width: 34px; height: 34px; }
+@media (max-width: 900px) { .cs--compact .cs-decisions { grid-template-columns: minmax(0, 1fr); } }

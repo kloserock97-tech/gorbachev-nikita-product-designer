@@ -11,6 +11,7 @@ const G = "cases/grif-ai/";
 
 export const en: CaseStory = {
   id: "grif-ai",
+  compact: true,
   hero: {
     kicker: "Proactive AI assistant · built from zero · 2026",
     title: "GRIF AI",
@@ -120,7 +121,7 @@ export const en: CaseStory = {
         insight: "F2",
         title: "Entry points where people already look",
         found: "If an action has an entry point in the input or in the suggestions under it, people find it without a hint.",
-        did: "The input sits in the middle of a new chat and grows downwards, from the tenth line the text scrolls inside. Under it are three chips with today's tasks: “Send a follow-up email”, “Meeting summary”, “Book a flight to Tokyo”. Files line up above the text, and a cross removes the ones you do not need.",
+        did: "The input sits in the middle of a new chat and grows downwards, with three chips for today's tasks under it. Files line up above the text.",
         changed: "[check] In the first version the suggestion cards had a two-line description that got cut off with an ellipsis. Now a chip is one line with an action.",
         demo: "grif-entry",
       },
@@ -129,7 +130,7 @@ export const en: CaseStory = {
         insight: "F3",
         title: "You can see GRIF reading and where the answer comes from",
         found: "If you can see the system reading and the answer names its source, people double-check it less.",
-        did: "While GRIF works, a line of steps runs above the answer: “Opened the calendar and the thread with the meeting attendee, collecting what we agreed”. When it is done, the line folds into “Gathered context, 4 sources, 1 min 47 s”, and the steps can be opened. Under the brief there is a “Based on” line with Telegram, Gmail and Notion labels.",
+        did: "While GRIF works, a line of steps runs above the answer. When it is done, the line folds into “Gathered context, 4 sources, 1 min 47 s”, and the brief says what it is based on: Telegram, Gmail and Notion.",
         changed: "[check] The draft had a spinner with the word “Checking…” in place of the steps. It was replaced with steps because a spinner does not tell you what is going on.",
         demo: "grif-reading",
       },
@@ -138,7 +139,7 @@ export const en: CaseStory = {
         insight: "F4",
         title: "Nothing goes out without a confirmation",
         found: "If the interface says “I won't send this without your confirmation”, the fear that it will get it wrong and send goes away.",
-        did: "The email arrives as a draft card: recipient, subject and the start of the text. At the bottom is the line “I won't send this without your confirmation” and three buttons: Edit, Decline and Send. Edit opens the whole email in a side panel.",
+        did: "The email arrives as a draft with the line “I won't send this without your confirmation” and the buttons Edit, Decline and Send. Edit opens the whole email.",
         changed: "[TO FILL: what changed in the email card after testing]",
         demo: "grif-confirm",
       },
@@ -147,7 +148,7 @@ export const en: CaseStory = {
         insight: "F4",
         title: "A sent email can be taken back",
         found: "If a sent action can be undone, people confirm more boldly.",
-        did: "After sending, a toast “Email sent · Undo” appears at the top, and the chat shows “Email sent to Sergey via Gmail, today, 10:42” with an Undo button. Memory works the same way: “Remembered: don't mention competitor X around Sergey” comes with “Don't remember”.",
+        did: "After sending you still have Undo in the toast at the top and in the chat. Memory works the same way: “Remembered…” comes with “Don't remember”.",
         changed: "[TO FILL: what changed after testing]",
         demo: "grif-undo",
       },
