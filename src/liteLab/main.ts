@@ -38,6 +38,7 @@ const OWN: Record<"ru" | "en", Record<string, string>> = {
     "contact.title": "Расскажите, что не работает",
     "foot.nav": "Разделы",
     "foot.social": "Где ещё найти",
+    "foot.links": "Ссылки",
     "foot.word": "Designer",
     "exp.title": "Где работал",
     "deck.label": "Кейсы и пэт-проекты",
@@ -75,6 +76,7 @@ const OWN: Record<"ru" | "en", Record<string, string>> = {
     "contact.title": "Tell me what's not working",
     "foot.nav": "Sections",
     "foot.social": "Elsewhere",
+    "foot.links": "Links",
     "foot.word": "Designer",
     "exp.title": "Where I worked",
     "deck.label": "Case studies and pet projects",
@@ -105,15 +107,15 @@ let kind: "all" | "web" | "mobile" = "all";
 type Job = { logo?: string; mark?: string; co: string; when: string; role: string; result: string };
 const JOBS: Record<"ru" | "en", Job[]> = {
   ru: [
-    { logo: "grif", co: "GRIF AI", when: "авг 2025 – авг 2026", role: "Founding Product Designer", result: "От идеи до кода: 3 недели → 5 дней" },
-    { logo: "sber", co: "Сбер", when: "июл 2025 – май 2026", role: "Senior Product Designer", result: "Оценка рисков ИИ-агентов: 6 ручных передач → 0" },
-    { logo: "mos", co: "Цифровые сервисы Москвы", when: "янв 2023 – июл 2025", role: "Senior Product Designer", result: "«Сообщество»: от гипотез до MVP за 9 месяцев, 250+ историй жителей за три месяца" },
+    { logo: "grif", co: "GRIF AI", when: "авг 2025 – авг 2026", role: "Founding Product Designer", result: "Новая фича доходит до кода за 5 дней, раньше уходило 3 недели" },
+    { logo: "sber", co: "Сбер", when: "июл 2025 – май 2026", role: "Senior Product Designer", result: "Убрал из оценки рисков ИИ-агентов все 6 ручных передач" },
+    { logo: "mos", co: "Цифровые сервисы Москвы", when: "янв 2023 – июл 2025", role: "Senior Product Designer", result: "Запустил «Сообщество» за 9 месяцев, жители написали 250+ историй" },
     { mark: "JD", co: "JustDev", when: "авг 2021 – янв 2023", role: "Product Designer", result: "Приложения iOS и Android, сайты, B2B-кабинеты и CRM" },
   ],
   en: [
-    { logo: "grif", co: "GRIF AI", when: "Aug 2025 – Aug 2026", role: "Founding Product Designer", result: "Idea to code: 3 weeks → 5 days" },
-    { logo: "sber", co: "Sber", when: "Jul 2025 – May 2026", role: "Senior Product Designer", result: "Agent risk review: 6 manual handoffs → 0" },
-    { logo: "mos", co: "Moscow Digital Services", when: "Jan 2023 – Jul 2025", role: "Senior Product Designer", result: "Community: from first hypotheses to MVP in 9 months, 250+ residents' stories in three months" },
+    { logo: "grif", co: "GRIF AI", when: "Aug 2025 – Aug 2026", role: "Founding Product Designer", result: "A new feature reaches code in 5 days, down from 3 weeks" },
+    { logo: "sber", co: "Sber", when: "Jul 2025 – May 2026", role: "Senior Product Designer", result: "Took all 6 manual handoffs out of AI agent risk review" },
+    { logo: "mos", co: "Moscow Digital Services", when: "Jan 2023 – Jul 2025", role: "Senior Product Designer", result: "Launched Community in 9 months, residents wrote 250+ stories" },
     { mark: "JD", co: "JustDev", when: "Aug 2021 – Jan 2023", role: "Product Designer", result: "iOS and Android apps, sites, B2B dashboards and CRMs" },
   ],
 };
@@ -167,13 +169,12 @@ function noteRow(n: (typeof notes)[number]) {
 }
 
 /* «о себе»: первая фраза тёмная, продолжение светлее. Фразу о последней должности (Head of Product Design) Никита
-   попросил не писать — она выпадает; если остаётся мало, добавляется about.p2 (about.p1 уже стоит в hero.lead) */
+   попросил не писать — она выпадает. about.p1 стоит в hero.lead, about.p2 рядом с «5+ лет», поэтому сюда их не добавляем */
 function statement() {
   const parts = t("about.intro").split(/(?<=[.!?])\s+/);
   const kept = parts.map((s) => s.trim()).filter((s) => !/Head of|Последняя роль|Most recently/i.test(s));
   const lead = kept.shift() ?? "";
-  let rest = kept.join(" ");
-  if (rest.length < 120) rest = `${rest} ${t("about.p2")}`.trim();
+  const rest = kept.join(" ");
   const put = (k: string, s: string) => { const el = document.querySelector(`[data-statement="${k}"]`); if (el) el.textContent = s; };
   put("lead", lead);
   put("rest", rest);
