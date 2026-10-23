@@ -13,7 +13,7 @@ const cards: Record<string, Card> = {
     /* реплика ассистента с искрой */
     glyph: '<path d="M10 14h44v28H30l-10 9v-9H10z"/><path d="M32 20v16M24 28h16"/>',
     en: {
-      stats: [{ value: "5 days", label: "from idea to a feature in code" }, { value: "87%", label: "unassisted task success rate" }, { value: "1", label: "designer on the whole product" }],
+      stats: [{ value: "5 days", label: "from idea to a feature in code" }, { value: "87%", label: "unassisted task success rate" }, { value: "9", label: "hypotheses tested" }],
       points: [
         "GRIF is an assistant that speaks first. It connects to mail, messengers, the calendar and finances, notices when it's time to act and brings a ready solution. The person only has to say yes or no.",
         "The budget was small, so I built the design department out of AI agents. I prepared the design system and the instructions, connected Figma to Claude and set up a pipeline all the way to code. Agents draw screens and components, I set the task and accept the work.",
@@ -21,7 +21,7 @@ const cards: Record<string, Card> = {
       ],
     },
     ru: {
-      stats: [{ value: "5 дней", label: "от идеи до фичи в коде" }, { value: "87 %", label: "задач выполнено без подсказки" }, { value: "1", label: "дизайнер на весь продукт" }],
+      stats: [{ value: "5 дней", label: "от идеи до фичи в коде" }, { value: "87 %", label: "задач выполнено без подсказки" }, { value: "9", label: "гипотез проверено" }],
       points: [
         "GRIF — ассистент, который приходит первым. Он подключается к почте, мессенджерам, календарю и финансам, сам замечает, что пора действовать, и приносит готовое решение. Человеку остаётся согласиться или отказаться.",
         "Бюджет был маленький, поэтому дизайн-отдел я собрал из ИИ-агентов. Подготовил дизайн-систему и инструкции, подключил Figma к Claude и настроил конвейер до кода. Агенты рисуют экраны и компоненты, я ставлю задачу и принимаю работу.",
@@ -73,7 +73,7 @@ const cards: Record<string, Card> = {
     /* список, который разбирают галочками */
     glyph: '<rect x="10" y="10" width="44" height="44" rx="6"/><path d="M18 24l4 4 7-7"/><path d="M35 25h11"/><path d="M18 40l4 4 7-7"/><path d="M35 41h11"/>',
     en: {
-      stats: [{ value: "−38%", label: "average handling time" }, { value: "4.3 of 5", label: "ease of use for moderators" }, { value: "8", label: "moderators in the test" }],
+      stats: [{ value: "−38%", label: "average handling time" }, { value: "4.3 of 5", label: "ease of use for moderators" }, { value: "8", label: "moderators tried the prototypes" }],
       points: [
         "Community residents wrote more and more, and comments, posts and complaints were handled by one administrator in a shared admin panel. The same one where the whole site is configured.",
         "I took the admin panel apart, tested two differently built prototypes with moderators and made the moderator a separate role. Routine gets decided right in the list, doubtful cases open in detail.",
@@ -81,7 +81,7 @@ const cards: Record<string, Card> = {
       ],
     },
     ru: {
-      stats: [{ value: "−38 %", label: "времени на модерацию (AHT)" }, { value: "4,3 из 5", label: "удобство по оценке модераторов" }, { value: "8", label: "модераторов на тесте" }],
+      stats: [{ value: "−38 %", label: "времени на модерацию (AHT)" }, { value: "4,3 из 5", label: "удобство по оценке модераторов" }, { value: "8", label: "модераторов проверили прототипы" }],
       points: [
         "Жители «Сообщества» писали всё больше, а комментарии, публикации и жалобы разбирал один администратор в общей админке. Там же, где настраивается весь сайт.",
         "Разобрал админку по шагам, проверил на модераторах два прототипа, устроенных по-разному, и выделил модератора в отдельную роль. Рутину он решает прямо в списке, сомнительное открывает подробно.",
@@ -113,7 +113,7 @@ const cards: Record<string, Card> = {
     /* метка на карте с вилкой */
     glyph: '<path d="M32 56S16 41 16 28a16 16 0 0132 0c0 13-16 28-16 28z"/><path d="M27 19v8a5 5 0 0010 0v-8"/><path d="M32 19v18"/>',
     en: {
-      stats: [{ value: "1 → 3–4", label: "places in view" }, { value: "27", label: "public studies behind the decisions" }, { value: "6", label: "decisions, each from the audit" }],
+      stats: [{ value: "1 → 3–4", label: "places in view" }, { value: "27", label: "public studies behind the decisions" }, { value: "6", label: "changes to the home screen" }],
       points: [
         "The home screen of a restaurant app has three jobs: find a known place by name, browse collections, or describe in words what you want. The old screen mixed them up and showed one venue, and the guide hid as an icon in the corner.",
         "I built the new screen around these three jobs and put the guide in the middle of the bottom bar, where the thumb reaches. There were no users of my own to test with, so every decision rests on a public study.",
@@ -121,7 +121,7 @@ const cards: Record<string, Card> = {
       ],
     },
     ru: {
-      stats: [{ value: "1 → 3–4", label: "места в кадре" }, { value: "27", label: "публичных исследований в основе" }, { value: "6", label: "решений, каждое из аудита" }],
+      stats: [{ value: "1 → 3–4", label: "места в кадре" }, { value: "27", label: "публичных исследований в основе" }, { value: "6", label: "изменений главного экрана" }],
       points: [
         "У главного экрана агрегатора три задачи: найти знакомое место по названию, полистать подборки или описать словами, что хочется. Старый экран мешал их в кучу и показывал одно заведение, а гид прятался иконкой в углу.",
         "Экран я пересобрал под эти три задачи и поставил гида в центр нижней панели, куда дотягивается большой палец. Своих пользователей не было, поэтому каждое решение опирается на публичное исследование.",

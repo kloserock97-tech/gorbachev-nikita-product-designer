@@ -156,7 +156,7 @@ export const en: CaseStory = {
   /* v114: prototype from the mock-ups — "move a payment to payday" in three taps; the "why" lines come from the decisions */
   prototype: {
     title: "Move a payment to payday",
-    lead: "A payment falls in the days before payday, and you move it from the bank's home screen in three taps.",
+    lead: "A payment falls in the days before payday, and you move it right from the bank's home screen.",
     live: "plati-chastyami",
     steps: [
       { image: img(P + "01-sbol-widget.webp", 786, 1704, "The bank's home screen"), spot: [0.8, 0.525], action: "Open your instalments from the home screen", why: "The instalment card sits right on the bank's home screen, so there is no section to hunt for." },

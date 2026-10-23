@@ -17,8 +17,8 @@ export const en: CaseStory = {
     summary:
       "We started with an idea, a couple of screens and a small budget, so agents did most of the design. I prepared the design system and the instructions, connected Figma to Claude through MCP and set up a pipeline to GitHub and Storybook. Agents built prototypes, screens and components, I owned the vision, fixes, animations and identity, and development checked and assembled the final interface.",
     facts: [
-      ["Role", "Product Designer"],
-      ["Team", "Agents did the design department's work. Frontend and backend were people"],
+      ["Role", "Head of Design"],
+      ["Company", "GRIF AI"],
       ["Timeline", "2025–2026"],
       ["Platform", "Web and desktop app"],
     ],
