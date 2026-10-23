@@ -35,7 +35,13 @@ export type Method = {
   sample?: string;
   finding: string;
   image?: CaseImage;
+  /** нумерованные находки (Н1, Н2…): на них ссылаются решения через Decision.insight */
+  insights?: Insight[];
 };
+
+/* 23.10 (по образцу кейса CRM с портфолио klinaeva): кейс читается как цепочка «находка → гипотеза → решение →
+   что поменял после теста». Находки нумеруются, чтобы решение могло сослаться на свою */
+export type Insight = { id: string; text: string };
 
 export type Hypothesis = { text: string; verdict: string; won?: boolean };
 
@@ -54,7 +60,23 @@ export type Decision = {
   image?: CaseImage;
   /** разбор в глубину — id из deepDives */
   deepDive?: string;
+  /** id находки (Insight.id), на которую отвечает решение; с ним found читается как гипотеза */
+  insight?: string;
+  /** что поменял после теста; эти же правки перечисляет последний этап validation */
+  changed?: string;
+  /** id живого мини-демо решения (подпись шага «1 из 3», пауза) */
+  demo?: string;
 };
+
+/* 23.10: путь пользователя по шагам. measured — какие шаги вошли в замер: к ним привязана цифра в «Результате» */
+export type JourneyStep = { kicker: string; title: string; note: string; outside?: boolean };
+
+/* 23.10: окно «До / После» с заметками. about — серая заметка «что это за блок», mine — синяя «мой комментарий».
+   Заметка mine с тем же id есть и в after: в «После» она переезжает туда, где правка сделана.
+   rect — место на снимке в долях (x, y, ширина, высота), его обводит рамка при наведении */
+export type CompareNote = { id: string; kind: "about" | "mine"; side: "left" | "right"; text: string; extra?: string; rect?: [number, number, number, number] };
+export type CompareSide = { title: string; image: CaseImage; notes: CompareNote[] };
+export type CaseCompare = { title: string; lead?: string; before: CompareSide; after: CompareSide; versions?: { image: CaseImage; label: string; note: string }[] };
 
 export type Mistake = { title: string; decided: string; wrong: string; out: string; changed: string };
 
@@ -114,7 +136,13 @@ export type CaseStory = {
     /** без него тёмной карточки «Моя роль» нет: роль бывает рассказана уже в «Коротко» */
     myRole?: string;
     team?: { who: string; how: string }[];
+    /** цели: каждая вытекает из проблемы в lead */
+    goals?: string[];
   };
+  journey?: { title: string; lead?: string; steps: JourneyStep[]; measured: string };
+  compare?: CaseCompare;
+  /** проверка этапами; последний этап перечисляет правки из Decision.changed */
+  validation?: { lead: string; stages: { kicker: string; title: string; text: string }[] };
   approach?: {
     lead: string;
     text?: string;
