@@ -21,7 +21,8 @@ import { heroStage, mountHero } from "./caseHero";
 import { brandMark, goArrow, lookVars, objectPicture } from "./caseLook";
 import { demoBlock, hasDemo, mountDemos } from "./caseDemos";
 import { mountProto, protoBlock } from "./caseProto";
-import { mountNotes, notesBlock } from "./caseNotes";
+import { marks, mountNotes, notesBlock } from "./caseNotes";
+import { decisionDemoBlock, hasDecisionDemo, mountDecisionDemos } from "./decisionDemos";
 import { mockupsHead, mountMockups } from "./mockupsTitle";
 import { icon, type IconName } from "./icons";
 import { smoothWheel } from "./smoothScroll";
@@ -159,13 +160,16 @@ const methodCard = (m: Method, k: number) => `
 
 const decision = (d: Decision, k: number, dives: CaseTrack[]) => {
   const dive = d.deepDive ? dives.find((x) => x.id === d.deepDive) : null;
+  /* 23.10: решение со ссылкой на находку — found читается как гипотеза, под текстом «после теста поменял» */
+  const demo = hasDecisionDemo(d.demo);
   return `
-  <article class="cs-decision" id="cs-d-${esc(d.id)}" data-reveal>
+  <article class="cs-decision${demo ? " cs-decision--demo" : ""}" id="cs-d-${esc(d.id)}" data-reveal>
     <div class="cs-decision-text">
       <p class="cs-num cs-num--s"><span>${pad(k + 1)}</span></p>
       <h3>${esc(d.title)}</h3>
+      ${d.insight ? `<a class="cs-insight" href="#cs-in-${esc(d.insight)}" data-insight="${esc(d.insight)}">${t("cs.insight")} ${esc(d.insight)} <span aria-hidden="true">↑</span></a>` : ""}
       <div class="cs-fdw">
-        <div><p class="cs-mini">${t("cs.found")}</p><p>${esc(d.found)}</p></div>
+        <div><p class="cs-mini">${t(d.insight ? "cs.hypothesis" : "cs.found")}</p><p>${marks(esc(d.found))}</p></div>
         <div><p class="cs-mini">${t("cs.did")}</p><p>${esc(d.did)}</p></div>
         ${d.effect ? `<div><p class="cs-mini">${t("cs.effect")}</p><p>${esc(d.effect)}</p></div>` : ""}
       </div>
@@ -174,8 +178,9 @@ const decision = (d: Decision, k: number, dives: CaseTrack[]) => {
         ${d.basis ? `<span class="cs-basis"><i></i>${t("cs.basis")}: ${esc(d.basis)}</span>` : ""}
         ${dive ? `<a class="cs-divelink" href="#/work/__ID__/${dive.id}" data-dive="${dive.id}">${t("cs.deep")}: ${esc(dive.chip)} <span aria-hidden="true">→</span></a>` : ""}
       </p>
+      ${d.changed ? `<div class="cs-changed"><p class="cs-mini">${t("cs.aftertest")}</p><p>${marks(esc(d.changed))}</p></div>` : ""}
     </div>
-    ${d.image ? fig(d.image, "cs-decision-img") : ""}
+    ${demo ? decisionDemoBlock(d.demo!, d.title) : d.image ? fig(d.image, "cs-decision-img") : ""}
   </article>`;
 };
 
@@ -870,6 +875,7 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
   stops.push(mountDemos(root, scroller));
   stops.push(mountProto(root));
   stops.push(mountNotes(root));
+  stops.push(mountDecisionDemos(root, scroller));
   stops.push(mountFilms(root, scroller));
   stops.push(mountMockups(root, scroller));
   stops.push(mountHero(root, scroller));

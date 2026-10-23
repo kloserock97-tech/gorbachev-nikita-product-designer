@@ -40,7 +40,7 @@ const ICON = {
 };
 const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 /** [ЗАПОЛНИТЬ: …] и [проверить] — места, где нужны факты владельца: на странице они видны, чтобы их не пропустить */
-const marks = (html: string) => html.replace(/\[(ЗАПОЛНИТЬ|TO FILL|проверить|check)(:?)([^\]]*)\]/g, (_m, w, c, rest) => `<mark class="cn-todo">${w}${c}${rest}</mark>`);
+export const marks = (html: string) => html.replace(/\[(ЗАПОЛНИТЬ|TO FILL|проверить|check)(:?)([^\]]*)\]/g, (_m, w, c, rest) => `<mark class="cn-todo">${w}${c}${rest}</mark>`);
 
 /* ── разметка на странице ─────────────────────────────────────────────────── */
 const card = (side: "before" | "after", s: CompareSide) => `<button type="button" class="cn-card cn-card--${side}" data-cn-open="${side}">
