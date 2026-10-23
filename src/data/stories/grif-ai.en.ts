@@ -215,20 +215,8 @@ export const en: CaseStory = {
     ],
   },
   /* 23.10: Никита оставил две метрики: task success rate 87% и time-to-market 3 нед → 5 дн, остальные убраны */
-  results: {
-    lead: "What is left after the project.",
-    pointsFirst: true,
-    points: [
-      "A design system: styling settings, three type families, components in every state, component pages and documentation",
-      "The whole user journey, with corner cases and onboarding",
-      "A Storybook of working components that frontend builds from",
-      "Agents that use the design system to create components, add them to Storybook and assemble screens from a prompt",
-    ],
-    outcomes: [
-      { x: "Time-to-market for a feature: 3 weeks → 5 days", y: "How long it takes from a feature idea to its code.", z: "A Figma → GitHub → Storybook pipeline where nobody moves mock-ups by hand." },
-      { x: "Unassisted task success rate: 87%", y: "Usability tests: find an action, launch it and undo it.", z: "Three entry points and undo at every step." },
-    ],
-  },
+  /* 23.10: раздел «Результат» убран по просьбе Никиты — цифры остаются в карточках под шапкой */
+
   /* v114: prototype from the mock-ups — the main flow: meeting files → brief and a ready email → sent */
   prototype: {
     title: "Send a follow-up after the meeting",
@@ -244,16 +232,9 @@ export const en: CaseStory = {
   },
   /* 23.10: раздел «Что забрал с собой» Никита попросил убрать */
   takeaways: [],
-  gallery: [
-    {
-      kind: "bento",
-      title: "More screens",
-      images: [
-        img(G + "t-chat-attach.webp", 1024, 640, "Chat with an attachment"),
-        img(G + "07.webp", 1024, 128, "Reasoning steps show what the system is busy with during the pause", "detail"),
-      ],
-    },
-  ],
+  /* 23.10: «Остальные экраны» убраны по просьбе Никиты */
+  gallery: [],
+
   /* разборы скрыты вслед за русской версией; вернуть — tracksEn["grif-ai"].tracks */
   deepDives: [],
 };

@@ -509,7 +509,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
         </section>
         ${brk("research")}
 
-        ${s.compare ? `<section class="cs-sec cs-sec--compare cs-zone">
+        ${s.compare ? `<section class="cs-sec cs-sec--compare">
           ${head(++sec, "compare", t("cs.compare"), s.compare.title)}
           ${notesBlock(s.compare, true)}
         </section>` : ""}
@@ -613,7 +613,7 @@ function stackLayers(root: HTMLElement, scroller: HTMLElement) {
   };
   for (const node of [...body.children] as HTMLElement[]) {
     if (node.classList.contains("cs-zone")) {
-      const kind = node.classList.contains("cs-sec--interface") ? "dark" : node.classList.contains("cs-sec--compare") ? "compare" : "grey";
+      const kind = node.classList.contains("cs-sec--interface") ? "dark" : "grey";
       const el = start(kind);
       body.insertBefore(el, node);
       el.append(node);
