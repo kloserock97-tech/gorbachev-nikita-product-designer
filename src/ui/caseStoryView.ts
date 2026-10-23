@@ -29,6 +29,7 @@ import { smoothWheel } from "./smoothScroll";
 import { tidy } from "../lib/typograph";
 import "./case-story.css";
 import "./case-zones.css";
+import "./case-chain.css";
 
 const BASE = import.meta.env.BASE_URL;
 /* всё, что уходит в разметку, проходит типограф показа: неразрывные пробелы после предлогов, у чисел и перед тире */
@@ -89,7 +90,7 @@ const interlude = (g: CaseImage, focus = "50% 47%") =>
   `<div class="cs-interlude cs-interlude--${esc(g.kind)}" data-reveal aria-hidden="true" style="--focus:${esc(focus)}"><img src="${BASE}${g.src}" alt="" width="${g.w}" height="${g.h}" loading="lazy" decoding="async"${hi(g, "100vw")} draggable="false"></div>`;
 
 /* ── куски ─────────────────────────────────────────────────────────────────── */
-const SEC_ICON: Record<string, IconName> = { brief: "brief", context: "context", approach: "approach", research: "research", flow: "flow", decisions: "decisions", split: "split", mistakes: "mistakes", results: "results", screens: "screens", roadmap: "roadmap", takeaways: "takeaways", steps: "decisions", more: "list", interface: "screens" };
+const SEC_ICON: Record<string, IconName> = { brief: "brief", context: "context", approach: "approach", research: "research", flow: "flow", decisions: "decisions", split: "split", mistakes: "mistakes", results: "results", screens: "screens", roadmap: "roadmap", takeaways: "takeaways", steps: "decisions", more: "list", interface: "screens", journey: "flow", validation: "research" };
 const head = (n: number, id: string, label: string, lead?: string) => `
   <header class="cs-head" id="cs-${id}">
     <p class="cs-num">${icon(SEC_ICON[id] ?? "brief")}<span>${pad(n)}</span>${esc(label)}</p>
@@ -152,9 +153,10 @@ const methodCard = (m: Method, k: number) => `
     ${m.title ? `<h3>${esc(m.title)}</h3>` : ""}
     <dl>
       <div><dt>${t("cs.question")}</dt><dd>${esc(m.question)}</dd></div>
-      ${m.sample ? `<div><dt>${t("cs.sample")}</dt><dd>${linkify(esc(m.sample))}</dd></div>` : ""}
+      ${m.sample ? `<div><dt>${t("cs.sample")}</dt><dd>${marks(linkify(esc(m.sample)))}</dd></div>` : ""}
     </dl>
     <p class="cs-method-finding"><b>${t("cs.finding")}</b>${esc(m.finding)}</p>
+    ${m.insights?.length ? `<ol class="cs-insights">${m.insights.map((x) => `<li id="cs-in-${esc(x.id)}"><b>${esc(x.id)}</b><span>${marks(esc(x.text))}</span></li>`).join("")}</ol>` : ""}
     ${m.image ? fig(m.image) : ""}
   </article>`;
 
@@ -339,10 +341,12 @@ export function sectionsOf(s: CaseStory): Section[] {
   if (s.gallery.length) list.push({ id: "screens", label: t("cs.screens") });
   if (s.results) list.push({ id: "results", label: t("cs.results") });
   list.push({ id: "context", label: t("cs.context") });
+  if (s.journey) list.push({ id: "journey", label: t("cs.journey") });
   if (s.approach) list.push({ id: "approach", label: t("cs.approach") });
   list.push({ id: "research", label: t("cs.research") });
   if (s.flow && !s.flow.folded) list.push({ id: "flow", label: t("cs.flow") });
   list.push({ id: "decisions", label: t("cs.decisions"), children: s.deepDives.map((d) => ({ id: `dd-${d.id}`, label: d.chip })) });
+  if (s.validation) list.push({ id: "validation", label: t("cs.validation") });
   if (s.split) list.push({ id: "split", label: t("cs.split") });
   if (s.mistakes) list.push({ id: "mistakes", label: t("cs.mistakes") });
   if (s.roadmap) list.push({ id: "roadmap", label: t("cs.roadmap") });
@@ -435,6 +439,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
         <section class="cs-sec cs-sec--context">
           ${head(++sec, "context", t("cs.context"), ctx.lead)}
           ${ctx.text ? paras(ctx.text) : ""}
+          ${ctx.goals?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.goals"))}<ol class="cs-goals">${ctx.goals.map((x, k) => `<li><span>${pad(k + 1)}</span><p>${marks(esc(x))}</p></li>`).join("")}</ol></div>` : ""}
           ${ctx.origin ? `<div class="cs-block" data-reveal>${mini(t("cs.origin"))}<p class="cs-text">${esc(ctx.origin)}</p></div>` : ""}
           ${ctx.roles?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.roles"))}<ul class="cs-roles">${ctx.roles.map((x) => `<li><b>${esc(x.who)}</b><span>${esc(x.needs)}</span></li>`).join("")}</ul></div>` : ""}
           ${ctx.constraints?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.constraints"))}<ol class="cs-constraints">${ctx.constraints.map((x, k) => `<li><span>${pad(k + 1)}</span><b>${esc(x.title)}</b><p>${esc(x.text)}</p></li>`).join("")}</ol></div>` : ""}
@@ -442,6 +447,13 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           ${ctx.myRole ? `<div class="cs-block cs-card cs-card--dark" data-reveal>${mini(t("cs.myrole"))}<p>${esc(ctx.myRole)}</p></div>` : ""}
         </section>
         ${brk("context")}
+
+        ${s.journey ? `<section class="cs-sec cs-sec--journey">
+          ${head(++sec, "journey", t("cs.journey"), s.journey.title)}
+          ${s.journey.lead ? paras(s.journey.lead) : ""}
+          <ol class="cs-journey" data-reveal>${s.journey.steps.map((x, k) => `<li class="${x.outside ? "is-outside" : ""}" style="--k:${k}"><p class="cs-mini">${esc(x.kicker)}</p><b>${esc(x.title)}</b><p>${esc(x.note)}</p></li>`).join("")}</ol>
+          <p class="cs-measured cs-measured--journey" data-reveal><b>${t("cs.measured")}</b>${marks(esc(s.journey.measured))}</p>
+        </section>` : ""}
 
         ${ap ? `<section class="cs-sec">
           ${head(++sec, "approach", t("cs.approach"), ap.lead)}
@@ -496,6 +508,11 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           ${s.deepDives.length ? `<div class="cs-deeps">${mini(t("cs.deep"))}${s.deepDives.map(deepDive).join("")}</div>` : ""}
         </section>
         ${brk("decisions")}
+
+        ${s.validation ? `<section class="cs-sec cs-sec--validation">
+          ${head(++sec, "validation", t("cs.validation"), s.validation.lead)}
+          <ol class="cs-stages">${s.validation.stages.map((x, k) => `<li data-reveal style="--rd:${k}"><p class="cs-mini">${esc(x.kicker)}</p><b>${esc(x.title)}</b><p>${marks(esc(x.text))}</p></li>`).join("")}</ol>
+        </section>` : ""}
 
         ${s.split ? `<section class="cs-sec">
           ${head(++sec, "split", t("cs.split"), s.split.title)}
@@ -624,6 +641,14 @@ export function mountStory(root: HTMLElement, scroller: HTMLElement, opts: { onC
     const el = root.querySelector<HTMLElement>(`#cs-${CSS.escape(sec)}`);
     if (el) scrollTo(el);
     closeSheet();
+  }));
+  /* метка «Находка Н2» у решения: доехать до находки в исследовании и подсветить её; адрес не трогаем — после # живёт роутер */
+  root.querySelectorAll<HTMLAnchorElement>(".cs-insight").forEach((a) => a.addEventListener("click", (e) => {
+    e.preventDefault();
+    const el = root.querySelector<HTMLElement>(`#cs-in-${CSS.escape(a.dataset.insight!)}`);
+    if (!el) return;
+    scrollTo(el);
+    el.classList.remove("is-flash"); void el.offsetWidth; el.classList.add("is-flash");
   }));
   root.querySelectorAll<HTMLAnchorElement>(".cs-divelink").forEach((a) => a.addEventListener("click", (e) => {
     e.preventDefault();

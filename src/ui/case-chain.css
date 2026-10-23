@@ -1,0 +1,41 @@
+/* 23.10: блоки кейса-цепочки (по образцу кейса CRM с портфолио klinaeva): цели, путь пользователя с пометкой,
+   какие шаги вошли в замер, нумерованные находки в карточках методов и проверка этапами */
+.cs-goals { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.cs-goals li { display: grid; gap: 10px; align-content: start; padding: 18px 20px; border-radius: 20px; background: var(--tile); }
+.cs-goals span { font-size: 14px; font-weight: 500; color: color-mix(in srgb, var(--ink) 70%, transparent); font-variant-numeric: tabular-nums; }
+.cs-goals p { margin: 0; font-size: 16.5px; line-height: 1.45; color: var(--ink); }
+
+/* путь: шаги в ряд, подготовка вне замера — пунктиром */
+.cs-journey { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 10px; margin: 8px 0 0; padding: 0; list-style: none; counter-reset: j; }
+.cs-journey li { position: relative; display: grid; gap: 6px; align-content: start; padding: 20px 20px 22px; border-radius: 20px; background: var(--tile); }
+.cs-journey li.is-outside { background: none; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ink) 22%, transparent); }
+.cs-journey .cs-mini { margin: 0; }
+.cs-journey b { font-size: 18px; line-height: 1.25; }
+.cs-journey p:not(.cs-mini) { margin: 0; font-size: 15px; line-height: 1.5; color: color-mix(in srgb, var(--ink) 74%, transparent); }
+/* стрелка между шагами — только когда они в один ряд */
+@media (min-width: 1100px) {
+  .cs-journey { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 22px; }
+  .cs-journey li:not(:last-child)::after {
+    content: ""; position: absolute; top: 50%; right: -16px; width: 10px; height: 10px; translate: 0 -50%; rotate: 45deg;
+    border-top: 1.5px solid color-mix(in srgb, var(--ink) 40%, transparent); border-right: 1.5px solid color-mix(in srgb, var(--ink) 40%, transparent);
+  }
+}
+.cs-measured--journey { margin-top: 16px; max-width: 48em; }
+
+/* находки: номер слева — на него ссылаются решения */
+.cs-insights { display: grid; gap: 8px; margin: 16px 0 0; padding: 0; list-style: none; }
+.cs-insights li { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: baseline; padding: 14px 16px; border-radius: 16px; background: var(--tile-2); scroll-margin-top: 110px; transition: box-shadow 0.4s ease; }
+.cs-insights b { display: inline-grid; place-items: center; min-width: 38px; height: 26px; padding: 0 8px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 13.5px; font-weight: 600; }
+.cs-insights span { font-size: 16px; line-height: 1.5; color: var(--ink); }
+.cs-insights li.is-flash { animation: cs-in-flash 1.8s ease; }
+@keyframes cs-in-flash { 0%, 60% { box-shadow: 0 0 0 3px var(--ink); } 100% { box-shadow: 0 0 0 3px transparent; } }
+
+/* проверка: этапы карточками */
+.cs-stages { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.cs-stages li { display: grid; gap: 8px; align-content: start; padding: 24px 24px 26px; border-radius: 24px; background: var(--tile); }
+.cs-stages li:last-child { background: var(--ink); color: #fff; }
+.cs-stages li:last-child .cs-mini { color: color-mix(in srgb, #fff 70%, transparent); }
+.cs-stages .cs-mini { margin: 0; }
+.cs-stages b { font-size: 20px; line-height: 1.25; }
+.cs-stages p:not(.cs-mini) { margin: 0; font-size: 16px; line-height: 1.55; }
+@media (prefers-reduced-motion: reduce) { .cs-insights li.is-flash { animation: none; box-shadow: 0 0 0 3px var(--ink); } }
