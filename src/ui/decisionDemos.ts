@@ -98,10 +98,18 @@ const DEMOS: Record<string, Demo> = {
         cap: { ru: "Готово: «Думал 12 с» и «Выполнил 4 действия»", en: "Done: “Thought for 12 s” and “Ran 4 actions”" },
         run: async (c) => {
           c.s.show("pending");
+          /* ответ собирается на глазах: «думал», действия, бриф печатается словами, письмо */
+          const msg = c.s.find("Agent message");
+          const dur = c.s.reveal(msg, 340, 0, (kid, at) => {
+            const text = [...kid.querySelectorAll<HTMLElement>("div"), kid].find((n) => !n.children.length && (n.textContent ?? "").startsWith("Бриф готов"));
+            return text ? c.s.stream(text, at, 30) : 0;
+          });
+          await c.wait(Math.min(dur, 4200));
           const steps = c.s.find("Agent steps");
           c.ring(steps);
           await c.point(steps, 0.25, 0.5);
         },
+        hold: 1800,
       },
       {
         cap: { ru: "Под ответом подписано, из чего он собран", en: "Under the answer: what it was built from" },
@@ -122,6 +130,7 @@ const DEMOS: Record<string, Demo> = {
         run: async (c) => {
           c.s.show("pending");
           const card = c.s.find("Action card");
+          card?.classList.add("g2-await");
           c.ring(card);
           await c.point(card, 0.5, 0.35);
         },
@@ -136,15 +145,17 @@ const DEMOS: Record<string, Demo> = {
         hold: 1900,
       },
       {
-        cap: { ru: "Решение за вами: отправить, изменить или не отправлять", en: "Your call: send, edit or don't send" },
+        cap: { ru: "В Ленте то же: решения ждут вас в «Ждут вас»", en: "Same in the Feed: decisions wait under “Waiting for you”" },
         run: async (c) => {
-          const send = c.s.find("Button/Отправить");
-          c.ring(send?.parentElement ?? send);
-          await c.point(c.s.text("Не отправлять"), 0.5, 0.5);
+          c.s.show("feed");
           await c.wait(500);
+          const group = c.s.find("Group / Ждут вас");
+          c.ring(group);
+          const send = c.s.find("Button/Отправить");
           await c.point(send, 0.5, 0.5);
           await c.press(send);
         },
+        hold: 2000,
       },
     ],
   },
@@ -271,10 +282,8 @@ function mountOne(fig: HTMLElement, scroller: HTMLElement) {
       el.classList.remove("dd-pressed");
       await wait(calm ? 0 : 260);
     },
-    ring: (el) => {
-      root.querySelectorAll(".dd-ring").forEach((n) => n.classList.remove("dd-ring"));
-      el?.classList.add("dd-ring");
-    },
+    /* кольцо — слоем поверх экрана (stage.mark): на самом слое его срезали бы родители с обрезкой содержимого */
+    ring: (el) => { stage!.mark(el); },
   });
 
   const caption = (i: number) => {

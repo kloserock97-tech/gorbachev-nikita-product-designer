@@ -10,10 +10,10 @@ import { createStage, type Stage } from "./stage";
 
 type Flow = (s: Stage, ctx: LiveCtx, step: number) => void;
 
+/* куда нажать: кольцо отдельным слоем поверх экрана (stage.mark) — на самом слое его срезали бы родители */
 function hint(s: Stage, el: HTMLElement | null, onTap: () => void) {
-  s.el.querySelectorAll(".pt-hint").forEach((n) => n.classList.remove("pt-hint"));
+  s.mark(el);
   if (!el) return;
-  el.classList.add("pt-hint");
   el.dataset.hot = "";
   el.addEventListener("click", (e) => { e.stopPropagation(); onTap(); }, { once: true });
 }
@@ -42,12 +42,17 @@ const chat: Flow = (s, ctx, step) => {
     /* ответ собирается на глазах: сообщение, «думал», выполненные действия, текст брифа, карточка письма */
     s.show("pending");
     const msg = s.find("Agent message");
-    const dur = s.reveal(msg, 520);
+    /* текст брифа печатается словами, следующая часть ждёт конца печати */
+    const dur = s.reveal(msg, 480, 0, (kid, at) => {
+      const text = [...kid.querySelectorAll<HTMLElement>("div"), kid].find((n) => !n.children.length && (n.textContent ?? "").startsWith("Бриф готов"));
+      return text ? s.stream(text, at) : 0;
+    });
     s.later(dur + 200, () => go(2));
     return;
   }
   if (step === 2) {
     s.show("pending", true);
+    s.find("Action card")?.classList.add("g2-await");
     hint(s, s.find("Button/Отправить"), () => go(3));
     return;
   }
@@ -96,7 +101,8 @@ const memory: Flow = (s, ctx, step) => {
   const root = el.parentElement!;
   if (step === 1) {
     toast?.classList.add("g2-hide");
-    dialog?.classList.add("g2-rise");
+    overlay?.classList.add("g2-fade");
+    dialog?.classList.add("g2-dialog");
     if (dialog) root.scrollTop = Math.max(0, dialog.offsetTop - 160);
     hint(s, s.hot("Забыть", 1, dialog), () => go(2));
     return;
@@ -104,7 +110,7 @@ const memory: Flow = (s, ctx, step) => {
   dialog?.classList.add("g2-hide");
   overlay?.classList.add("g2-hide");
   root.scrollTop = 0;
-  toast?.classList.add("g2-rise");
+  toast?.classList.add("g2-drop");
   s.countdown(toast);
 };
 

@@ -13,3 +13,41 @@
 .g2 .g2-gone { animation: g2-gone 0.3s ease both; }
 @keyframes g2-gone { to { opacity: 0; translate: 0 -6px; } }
 @media (prefers-reduced-motion: reduce) { .g2-in, .g2-out, .g2 .g2-rise, .g2 .g2-gone { animation: none; } }
+
+/* 24.10: экраны живут сами (stage.ts, liven). Кривые — сильный ease-out для появлений, linear для постоянного движения */
+.g2 .g2-rise { animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1); }
+.g2 .g2-spin { animation: g2-spin 0.9s linear infinite; }
+@keyframes g2-spin { to { rotate: 360deg; } }
+.g2 .g2-grow { transform-origin: 0 50%; animation: g2-grow 2.6s cubic-bezier(0.23, 1, 0.32, 1) both; }
+@keyframes g2-grow { from { scale: 0.3 1; } to { scale: 1 1; } }
+.g2 .g2-pulse { animation: g2-pulse 2s ease-in-out infinite; }
+@keyframes g2-pulse { 50% { opacity: 0.45; scale: 0.8; } }
+.g2 .g2-breathe { animation: g2-breathe 1.6s ease-in-out infinite; }
+.g2 .g2-breathe-slow { animation: g2-breathe 3.2s ease-in-out infinite; }
+@keyframes g2-breathe { 50% { scale: 1.08; } }
+.g2 .g2-float { animation: g2-float 3.4s ease-in-out infinite; }
+@keyframes g2-float { 50% { translate: 0 -3px; } }
+.g2 .g2-shimmer {
+  -webkit-mask-image: linear-gradient(100deg, #000 35%, rgba(0, 0, 0, 0.35) 50%, #000 65%); mask-image: linear-gradient(100deg, #000 35%, rgba(0, 0, 0, 0.35) 50%, #000 65%);
+  -webkit-mask-size: 260% 100%; mask-size: 260% 100%; animation: g2-shimmer 1.8s linear infinite;
+}
+@keyframes g2-shimmer { from { -webkit-mask-position: 100% 0; mask-position: 100% 0; } to { -webkit-mask-position: 0 0; mask-position: 0 0; } }
+.g2 .g2-pop { animation: g2-pop 0.32s cubic-bezier(0.23, 1, 0.32, 1) both; }
+@keyframes g2-pop { from { opacity: 0; scale: 0.6; } to { opacity: 1; scale: 1; } }
+.g2 .g2-dialog { animation: g2-dialog 0.26s cubic-bezier(0.23, 1, 0.32, 1) both; }
+@keyframes g2-dialog { from { opacity: 0; scale: 0.96; } to { opacity: 1; scale: 1; } }
+.g2 .g2-fade { animation: g2-in 0.22s ease both; }
+.g2 .g2-drop { animation: g2-drop 0.3s cubic-bezier(0.23, 1, 0.32, 1) both; }
+@keyframes g2-drop { from { opacity: 0; translate: 0 -12px; } to { opacity: 1; translate: 0 0; } }
+/* письмо ждёт решения: подсветка переезжает на карточку (правило языка GRIF) — мягко дышит внутри её края */
+.g2 .g2-await { isolation: isolate; }
+.g2 .g2-await::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(143, 160, 255, 0.7), inset 0 0 28px rgba(79, 99, 216, 0.28); animation: g2-glow 2.4s ease-in-out infinite; }
+@keyframes g2-glow { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+/* кольцо-подсказка поверх экрана (stage.mark): не обрезается родителями слоя */
+.g2 .g2-mark { position: absolute; z-index: 60; display: block; pointer-events: none; box-sizing: border-box; border: calc(2px * var(--k, 1)) solid #8fa0ff; }
+.g2 .g2-mark::after { content: ""; position: absolute; inset: calc(-2px * var(--k, 1)); border-radius: inherit; box-shadow: 0 0 0 calc(6px * var(--k, 1)) rgba(101, 124, 241, 0.35); animation: g2-mark 1.6s ease-out infinite; }
+@keyframes g2-mark { 0% { opacity: 1; scale: 0.98; } 100% { opacity: 0; scale: 1.06; } }
+@media (prefers-reduced-motion: reduce) {
+  .g2 .g2-spin, .g2 .g2-grow, .g2 .g2-pulse, .g2 .g2-breathe, .g2 .g2-breathe-slow, .g2 .g2-float, .g2 .g2-shimmer, .g2 .g2-pop, .g2 .g2-dialog, .g2 .g2-drop, .g2 .g2-await::after, .g2 .g2-mark::after { animation: none; }
+  .g2 .g2-shimmer { -webkit-mask-image: none; mask-image: none; }
+}

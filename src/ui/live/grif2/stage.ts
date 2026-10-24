@@ -28,7 +28,62 @@ export function createStage(root: HTMLElement, opts: { base: string; calm: boole
     } else old?.remove();
     cur = el;
     root.scrollTop = 0;
+    liven(el, key, instant);
     return el;
+  }
+
+  /* 24.10: экран живёт и без нажатий — то, что в продукте движется, движется и здесь: спиннеры крутятся, полоски
+     прогресса дорастают, точка статуса и персонаж «дышат», строка текущего шага мерцает. На входе экрана его части
+     появляются лесенкой (30–60 мс), а не все разом. «Меньше движения» — без этого. */
+  function liven(el: HTMLElement, key: ScreenKey, instant: boolean) {
+    if (opts.calm) return;
+    const all = (sel: string) => [...el.querySelectorAll<HTMLElement>(sel)];
+    all('[data-n="icon/spin"]').forEach((n) => n.classList.add("g2-spin"));
+    all('[data-n="Progress"], [data-n="Long task"] > div > [data-n="Rectangle"]').forEach((n) => n.classList.add("g2-grow"));
+    all('[data-n="Agent status"] > [data-n="Ellipse"]').forEach((n) => n.classList.add("g2-pulse"));
+    all('[data-n="Character · Working"]').forEach((n) => n.classList.add("g2-breathe"));
+    all('[data-n="Character · Listening"]').forEach((n) => n.classList.add("g2-breathe-slow"));
+    all('[data-n="Character · Idle"]').forEach((n) => n.classList.add("g2-float"));
+    /* текущий шаг: строка рядом со спиннером */
+    all('[data-n="icon/spin"]').forEach((sp) => [...(sp.parentElement?.children ?? [])].forEach((c) => {
+      if (c !== sp && c.tagName === "DIV" && !c.children.length && (c.textContent ?? "").length > 6) c.classList.add("g2-shimmer");
+    }));
+    all('[data-n="Working status"] div').forEach((n) => { if (!n.children.length && (n.textContent ?? "").length > 10) n.classList.add("g2-shimmer"); });
+    if (instant) return;
+    const stagger = (list: (HTMLElement | null | undefined)[], step = 50, from = 0, cls = "g2-rise") =>
+      list.filter(Boolean).forEach((n, i) => { n!.style.animationDelay = `${from + i * step}ms`; n!.classList.add(cls); });
+    const kids = (sel: string) => [...(el.querySelector(sel)?.children ?? [])] as HTMLElement[];
+    if (key === "new") stagger([el.querySelector<HTMLElement>('[data-n="Greeting row"]'), el.querySelector<HTMLElement>('[data-n="Composer v3"]'), ...kids('[data-n="Prompt buttons"]')], 60, 80);
+    if (key === "feed" || key === "feedRun" || key === "feedEmpty") stagger(all('[data-n="Main Container"] [data-n^="Group"] > [data-n^="Row"]'), 35, 60);
+    if (key === "feedRun") stagger(kids('[data-n="Steps"]'), 260, 200), all('[data-n="Steps"] [data-n="icon/okc"]').forEach((n, i) => { n.style.animationDelay = `${300 + i * 260}ms`; n.classList.add("g2-pop"); });
+    if (key === "memory" || key === "forget") stagger([...kids('[data-n="Recently remembered"]'), ...kids('[data-n="Dossier grid"]')], 45, 60);
+  }
+
+  /** кольцо-подсказка отдельным слоем поверх экрана: родители слоя в Figma обрезают содержимое, кольцо на самом
+      слое срезалось бы по их краю. Координаты — сумма offset* до корня экрана (не зависят от zoom и transform) */
+  function mark(target: HTMLElement | null) {
+    cur?.querySelectorAll(".g2-mark").forEach((n) => n.remove());
+    if (!target || !cur) return;
+    let x = 0, y = 0;
+    for (let n: HTMLElement | null = target; n && n !== cur; n = n.offsetParent as HTMLElement | null) { x += n.offsetLeft; y += n.offsetTop; }
+    const k = parseFloat(getComputedStyle(root).getPropertyValue("--dd-k")) || 1 / (parseFloat(root.style.zoom) || 1);
+    const pad = 5 * k;
+    const r = parseFloat(getComputedStyle(target).borderTopLeftRadius) || 8;
+    const m = document.createElement("i");
+    m.className = "g2-mark";
+    m.style.cssText = `left:${x - pad}px;top:${y - pad}px;width:${target.offsetWidth + pad * 2}px;height:${target.offsetHeight + pad * 2}px;--k:${k};border-radius:${r + pad}px`;
+    cur.append(m);
+    return m;
+  }
+
+  /** текст печатается словами, как стриминг ответа */
+  /** с момента at; возвращает, сколько длится печать */
+  function stream(el: HTMLElement | null, at = 0, gap = 40) {
+    if (!el || opts.calm) return 0;
+    const words = (el.textContent ?? "").split(/(\s+)/);
+    el.textContent = "";
+    words.forEach((w, i) => later(at + i * gap, () => { el.textContent += w; }));
+    return words.length * gap;
   }
 
   /** ближайший предок-«кнопка» текстового слоя: up — на сколько уровней подняться от текста */
@@ -39,15 +94,20 @@ export function createStage(root: HTMLElement, opts: { base: string; calm: boole
   }
 
   /** дети слоя появляются по очереди (ответ агента собирается на глазах) */
-  function reveal(parent: HTMLElement | null, gap = 420, from = 0) {
+  /** дети слоя появляются по очереди; onShow(kid, at) — что сделать с частью к моменту at и сколько ещё ждать
+      до следующей (часть печатается словами — следующая ждёт конца печати). Возвращает общую длительность */
+  function reveal(parent: HTMLElement | null, gap = 420, from = 0, onShow?: (kid: HTMLElement, at: number) => number) {
     if (!parent) return 0;
-    const kids = [...parent.children] as HTMLElement[];
-    kids.forEach((k, i) => {
-      if (i < from) return;
-      k.classList.add("g2-hide");
-      later(gap * (i - from + 1), () => { k.classList.remove("g2-hide"); k.classList.add("g2-rise"); });
-    });
-    return gap * (kids.length - from + 1);
+    const kids = ([...parent.children] as HTMLElement[]).slice(from);
+    kids.forEach((k) => k.classList.add("g2-hide"));
+    let t = 0;
+    for (const k of kids) {
+      t += gap;
+      const extra = onShow ? onShow(k, t) : 0;
+      later(t, () => { k.classList.remove("g2-hide"); k.classList.add("g2-rise"); });
+      t += extra;
+    }
+    return t + gap;
   }
 
   /** печать в текстовый слой; resolve, когда допечатано */
@@ -79,6 +139,8 @@ export function createStage(root: HTMLElement, opts: { base: string; calm: boole
     type,
     countdown,
     later,
+    mark,
+    stream,
     clear,
     get el() { return cur!; },
     find: (name: string, contains = false) => (cur ? layer(cur, name, contains) : null),

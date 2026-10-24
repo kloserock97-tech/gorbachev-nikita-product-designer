@@ -17,7 +17,7 @@ export const en: CaseStory = {
     title: "GRIF AI",
     tagline: "I built a design department out of AI agents and took the product from concept to an MVP with a design system in React.",
     summary:
-      "We started with an idea, a couple of screens and a small budget, so agents did most of the design. I prepared the design system and the instructions, connected Figma to Claude through MCP and set up a pipeline to GitHub and Storybook. Agents built prototypes, screens and components, I owned the vision, fixes, animations and identity, and development checked and assembled the final interface.",
+      "GRIF is an assistant that comes to you first: it notices tasks in your mail and calendar and brings a ready solution. The main design job was to make people trust it with a whole task and not fear a mistake. We built it from zero on a small budget, so AI agents put together most of the design: I prepared the design system and the rules, connected Figma to Claude through MCP and set up a pipeline to GitHub and Storybook. Agents built screens and components, I owned the vision, fixes and animations.",
     facts: [
       ["Role", "Founding Product Designer"],
       ["Company", "GRIF AI"],
@@ -137,7 +137,7 @@ export const en: CaseStory = {
         insight: "F4",
         title: "Nothing goes out without a confirmation",
         found: "If the interface says “I won't send this without your confirmation”, the fear that it will get it wrong and send goes away.",
-        did: "The email arrives as a draft: recipient, subject, text. At the bottom is the line “I'll send it only after your yes” and three buttons: Don't send, Edit and Send.",
+        did: "The email arrives as a draft: recipient, subject, text. At the bottom is the line “I'll send it only after your yes” and three buttons: Don't send, Edit and Send. The Feed works the same way: the email to Sergey sits under “Waiting for you” and goes out only when you press the button.",
         demo: "grif-confirm",
       },
       {

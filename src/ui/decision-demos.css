@@ -15,8 +15,6 @@
 }
 .dd-cursor.is-on { opacity: 1; }
 .dd-cursor.is-down { scale: 0.82; }
-.dd-root .dd-ring { outline: calc(2px * var(--dd-k, 1)) solid #8fa0ff; outline-offset: calc(3px * var(--dd-k, 1)); animation: dd-ring 1.6s ease-out infinite; }
-@keyframes dd-ring { 0% { box-shadow: 0 0 0 0 rgba(101, 124, 241, 0.55); } 100% { box-shadow: 0 0 0 calc(12px * var(--dd-k, 1)) rgba(101, 124, 241, 0); } }
 .dd-root .dd-pressed { transform: scale(0.96); transition: transform 0.12s ease; }
 
 .dd-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -38,5 +36,4 @@
 .cs-changed p:not(.cs-mini) { margin: 0; font-size: 16px; line-height: 1.5; }
 @media (prefers-reduced-motion: reduce) {
   .dd-cursor { transition: none; }
-  .dd-root .dd-ring { animation: none; }
 }

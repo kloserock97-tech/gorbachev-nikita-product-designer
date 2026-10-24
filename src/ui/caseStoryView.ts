@@ -358,12 +358,13 @@ export function sectionsOf(s: CaseStory): Section[] {
   if (s.results) list.push({ id: "results", label: t("cs.results") });
   list.push({ id: "context", label: t("cs.context") });
   if (s.journey) list.push({ id: "journey", label: t("cs.journey") });
-  if (s.approach) list.push({ id: "approach", label: t("cs.approach") });
+  if (s.approach && !s.compact) list.push({ id: "approach", label: t("cs.approach") });
   list.push({ id: "research", label: t("cs.research") });
   if (s.flow && !s.flow.folded) list.push({ id: "flow", label: t("cs.flow") });
   if (s.compare) list.push({ id: "compare", label: t("cs.compare") });
   list.push({ id: "decisions", label: t("cs.decisions"), children: s.deepDives.map((d) => ({ id: `dd-${d.id}`, label: d.chip })) });
   if (s.validation) list.push({ id: "validation", label: t("cs.validation") });
+  if (s.approach && s.compact) list.push({ id: "approach", label: t("cs.approach") });
   if (s.split) list.push({ id: "split", label: t("cs.split") });
   if (s.mistakes) list.push({ id: "mistakes", label: t("cs.mistakes") });
   if (s.roadmap) list.push({ id: "roadmap", label: t("cs.roadmap") });
@@ -389,6 +390,19 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
   const r = s.research;
   /** фото-разделитель встаёт после названной главы, если он у кейса есть */
   const brk = (after: string) => (s.interludes ?? []).filter((x) => x.after === after).map((x) => interlude(x.image, x.focus)).join("");
+  /* 24.10: в плотной вёрстке «Подход» (как работал с агентами) идёт в конце: продуктовая цепочка контекст → путь →
+     исследование → решения → проверка не рвётся рассказом о процессе. head(++sec) считает номер при вызове */
+  const apBlock = () => `
+    ${ap ? `<section class="cs-sec">
+      ${head(++sec, "approach", t("cs.approach"), ap.lead)}
+      ${ap.text ? paras(ap.text) : ""}
+      ${ap.rejected ? `<div class="cs-block cs-rejected" data-reveal>${mini(t("cs.rejected"))}<p>${esc(ap.rejected)}</p></div>` : ""}
+      ${ap.levels?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.levels"))}<ol class="cs-levels">${ap.levels.map((x, k) => `<li style="--k:${k}"><span>${pad(k + 1)}</span><b>${esc(x.title)}</b><p>${esc(x.text)}</p></li>`).join("")}</ol></div>` : ""}
+      ${ap.rules?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.rules"))}<dl class="cs-rules">${ap.rules.map((x) => `<div><dt>${esc(x.trait)}</dt><dd>${esc(x.rule)}</dd></div>`).join("")}</dl></div>` : ""}
+      ${ap.refusals?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.refusals"))}<ul class="cs-refusals">${ap.refusals.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
+      ${ap.image ? `<div data-reveal>${fig(ap.image, "cs-fig--wide")}</div>` : ""}
+    </section>` : ""}
+    ${brk("approach")}`;
   const html = `
   <article class="cs${s.compact ? " cs--compact" : ""}" data-case="${esc(s.id)}" style="${lookVars(card, "mono")};--case:${card.look.accent};--case-ink:${card.look.ink}">
     <div class="cs-top">
@@ -473,16 +487,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           <p class="cs-measured cs-measured--journey" data-reveal><b>${t("cs.measured")}</b>${marks(esc(s.journey.measured))}</p>
         </section>` : ""}
 
-        ${ap ? `<section class="cs-sec">
-          ${head(++sec, "approach", t("cs.approach"), ap.lead)}
-          ${ap.text ? paras(ap.text) : ""}
-          ${ap.rejected ? `<div class="cs-block cs-rejected" data-reveal>${mini(t("cs.rejected"))}<p>${esc(ap.rejected)}</p></div>` : ""}
-          ${ap.levels?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.levels"))}<ol class="cs-levels">${ap.levels.map((x, k) => `<li style="--k:${k}"><span>${pad(k + 1)}</span><b>${esc(x.title)}</b><p>${esc(x.text)}</p></li>`).join("")}</ol></div>` : ""}
-          ${ap.rules?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.rules"))}<dl class="cs-rules">${ap.rules.map((x) => `<div><dt>${esc(x.trait)}</dt><dd>${esc(x.rule)}</dd></div>`).join("")}</dl></div>` : ""}
-          ${ap.refusals?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.refusals"))}<ul class="cs-refusals">${ap.refusals.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
-          ${ap.image ? `<div data-reveal>${fig(ap.image, "cs-fig--wide")}</div>` : ""}
-        </section>` : ""}
-        ${brk("approach")}
+        ${s.compact ? "" : apBlock()}
 
         <section class="cs-sec cs-sec--research">
           ${head(++sec, "research", t("cs.research"), r.lead)}
@@ -535,6 +540,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           ${head(++sec, "validation", t("cs.validation"), s.validation.lead)}
           <ol class="cs-stages">${s.validation.stages.map((x, k) => `<li data-reveal style="--rd:${k}"><p class="cs-mini">${esc(x.kicker)}</p><b>${esc(x.title)}</b><p>${marks(esc(x.text))}</p></li>`).join("")}</ol>
         </section>` : ""}
+        ${s.compact ? apBlock() : ""}
 
         ${s.split ? `<section class="cs-sec">
           ${head(++sec, "split", t("cs.split"), s.split.title)}
