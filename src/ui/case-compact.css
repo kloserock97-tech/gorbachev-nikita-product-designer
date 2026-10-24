@@ -116,3 +116,12 @@
     background: #05060a; opacity: calc(var(--cover, 0) * 0.45); pointer-events: none;
   }
 }
+
+/* 24.10, прожарка: короткие пары «название — пояснение» не тянутся строками во всю ширину, а встают в две колонки */
+@media (min-width: 900px) {
+  .cs--compact .cs-rules { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
+  .cs--compact .cs-rules div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .cs--compact .cs-constraints { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
+  .cs--compact .cs-constraints li { grid-template-columns: 28px minmax(0, 1fr); gap: 4px 10px; }
+  .cs--compact .cs-constraints li > p { grid-column: 2; }
+}

@@ -149,8 +149,7 @@ export const en: CaseStory = {
         demo: "grif-undo",
       },
     ],
-    film: { src: G + "film.mp4", poster: G + "film-poster.webp", w: 1920, h: 1080, caption: "GRIF interface film: input, greeting, chips, thinking steps, artefacts and accessibility",
-      start: 3, end: 39, chapters: [{ t: 3, label: "One input" }, { t: 7, label: "Greeting" }, { t: 11, label: "Suggestions" }, { t: 16, label: "Thinking" }, { t: 21, label: "Artefacts" }, { t: 30, label: "Accessibility" }] },
+    /* 24.10: the interface film is gone: it was shot on the pre-redesign UI */
   },
   /* 23.10: contrast measured on the Figma export pixels, see the Russian version for frame ids.
      In the final mock-up the placeholder is 3.67, the warning 3.90 and the profile email 3.40, also under 4.5 */
@@ -207,7 +206,7 @@ export const en: CaseStory = {
       {
         kicker: "Round 2",
         title: "An investor run",
-        text: "Investors went through real tasks in the finished part of the product. Wanting to invest and wanting to use it yourself went together: interest came when the product's logic was clear within minutes and people recognised their own tasks, like meeting briefs and sorting email. So the interface explains itself through captions: “Thought for 12 s · Ran 4 actions” and “I'll send it only after your yes”.",
+        text: "Investors went through real tasks in the finished part of the product. Interest came when the product's logic was clear within minutes and people recognised their own tasks, like meeting briefs and sorting email.",
       },
       {
         kicker: "Round 3",
