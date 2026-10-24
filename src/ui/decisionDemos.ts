@@ -1,202 +1,185 @@
 /* 23.10: мини-демо решений на странице кейса (глава «Решения»). Идея — ролики решений в кейсе CRM с портфолио
    klinaeva: кусок интерфейса сам проигрывает действие, внизу подпись шага «1 из 3 · …» и пауза. Код свой.
 
-   Демо не рисует интерфейс заново: внутри — тот же живой прототип, что в главе «Готовый интерфейс» (src/ui/live),
-   целиком, как полный экран продукта (окно 1200 × 750 с сайдбаром), уменьшенный под ширину блока: видно всё окно
+   24.10: внутри — финальные экраны GRIF, перенесённые из Figma один в один (src/ui/live/grif2), на той же сцене,
+   что и прототип. Окно продукта целиком, 1440 × 900 с сайдбаром, уменьшенное под ширину блока: видно всё окно
    и как в нём меняется состояние. Ничего не кадрируется и не приближается. Курсор и кольцо подсветки рисуются
-   в обратном масштабе, чтобы в уменьшенном окне их было видно. Сценарий — три шага: каждый ставит прототип
-   в нужное состояние, двигает курсор и обводит элемент кольцом. Демо только показывает: нажать внутри нельзя, для этого есть прототип выше.
+   в обратном масштабе, чтобы в уменьшенном окне их было видно. Сценарий — три шага: каждый показывает экран,
+   двигает курсор и обводит слой кольцом (слой ищется по имени из Figma или по тексту). Демо только показывает:
+   нажать внутри нельзя, для этого есть прототип выше.
 
    Играет, пока блок на экране; ушёл с экрана — пауза. «Меньше движения» — без автопроигрывания: шаги листаются
-   кнопкой, курсор не едет. Модуль прототипа грузится своим чанком, когда блок подъехал к экрану. */
+   кнопкой, курсор не едет. Экраны грузятся своим чанком, когда блок подъехал к экрану. */
 import { getLang } from "../i18n";
 import { tidy } from "../lib/typograph";
-import { LIVE } from "./live";
-import type { LiveInstance } from "./live/types";
+import type { Stage } from "./live/grif2/stage";
 import "./decision-demos.css";
 
 type L = { ru: string; en: string };
 type Scene = {
-  q: <E extends HTMLElement = HTMLElement>(sel: string) => E;
-  inst: LiveInstance;
+  s: Stage;
   calm: boolean;
   wait: (ms: number) => Promise<void>;
   /** курсор к элементу (по центру или в точку fx, fy в долях элемента) */
-  point: (el: HTMLElement, fx?: number, fy?: number) => Promise<void>;
-  /** нажатие курсором; click — передать нажатие интерфейсу */
-  press: (el: HTMLElement, click?: boolean) => Promise<void>;
+  point: (el: HTMLElement | null, fx?: number, fy?: number) => Promise<void>;
+  /** нажатие курсором (интерфейсу не передаётся) */
+  press: (el: HTMLElement | null) => Promise<void>;
   ring: (el: HTMLElement | null) => void;
-  type: (el: HTMLTextAreaElement, text: string) => Promise<void>;
-  /** дождаться, пока элемент покажется (прототип сам ведёт свои паузы) */
-  until: (sel: string, ms?: number) => Promise<void>;
-  /** поставить элемент к верху прокрутки чата */
-  top: (el: HTMLElement, middle?: boolean) => void;
 };
 type Beat = { cap: L; run: (s: Scene) => Promise<void>; hold?: number };
-type Demo = { live: string; beats: Beat[] };
+type Demo = { beats: Beat[] };
 
-/** демо показывает окно продукта целиком, как полный экран (дизайн-ширина живого прототипа), уменьшенным под блок */
-const FULL_W = 1200, FULL_H = 750;
+/** демо показывает окно продукта целиком, как полный экран (размер кадра в Figma), уменьшенным под блок */
+const FULL_W = 1440, FULL_H = 900;
 const tr = (x: L) => (getLang() === "ru" ? x.ru : x.en);
 const T = {
   of: { ru: "из", en: "of" },
   pause: { ru: "Пауза", en: "Pause" },
   play: { ru: "Смотреть", en: "Play" },
   next: { ru: "Следующий шаг", en: "Next step" },
-  label: { ru: "Демо решения: проигрывается само", en: "Demo of the decision: plays by itself" },
 };
 
-/* ── сценарии GRIF: селекторы — из разметки src/ui/live/grif.ts ─────────────── */
-const TYPED: L = { ru: "Напиши Сергею follow-up по вчерашней встрече", en: "Write Sergey a follow-up on yesterday's meeting" };
+/* ── сценарии GRIF: экраны и имена слоёв — из Figma (секция 1066:3810) ─────────────── */
 const DEMOS: Record<string, Demo> = {
   "grif-entry": {
-    live: "grif-ai",
     beats: [
       {
         cap: { ru: "Поле ввода стоит в центре нового чата", en: "The input sits in the middle of a new chat" },
-        run: async (s) => {
-          s.inst.show(0);
-          const p = s.q<HTMLTextAreaElement>("[data-prompt]");
-          p.value = "";
-          s.q("[data-files]").hidden = true;
-          await s.point(p, 0.2, 0.5);
-          await s.type(p, tr(TYPED));
+        run: async (c) => {
+          c.s.show("new");
+          const box = c.s.find("Composer v3");
+          c.ring(box);
+          await c.point(c.s.find("Placeholder"), 0.12, 0.5);
         },
       },
       {
-        cap: { ru: "Файлы встают в ряд над текстом", en: "Files line up above the text" },
-        run: async (s) => {
-          const files = s.q("[data-files]");
-          files.hidden = false;
-          s.ring(files);
-          await s.point(files, 0.3, 0.5);
+        cap: { ru: "Через @ источник выбирается прямо в поле", en: "Typing @ picks a source right in the input" },
+        run: async (c) => {
+          c.s.show("input");
+          const ph = c.s.find("Placeholder");
+          const pop = c.s.find("Mention popover");
+          pop?.classList.add("g2-hide");
+          await c.point(ph, 0.1, 0.5);
+          await c.s.type(ph, "Найди в @Gmail письмо от Сергея про пилот", 34);
+          pop?.classList.remove("g2-hide");
+          pop?.classList.add("g2-rise");
+          c.ring(pop);
+          await c.point(c.s.text("Gmail"), 0.5, 0.5);
         },
+        hold: 1800,
       },
       {
-        cap: { ru: "Или готовое дело в один клик", en: "Or a ready-made task in one click" },
-        run: async (s) => {
-          const chip = s.q(".lg-hcard[data-send]");
-          s.ring(chip);
-          await s.point(chip, 0.45, 0.5);
-          await s.press(chip);
+        cap: { ru: "Или подсказка из дел на сегодня", en: "Or a suggestion from today's tasks" },
+        run: async (c) => {
+          c.s.show("new");
+          const chip = c.s.find("Card");
+          c.ring(chip);
+          await c.point(chip, 0.4, 0.5);
+          await c.press(chip);
         },
       },
     ],
   },
   "grif-reading": {
-    live: "grif-ai",
     beats: [
       {
-        cap: { ru: "Пока GRIF работает, видно, что именно он делает", en: "While GRIF works, you can see what exactly it is doing" },
-        run: async (s) => {
-          s.inst.show(1);
-          await s.until("[data-think]:not([hidden])", 2500);
-          s.ring(s.q("[data-think]"));
-          /* прототип сам докручивает чат вниз, пока дописывает ответ: шаг длится до конца ответа */
-          await s.until("[data-card]:not([hidden])", 8000);
-          /* после письма прототип ещё раз доводит чат до кнопки «Отправить» — даём ему закончить */
-          await s.until("[data-more]:not([hidden])", 2000);
-          await s.wait(700);
+        cap: { ru: "Пока GRIF работает, видно шаг и сколько осталось", en: "While GRIF works, you see the step and what is left" },
+        run: async (c) => {
+          c.s.show("working");
+          const task = c.s.find("Long task");
+          c.ring(task);
+          await c.point(task, 0.3, 0.35);
+          await c.wait(900);
+          await c.point(c.s.text("GRIF работает: шаг 2 из 4 — ищу переписку в Gmail"), 0.4, 0.5);
         },
-        hold: 300,
+        hold: 1800,
       },
       {
-        cap: { ru: "Готово: шаги свернулись в одну строку, их можно раскрыть", en: "Done: the steps fold into one line you can open" },
-        run: async (s) => {
-          s.top(s.q("[data-brief]"));
-          const sum = s.q("[data-sum]");
-          s.ring(sum);
-          await s.point(sum, 0.5, 0.5);
-          await s.press(sum, true);
-          await s.wait(1500);
-          await s.press(sum, true);
+        cap: { ru: "Готово: «Думал 12 с» и «Выполнил 4 действия»", en: "Done: “Thought for 12 s” and “Ran 4 actions”" },
+        run: async (c) => {
+          c.s.show("pending");
+          const steps = c.s.find("Agent steps");
+          c.ring(steps);
+          await c.point(steps, 0.25, 0.5);
         },
       },
       {
         cap: { ru: "Под ответом подписано, из чего он собран", en: "Under the answer: what it was built from" },
-        run: async (s) => {
-          const based = s.q("[data-based]");
-          /* на узкой вёрстке бриф длинный, и строку источников у верха брифа прикрыло бы поле ввода */
-          s.top(based, true);
-          s.ring(based);
-          await s.point(based, 0.55, 0.5);
+        run: async (c) => {
+          c.s.show("done");
+          const src = c.s.text("Gmail · 12 писем")?.parentElement?.parentElement ?? null;
+          c.ring(src);
+          await c.point(src, 0.5, 0.5);
         },
         hold: 2200,
       },
     ],
   },
   "grif-confirm": {
-    live: "grif-ai",
     beats: [
       {
         cap: { ru: "Письмо приходит черновиком", en: "The email arrives as a draft" },
-        run: async (s) => {
-          s.inst.show(2);
-          await s.wait(60);
-          const card = s.q("[data-card]");
-          s.top(s.q("[data-mem]"));
-          s.ring(card);
-          await s.point(card, 0.5, 0.45);
+        run: async (c) => {
+          c.s.show("pending");
+          const card = c.s.find("Action card");
+          c.ring(card);
+          await c.point(card, 0.5, 0.35);
         },
       },
       {
-        cap: { ru: "«Редактировать» открывает письмо целиком", en: "“Edit” opens the whole email" },
-        run: async (s) => {
-          const edit = s.q("[data-edit]");
-          s.ring(edit);
-          await s.point(edit);
-          await s.press(edit, true);
+        cap: { ru: "«Отправлю только после вашего «да»»", en: "“I'll send it only after your yes”" },
+        run: async (c) => {
+          const line = c.s.text("Отправлю только после вашего «да»");
+          c.ring(line?.parentElement ?? line);
+          await c.point(line, 0.5, 0.5);
         },
-        hold: 2400,
+        hold: 1900,
       },
       {
-        cap: { ru: "Без подтверждения ничего не уйдёт", en: "Nothing goes out without your confirmation" },
-        run: async (s) => {
-          await s.press(s.q("[data-panel] [data-close]"), true);
-          const safe = s.q(".lg-safe");
-          s.ring(safe);
-          await s.point(safe, 0.6, 0.5);
-          await s.wait(900);
-          const send = s.q("[data-card] [data-mail]");
-          s.ring(send);
-          await s.point(send);
+        cap: { ru: "Решение за вами: отправить, изменить или не отправлять", en: "Your call: send, edit or don't send" },
+        run: async (c) => {
+          const send = c.s.find("Button/Отправить");
+          c.ring(send?.parentElement ?? send);
+          await c.point(c.s.text("Не отправлять"), 0.5, 0.5);
+          await c.wait(500);
+          await c.point(send, 0.5, 0.5);
+          await c.press(send);
         },
       },
     ],
   },
   "grif-undo": {
-    live: "grif-ai",
     beats: [
       {
-        cap: { ru: "Нажали «Отправить»: письмо ушло", en: "Hit “Send”: the email is out" },
-        run: async (s) => {
-          s.inst.show(2);
-          await s.wait(60);
-          s.top(s.q("[data-mem]"));
-          const send = s.q("[data-card] [data-mail]");
-          s.ring(send);
-          await s.point(send);
-          await s.press(send, true);
-          s.ring(s.q("[data-toast]"));
+        cap: { ru: "Письмо ушло, но «Отменить» держится 8 секунд", en: "Sent, but “Undo” stays for 8 seconds" },
+        run: async (c) => {
+          c.s.show("done");
+          const card = c.s.find("Action card");
+          c.ring(card);
+          c.s.countdown(card);
+          await c.point(c.s.text("Отменить · 8 с"), 0.5, 0.5);
         },
-      },
-      {
-        cap: { ru: "Передумали: «Вернуть»", en: "Changed your mind: “Undo”" },
-        run: async (s) => {
-          const undo = s.q("[data-sent] [data-undo]");
-          s.ring(undo);
-          await s.point(undo);
-          await s.press(undo, true);
-          s.top(s.q("[data-mem]"));
-        },
+        hold: 2200,
       },
       {
         cap: { ru: "Запомненное тоже можно отменить", en: "What it remembered can be undone too" },
-        run: async (s) => {
-          const link = s.q(".lg-mem .lg-link");
-          s.ring(link);
-          await s.point(link);
-          await s.press(link);
+        run: async (c) => {
+          const note = c.s.find("Memory note");
+          c.ring(note);
+          await c.point(c.s.text("Отменить", note), 0.5, 0.5);
+        },
+      },
+      {
+        cap: { ru: "Забытое в Памяти — «Вернуть» в течение 10 секунд", en: "Forgotten in Memory: “Restore” for 10 seconds" },
+        run: async (c) => {
+          c.s.show("forget");
+          c.s.find("Dialog / Forget")?.classList.add("g2-hide");
+          c.s.find("Overlay")?.classList.add("g2-hide");
+          const toast = c.s.find("Toast / after forget");
+          toast?.classList.add("g2-rise");
+          c.ring(toast);
+          c.s.countdown(toast);
+          await c.point(toast, 0.75, 0.5);
         },
         hold: 2200,
       },
@@ -207,9 +190,8 @@ const DEMOS: Record<string, Demo> = {
 export const hasDecisionDemo = (id?: string) => !!id && id in DEMOS;
 
 export function decisionDemoBlock(id: string, alt: string) {
-  const w = FULL_W, h = FULL_H;
   const esc = (s: string) => tidy(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-  return `<figure class="dd" data-dd="${id}" style="--dd-ar:${w} / ${h}" aria-label="${esc(alt)}">
+  return `<figure class="dd" data-dd="${id}" style="--dd-ar:${FULL_W} / ${FULL_H}" aria-label="${esc(alt)}">
     <div class="dd-view" aria-hidden="true"><div class="dd-cam"><div class="dd-root"></div><i class="dd-cursor"></i></div></div>
     <figcaption class="dd-bar">
       <span class="dd-step" aria-live="polite"><b data-dd-n></b><span data-dd-cap></span></span>
@@ -234,12 +216,11 @@ function mountOne(fig: HTMLElement, scroller: HTMLElement) {
   const nEl = fig.querySelector<HTMLElement>("[data-dd-n]")!;
   const capEl = fig.querySelector<HTMLElement>("[data-dd-cap]")!;
   const btn = fig.querySelector<HTMLButtonElement>("[data-dd-btn]")!;
-  let inst: LiveInstance | null = null;
+  let stage: Stage | null = null;
   let scale = 1;
   let visible = false, userPaused = false, dead = false, loop = 0;
   let k = 0;
 
-  /* ширина вёрстки — по блоку: интерфейс не мельче 0,9 (на телефоне 0,68, иначе чат не поместится) */
   const fit = () => {
     const vw = view.clientWidth || FULL_W;
     for (const el of [cam, root]) { el.style.width = `${FULL_W}px`; el.style.height = `${FULL_H}px`; }
@@ -265,48 +246,34 @@ function mountOne(fig: HTMLElement, scroller: HTMLElement) {
     };
     setTimeout(tick, 60);
   });
-  /* координаты элемента в пикселях дизайна: от корня прототипа, делённые на масштаб камеры */
+  /* координаты элемента в пикселях экрана: от корня сцены, делённые на масштаб камеры */
   const at = (el: HTMLElement, fx = 0.5, fy = 0.5) => {
     const a = el.getBoundingClientRect(), b = root.getBoundingClientRect();
     return [(a.left - b.left + a.width * fx) / scale, (a.top - b.top + a.height * fy) / scale];
   };
   const scene = (): Scene => ({
-    q: <E extends HTMLElement = HTMLElement>(sel: string) => root.querySelector<E>(sel)!,
-    inst: inst!,
+    s: stage!,
     calm,
     wait,
     point: async (el, fx, fy) => {
+      if (!el) return;
       const [x, y] = at(el, fx, fy);
       cursor.style.transform = `translate(${x}px, ${y}px)`;
       cursor.classList.add("is-on");
       if (!calm) await wait(650);
     },
-    press: async (el, click = false) => {
+    press: async (el) => {
+      if (!el) return;
       cursor.classList.add("is-down");
       el.classList.add("dd-pressed");
       await wait(calm ? 0 : 220);
       cursor.classList.remove("is-down");
       el.classList.remove("dd-pressed");
-      if (click) el.click();
       await wait(calm ? 0 : 260);
     },
     ring: (el) => {
       root.querySelectorAll(".dd-ring").forEach((n) => n.classList.remove("dd-ring"));
       el?.classList.add("dd-ring");
-    },
-    type: async (el, text) => {
-      if (calm) { el.value = text; return; }
-      for (let i = 1; i <= text.length; i++) { el.value = text.slice(0, i); await wait(38); }
-    },
-    until: async (sel, ms = 4000) => {
-      for (let t = 0; t < ms && !root.querySelector(sel); t += 100) await wait(100);
-    },
-    top: (el, middle = false) => {
-      const sc = root.querySelector<HTMLElement>("[data-scroll]");
-      if (!sc || !sc.contains(el)) return;
-      let y = 0;
-      for (let n: HTMLElement | null = el; n && n !== sc; n = n.offsetParent as HTMLElement | null) y += n.offsetTop;
-      sc.scrollTop = Math.max(0, middle ? y - (sc.clientHeight - el.offsetHeight) / 2 : y - 16);
     },
   });
 
@@ -340,10 +307,11 @@ function mountOne(fig: HTMLElement, scroller: HTMLElement) {
   }
 
   async function start() {
-    if (inst) return;
-    const mod = await LIVE[d.live]();
+    if (stage) return;
+    const { createStage } = await import("./live/grif2/stage");
     if (dead) return;
-    inst = mod.default.mount(root, { lang: getLang() === "ru" ? "ru" : "en", calm, base: import.meta.env.BASE_URL, go: () => {} });
+    stage = createStage(root, { base: import.meta.env.BASE_URL, calm });
+    root.style.overflow = "hidden";
     fit();
     paintBtn();
     if (calm) await playBeat(0); else void run();
@@ -356,14 +324,14 @@ function mountOne(fig: HTMLElement, scroller: HTMLElement) {
   io.observe(fig);
 
   btn.addEventListener("click", async () => {
-    if (calm) { if (inst) await playBeat((k + 1) % d.beats.length); return; }
+    if (calm) { if (stage) await playBeat((k + 1) % d.beats.length); return; }
     userPaused = !userPaused;
     paintBtn();
   });
   paintBtn();
   caption(0);
 
-  return () => { dead = true; loop++; io.disconnect(); ro.disconnect(); inst?.destroy(); };
+  return () => { dead = true; loop++; io.disconnect(); ro.disconnect(); stage?.destroy(); };
 }
 
 export function mountDecisionDemos(root: HTMLElement, scroller: HTMLElement) {

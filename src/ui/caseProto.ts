@@ -88,9 +88,29 @@ export function protoBlock(p: CasePrototype) {
   </div>`;
 }
 
+/* 24.10: несколько сценариев одного продукта — вкладки над прототипами. Виден один блок; скрытый не грузит свой
+   живой модуль, пока его не открыли (наблюдатель видимости в mountProto срабатывает, когда блок показался) */
+export function flowsBlock(list: CasePrototype[]) {
+  return `<div class="pt-flows" data-flows>
+    <div class="pt-tabs" role="tablist">${list.map((p, k) => `<button type="button" role="tab" aria-selected="${k === 0}" data-flow="${k}">${esc(p.tab ?? p.title)}</button>`).join("")}</div>
+    ${list.map((p, k) => `<div class="pt-flow" data-flow-panel="${k}" role="tabpanel"${k ? " hidden" : ""}>${protoBlock(p)}</div>`).join("")}
+  </div>`;
+}
+
 /** оживляет все прототипы на странице; возвращает функцию остановки */
 export function mountProto(root: HTMLElement) {
   const offs: (() => void)[] = [];
+  root.querySelectorAll<HTMLElement>("[data-flows]").forEach((wrap) => {
+    const tabs = [...wrap.querySelectorAll<HTMLButtonElement>("[data-flow]")];
+    const panels = [...wrap.querySelectorAll<HTMLElement>("[data-flow-panel]")];
+    const pick = (k: number) => {
+      tabs.forEach((t, i) => t.setAttribute("aria-selected", String(i === k)));
+      panels.forEach((p, i) => { p.hidden = i !== k; });
+    };
+    const onTab = (e: MouseEvent) => { const t = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-flow]"); if (t) pick(+t.dataset.flow!); };
+    wrap.querySelector(".pt-tabs")!.addEventListener("click", onTab as EventListener);
+    offs.push(() => wrap.querySelector(".pt-tabs")?.removeEventListener("click", onTab as EventListener));
+  });
   const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
   root.querySelectorAll<HTMLElement>("[data-proto]").forEach((box) => {
     const pages = [...box.querySelectorAll<HTMLElement>(".pt-page")];

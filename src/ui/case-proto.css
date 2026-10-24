@@ -186,3 +186,12 @@
   .pt-page.is-in, .pt-page.is-out, .pt-page.is-in-back, .pt-page.is-out-back, .pt-toast { animation: none; }
   .pt-live-root .pt-hint { animation: none; box-shadow: 0 0 0 3px rgba(36, 120, 255, 0.6); }
 }
+
+/* 24.10: вкладки сценариев над прототипами (flowsBlock) */
+.pt-flows { display: grid; gap: 18px; }
+.pt-tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px; width: fit-content; max-width: 100%; border-radius: 999px; background: color-mix(in srgb, var(--ink) 8%, transparent); }
+.pt-tabs button { padding: 9px 16px; border: 0; border-radius: 999px; background: none; color: color-mix(in srgb, var(--ink) 72%, transparent); font: 500 14.5px/1.2 var(--font); cursor: pointer; transition: background 0.2s ease, color 0.2s ease; }
+.pt-tabs button:hover { color: var(--ink); }
+.pt-tabs button[aria-selected="true"] { background: var(--ink); color: #0e0f11; }
+.pt-tabs button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.pt-flow[hidden] { display: none; }

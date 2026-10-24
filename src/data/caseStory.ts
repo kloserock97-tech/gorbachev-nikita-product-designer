@@ -114,7 +114,8 @@ export type CaseFilm = { src: string; poster: string; w: number; h: number; capt
 export type ProtoStep = { image: CaseImage; spot?: [number, number]; action: string; why?: string; wait?: number; toast?: string };
 /* v115: live — id живого прототипа в src/ui/live (настоящий интерфейс в HTML вместо картинок); картинки шагов тогда
    остаются запасными и описывают, как выглядит каждый шаг */
-export type CasePrototype = { title: string; lead?: string; device?: "phone" | "browser"; live?: string; steps: ProtoStep[] };
+/* 24.10: tab — подпись сценария, когда у кейса несколько прототипов (CaseStory.prototypes) */
+export type CasePrototype = { title: string; lead?: string; device?: "phone" | "browser"; live?: string; tab?: string; steps: ProtoStep[] };
 
 export type CaseStory = {
   id: string;
@@ -176,6 +177,8 @@ export type CaseStory = {
   decisions: { lead: string; items: Decision[]; film?: { src: string; poster: string; w: number; h: number; caption: string; start?: number; end?: number; chapters?: { t: number; label: string }[] } };
   /** прототип, который можно прокликать, — в главе «Готовый интерфейс», если у кейса нет ролика */
   prototype?: CasePrototype;
+  /** 24.10: несколько сценариев прототипа — вкладками над блоком; есть — prototype не нужен */
+  prototypes?: CasePrototype[];
   /** разделение человек/агент (GRIF) */
   split?: { title: string; left: { name: string; items: string[] }; right: { name: string; items: string[] }; why: string };
   /** широкие картинки-разделители между главами: фото и фирменные материалы продукта */

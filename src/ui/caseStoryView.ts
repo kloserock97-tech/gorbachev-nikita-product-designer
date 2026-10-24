@@ -20,7 +20,7 @@ import { t } from "../i18n";
 import { heroStage, mountHero } from "./caseHero";
 import { brandMark, goArrow, lookVars, objectPicture } from "./caseLook";
 import { demoBlock, hasDemo, mountDemos } from "./caseDemos";
-import { mountProto, protoBlock } from "./caseProto";
+import { flowsBlock, mountProto, protoBlock } from "./caseProto";
 import { marks, mountNotes, notesBlock } from "./caseNotes";
 import { decisionDemoBlock, hasDecisionDemo, mountDecisionDemos } from "./decisionDemos";
 import { mountOpener, openerBlock } from "./filmOpener";
@@ -353,7 +353,7 @@ export function sectionsOf(s: CaseStory): Section[] {
   }
   /* v99: сначала готовый интерфейс и результат, потом процесс */
   const list: Section[] = [{ id: "brief", label: t("cs.brief") }];
-  if (s.decisions.film || s.prototype || hasDemo(s.id)) list.push({ id: "interface", label: t("cs.interface") });
+  if (s.decisions.film || s.prototype || s.prototypes?.length || hasDemo(s.id)) list.push({ id: "interface", label: t("cs.interface") });
   if (s.gallery.length) list.push({ id: "screens", label: t("cs.screens") });
   if (s.results) list.push({ id: "results", label: t("cs.results") });
   list.push({ id: "context", label: t("cs.context") });
@@ -425,10 +425,10 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           <p class="cs-summary" data-reveal>${runIn(s.hero.summary)}</p>
         </section>
 
-        ${s.decisions.film || s.prototype || hasDemo(s.id) ? `<section class="cs-sec cs-sec--interface cs-zone">
+        ${s.decisions.film || s.prototype || s.prototypes?.length || hasDemo(s.id) ? `<section class="cs-sec cs-sec--interface cs-zone">
           ${head(++sec, "interface", t("cs.interface"))}
-          ${s.prototype ? protoBlock(s.prototype) : ""}
-          ${s.decisions.film && !s.compact ? filmBlock(s.decisions.film) : s.prototype ? "" : demoBlock(s.id)}
+          ${s.prototypes?.length ? flowsBlock(s.prototypes) : s.prototype ? protoBlock(s.prototype) : ""}
+          ${s.decisions.film && !s.compact ? filmBlock(s.decisions.film) : s.prototype || s.prototypes?.length ? "" : demoBlock(s.id)}
         </section>` : ""}
 
         ${s.gallery.length ? `<section class="cs-sec cs-sec--screens">
