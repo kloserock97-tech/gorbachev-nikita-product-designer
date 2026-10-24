@@ -63,23 +63,8 @@ export const en: CaseStory = {
     ],
     measured: "I counted unassisted task success on steps 1, 3 and 4: find an action, launch it and undo it. GRIF does step 2 on its own.",
   },
-  approach: {
-    lead: "I wrote down the product's character in a form an agent can work from.",
-    text:
-      "Telling an agent \"make it calm and premium\" is useless: an LLM follows rules but does not guess taste. So my first step was to describe the product's character and turn it into rules, like a recipe that says \"a teaspoon of salt\" where a beginner would get \"salt to taste\".\n\nGRIF's character is the Quiet Strategist, \"the part of your mind that already thought it through while you were busy\". It speaks rarely and gets straight to the point, for example: \"Your brief for the meeting with Sergey is ready. Open it?\".",
-    rules: [
-      { trait: "Never rushes", rule: "Animations of 120 to 200 ms that change only opacity and colour. Nothing bounces or swells." },
-      { trait: "Speaks once", rule: "One guess at a time: one line between two points, no web of connections." },
-      { trait: "Silence is a message too", rule: "There is no spinner and no \"typing…\". During a pause a status line says \"Watching, quiet right now\"." },
-      { trait: "Trust through precision", rule: "Every answer carries the labels of the sources it was built from." },
-      { trait: "Makes no noise", rule: "One blue accent per screen, everything else grey. Blue marks what to look at right now." },
-    ],
-    refusals: [
-      "Choosing a model. The assistant decides which model fits the task, and the person has no need to know.",
-      "Folders and projects. Sorting tasks into folders would fall on the person, and that tidying is exactly what the assistant takes on.",
-      "Waking it with a code word. That would mean the assistant listens all the time, and GRIF already comes on its own when there is a reason.",
-    ],
-  },
+  /* 24.10: раздел «Подход» убран по просьбе Никиты */
+
   /* the product's own brand material and a photograph break up the chapters: a long page is read by scrolling */
   /* 23.10: широкие картинки между главами убраны по просьбе Никиты */
   interludes: [],
