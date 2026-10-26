@@ -23,12 +23,14 @@ void main(){
   float a=atan(v.y,v.x);
   float span=min(uRes.x,uRes.y);
   /* лучи: шум по углу, уходит наружу со временем; вторая октава медленнее — свет не мигает, а переливается */
-  float r=fbm(vec2(a*2.6,d/span*3.2-uT*.16));
-  float r2=fbm(vec2(a*5.1+3.,d/span*1.6-uT*.07));
-  float ray=.55+.75*r*r2*2.;
-  /* цвет стороны: вес — насколько точка левее/правее/выше/ниже центра */
-  vec4 w=vec4(max(0.,-v.x),max(0.,v.x),max(0.,v.y),max(0.,-v.y));
-  w=w*w;w/=max(1e-4,w.x+w.y+w.z+w.w);
+  /* 26.10: лучи мягче — низкая частота по углу и малый размах, свет переливается, а не полосит */
+  float r=fbm(vec2(a*1.4,d/span*2.2-uT*.12));
+  float r2=fbm(vec2(a*2.3+3.,d/span*1.1-uT*.05));
+  float ray=.78+.36*(r+r2-1.);
+  /* цвет стороны: плавное смешивание по направлению от центра (softmax по четырём осям) — без стыков на диагоналях */
+  vec2 dir=normalize(v+1e-4);
+  vec4 w=exp(2.2*vec4(-dir.x,dir.x,dir.y,-dir.y));
+  w/=w.x+w.y+w.z+w.w;
   vec4 br=.82+.22*sin(uT*vec4(.31,.27,.23,.37)+vec4(0.,1.7,3.1,4.6));
   vec3 col=uL*w.x*br.x+uR*w.y*br.y+uTop*w.z*br.z+uB*w.w*br.w;
   /* серый край (тёмный интерфейс) светил бы грязно-серым: нейтральный цвет тянем к цвету кейса, тёмный — поднимаем */
@@ -36,11 +38,12 @@ void main(){
   float chroma=max(col.r,max(col.g,col.b))-min(col.r,min(col.g,col.b));
   col=mix(col,uAcc*(.55+lum),smoothstep(.22,.02,chroma)*.75);
   col*=1.25+.6*smoothstep(.45,.1,lum);
-  float fall=exp(-d/(span*.22));
-  float I=fall*ray*step(.5,d+.5);
-  /* к краям холста свет сходит на нет — без обреза по его границе */
-  float e=min(min(p.x,uRes.x-p.x),min(p.y,uRes.y-p.y));
-  I*=smoothstep(0.,span*.14,e);
+  /* спад мягкий: широкое ядро плюс дальний ореол; у края экрана свет нарастает, а не начинается ступенькой */
+  float fall=.65*exp(-d/(span*.16))+.35*exp(-d/(span*.42));
+  float I=fall*ray*smoothstep(0.,span*.02,d);
+  /* к краям холста — эллиптическое затухание: без прямоугольной границы */
+  vec2 uv=gl_FragCoord.xy/uRes*2.-1.;
+  I*=1.-smoothstep(.55,1.,length(uv*vec2(.92,.92)));
   I=clamp(I,0.,1.);
   gl_FragColor=vec4(col*I,I*.92);
 }`;

@@ -244,8 +244,22 @@
 @media (max-width: 860px) { .pt-reel { height: 52px; } .pt-now-k b { font-size: 56px; } }
 
 /* 26.10: подсветка шейдером (ambientGL.ts): холст поверх тех же границ, что у пятен; пятна тогда не рисуются */
-.pt-amb-gl { position: absolute; inset: 0; width: 100%; height: 100%; filter: blur(14px) saturate(1.25); opacity: 0; animation: pt-amb-in 1.2s ease-out 0.1s forwards; }
+.pt-amb-gl { position: absolute; inset: 0; width: 100%; height: 100%; filter: blur(28px) saturate(1.2); opacity: 0; animation: pt-amb-in 1.2s ease-out 0.1s forwards; }
 .pt-amb.has-gl i { display: none; }
 @keyframes pt-amb-in { to { opacity: 1; } }
 /* 26.10: у телефона экран высокий — в кадре раскадровки виден его верх, а не середина */
 .pt--compact:not(.pt--browser) .pt-reel img { object-position: 50% 0; }
+
+/* 26.10: мобильный прототип в плотной панели. Колонка текста не шире 500 px, пара «панель + телефон» по центру —
+   строки не растягиваются на всю ширину. Раскадровка — маленькие экраны телефона целиком (9:19,5), а не полоска
+   верха: по кадру видно, что за экран; текущий чуть крупнее и поднят */
+@media (min-width: 861px) {
+  .pt--compact:not(.pt--browser) { grid-template-columns: minmax(0, 500px) minmax(280px, 360px); justify-content: center; gap: clamp(40px, 6vw, 104px); }
+}
+.pt--compact:not(.pt--browser) .pt-reel { height: auto; align-items: flex-end; gap: 8px; }
+.pt--compact:not(.pt--browser) .pt-reel li { flex: 0 0 auto; width: clamp(44px, 4.4vw, 58px); aspect-ratio: 9 / 19.5; transition: width 0.42s cubic-bezier(0.23, 1, 0.32, 1); }
+.pt--compact:not(.pt--browser) .pt-reel li:has(.is-now) { flex-grow: 0; width: clamp(58px, 5.8vw, 76px); }
+.pt--compact:not(.pt--browser) .pt-reel button { border-radius: 9px; }
+.pt--compact:not(.pt--browser) .pt-reel img { object-fit: cover; object-position: 50% 0; }
+.pt--compact:not(.pt--browser) .pt-reel .is-now img { scale: 1; }
+@media (max-width: 860px) { .pt--compact:not(.pt--browser) .pt-reel li { width: 46px; } .pt--compact:not(.pt--browser) .pt-reel li:has(.is-now) { width: 60px; } }

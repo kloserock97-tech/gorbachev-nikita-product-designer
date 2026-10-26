@@ -13,21 +13,8 @@
 import { getLang } from "../i18n";
 import { tidy } from "../lib/typograph";
 import type { Stage } from "./live/grif2/stage";
+import type { Demo, L, Scene } from "./live/grif2/demoTypes";
 import "./decision-demos.css";
-
-type L = { ru: string; en: string };
-type Scene = {
-  s: Stage;
-  calm: boolean;
-  wait: (ms: number) => Promise<void>;
-  /** курсор к элементу (по центру или в точку fx, fy в долях элемента) */
-  point: (el: HTMLElement | null, fx?: number, fy?: number) => Promise<void>;
-  /** нажатие курсором (интерфейсу не передаётся) */
-  press: (el: HTMLElement | null) => Promise<void>;
-  ring: (el: HTMLElement | null) => void;
-};
-type Beat = { cap: L; run: (s: Scene) => Promise<void>; hold?: number };
-type Demo = { beats: Beat[] };
 
 /** демо показывает окно продукта целиком, как полный экран (размер кадра в Figma), уменьшенным под блок */
 const FULL_W = 1440, FULL_H = 900;
@@ -162,7 +149,18 @@ const DEMOS: Record<string, Demo> = {
   },
 };
 
-export const hasDecisionDemo = (id?: string) => !!id && id in DEMOS;
+/* 26.10: демо решений у всех кейсов (как у GRIF). Модуль src/ui/live/<папка>/demos.ts с экспортом
+   demos: Record<имя, Demo> подключается сам; в данных решения — demo: "<папка>:<имя>". Экраны — те же, что у
+   прототипа кейса (свой createRenderer в Demo.r) */
+const EXT = import.meta.glob<{ demos: Record<string, Demo> }>("./live/*/demos.ts");
+const extPath = (id: string) => { const [dir, name] = id.split(":"); return name ? `./live/${dir}/demos.ts` : ""; };
+export const hasDecisionDemo = (id?: string) => !!id && (id in DEMOS || !!EXT[extPath(id)]);
+async function loadDemo(id: string): Promise<Demo | null> {
+  if (DEMOS[id]) return DEMOS[id];
+  const load = EXT[extPath(id)];
+  if (!load) return null;
+  return (await load()).demos?.[id.split(":")[1]] ?? null;
+}
 
 export function decisionDemoBlock(id: string, alt: string) {
   const esc = (s: string) => tidy(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -182,7 +180,8 @@ const ICON = {
 };
 
 function mountOne(fig: HTMLElement, scroller: HTMLElement) {
-  const d = DEMOS[fig.dataset.dd!];
+  /* демо кейса грузится своим чанком, когда блок подъехал; до этого — пустой шаг 1 */
+  let d: Demo = DEMOS[fig.dataset.dd!] ?? { beats: [] };
   const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const view = fig.querySelector<HTMLElement>(".dd-view")!;
   const cam = fig.querySelector<HTMLElement>(".dd-cam")!;
@@ -197,11 +196,17 @@ function mountOne(fig: HTMLElement, scroller: HTMLElement) {
   let k = 0;
 
   const fit = () => {
+    const W = d.size?.w ?? FULL_W, H = d.size?.h ?? FULL_H;
     const vw = view.clientWidth || FULL_W;
-    for (const el of [cam, root]) { el.style.width = `${FULL_W}px`; el.style.height = `${FULL_H}px`; }
+    /* сцена всегда 16:10; экран телефона встаёт целиком по высоте посередине, веб — на всю ширину */
+    const vh = vw * FULL_H / FULL_W;
+    for (const el of [cam, root]) { el.style.width = `${W}px`; el.style.height = `${H}px`; }
     view.style.aspectRatio = `${FULL_W} / ${FULL_H}`;
-    scale = vw / FULL_W;
-    cam.style.transform = `scale(${scale})`;
+    scale = Math.min(vw / W, vh / H);
+    const ox = (vw - W * scale) / 2, oy = (vh - H * scale) / 2;
+    cam.style.transformOrigin = "0 0";
+    cam.style.transform = `translate(${ox}px, ${oy}px) scale(${scale})`;
+    view.classList.toggle("is-phone", H > W);
     /* курсор и кольцо — в экранных пикселях, а не в уменьшенных */
     view.style.setProperty("--dd-k", String(1 / scale));
   };
@@ -251,6 +256,7 @@ function mountOne(fig: HTMLElement, scroller: HTMLElement) {
   });
 
   const caption = (i: number) => {
+    if (!d.beats[i]) return;
     nEl.textContent = `${i + 1} ${tr(T.of)} ${d.beats.length}`;
     capEl.textContent = tidy(tr(d.beats[i].cap));
   };
@@ -281,9 +287,11 @@ function mountOne(fig: HTMLElement, scroller: HTMLElement) {
 
   async function start() {
     if (stage) return;
-    const { createStage } = await import("./live/grif2/stage");
-    if (dead) return;
-    stage = createStage(root, { base: import.meta.env.BASE_URL, calm });
+    const [{ createStage }, demo] = await Promise.all([import("./live/grif2/stage"), loadDemo(fig.dataset.dd!)]);
+    if (dead || stage || !demo) return;
+    d = demo;
+    caption(0);
+    stage = createStage(root, { base: import.meta.env.BASE_URL, calm, r: d.r, liven: d.liven, fix: d.fix });
     root.style.overflow = "hidden";
     fit();
     paintBtn();
@@ -308,6 +316,6 @@ function mountOne(fig: HTMLElement, scroller: HTMLElement) {
 }
 
 export function mountDecisionDemos(root: HTMLElement, scroller: HTMLElement) {
-  const stops = [...root.querySelectorAll<HTMLElement>("[data-dd]")].filter((f) => f.dataset.dd! in DEMOS).map((f) => mountOne(f, scroller));
+  const stops = [...root.querySelectorAll<HTMLElement>("[data-dd]")].filter((f) => hasDecisionDemo(f.dataset.dd)).map((f) => mountOne(f, scroller));
   return () => stops.forEach((f) => f());
 }
