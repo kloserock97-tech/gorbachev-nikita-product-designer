@@ -36,17 +36,26 @@ export function initMobileNav() {
     else dock(go)?.click();
   }));
 
-  /* звук: состояние берём с body.sound-on, которое пишет soundToggle */
+  /* звук: состояние берём с body.sound-on, которое пишет soundToggle; когда играет — под строкой название трека */
   const sound = menu.querySelector<HTMLButtonElement>(".m-menu__sound");
   const soundLabel = sound?.querySelector<HTMLElement>("[data-m-sound]");
   const lite = menu.querySelector<HTMLAnchorElement>(".m-menu__lite");
+  const langs = menu.querySelectorAll<HTMLButtonElement>("[data-m-lang]");
   const paint = () => {
     const on = body.classList.contains("sound-on");
     sound?.setAttribute("aria-pressed", String(on));
-    if (soundLabel) soundLabel.textContent = t(on ? "sound.label.on" : "sound.label.off");
+    sound?.setAttribute("aria-label", t(on ? "nav.sound.on" : "nav.sound.off"));
+    if (soundLabel) soundLabel.textContent = on ? `${t("menu.sound.on")} · Northern Resonance` : t("menu.sound.off");
+    langs.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mLang === getLang())));
     if (lite) lite.href = `lite.html?lang=${getLang()}`;
   };
   sound?.addEventListener("click", () => document.querySelector<HTMLButtonElement>(".sound-fab")?.click());
+  langs.forEach((b) => b.addEventListener("click", () => {
+    const next = b.dataset.mLang as ReturnType<typeof getLang>;
+    if (next === getLang()) return;
+    cue("toggle-on", 0.8);
+    setLang(next);
+  }));
   new MutationObserver(paint).observe(body, { attributes: true, attributeFilter: ["class"] });
   onLang(paint);
   paint();

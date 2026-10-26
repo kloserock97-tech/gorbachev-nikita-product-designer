@@ -36,18 +36,15 @@
   .m-menu-open .m-bar__burger i:nth-child(2) { opacity: 0; }
   .m-menu-open .m-bar__burger i:nth-child(3) { width: 22px; left: 11px; translate: 0 -6px; rotate: -45deg; }
   .m-bar__lang:focus-visible, .m-bar__burger:focus-visible { outline: 2px solid #11110f; outline-offset: 2px; }
-  /* меню — небольшая панель под кнопкой: звук и лёгкая версия; разделы и так в строке */
-  .m-menu { display: block; position: fixed; z-index: 30; top: 74px; right: clamp(24px, 4.6vw, 88px); width: 300px;
-    opacity: 0; visibility: hidden; translate: 0 -6px; transition: opacity 0.2s ease, translate 0.25s ease, visibility 0s 0.25s; }
-  .m-menu-open .m-menu { opacity: 1; visibility: visible; translate: none; transition: opacity 0.2s ease, translate 0.25s ease; }
-  .m-menu__in { padding: 10px; border-radius: 18px; background: #f6f3ec; box-shadow: 0 20px 50px rgba(40, 34, 18, 0.22); }
+  /* меню — небольшая панель под кнопкой: звук, язык и лёгкая версия строками с пояснениями; разделы и так в строке.
+     26.10: раскрывается от кнопки (origin справа сверху), строки входят по очереди, закрывается быстрее, чем открывается */
+  .m-menu { display: block; position: fixed; z-index: 30; top: 70px; right: clamp(24px, 4.6vw, 88px); width: 352px;
+    opacity: 0; visibility: hidden; scale: 0.96; translate: 0 -4px; transform-origin: calc(100% - 22px) 0;
+    transition: opacity 0.14s ease-out, scale 0.14s ease-out, translate 0.14s ease-out, visibility 0s 0.14s; }
+  .m-menu-open .m-menu { opacity: 1; visibility: visible; scale: 1; translate: none;
+    transition: opacity 0.18s var(--m-ease), scale 0.24s var(--m-ease), translate 0.24s var(--m-ease); }
+  .m-menu__in { padding: 6px; border-radius: 20px; background: #f6f3ec; box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 24px 60px rgba(40, 34, 18, 0.24), 0 2px 8px rgba(40, 34, 18, 0.08); }
   .m-menu__in > a { display: none; }
-  .m-menu__row { display: flex; flex-direction: column; gap: 6px; }
-  .m-menu__sound, .m-menu__lite {
-    height: 44px; display: flex; align-items: center; padding: 0 16px; border: 1px solid rgba(40, 36, 26, 0.12); border-radius: 12px;
-    background: #fffdf8; color: #23221d; font: 500 14px/1 var(--font); text-decoration: none; cursor: pointer;
-  }
-  .m-menu__sound[aria-pressed="true"] { background: #23221d; border-color: #23221d; color: #f7f4ec; }
 }
 
 @media (max-width: 900px) {
@@ -115,16 +112,90 @@
     display: block; padding: 11px 0; border-bottom: 1px solid rgba(40, 36, 26, 0.1);
     color: #14140f; text-decoration: none; font: 500 28px/1.15 var(--font); letter-spacing: -0.01em;
   }
-  .m-menu__row { display: flex; gap: 8px; margin-top: 20px; }
-  .m-menu__sound, .m-menu__lite {
-    flex: 1 1 0; height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 12px;
-    border: 1px solid rgba(40, 36, 26, 0.14); border-radius: 999px; background: #fffdf8;
-    color: #23221d; font: 500 14px/1 var(--font); text-decoration: none; white-space: nowrap; cursor: pointer;
-  }
-  .m-menu__sound[aria-pressed="true"] { background: #23221d; border-color: #23221d; color: #f7f4ec; }
+  .m-menu__row { margin: 16px -10px 0; padding: 6px; border-radius: 18px; background: #fffdf8; }
+  .m-menu__row .m-menu__item { min-height: 58px; }
 }
 @media (max-width: 900px) and (prefers-reduced-motion: reduce) {
   .m-bar, .m-menu, .m-menu__in, .m-bar__burger i { transition: none; }
+}
+
+/* ── строки меню (26.10): значок, название с пояснением, справа — что будет по нажатию ──
+   звук — переключатель с ползунком, когда играет — эквалайзер и название трека; язык — RU | EN; лёгкая версия — стрелка
+   «уйти на другую страницу». Нажатие чуть сжимает строку, наведение — только на устройствах с мышью */
+:root { --m-ease: cubic-bezier(0.23, 1, 0.32, 1); }
+.m-menu__row { display: flex; flex-direction: column; gap: 2px; }
+.m-menu__item {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 8px 12px 8px 8px;
+  border: 0; border-radius: 14px; background: transparent; color: #1d1c17; text-align: left; text-decoration: none;
+  font: 500 15px/1.2 var(--font); cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, scale 0.16s ease-out, opacity 0.2s var(--m-ease), translate 0.28s var(--m-ease);
+}
+.m-menu__lang { cursor: default; }
+.m-menu__item:active:not(.m-menu__lang) { scale: 0.98; }
+.m-menu__item:focus-visible, .m-menu__seg button:focus-visible { outline: 2px solid #23221d; outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .m-menu__item:not(.m-menu__lang):hover { background: rgba(255, 255, 255, 0.85); }
+  .m-menu__lite:hover .m-menu__go { translate: 2px -2px; color: #1d1c17; }
+}
+.m-menu__ico {
+  flex: none; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px;
+  background: #ebe6da; color: #3a382f; transition: background 0.25s ease, color 0.25s ease;
+}
+.m-menu__ico svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.m-menu__wave { opacity: 0.35; transition: opacity 0.25s ease; }
+.m-menu__txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.m-menu__txt b { font-weight: 600; }
+.m-menu__txt small { display: flex; align-items: center; gap: 6px; color: #77736a; font: 400 13px/1.3 var(--font); white-space: nowrap; }
+.m-menu__txt small > span:last-child { overflow: hidden; text-overflow: ellipsis; }
+
+/* звук */
+.m-menu__eq { display: none; align-items: flex-end; gap: 2px; height: 11px; }
+.m-menu__eq i { width: 2px; height: 100%; border-radius: 1px; background: #4f7a3a; transform-origin: bottom; scale: 1 0.35; }
+.m-menu__switch {
+  flex: none; position: relative; width: 38px; height: 22px; border-radius: 999px; background: #d9d3c5;
+  transition: background 0.22s ease;
+}
+.m-menu__switch::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(30, 26, 14, 0.25); transition: translate 0.24s var(--m-ease);
+}
+.m-menu__sound[aria-pressed="true"] .m-menu__switch { background: #23221d; }
+.m-menu__sound[aria-pressed="true"] .m-menu__switch::after { translate: 16px 0; }
+.m-menu__sound[aria-pressed="true"] .m-menu__ico { background: #23221d; color: #f7f4ec; }
+.m-menu__sound[aria-pressed="true"] .m-menu__wave { opacity: 1; }
+.m-menu__sound[aria-pressed="true"] .m-menu__eq { display: inline-flex; }
+.m-menu__sound[aria-pressed="true"] small { color: #4f7a3a; }
+.m-menu-open .m-menu__sound[aria-pressed="true"] .m-menu__eq i { animation: m-eq 0.9s ease-in-out infinite alternate; }
+.m-menu-open .m-menu__sound[aria-pressed="true"] .m-menu__eq i:nth-child(2) { animation-duration: 0.7s; animation-delay: -0.3s; }
+.m-menu-open .m-menu__sound[aria-pressed="true"] .m-menu__eq i:nth-child(3) { animation-duration: 1.1s; animation-delay: -0.6s; }
+@keyframes m-eq { from { scale: 1 0.3; } to { scale: 1 1; } }
+
+/* язык */
+.m-menu__seg { flex: none; display: flex; padding: 3px; border-radius: 11px; background: #ebe6da; }
+.m-menu__seg button {
+  min-width: 42px; height: 30px; border: 0; border-radius: 8px; background: transparent; color: #6d695f;
+  font: 600 12px/1 var(--font); letter-spacing: 0.06em; cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, scale 0.12s ease-out;
+}
+.m-menu__seg button[aria-pressed="true"] { background: #fffdf8; color: #1d1c17; box-shadow: 0 1px 3px rgba(30, 26, 14, 0.14); }
+.m-menu__seg button:active { scale: 0.96; }
+
+/* лёгкая версия */
+.m-menu__go {
+  flex: none; width: 18px; height: 18px; margin-right: 4px; fill: none; stroke: currentColor; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round; color: #8a867c; transition: translate 0.2s var(--m-ease), color 0.2s ease;
+}
+
+/* строки входят по очереди, только при открытии; закрытие — без задержек */
+.m-menu .m-menu__item { opacity: 0; translate: 0 6px; }
+.m-menu-open .m-menu__item { opacity: 1; translate: none; }
+.m-menu-open .m-menu__item:nth-child(1) { transition-delay: 0s, 0s, 0.03s, 0.03s; }
+.m-menu-open .m-menu__item:nth-child(2) { transition-delay: 0s, 0s, 0.07s, 0.07s; }
+.m-menu-open .m-menu__item:nth-child(3) { transition-delay: 0s, 0s, 0.11s, 0.11s; }
+@media (prefers-reduced-motion: reduce) {
+  .m-menu .m-menu__item { translate: none; }
+  .m-menu { scale: 1; translate: none; }
+  .m-menu__eq i { animation: none !important; scale: 1 0.6; }
 }
 
 /* ── первый экран на вертикальном телефоне ── */
