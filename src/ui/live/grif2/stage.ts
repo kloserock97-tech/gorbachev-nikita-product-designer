@@ -108,7 +108,10 @@ export function createStage(root: HTMLElement, opts: { base: string; calm: boole
     if (!scr || !scr.classList.contains("is-pan")) return;
     const a = el.getBoundingClientRect();
     const b = scr.getBoundingClientRect();
-    if (a.left >= b.left + 6 && a.right <= b.right - 6) return;
+    /* 26.10: окно едет за подсказкой, как камера: она встаёт по центру, а вокруг видно её контекст (раньше окно
+       двигалось, только когда подсказка уходила за край, — на телефоне ответ и кнопки оставались обрезаны) */
+    const off = (a.left + a.right) / 2 - (b.left + b.right) / 2;
+    if (Math.abs(off) < b.width * 0.12 && a.left >= b.left && a.right <= b.right) return;
     const left = a.width > b.width ? scr.scrollLeft + a.left - b.left - 8 : scr.scrollLeft + (a.left + a.right) / 2 - (b.left + b.right) / 2;
     scr.scrollTo({ left, behavior: opts.calm ? "auto" : "smooth" });
   }

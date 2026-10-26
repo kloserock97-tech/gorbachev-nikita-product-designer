@@ -65,6 +65,12 @@ const ART: Record<string, () => string> = {
 /* 26.10: у каждого кейса свои сцены (src/ui/contextArt/<id>.ts); сцены GRIF — выше, в ART */
 const SCENES: Record<string, Record<string, () => string>> = { "grif-ai": ART, community, "ai-agents": aiAgents, "moderator-dashboard": moderator, "plati-chastyami": plati, "restaurant-guru": guru };
 
+/** 26.10: одна сцена кейса широкой плиткой — схема у этапа «Проверки» и т. п.; пусто, если сцены нет */
+export function artTile(caseId: string, key?: string, cls = "ca-tile--wide") {
+  const sc = key ? SCENES[caseId]?.[key] : undefined;
+  return sc ? `<div class="ca-tile ${cls} ca-tile--${key}" aria-hidden="true">${sc()}</div>` : "";
+}
+
 /** цели и ограничения картинками — внутри «Коротко»; пусто, если у кейса нет context.art */
 export function contextArtBlock(s: CaseStory, mini: (label: string) => string) {
   const art = s.context.art;

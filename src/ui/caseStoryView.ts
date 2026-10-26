@@ -22,7 +22,7 @@ import { brandMark, goArrow, lookVars, objectPicture } from "./caseLook";
 import { demoBlock, hasDemo, mountDemos } from "./caseDemos";
 import { flowsBlock, mountProto, protoBlock } from "./caseProto";
 import { marks, mountNotes, notesBlock } from "./caseNotes";
-import { contextArtBlock } from "./contextArt";
+import { artTile, contextArtBlock } from "./contextArt";
 import { decisionDemoBlock, hasDecisionDemo, mountDecisionDemos } from "./decisionDemos";
 import { mountOpener, openerBlock } from "./filmOpener";
 import { mockupsHead, mountMockups } from "./mockupsTitle";
@@ -541,7 +541,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
 
         ${s.validation ? `<section class="cs-sec cs-sec--validation">
           ${head(++sec, "validation", t("cs.validation"), s.validation.lead)}
-          <ol class="cs-stages">${s.validation.stages.map((x, k) => `<li data-reveal style="--rd:${k}"><p class="cs-mini">${esc(x.kicker)}</p><b>${esc(x.title)}</b><p>${marks(esc(x.text))}</p></li>`).join("")}</ol>
+          <ol class="cs-stages">${s.validation.stages.map((x, k) => `<li class="${x.art ? "ca-card cs-stage--art" : ""}" data-reveal style="--rd:${k}"><p class="cs-mini">${esc(x.kicker)}</p><b>${esc(x.title)}</b><p>${marks(esc(x.text))}</p>${artTile(s.id, x.art)}</li>`).join("")}</ol>
         </section>` : ""}
         ${s.compact ? apBlock() : ""}
 

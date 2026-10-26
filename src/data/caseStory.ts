@@ -147,7 +147,8 @@ export type CaseStory = {
   journey?: { title: string; lead?: string; steps: JourneyStep[]; measured: string };
   compare?: CaseCompare;
   /** проверка этапами; последний этап перечисляет правки из Decision.changed */
-  validation?: { lead: string; stages: { kicker: string; title: string; text: string }[] };
+  /** 26.10: art — ключ сцены кейса (src/ui/contextArt/<id>.ts): компактная схема у этапа, плитка во всю ширину карточки */
+  validation?: { lead: string; stages: { kicker: string; title: string; text: string; art?: string }[] };
   approach?: {
     lead: string;
     text?: string;

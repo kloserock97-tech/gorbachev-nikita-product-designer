@@ -109,3 +109,8 @@
 @keyframes ca-undo { from { --ca-left: 1; } to { --ca-left: 0; } }
 @keyframes ca-ring { 0% { opacity: 0.9; transform: scale(0.96); } 70%, 100% { opacity: 0; transform: scale(1.12); } }
 @keyframes ca-beat { 50% { transform: scale(1.1); } }
+
+/* 26.10: широкая плитка-схема (artTile) — у этапа «Проверки»: во всю ширину карточки, низкая */
+.ca-tile--wide { aspect-ratio: 3.2 / 1; margin-top: 16px; border-radius: 14px; }
+.cs-stage--art { grid-column: 1 / -1; }
+@media (max-width: 600px) { .ca-tile--wide { aspect-ratio: 1.7 / 1; } }
