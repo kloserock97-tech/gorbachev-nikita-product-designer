@@ -84,6 +84,6 @@ export function contextArtBlock(s: CaseStory, mini: (label: string) => string) {
       <ol class="ca-goals">${goals.map((g, k) => `<li class="ca-card" data-reveal style="--rd:${k}">${tile(art.goals?.[k])}<p><span>${pad(k + 1)}</span>${esc(g)}</p></li>`).join("")}</ol>
     </div>` : ""}
     ${cons.length ? `<div class="cs-block ca-block">${mini(t("cs.constraints"))}
-      <ol class="ca-cons">${cons.map((c, k) => `<li class="ca-card ca-card--row" data-reveal style="--rd:${k}">${tile(art.constraints?.[k])}<div><b>${esc(c.title)}</b><p>${esc(c.text)}</p></div></li>`).join("")}</ol>
+      <ol class="ca-cons">${cons.map((c, k) => `<li class="ca-card ca-card--row" data-reveal style="--rd:${k}">${tile(art.constraints?.[k])}<div><b>${esc(c.title)}</b>${c.text ? `<p>${esc(c.text)}</p>` : ""}</div></li>`).join("")}</ol>
     </div>` : ""}`;
 }

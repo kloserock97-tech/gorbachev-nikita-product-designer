@@ -46,7 +46,7 @@ export const en: CaseStory = {
     art: { goals: ["entry", "live", "confirm", "round"], constraints: ["nods", "budget"] },
     constraints: [
       { title: "No design system or guidelines at the start", text: "Only wishes about the look and a couple of generated screens." },
-      { title: "Show investors the value through design", text: "Until the investment came, there was little money for research or a team — the interface itself had to show the value." },
+      { title: "Show investors the value through design", text: "" },
     ],
   },
   /* 26.10: «Путь пользователя» убран по просьбе Никиты */
