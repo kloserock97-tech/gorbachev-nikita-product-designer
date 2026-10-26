@@ -1,10 +1,11 @@
 /* 26.10: движение экранов «Рисков ИИ-агентов» сверх общего (stage.css). Только transform/opacity, вход — ease-out
-   cubic-bezier(0.23, 1, 0.32, 1). Шторка выезжает справа, сегменты прогресса загораются по очереди, тост поднимается. */
+   cubic-bezier(0.23, 1, 0.32, 1). Шторка выезжает справа, сплошная полоса прогресса дорастает, тост поднимается. */
 .g2 .ag-drawer { animation: ag-drawer 0.42s cubic-bezier(0.23, 1, 0.32, 1) both; }
 @keyframes ag-drawer { from { opacity: 0; translate: 56px 0; } to { opacity: 1; translate: 0 0; } }
-.g2 .ag-seg { animation: ag-seg 0.36s cubic-bezier(0.23, 1, 0.32, 1) both; transform-origin: 0 50%; }
-@keyframes ag-seg { from { opacity: 0.15; scale: 0.4 1; } to { opacity: 1; scale: 1 1; } }
+/* 26.10: прогресс сплошной (solidProgress в flows.ts): заливка растёт от левого края, ровно и долго — модель работает */
+.g2 .ag-fill-grow { transform-origin: 0 50%; animation: ag-fill 2.4s cubic-bezier(0.23, 1, 0.32, 1) 0.15s both; }
+@keyframes ag-fill { from { transform: scaleX(0.04); } to { transform: scaleX(1); } }
 .g2 .ag-toast { animation: ag-toast 0.42s cubic-bezier(0.23, 1, 0.32, 1) 0.15s both; }
 @keyframes ag-toast { from { opacity: 0; translate: 0 16px; } to { opacity: 1; translate: 0 0; } }
 .g2 .ag-dim { opacity: 0.45; transition: opacity 0.25s ease; }
-@media (prefers-reduced-motion: reduce) { .g2 .ag-drawer, .g2 .ag-seg, .g2 .ag-toast { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .g2 .ag-drawer, .g2 .ag-fill-grow, .g2 .ag-toast { animation: none; } }

@@ -5,7 +5,6 @@
 import "./moderator-dashboard.css";
 
 const row = (i: number, w: number, cls = "") => `<div class="ca-md-row${cls}" style="--i:${i}"><i class="ca-md-dot"></i><i class="ca-md-l" style="--w:${w}%"></i><i class="ca-md-l ca-md-l--s"></i></div>`;
-const cursor = `<svg class="ca-md-cursor" viewBox="0 0 16 20" aria-hidden="true"><path d="M1.5 1.5v15l4.2-3.9 2.9 6.2 2.6-1.2-2.9-6.1 5.9-.4Z"/></svg>`;
 
 export const scenes: Record<string, () => string> = {
   /* сразу видно, что ждёт проверки: вкладки статусов, у первой — метка, строки «Новый» въезжают по очереди */
@@ -14,14 +13,12 @@ export const scenes: Record<string, () => string> = {
       <div class="ca-md-tabs"><i class="is-on"><b class="ca-md-badge"></b></i><i></i><i></i><i></i></div>
       ${row(0, 52)}${row(1, 38)}${row(2, 46)}
     </div>`,
-  /* очевидное решается в строке: курсор подъезжает к «Одобрить», нажатие, у строки появляется отметка */
-  "md-inline": () => `
-    <div class="ca-md-win ca-md-win--inline">
-      ${row(0, 40, " is-dim")}
-      <div class="ca-md-row is-hot"><i class="ca-md-dot"></i><i class="ca-md-l" style="--w:34%"></i><span class="ca-md-acts"><i class="ca-md-btn ca-md-btn--ghost"></i><i class="ca-md-btn"><b class="ca-md-ok"></b></i></span></div>
-      ${row(2, 46, " is-dim")}
-    </div>
-    ${cursor}`,
+  /* 26.10: цель «сократить время на проверку объекта»: было — длинная полоса, стало — на 38 % короче (замер AHT) */
+  "md-time": () => `
+    <div class="ca-md-win ca-md-win--time">
+      <div class="ca-md-trow"><i class="ca-md-clock"></i><i class="ca-md-bar ca-md-bar--was"></i></div>
+      <div class="ca-md-trow"><i class="ca-md-clock is-now"></i><i class="ca-md-bar ca-md-bar--now"></i><b class="ca-md-minus">−38 %</b></div>
+    </div>`,
   /* спорное — на одном экране: публикация, автор с кармой, ветка ответов и жалобы собираются вместе */
   "md-context": () => `
     <div class="ca-md-win ca-md-win--page">
@@ -40,10 +37,9 @@ export const scenes: Record<string, () => string> = {
     <div class="ca-md-admin">
       <i></i><i></i><i></i><i></i><i class="ca-md-slot"><b></b></i><i></i>
     </div>`,
-  /* один администратор на весь поток: над одним человеком растёт стопка комментариев и жалоб */
-  "md-one": () => `
-    <div class="ca-md-pile">
-      <i style="--i:0;--r:-6deg"></i><i style="--i:1;--r:5deg"></i><i style="--i:2;--r:-3deg"></i><i style="--i:3;--r:7deg"></i><i style="--i:4;--r:-8deg"></i>
-    </div>
-    <i class="ca-md-person"></i>`,
+  /* 26.10: цель «снять поток с одного администратора»: стопка комментариев и жалоб расходится по трём модераторам */
+  "md-team": () => `
+    <div class="ca-md-team">
+      ${[0, 1, 2].map((p) => `<div class="ca-md-mod" style="--p:${p}"><span class="ca-md-stack"><i style="--i:${p * 2};--r:${p === 1 ? 4 : -5}deg"></i><i style="--i:${p * 2 + 1};--r:${p === 1 ? -3 : 6}deg"></i></span><i class="ca-md-person"></i></div>`).join("")}
+    </div>`,
 };

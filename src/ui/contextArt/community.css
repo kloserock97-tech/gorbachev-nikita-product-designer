@@ -40,10 +40,6 @@
 .ca-cm-progress { position: absolute; left: 0; top: 0; height: 1.6cqw; width: 100%; background: #f6a7d3; transform-origin: left; transform: scaleX(0.58); }
 .ca-cm-aa { font: 600 15cqw/1 "Golos Text", "Onest", sans-serif; letter-spacing: -0.04em; color: var(--cm-ink); margin-bottom: 1cqw; }
 
-/* months: девять клеток, заполняются по очереди; девятая — запуск, розовая и с кольцом */
-.ca-cm-months { position: absolute; inset: 20cqw 18cqw; display: grid; grid-template-columns: repeat(3, 1fr); gap: 5cqw; }
-.ca-cm-months i { border-radius: 4cqw; background: var(--cm-ink); }
-.ca-cm-months .is-mvp { background: #f6a7d3; box-shadow: 0 0 0 1.6cqw #fff, 0 0 0 3cqw rgba(246, 167, 211, 0.55); }
 
 /* kit: кнопка в трёх состояниях и поле */
 .ca-cm-kit { position: absolute; inset: 16cqw 14cqw; display: grid; gap: 5cqw; align-content: center; }
@@ -65,8 +61,6 @@
   .ca-cm-cards .ca-cm-card { animation: ca-rise 0.55s cubic-bezier(0.23, 1, 0.32, 1) both; animation-delay: calc(0.3s + var(--i) * 0.1s); }
   .ca-cm-progress { animation: ca-cm-read 4.5s linear infinite 0.4s; }
   .ca-cm-aa { animation: ca-pop 0.55s cubic-bezier(0.23, 1, 0.32, 1) both 0.15s; }
-  .ca-cm-months i { animation: ca-pop 0.42s cubic-bezier(0.23, 1, 0.32, 1) both; animation-delay: calc(0.2s + var(--i) * 0.11s); }
-  .ca-cm-months .is-mvp { animation: ca-pop 0.42s cubic-bezier(0.23, 1, 0.32, 1) both 1.2s, ca-beat 2.6s ease-in-out infinite 1.8s; }
   .ca-cm-k { animation: ca-cm-in 0.5s cubic-bezier(0.23, 1, 0.32, 1) both; animation-delay: calc(0.25s + var(--i) * 0.12s); }
 }
 @keyframes ca-cm-grow { from { transform: scaleX(0); } }
@@ -76,3 +70,17 @@
 /* подложка выбранной рубрики переезжает: первая → третья → вторая → первая */
 @keyframes ca-cm-pick { 0%, 18% { transform: translateX(0); } 30%, 50% { transform: translateX(calc(200% + 4.8cqw)); } 62%, 82% { transform: translateX(calc(100% + 2.4cqw)); } 94%, 100% { transform: translateX(0); } }
 @keyframes ca-cm-read { from { transform: scaleX(0.08); } to { transform: scaleX(1); } }
+
+/* 26.10: legacy — стопка старых плит (серые, со строками таблицы, вразнобой) и новая белая карточка сверху */
+.ca-cm-legacy { position: absolute; inset: 0; }
+.ca-tile .ca-cm-old { position: absolute; left: 14cqw; right: 14cqw; bottom: 14cqw; height: 16cqw; border-radius: 2.6cqw; background: repeating-linear-gradient(180deg, #b9b2a8 0 1.1cqw, #d9d3ca 1.1cqw 4.6cqw); box-shadow: inset 0 0 0 0.9cqw #aaa298, 0 2cqw 4cqw -2cqw rgba(20, 21, 18, 0.35); transform: translate(var(--x, 0), var(--y)) rotate(var(--r)); }
+.ca-tile .ca-cm-new { left: 20cqw; right: 20cqw; top: 9cqw; display: grid; gap: 2.4cqw; padding: 5cqw; }
+.ca-tile .ca-cm-dot { position: absolute; right: 4cqw; top: 4cqw; width: 6cqw; height: 6cqw; border-radius: 50%; background: #f6a7d3; }
+.ca-tile .ca-cm-tape { position: absolute; left: 54cqw; top: 40cqw; width: 18cqw; height: 6cqw; border-radius: 1cqw; background: rgba(246, 167, 211, 0.55); transform: rotate(-24deg); }
+@media (prefers-reduced-motion: no-preference) {
+  .ca-cm-old { animation: ca-cm-old 0.5s cubic-bezier(0.23, 1, 0.32, 1) both; animation-delay: calc(0.15s + var(--i) * 0.12s); }
+  .ca-cm-new { animation: ca-cm-drop 0.7s cubic-bezier(0.23, 1, 0.32, 1) both 0.6s; }
+  .ca-cm-tape { animation: ca-pop 0.4s cubic-bezier(0.23, 1, 0.32, 1) both 1.15s; }
+}
+@keyframes ca-cm-old { from { opacity: 0; transform: translate(var(--x, 0), calc(var(--y) + 6cqw)) rotate(var(--r)); } }
+@keyframes ca-cm-drop { from { opacity: 0; transform: translateY(-12cqw); } }

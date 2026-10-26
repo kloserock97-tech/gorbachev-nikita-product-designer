@@ -3,7 +3,8 @@
    · pattern — реакции стоят на одном месте в ленте и на странице истории и работают одинаково;
    · posts — «Рассказать историю» в шапке → форма → поле ответа под историей;
    · older — рубрики одной строкой, выбор с первого клика, в ленте остаётся рубрика;
-   · ds — Golos Text в заголовке и в длинном тексте, один розовый акцент.
+   · future (26.10, вместо ds) — заделы на будущее: карма и награда у автора комментария, карма, рейтинг и баллы в
+     профиле, «Группа создана!» с наградой «Лидер» (кадр 21061:92051, ключ groups).
    Экраны выше окна: сцена доезжает до слоя сама (reach), курсор едет после. */
 import type { Demo, Scene } from "../grif2/demoTypes";
 import type { Stage } from "../grif2/stage";
@@ -154,38 +155,52 @@ export const demos: Record<string, Demo> = {
       },
     ],
   },
-  ds: {
+  future: {
     ...base,
     beats: [
       {
-        cap: { ru: "Golos Text в заголовке истории", en: "Golos Text in the story title" },
+        cap: { ru: "У автора комментария — карма и награда", en: "A commenter shows karma and an award" },
         run: async (c) => {
           c.s.show("story");
-          const title = c.s.find("heading+subtitle");
-          c.ring(title);
-          await c.point(title, 0.35, 0.5);
-        },
-        hold: 1700,
-      },
-      {
-        cap: { ru: "Длинный текст читается без усилий, в том числе 55+", en: "Long text reads easily, people 55+ included" },
-        run: async (c) => {
-          const text = c.s.find(" Two paragraphs") ?? c.s.find("Two paragraphs", true);
-          await go(c, text);
-          c.ring(text);
-          await c.point(text, 0.4, 0.3);
-        },
-        hold: 1900,
-      },
-      {
-        cap: { ru: "Чёрный, рабочие серые и один розовый акцент", en: "Black, working greys and a single pink accent" },
-        run: async (c) => {
-          const card = c.s.find("Statistic Card");
-          await go(c, card);
-          c.ring(card?.querySelector<HTMLElement>('[data-n="table"]') ?? card);
-          await c.point(card?.querySelector<HTMLElement>('[data-n="Table Cell"]') ?? card, 0.5, 0.5);
+          const award = c.s.text("Экстраверт");
+          const user = award?.closest<HTMLElement>('[data-n="User Name"]') ?? c.s.find("User Name");
+          await go(c, user);
+          c.ring(user);
+          await c.point(award ?? user, 0.5, 0.5);
         },
         hold: 2000,
+      },
+      {
+        cap: { ru: "В профиле — карма, рейтинг и баллы за активность", en: "The profile shows karma, rating and points for activity" },
+        run: async (c) => {
+          c.s.show("profile");
+          const info = c.s.find("Info");
+          await go(c, info);
+          c.ring(info);
+          await c.point(info?.querySelector<HTMLElement>('[data-n="Carma"]') ?? info, 0.5, 0.5);
+          await c.wait(c.calm ? 0 : 1100);
+          const points = c.s.text("+5 баллов");
+          const bubble = points?.closest<HTMLElement>('[data-n="Bubble"]') ?? points;
+          await go(c, bubble);
+          bubble?.classList.add("g2-pop");
+          c.ring(bubble);
+          await c.point(bubble, 0.5, 0.5);
+        },
+        hold: 2000,
+      },
+      {
+        cap: { ru: "Группы по интересам: за первую — награда «Лидер»", en: "Interest groups: the first one earns the “Leader” award" },
+        run: async (c) => {
+          c.s.show("groups");
+          c.s.find("Rectangle 10")?.classList.add("g2-fade");
+          const modal = c.s.find("Main Modal");
+          modal?.classList.add("g2-dialog");
+          await c.wait(c.calm ? 0 : 450);
+          const award = modal?.querySelector<HTMLElement>('[data-n="Img+Description"]') ?? modal;
+          c.ring(award);
+          await c.point(c.s.text("Опубликовать первый пост") ?? award, 0.5, 0.5);
+        },
+        hold: 2400,
       },
     ],
   },

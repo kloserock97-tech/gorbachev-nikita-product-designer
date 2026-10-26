@@ -19,7 +19,7 @@ export const en: CaseStory = {
     tagline: "I made the moderator a separate role and gave them one workplace for everything they check.",
     /* 26.10: In brief opens with the product and the problem; the context paragraphs are gone, the facts are the same */
     summary:
-      "The moderator dashboard is a workplace for the people who check comments, users, publications, groups and posts in Community. Before, one administrator went through that whole stream in the general admin panel, the same place where the whole site is set up. I audited the admin panel, tested two prototypes with eight moderators and designed the dashboard from the results: the obvious gets decided right in the list, the doubtful on one page with all the context.",
+      "The moderator dashboard is a workplace for the people who check comments, users, publications, groups and posts in Community. Before, one administrator went through that whole stream in the general admin panel, the same place where the whole site is set up. I audited the admin panel, tested two prototypes with eight moderators and designed the dashboard from the results: the obvious gets read right in the list, the doubtful on one page with all the context.",
     facts: [
       ["Role", "UX designer"],
       ["Company", "Moscow Department of Information Technology (DIT)"],
@@ -36,16 +36,16 @@ export const en: CaseStory = {
   /* 26.10: goals and constraints are built from the earlier case text (context, decisions, engineering interviews) */
   context: {
     lead: "",
+    /* 26.10: goals rewritten as goals, not solutions; the «one administrator» constraint is gone — see the Russian version */
     goals: [
-      "A moderator sees straight away what is waiting for a check and does not waste time searching.",
-      "An obvious comment is decided right in the list, without a page of its own.",
-      "For a disputed comment all the context is on one screen: the post, the author, the reply thread, the complaints.",
-      "One way of working for five types of items: comments, users, publications, groups and posts.",
+      "Cut the time it takes to check one item.",
+      "Free a moderator's time for the decision, not for hunting down the comment and its context.",
+      "Take the whole moderation stream off one administrator and hand it to moderators.",
+      "Bring new item types into moderation without a separate interface for each.",
     ],
-    art: { goals: ["md-queue", "md-inline", "md-context", "md-five"], constraints: ["md-admin", "md-one"] },
+    art: { goals: ["md-time", "md-context", "md-team", "md-five"], constraints: ["md-admin"] },
     constraints: [
       { title: "On top of the existing admin panel", text: "The dashboard is built on it, so new sections have to be added to one template." },
-      { title: "One administrator for the whole stream", text: "Comments, publications and complaints were handled by one person in the general admin panel, where the whole site is set up." },
     ],
   },
   /* 26.10: the three test hypotheses became the hypotheses of the decisions; audit and engineering findings are numbered F1–F4 */
@@ -97,10 +97,10 @@ export const en: CaseStory = {
         id: "inline",
         demo: "moderator2:inline",
         insight: "F2",
-        title: "A decision right in the list",
-        found: "If a short, clear comment can be rated in the list without opening a page, the obvious gets closed faster.",
-        did: "The decision buttons sit right in the list row. An obvious comment now takes one click, it used to take five.",
-        changed: "In prototype 1 a decision was made only on the comment page. In the test moderators settled short comments in the list, as in prototype 2, and the decision moved into the row.",
+        title: "A comment reads right in the list",
+        found: "If a short comment can be read in full in the list without opening a page, the obvious gets sorted out faster.",
+        did: "A long comment expands in the registry row with “More”, and its status shows the history: who has already taken it on and when. The page is opened when a case is not obvious; the decision buttons are at its top.",
+        changed: "In prototype 1 a comment was read only on its page, in prototype 2 it was decided right in the row. In the test moderators sorted short comments out in the list, and what moved from prototype 2 into the final design is reading in the row: the full text and the status history.",
         image: img(M + "quick-list.webp", 1600, 1075, "Prototype 2: a decision from the list row"),
       },
       {
@@ -170,7 +170,7 @@ export const en: CaseStory = {
       device: "browser",
       steps: [
         { image: img("cases/moderator-dashboard/live2/s-cList.webp", 1200, 750, "The comment registry by status"), action: "Press “More” in the first row", why: "The registry is split by status: what waits for review comes first. A long comment is cut in the row." },
-        { image: img("cases/moderator-dashboard/live2/s-cRow.webp", 1200, 750, "The comment expanded right in the row"), action: "Click the “New” status", why: "The comment expanded in the row, no page to open. Next to it is “Hide”, a decision right in the list." },
+        { image: img("cases/moderator-dashboard/live2/s-cRow.webp", 1200, 750, "The comment expanded right in the row"), action: "Click the “New” status", why: "The comment expanded in the row, no page to open. “Hide” folds it back." },
         { image: img("cases/moderator-dashboard/live2/s-cStatus.webp", 1200, 750, "The status history of the comment"), action: "Open the first comment", why: "The status shows its history: who has already taken the comment and when. If the case is not obvious, it is opened in full." },
         { image: img("cases/moderator-dashboard/live2/s-cData.webp", 1200, 750, "The comment page: publication, author, tabs"), action: "Press “Take into work”", why: "One page holds the publication, a note about the author and tabs with the reply thread, history and complaints." },
         { image: img("cases/moderator-dashboard/live2/s-cWork.webp", 1200, 750, "The comment in work, decision buttons on top"), action: "Done: the comment is in work", why: "The decision buttons are at the top: approve, hide, send to a manager or delete." },

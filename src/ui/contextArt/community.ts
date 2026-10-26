@@ -38,8 +38,15 @@ export const scenes: Record<string, () => string> = {
       <i class="ca-cm-l" style="--w:94%;--i:0"></i><i class="ca-cm-l" style="--w:88%;--i:1"></i><i class="ca-cm-l" style="--w:91%;--i:2"></i><i class="ca-cm-l" style="--w:62%;--i:3"></i>
     </div>`,
   /* девять месяцев: девять клеток-месяцев заполняются, последняя — запуск */
-  months: () => `
-    <div class="ca-cm-months">${Array.from({ length: 9 }, (_, i) => `<i class="${i === 8 ? "is-mvp" : ""}" style="--i:${i}"></i>`).join("")}</div>`,
+  /* 26.10: много легаси — новая карточка ложится на стопку старых плит со строками, как у общей админки; стык держит заплатка */
+  legacy: () => `
+    <div class="ca-cm-legacy">
+      <i class="ca-cm-old" style="--i:0;--r:-6deg;--y:0cqw;--x:-3cqw"></i>
+      <i class="ca-cm-old" style="--i:1;--r:4deg;--y:-11cqw;--x:3cqw"></i>
+      <i class="ca-cm-old" style="--i:2;--r:-2deg;--y:-22cqw;--x:-1cqw"></i>
+      <div class="ca-cm-card ca-cm-new"><span class="ca-cm-l ca-cm-l--b" style="--w:58%"></span><span class="ca-cm-l" style="--w:86%"></span><span class="ca-cm-l" style="--w:64%"></span><i class="ca-cm-dot"></i></div>
+      <i class="ca-cm-tape"></i>
+    </div>`,
   /* своя дизайн-система: кнопка в трёх состояниях и поле — собираются по одной детали */
   kit: () => `
     <div class="ca-cm-kit">

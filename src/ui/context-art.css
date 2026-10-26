@@ -114,3 +114,7 @@
 .ca-tile--wide { aspect-ratio: 3.2 / 1; margin-top: 16px; border-radius: 14px; }
 .cs-stage--art { grid-column: 1 / -1; }
 @media (max-width: 600px) { .ca-tile--wide { aspect-ratio: 1.7 / 1; } }
+/* этап с картинкой — не карточка контекста: цвет текста от карточки этапа (она бывает тёмной), а размеры жирного
+   текста этапа не задевают подписи внутри схемы */
+.cs-stages li.cs-stage--art > p { color: inherit; }
+.cs-stages .ca-tile b { font-size: inherit; font-weight: inherit; }

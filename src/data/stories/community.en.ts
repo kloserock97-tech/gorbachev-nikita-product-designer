@@ -42,9 +42,10 @@ export const en: CaseStory = {
       "What you need is one click away, with no complex filters.",
       "A long text is easy to read, including for people over 55.",
     ],
-    art: { goals: ["write", "queue", "rubrics", "read"], constraints: ["months", "kit"] },
+    art: { goals: ["write", "queue", "rubrics", "read"], constraints: ["legacy", "kit"] },
     constraints: [
-      { title: "Nine months to MVP", text: "Research, architecture, a prototype, the design system and the launch. Groups and events had to wait." },
+      /* 26.10: «Nine months to MVP» replaced with legacy, see the Russian version */
+      { title: "A lot of legacy", text: "Moderation lived in the site's shared admin panel, so new parts had to be built on top of the old ones." },
       { title: "Our own design system", text: "Separate from Mos.ru: I built buttons, fields and cards in every state from scratch." },
     ],
   },
@@ -67,6 +68,7 @@ export const en: CaseStory = {
         question: "Where do similar services confuse people, and what should we not repeat?",
         sample: "Goals, competitors, reference info, heuristics and feedback on one board",
         finding: "Everyone makes the same mistake: one action looks different in different places.",
+        image: img(C + "heuristics.webp", 2800, 1510, "Heuristic review: five services against Nielsen's ten heuristics, with scores", "detail"),
         insights: [
           { id: "F2", text: "Follow and unfollow are scattered across screens, and people get lost." },
         ],
@@ -113,14 +115,14 @@ export const en: CaseStory = {
         demo: "community2:older",
         image: img(C + "01.webp", 1440, 788, "The feed: topics in one row above the cards"),
       },
+      /* 26.10: groundwork for later instead of the long-read look, see the Russian version */
       {
-        id: "ds",
-        insight: "F4",
-        title: "A look made for long reading",
-        found: "If the typeface stays legible even at small sizes, people over 55 finish a long story too.",
-        did: "I chose Golos Text, a typeface made for screens that stays legible even at small sizes. Contrast follows WCAG, and the palette is black, working greys and one pink accent, #FFECF9.",
-        demo: "community2:ds",
-        image: img(C + "06.webp", 1600, 1598, "The type scale", "detail"),
+        id: "future",
+        title: "Groundwork for later: awards, karma and groups",
+        found: "Groups and events didn't make it into the first version; they were postponed.",
+        did: "I laid out in the mock-ups where the platform would grow. An author has karma and a rating in the profile and next to the name in comments, awards such as “Extrovert”, and points for activity: “Story published +5 points”. The “Groups and events” section brings interest groups and events, and creating your first group earns the “Leader” award.",
+        demo: "community2:future",
+        image: img(C + "live2/s-profile.webp", 1200, 750, "Profile: karma, rating, awards and activity points"),
       },
     ],
   },

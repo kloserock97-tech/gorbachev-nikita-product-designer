@@ -3,7 +3,10 @@
    Движение — только transform/opacity, старт по .ca-card.is-in, «меньше движения» — конечный вид.
    Все сцены — кусочки светлого интерфейса реестра рисков: белые карточки с серой рамкой #E9EBEF, тёмно-зелёная
    кнопка #0E8552, бейджи статусов в цветах макета (Figma XomA0T1zFMATidI4Qq5nEw). Слов нет — подпись под плиткой. */
+import { getLang } from "../../i18n";
 import "./ai-agents.css";
+
+const L = (ru: string, en: string) => (getLang() === "ru" ? ru : en);
 
 const ok = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 6.2 2 2L9 4"/></svg>';
 
@@ -69,4 +72,25 @@ export const scenes: Record<string, () => string> = {
       <b class="ca-ag-node is-q" style="--i:2;left:74%;top:22%"></b><b class="ca-ag-node" style="--i:3;left:22%;top:58%"></b>
       <b class="ca-ag-node is-q" style="--i:4;left:62%;top:64%"></b>
     </div>`,
+  /* 26.10, «Проверка»: схема оптимизации процесса — было три передачи между Excel, Jira и личными сообщениями
+     (каждая от 20 минут плюс ожидание следующего), стало одно окно и ноль передач. Эстафета ползёт по старой цепочке
+     с остановками на каждой передаче; новое окно спокойно светится. Только факты этапа, слов — минимум */
+  process: () => {
+    /* подпись передачи — двумя частями: на узкой плитке (телефон) они встают в две строки */
+    const wait = `<span>${L("20+ мин", "20+ min")}</span> <span>${L("+ ожидание", "+ waiting")}</span>`;
+    const hop = (i: number) => `<span class="ca-ag-hop" style="--i:${i}"><i class="ca-ag-hop-line"></i><em>${wait}</em></span>`;
+    /* span, а не b: правило .cs-stages b (заголовок этапа) иначе задаёт чипам свой кегль */
+    const tool = (name: string, i: number) => `<span class="ca-ag-tool" style="--i:${i}">${name}</span>`;
+    return `
+    <div class="ca-ag-flow">
+      <div class="ca-ag-lane ca-ag-lane--old">
+        <span class="ca-ag-tag">${L("Было", "Before")}</span>
+        <div class="ca-ag-chain">${tool("Excel", 0)}${hop(0)}${tool("Jira", 1)}${hop(1)}${tool(L("ЛС", "DMs"), 2)}<i class="ca-ag-baton"></i></div>
+      </div>
+      <div class="ca-ag-lane ca-ag-lane--new">
+        <span class="ca-ag-tag">${L("Стало", "After")}</span>
+        <div class="ca-ag-one"><span class="ca-ag-tool ca-ag-tool--one"><i class="ca-ag-check">${ok}</i>${L("Новый интерфейс", "New interface")}</span><span class="ca-ag-zero">${L("0 передач", "0 handoffs")}</span></div>
+      </div>
+    </div>`;
+  },
 };

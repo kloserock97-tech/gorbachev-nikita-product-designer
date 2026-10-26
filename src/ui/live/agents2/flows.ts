@@ -34,6 +34,26 @@ function countUp(n: HTMLElement, ms = 700) {
 
 /* в макетах подписи кнопок и бейджей обрезаны по высоте прописных (leading trim): слой ниже кегля, а конвертер этого не
    знает — текст садится на 3–4 px ниже. Строка высотой ровно в слой возвращает подпись в центр */
+/* 26.10: прогресс в продукте сплошной, а не сегментами (Никита). В кадре «Формирование» полоса нарисована 13 сегментами —
+   прячем их и кладём одну заливку той же высоты и цвета на серую дорожку. Доля — из подписи «готово N рисков из M».
+   Работает всегда (хук fix), рост заливки — в liven */
+export function solidProgress(el: HTMLElement) {
+  for (const track of qa(el, '[data-n="AI Progress"] [data-n="Track"]')) {
+    const segs = [...track.children].filter((n) => (n as HTMLElement).dataset.n?.startsWith("Segment")) as HTMLElement[];
+    if (!segs.length || track.querySelector(".ag-fill")) continue;
+    const title = track.closest('[data-n="AI Progress"]')?.querySelector<HTMLElement>('[data-n="Title"]')?.textContent ?? "";
+    const m = title.match(/(\d+)\D+(\d+)/);
+    const share = m ? Math.min(1, +m[1] / +m[2]) : 0.6;
+    segs.forEach((n) => (n.style.display = "none"));
+    track.style.background = "#e2e6ec";
+    const fill = document.createElement("i");
+    fill.className = "ag-fill";
+    fill.style.cssText = `left:0;top:0;height:100%;width:${(share * 100).toFixed(2)}%;border-radius:999px;background:linear-gradient(90deg,#2563eb,#584bec)`;
+    track.append(fill);
+  }
+}
+export function fix(el: HTMLElement) { trimCaps(el); solidProgress(el); }
+
 export function trimCaps(el: HTMLElement) {
   for (const n of qa(el, "div")) {
     if (n.children.length || !n.textContent?.trim()) continue;
@@ -56,7 +76,7 @@ export function liven(el: HTMLElement, key: string, instant: boolean) {
   stag('[data-n="Applied filters slot"] > *', 60, 80, "g2-pop");
   if (key === "reg") qa(el, '[data-n="Stat Tile"] div, [data-n="Risk Summary Tile"] div').filter((n) => !n.children.length && /^\d[\d\s]*$/.test(n.textContent?.trim() ?? "")).forEach((n) => countUp(n));
   if (key === "forming") {
-    qa(el, '[data-n="Track"] > *').forEach((n, i) => { n.style.animationDelay = `${i * 110}ms`; n.classList.add("ag-seg"); });
+    el.querySelector<HTMLElement>('[data-n="AI Progress"] .ag-fill')?.classList.add("ag-fill-grow");
     el.querySelector<HTMLElement>('[data-n="AI mark"]')?.classList.add("g2-breathe");
   }
   el.querySelector<HTMLElement>('[data-n="AI Banner"]')?.classList.add("g2-drop");
@@ -141,7 +161,7 @@ const na: Flow = (s, ctx, step) => {
 };
 
 export const flows = {
-  assess: make({ w: 1440 }, assess, r, liven, trimCaps),
-  filter: make({ w: 1440 }, filter, r, liven, trimCaps),
-  na: make({ w: 1440 }, na, r, liven, trimCaps),
+  assess: make({ w: 1440 }, assess, r, liven, fix),
+  filter: make({ w: 1440 }, filter, r, liven, fix),
+  na: make({ w: 1440 }, na, r, liven, fix),
 };

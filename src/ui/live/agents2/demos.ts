@@ -3,10 +3,10 @@
    прототипа (flows.ts); к ним добавлены кадры 01.2 «Реестр · загрузка» и 01.8 «Сортировка» (ключи loading, sort).
    В данных решения — demo: "agents2:<имя>". */
 import type { Demo, Scene } from "../grif2/demoTypes";
-import { dialog, drawer, liven, r, trimCaps } from "./flows";
+import { dialog, drawer, fix, liven, r } from "./flows";
 
 const q = (c: Scene, sel: string) => c.s.el.querySelector<HTMLElement>(sel);
-const base = { r, liven, fix: trimCaps };
+const base = { r, liven, fix };
 
 export const demos: Record<string, Demo> = {
   /* документы и черновик рисков — внутри продукта: архив в карточке → разбор с прогрессом → черновик из 13 рисков */

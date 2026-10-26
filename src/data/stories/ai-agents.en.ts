@@ -154,6 +154,8 @@ export const en: CaseStory = {
       {
         kicker: "Timing",
         title: "The same risks along two routes",
+        /* 26.10: компактная схема «было три передачи → стало одно окно» (сцена process в contextArt/ai-agents.ts) */
+        art: "process",
         text: "We ran the same risks in parallel: the old way, through Excel, Jira and direct messages, and in the new interface, and timed them. On the old route each handoff took 20 minutes or more, plus waiting for the next person. In the interface there were no handoffs left.",
       },
     ],

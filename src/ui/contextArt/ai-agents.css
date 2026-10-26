@@ -104,3 +104,58 @@
 @keyframes ca-ag-toggle { from { transform: translateX(-15cqw); } }
 @keyframes ca-ag-belt { to { transform: translateY(-60cqw); } }
 @keyframes ca-ag-draw { from { opacity: 0; transform: scaleX(0); } }
+
+/* 26.10, «Проверка»: схема оптимизации (сцена process) — тёмная плитка внутри тёмной карточки этапа. Две дорожки:
+   «Было» — инструменты по цепочке, на каждой передаче «20+ мин + ожидание», эстафета ползёт с остановками (linear,
+   бесконечно); «Стало» — одно окно, точка проходит разом, «0 передач». Текст не мельче 10 px (телефон) */
+/* схема ниже стандартной широкой плитки — компактно; текст этапа на тёмной карточке светлый (общее правило .ca-card > p
+   красит абзац в цвет страницы — на тёмной карточке он пропадал) */
+.cs[data-case="ai-agents"] .cs-stage--art .ca-tile--process { aspect-ratio: 4.6 / 1; }
+@media (max-width: 600px) { .cs[data-case="ai-agents"] .cs-stage--art .ca-tile--process { aspect-ratio: 2 / 1; } }
+.cs[data-case="ai-agents"] .cs-stages li.cs-stage--art > p:not(.cs-mini) { color: inherit; font-size: 16px; }
+.cs[data-case="ai-agents"] .cs-stage--art .ca-tile { background: linear-gradient(160deg, #24272d, #1a1c20); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07); }
+/* мобильный браузер не раздувает мелкий текст схемы (text autosizing) */
+.cs[data-case="ai-agents"] .cs-stage--art .ca-tile { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+.ca-tile .ca-ag-flow { position: absolute; inset: 9% 3.5%; display: grid; grid-template-rows: 1fr 1fr; gap: 6%; }
+.ca-tile .ca-ag-lane { display: grid; grid-template-columns: max(44px, 7cqw) minmax(0, 1fr); align-items: center; gap: 2cqw; }
+.ca-tile .ca-ag-tag { font: 600 max(10px, 1.3cqw)/1 var(--font, inherit); letter-spacing: 0.04em; text-transform: uppercase; color: rgba(255, 255, 255, 0.5); }
+.ca-tile .ca-ag-chain, .ca-tile .ca-ag-one { position: relative; display: flex; align-items: center; height: 100%; }
+.ca-tile .ca-ag-tool { position: relative; z-index: 1; flex: none; display: inline-flex; align-items: center; gap: 0.8cqw; padding: max(6px, 1cqw) max(10px, 1.7cqw); border-radius: 99cqw; background: #f4f5f7; color: #1f2328; font: 600 max(10px, 1.45cqw)/1 var(--font, inherit); white-space: nowrap; }
+.ca-tile .ca-ag-hop { position: relative; flex: 1 1 0; min-width: 0; display: grid; justify-items: center; align-self: stretch; align-content: center; }
+.ca-tile .ca-ag-hop-line { width: 100%; height: 0; border-top: max(1.5px, 0.22cqw) dashed rgba(255, 255, 255, 0.35); transform-origin: 0 50%; }
+.ca-tile .ca-ag-hop em { position: absolute; top: calc(50% + max(7px, 1cqw)); font: 500 max(9.5px, 1.15cqw)/1.1 var(--font, inherit); font-style: normal; color: #ffb35c; white-space: nowrap; text-align: center; }
+/* эстафета: точка ползёт вдоль цепочки и стоит на каждой передаче */
+.ca-tile .ca-ag-baton { position: absolute; z-index: 2; inset: 0; pointer-events: none; opacity: 0; }
+.ca-tile .ca-ag-baton::before { content: ""; position: absolute; left: 0; top: 50%; width: max(8px, 1.2cqw); height: max(8px, 1.2cqw); margin: calc(max(8px, 1.2cqw) / -2) 0 0 calc(max(8px, 1.2cqw) / -2); border-radius: 50%; background: #ffb35c; box-shadow: 0 0 0 max(3px, 0.5cqw) rgba(255, 179, 92, 0.22); }
+.ca-tile .ca-ag-one { gap: 2cqw; }
+.ca-tile .ca-ag-tool--one { background: #e7f7ee; color: #0b5c38; box-shadow: 0 0 0 max(3px, 0.4cqw) rgba(14, 133, 82, 0.25); }
+.ca-tile .ca-ag-check { display: grid; place-items: center; width: max(14px, 2cqw); height: max(14px, 2cqw); border-radius: 50%; background: #0e8552; }
+.ca-tile .ca-ag-check svg { width: 70%; height: 70%; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ca-tile .ca-ag-zero { font: 600 max(10px, 1.45cqw)/1 var(--font, inherit); color: #6ee7a8; white-space: nowrap; }
+@media (prefers-reduced-motion: no-preference) {
+  .ca-tile .ca-ag-lane--old .ca-ag-tool { animation: ca-pop 0.45s var(--ca-out) both; animation-delay: calc(0.15s + var(--i) * 0.35s); }
+  .ca-tile .ca-ag-hop-line { animation: ag-draw 0.5s var(--ca-out) both; animation-delay: calc(0.3s + var(--i) * 0.35s); }
+  .ca-tile .ca-ag-hop em { animation: ca-pop 0.45s var(--ca-out) both; animation-delay: calc(0.45s + var(--i) * 0.35s); }
+  .ca-tile .ca-ag-baton { animation: ag-baton 6.4s linear 1.4s infinite; }
+  .ca-tile .ca-ag-lane--new .ca-ag-tool, .ca-tile .ca-ag-zero { animation: ca-pop 0.5s var(--ca-out) both 1.2s; }
+  .ca-tile .ca-ag-zero { animation-delay: 1.45s; }
+  .ca-tile .ca-ag-lane--new .ca-ag-tool--one { animation: ca-pop 0.5s var(--ca-out) both 1.2s, ag-glow 2.8s ease-in-out 1.8s infinite; }
+}
+@keyframes ag-draw { from { transform: scaleX(0); } }
+/* стоянки на каждом инструменте и долгий путь через передачу: 0% Excel → 33% Jira → 66% ЛС → в конце гаснет */
+@keyframes ag-baton {
+  0% { opacity: 0; transform: translateX(5%); }
+  6%, 22% { opacity: 1; transform: translateX(5%); }
+  44%, 60% { opacity: 1; transform: translateX(48%); }
+  82%, 94% { opacity: 1; transform: translateX(92%); }
+  100% { opacity: 0; transform: translateX(92%); }
+}
+@keyframes ag-glow { 50% { box-shadow: 0 0 0 max(5px, 0.7cqw) rgba(14, 133, 82, 0.18); } }
+
+/* узкая плитка (телефон): подпись передачи в две строки, инструменты и подписи мельче */
+@container (max-width: 520px) {
+  .ca-tile .ca-ag-hop em span { display: block; }
+  .ca-tile .ca-ag-hop em { line-height: 1.15; }
+  .ca-tile .ca-ag-tool { padding: 5px 8px; }
+  .ca-tile .ca-ag-lane { grid-template-columns: 40px minmax(0, 1fr); gap: 6px; }
+}
