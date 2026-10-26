@@ -2,13 +2,16 @@
    Сцена держит один экран; смена экрана — короткая смена прозрачности, как переход в продукте. Внутри экрана
    сценарий находит слой по имени из Figma или по тексту, прячет и проявляет части ответа по очереди, печатает
    в поле ввода. Экран выше окна (Память, 1176 px) прокручивается внутри сцены. */
-import { byText, ensureStyles, layer, renderScreen, type ScreenKey } from "./render";
+import { byText, grif, layer, type Renderer } from "./render";
 import "./stage.css";
 
 export type Stage = ReturnType<typeof createStage>;
 
-export function createStage(root: HTMLElement, opts: { base: string; calm: boolean }) {
-  ensureStyles(opts.base);
+/* 26.10: сцена общая для всех кейсов: r — экраны кейса (createRenderer), по умолчанию GRIF; liven — своё оживление
+   экранов кейса поверх общего (имена слоёв у каждого продукта свои) */
+export function createStage(root: HTMLElement, opts: { base: string; calm: boolean; r?: Renderer; liven?: (el: HTMLElement, key: string, instant: boolean) => void }) {
+  const r = opts.r ?? grif;
+  r.ensureStyles(opts.base);
   root.classList.add("g2-stage");
   let cur: HTMLElement | null = null;
   let timers: number[] = [];
@@ -16,9 +19,9 @@ export function createStage(root: HTMLElement, opts: { base: string; calm: boole
   const clear = () => { timers.forEach(clearTimeout); timers = []; };
   const later = (ms: number, fn: () => void) => { timers.push(window.setTimeout(fn, opts.calm ? 0 : ms)); };
 
-  function show(key: ScreenKey, instant = false) {
+  function show(key: string, instant = false) {
     clear();
-    const el = renderScreen(key);
+    const el = r.renderScreen(key);
     root.append(el);
     const old = cur;
     if (old && !instant && !opts.calm) {
@@ -35,8 +38,9 @@ export function createStage(root: HTMLElement, opts: { base: string; calm: boole
   /* 24.10: экран живёт и без нажатий — то, что в продукте движется, движется и здесь: спиннеры крутятся, полоски
      прогресса дорастают, точка статуса и персонаж «дышат», строка текущего шага мерцает. На входе экрана его части
      появляются лесенкой (30–60 мс), а не все разом. «Меньше движения» — без этого. */
-  function liven(el: HTMLElement, key: ScreenKey, instant: boolean) {
+  function liven(el: HTMLElement, key: string, instant: boolean) {
     if (opts.calm) return;
+    opts.liven?.(el, key, instant);
     const all = (sel: string) => [...el.querySelectorAll<HTMLElement>(sel)];
     all('[data-n="icon/spin"]').forEach((n) => n.classList.add("g2-spin"));
     all('[data-n="Progress"], [data-n="Long task"] > div > [data-n="Rectangle"]').forEach((n) => n.classList.add("g2-grow"));

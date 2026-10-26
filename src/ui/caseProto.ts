@@ -19,7 +19,7 @@ import type { CasePrototype } from "../data/caseStory";
 import { getLang } from "../i18n";
 import { tidy } from "../lib/typograph";
 import { ambientShader } from "./ambientGL";
-import { LIVE } from "./live";
+import { liveLoader } from "./live";
 import type { LiveInstance } from "./live/types";
 import "./case-proto.css";
 
@@ -51,7 +51,7 @@ const ICON = {
 export function protoBlock(p: CasePrototype, opts: { compact?: boolean } = {}) {
   const n = p.steps.length;
   const web = p.device === "browser";
-  const live = !!p.live && !!LIVE[p.live];
+  const live = !!liveLoader(p.live);
   const screen = live
     ? `<div class="pt-live-root" data-live="${esc(p.live!)}"><p class="pt-loading">${tr(T.loading)}</p></div>`
     : p.steps.map((s, k) => `<div class="pt-page" data-page="${k}"${k ? " hidden" : ""}>
@@ -217,7 +217,7 @@ export function mountProto(root: HTMLElement) {
     /* живой модуль: грузится, когда блок близко; экран в его дизайн-ширине ужимается под рамку через zoom */
     let fit: ResizeObserver | null = null;
     async function boot() {
-      const load = LIVE[liveRoot!.dataset.live!];
+      const load = liveLoader(liveRoot!.dataset.live)!;
       const mod = (await load()).default;
       const screen = liveRoot!.parentElement!;
       /* на узком экране окно браузера не ужимаем мельче 0,5: текст в 1100 px читался бы в 4 px. Лишнее по ширине
