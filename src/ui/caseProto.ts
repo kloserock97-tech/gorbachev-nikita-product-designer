@@ -9,13 +9,16 @@
      проходит сам; плашка-итог (toast) встаёт поверх последнего экрана, если отдельного нет.
    · v115, живой (prototype.live): в рамке настоящий интерфейс в HTML (src/ui/live/, контракт — live/types.ts),
      собранный в Claude Code. Шаги переключаются от действий в самом интерфейсе; модуль грузится своим чанком,
-     когда блок подъехал к экрану. Метка «Прототип собран в Claude Code» — текстом и своим значком.
+     когда блок подъехал к экрану. 26.10: метки «Прототип собран в Claude Code» и «Демо: данные выдуманы» убраны.
+   · 26.10, плотный вид (opts.compact, у кейсов с CaseStory.compact): вместо списка шагов — раскадровка из миниатюр
+     экранов (текущий кадр шире), под ней крупный номер шага в цветах подсветки, действие и «почему так» одной строкой.
 
    Шаги слева — кнопки: можно перейти к любому. Рамка — телефон или окно браузера 16:10 (device).
    «Меньше движения» — экраны сменяются без въезда, кольцо не пульсирует. */
 import type { CasePrototype } from "../data/caseStory";
 import { getLang } from "../i18n";
 import { tidy } from "../lib/typograph";
+import { ambientShader } from "./ambientGL";
 import { LIVE } from "./live";
 import type { LiveInstance } from "./live/types";
 import "./case-proto.css";
@@ -30,10 +33,9 @@ const T = {
   again: { ru: "Пройти ещё раз", en: "Start over" },
   back: { ru: "Шаг назад", en: "Back" },
   mock: { ru: "Прототип из макетов", en: "Prototype from the mock-ups" },
-  claude: { ru: "Прототип собран в Claude Code", en: "Prototype built in Claude Code" },
-  demo: { ru: "Демо: данные выдуманы, ничего не отправляется", en: "Demo: the data is made up and nothing is sent" },
   loading: { ru: "Загружаю прототип…", en: "Loading the prototype…" },
   next: { ru: "Сделать этот шаг за меня", en: "Do this step for me" },
+  nextShort: { ru: "Сделать за меня", en: "Do it for me" },
   pan: { ru: "Окно шире экрана — листайте его вбок", en: "The window is wider than the screen: swipe it sideways" },
 };
 const tr = (x: { ru: string; en: string }) => (getLang() === "ru" ? x.ru : x.en);
@@ -46,7 +48,7 @@ const ICON = {
   spark: '<svg class="pt-spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v6M12 15.5v6M2.5 12h6M15.5 12h6M5.3 5.3l3.9 3.9M14.8 14.8l3.9 3.9M18.7 5.3l-3.9 3.9M9.2 14.8l-3.9 3.9"/></svg>',
 };
 
-export function protoBlock(p: CasePrototype) {
+export function protoBlock(p: CasePrototype, opts: { compact?: boolean } = {}) {
   const n = p.steps.length;
   const web = p.device === "browser";
   const live = !!p.live && !!LIVE[p.live];
@@ -57,9 +59,8 @@ export function protoBlock(p: CasePrototype) {
           ${s.spot ? `<button type="button" class="pt-spot" style="left:${(s.spot[0] * 100).toFixed(2)}%;top:${(s.spot[1] * 100).toFixed(2)}%" aria-label="${esc(s.action)}"><i></i></button>` : ""}
           ${s.toast ? `<p class="pt-toast">${ICON.check}${esc(s.toast)}</p>` : ""}</div>
         </div>`).join("");
-  return `<div class="pt${web ? " pt--browser" : ""}${live ? " pt--live" : ""}" data-proto>
-    <div class="pt-side">
-      ${live ? `<p class="pt-badge">${ICON.spark}${tr(T.claude)}</p>` : `<p class="pt-badge pt-badge--mock"><i></i>${tr(T.mock)}</p>`}
+  const side = opts.compact ? sideCompact(p) : `
+      ${live ? "" : `<p class="pt-badge pt-badge--mock"><i></i>${tr(T.mock)}</p>`}
       <h3 class="pt-title">${esc(p.title)}</h3>
       ${p.lead ? `<p class="pt-lead">${esc(p.lead)}</p>` : ""}
       <div class="pt-trace">
@@ -75,7 +76,9 @@ export function protoBlock(p: CasePrototype) {
           <button type="button" class="pt-icon" data-again aria-label="${tr(T.again)}" title="${tr(T.again)}">${ICON.again}</button>
           <button type="button" class="pt-send" data-next aria-label="${tr(T.next)}" title="${tr(T.next)}">${ICON.up}</button>
         </span>
-      </div>
+      </div>`;
+  return `<div class="pt${web ? " pt--browser" : ""}${live ? " pt--live" : ""}${opts.compact ? " pt--compact" : ""}" data-proto>
+    <div class="pt-side">${side}
     </div>
     <div class="pt-device">
       <div class="pt-amb" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
@@ -83,17 +86,38 @@ export function protoBlock(p: CasePrototype) {
         ${web ? '<p class="pt-bar" aria-hidden="true"><i></i><i></i><i></i></p>' : ""}
         <div class="pt-screen" data-screen>${screen}</div>
       </div>
-      ${live ? `<p class="pt-pan">${tr(T.pan)}</p><p class="pt-demo">${tr(T.demo)}</p>` : ""}
+      ${live ? `<p class="pt-pan">${tr(T.pan)}</p>` : ""}
     </div>
   </div>`;
 }
 
+/* 26.10: плотная панель — раскадровка шагов вместо списка. Миниатюры — запасные картинки шагов (step.image) */
+function sideCompact(p: CasePrototype) {
+  const n = p.steps.length;
+  return `
+      <h3 class="pt-title">${esc(p.title)}</h3>
+      ${p.lead ? `<p class="pt-lead">${esc(p.lead)}</p>` : ""}
+      <ol class="pt-reel" style="--n:${n}">${p.steps.map((s, k) => `<li><button type="button" data-go="${k}" data-why="${esc(s.why ?? "")}" aria-label="${esc(s.action)}" title="${esc(s.action)}"${s.wait ? ` data-wait="${s.wait}"` : ""}>
+        <img src="${BASE}${s.image.src}" alt="" width="${s.image.w}" height="${s.image.h}" loading="lazy" decoding="async"><span class="pt-k" aria-hidden="true">${k + 1 < n ? k + 1 : ICON.check}</span><span class="pt-act" hidden>${esc(s.action)}</span></button></li>`).join("")}</ol>
+      <div class="pt-now">
+        <p class="pt-now-k" aria-hidden="true"><b data-now-k></b><span>/${String(n - 1).padStart(2, "0")}</span></p>
+        <p class="pt-now-act" data-prompt></p>
+        <span class="pt-sr" data-pt-count aria-live="polite"></span>
+      </div>
+      <p class="pt-why pt-why--line" data-why-box>${ICON.spark}<span data-why-text></span></p>
+      <div class="pt-ctrls pt-ctrls--compact">
+        <button type="button" class="pt-icon" data-back aria-label="${tr(T.back)}" title="${tr(T.back)}">${ICON.back}</button>
+        <button type="button" class="pt-icon" data-again aria-label="${tr(T.again)}" title="${tr(T.again)}">${ICON.again}</button>
+        <button type="button" class="pt-go" data-next aria-label="${tr(T.next)}">${tr(T.nextShort)}${ICON.up}</button>
+      </div>`;
+}
+
 /* 24.10: несколько сценариев одного продукта — вкладки над прототипами. Виден один блок; скрытый не грузит свой
    живой модуль, пока его не открыли (наблюдатель видимости в mountProto срабатывает, когда блок показался) */
-export function flowsBlock(list: CasePrototype[]) {
+export function flowsBlock(list: CasePrototype[], opts: { compact?: boolean } = {}) {
   return `<div class="pt-flows" data-flows>
     <div class="pt-tabs" role="tablist">${list.map((p, k) => `<button type="button" role="tab" aria-selected="${k === 0}" data-flow="${k}">${esc(p.tab ?? p.title)}</button>`).join("")}</div>
-    ${list.map((p, k) => `<div class="pt-flow" data-flow-panel="${k}" role="tabpanel"${k ? " hidden" : ""}>${protoBlock(p)}</div>`).join("")}
+    ${list.map((p, k) => `<div class="pt-flow" data-flow-panel="${k}" role="tabpanel"${k ? " hidden" : ""}>${protoBlock(p, opts)}</div>`).join("")}
   </div>`;
 }
 
@@ -116,7 +140,8 @@ export function mountProto(root: HTMLElement) {
     const pages = [...box.querySelectorAll<HTMLElement>(".pt-page")];
     /* шаги — только кнопки панели: в живом экране свои data-атрибуты не должны попадать в движок */
     const side = box.querySelector<HTMLElement>(".pt-side")!;
-    const steps = [...side.querySelectorAll<HTMLButtonElement>(".pt-steps [data-go]")];
+    const steps = [...side.querySelectorAll<HTMLButtonElement>(":is(.pt-steps, .pt-reel) [data-go]")];
+    const nowK = box.querySelector<HTMLElement>("[data-now-k]");
     const prompt = box.querySelector<HTMLElement>("[data-prompt]")!;
     const next = box.querySelector<HTMLButtonElement>("[data-next]")!;
     const count = box.querySelector<HTMLElement>("[data-pt-count]")!;
@@ -146,6 +171,11 @@ export function mountProto(root: HTMLElement) {
       next.disabled = last;
       /* «поле ввода» внизу — текущий шаг, как набранный запрос; круглая кнопка проходит его за человека */
       prompt.textContent = steps[k].querySelector(".pt-act")?.textContent ?? "";
+      if (nowK) {
+        /* плотная панель: крупный номер и действие появляются заново на каждом шаге */
+        nowK.textContent = last ? "✓" : String(k + 1).padStart(2, "0");
+        for (const el of [nowK.parentElement!, prompt, why]) { el.classList.remove("is-swap"); void el.offsetWidth; el.classList.add("is-swap"); }
+      }
       box.classList.toggle("is-done", last);
       ambient.soon();
     }
@@ -315,6 +345,8 @@ function ambientLight(box: HTMLElement, calm: boolean) {
     for (const [k, c] of Object.entries(sides)) if (c) box.style.setProperty(`--am-${k}`, tone(c));
   };
   let t1 = 0, t2 = 0, tick = 0, live = false, lastScroll = 0;
+  /* 26.10: свет рисует шейдер (ambientGL.ts); создаётся, когда блок впервые показался, а не на скрытой вкладке */
+  let gl: ReturnType<typeof ambientShader> | undefined;
   const soon = () => {
     clearTimeout(t1); clearTimeout(t2);
     t1 = window.setTimeout(sample, calm ? 60 : 260);
@@ -328,10 +360,12 @@ function ambientLight(box: HTMLElement, calm: boolean) {
     box.classList.toggle("is-lit", live);
     clearInterval(tick);
     if (live) { sample(); tick = window.setInterval(sample, 1500); }
+    if (live && !calm && gl === undefined) gl = ambientShader(box);
+    if (live) gl?.start(); else gl?.stop();
   });
   io.observe(box);
   return {
     soon,
-    stop() { clearTimeout(t1); clearTimeout(t2); clearInterval(tick); io.disconnect(); screen.removeEventListener("scroll", onScroll, { capture: true }); },
+    stop() { clearTimeout(t1); clearTimeout(t2); clearInterval(tick); io.disconnect(); gl?.destroy(); screen.removeEventListener("scroll", onScroll, { capture: true }); },
   };
 }

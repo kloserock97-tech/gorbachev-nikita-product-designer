@@ -444,7 +444,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
 
         ${s.decisions.film || s.prototype || s.prototypes?.length || hasDemo(s.id) ? `<section class="cs-sec cs-sec--interface cs-zone">
           ${head(++sec, "interface", t("cs.interface"))}
-          ${s.prototypes?.length ? flowsBlock(s.prototypes) : s.prototype ? protoBlock(s.prototype) : ""}
+          ${s.prototypes?.length ? flowsBlock(s.prototypes, { compact: s.compact }) : s.prototype ? protoBlock(s.prototype, { compact: s.compact }) : ""}
           ${s.decisions.film && !s.compact ? filmBlock(s.decisions.film) : s.prototype || s.prototypes?.length ? "" : demoBlock(s.id)}
         </section>` : ""}
 

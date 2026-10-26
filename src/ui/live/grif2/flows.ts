@@ -46,6 +46,10 @@ const chat: Flow = (s, ctx, step) => {
       const text = [...kid.querySelectorAll<HTMLElement>("div"), kid].find((n) => !n.children.length && (n.textContent ?? "").startsWith("Бриф готов"));
       return text ? s.stream(text, at) : 0;
     });
+    /* пока ответ собирается, «Думал 12 с» переливается — как статус «думаю» */
+    const think = [...(s.find("Reasoning row")?.querySelectorAll<HTMLElement>("div") ?? [])].find((n) => !n.children.length && /Думал|Thought/.test(n.textContent ?? ""));
+    think?.classList.add("g2-sheen");
+    s.later(dur, () => think?.classList.remove("g2-sheen"));
     s.later(dur + 200, () => go(2));
     return;
   }

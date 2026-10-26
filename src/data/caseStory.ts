@@ -78,7 +78,7 @@ export type JourneyStep = { kicker: string; title: string; note: string; outside
 export type CompareRect = [number, number, number, number];
 export type CompareNote = { id: string; kind: "about" | "mine"; side: "left" | "right"; text: string; extra?: string; rects?: CompareRect[] };
 export type CompareSide = { title: string; image: CaseImage; notes: CompareNote[] };
-export type CaseCompare = { title: string; lead?: string; before: CompareSide; after: CompareSide; versions?: { image: CaseImage; label: string; note: string }[] };
+export type CaseCompare = { title: string; lead?: string; before: CompareSide; after: CompareSide };
 
 export type Mistake = { title: string; decided: string; wrong: string; out: string; changed: string };
 

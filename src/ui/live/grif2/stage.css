@@ -59,3 +59,24 @@
 @keyframes g2-hello { from { opacity: 0; scale: 0.9; translate: 0 8px; } to { opacity: 1; scale: 1; translate: 0 0; } }
 .g2 .g2-fade-slow { animation: g2-in 1.2s ease 0.15s both; }
 @media (prefers-reduced-motion: reduce) { .g2 .g2-from-right, .g2 .g2-hello, .g2 .g2-fade-slow { animation: none; } }
+
+/* 26.10: ещё живее, по разбору с макетами и образцам AI-интерфейсов (21st.dev: Text Shimmer, Gradient Chat Input).
+   · рамка поля ввода — четыре цветных пятна из макета плывут по кругу: цвет обтекает поле, как живая обводка;
+   · пустое поле — мигающая каретка перед подсказкой;
+   · ответ — слова проявляются из размытия, а не просто дописываются;
+   · статус «Жду вашего решения» — полоса блика по тексту; приветствие — словами из размытия;
+   · то, что можно нажать, отвечает на нажатие (scale 0.97). */
+.g2 .g2-flow { animation: g2-flow 7s ease-in-out infinite alternate; }
+@keyframes g2-flow { 0% { translate: 0 0; } 33% { translate: 26% 18%; } 66% { translate: -18% -12%; } 100% { translate: 12% -20%; } }
+.g2 .g2-caret::before { content: ""; display: inline-block; width: 1.5px; height: 1.05em; margin: 0 3px -0.16em 0; background: #c7cbff; animation: g2-blink 1.05s steps(1) infinite; }
+@keyframes g2-blink { 50% { opacity: 0; } }
+.g2 .g2-w { display: inline; animation: g2-word 0.42s cubic-bezier(0.23, 1, 0.32, 1) both; }
+@keyframes g2-word { from { opacity: 0; filter: blur(4px); } to { opacity: 1; filter: blur(0); } }
+.g2 .g2-sheen { background: linear-gradient(100deg, currentColor 40%, #fff 50%, currentColor 60%) 0 0 / 260% 100% no-repeat; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: g2-sheen 2.2s linear infinite; }
+@keyframes g2-sheen { from { background-position: 100% 0; } to { background-position: -160% 0; } }
+.g2 [data-hot] { transition: transform 0.16s ease-out; }
+.g2 [data-hot]:active { transform: scale(0.97); }
+@media (prefers-reduced-motion: reduce) {
+  .g2 .g2-flow, .g2 .g2-caret::before, .g2 .g2-w, .g2 .g2-sheen { animation: none; }
+  .g2 .g2-sheen { -webkit-text-fill-color: currentColor; background: none; }
+}

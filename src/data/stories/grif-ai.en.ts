@@ -154,12 +154,7 @@ export const en: CaseStory = {
         { id: "m-warn", kind: "mine", side: "right", text: "The warning is no longer the palest text", extra: "5.58 : 1 instead of 4.17", rects: [[0.421, 0.962, 0.341, 0.022]] },
       ],
     },
-    versions: [
-      { image: img(G + "v1-orb.webp", 960, 600, "The version with an orb"), label: "Orb", note: "Failed contrast, the orb pulls attention" },
-      { image: img(G + "v2-navy.webp", 960, 600, "A dark blue version with no orb"), label: "No orb", note: "The input in the middle, files in a row" },
-      { image: img(G + "v3-light.webp", 960, 600, "A light theme try"), label: "Light theme", note: "Tried it and stayed with the dark one" },
-      { image: img(G + "compare-after.webp", 1440, 900, "The final new chat"), label: "Final", note: "A character in place of the orb, all text at 5.2 : 1 or more" },
-    ],
+    /* 26.10: лента «Как менялся экран» убрана по просьбе Никиты */
   },
   /* 23.10: the investor run moved here from research: it tested the finished product */
   validation: {

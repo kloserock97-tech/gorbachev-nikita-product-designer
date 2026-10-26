@@ -49,10 +49,20 @@ export function createStage(root: HTMLElement, opts: { base: string; calm: boole
       if (c !== sp && c.tagName === "DIV" && !c.children.length && (c.textContent ?? "").length > 6) c.classList.add("g2-shimmer");
     }));
     all('[data-n="Working status"] div').forEach((n) => { if (!n.children.length && (n.textContent ?? "").length > 10) n.classList.add("g2-shimmer"); });
+    /* 26.10: рамка поля ввода переливается; в пустом поле мигает каретка; ожидание решения и синхронизация — блик по тексту */
+    all('[data-n="Composer v3"] > [data-n^="Glow"]').forEach((n, i) => { n.style.animationDelay = `${-i * 1.9}s`; n.style.animationDuration = `${6 + i * 1.3}s`; n.classList.add("g2-flow"); });
+    all('[data-n="Composer v3"] [data-n="Placeholder"]').forEach((n) => n.classList.add("g2-caret"));
+    all('[data-n="Presence"] > div').forEach((n) => { if (!n.children.length && /Жду|Waiting/.test(n.textContent ?? "")) n.classList.add("g2-sheen"); });
+    all('[data-n="Sync status"] div').forEach((n) => { if (!n.children.length && (n.textContent ?? "").length > 12) n.classList.add("g2-sheen"); });
     if (instant) return;
     const stagger = (list: (HTMLElement | null | undefined)[], step = 50, from = 0, cls = "g2-rise") =>
       list.filter(Boolean).forEach((n, i) => { n!.style.animationDelay = `${from + i * step}ms`; n!.classList.add(cls); });
     const kids = (sel: string) => [...(el.querySelector(sel)?.children ?? [])] as HTMLElement[];
+    if (key === "new") {
+      /* приветствие проявляется словами */
+      const hello = [...el.querySelectorAll<HTMLElement>('[data-n="Greeting row"] div')].find((n) => !n.children.length && (n.textContent ?? "").length > 6);
+      stream(hello ?? null, 120, 70);
+    }
     if (key === "new") stagger([el.querySelector<HTMLElement>('[data-n="Greeting row"]'), el.querySelector<HTMLElement>('[data-n="Composer v3"]'), ...kids('[data-n="Prompt buttons"]')], 60, 80);
     if (key === "feed" || key === "feedRun" || key === "feedEmpty") stagger(all('[data-n="Main Container"] [data-n^="Group"] > [data-n^="Row"]'), 35, 60);
     if (key === "feedRun") stagger(kids('[data-n="Steps"]'), 260, 200), all('[data-n="Steps"] [data-n="icon/okc"]').forEach((n, i) => { n.style.animationDelay = `${300 + i * 260}ms`; n.classList.add("g2-pop"); });
@@ -97,14 +107,23 @@ export function createStage(root: HTMLElement, opts: { base: string; calm: boole
     scr.scrollTo({ left, behavior: opts.calm ? "auto" : "smooth" });
   }
 
-  /** текст печатается словами, как стриминг ответа */
-  /** с момента at; возвращает, сколько длится печать */
+  /** текст появляется словами, как стриминг ответа: каждое слово проявляется из размытия (26.10 — раньше просто
+      дописывалось). С момента at; возвращает, сколько длится. Слова — span с задержкой анимации, без таймеров */
   function stream(el: HTMLElement | null, at = 0, gap = 40) {
     if (!el || opts.calm) return 0;
-    const words = (el.textContent ?? "").split(/(\s+)/);
+    const parts = (el.textContent ?? "").split(/(\s+)/);
     el.textContent = "";
-    words.forEach((w, i) => later(at + i * gap, () => { el.textContent += w; }));
-    return words.length * gap;
+    let i = 0;
+    for (const w of parts) {
+      if (!w) continue;
+      if (/^\s+$/.test(w)) { el.append(w); continue; }
+      const s = document.createElement("span");
+      s.className = "g2-w";
+      s.textContent = w;
+      s.style.animationDelay = `${at + i++ * gap}ms`;
+      el.append(s);
+    }
+    return i * gap;
   }
 
   /** ближайший предок-«кнопка» текстового слоя: up — на сколько уровней подняться от текста */

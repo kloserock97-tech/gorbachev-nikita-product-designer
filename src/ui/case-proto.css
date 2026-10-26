@@ -195,3 +195,55 @@
 .pt-tabs button[aria-selected="true"] { background: var(--ink); color: #0e0f11; }
 .pt-tabs button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .pt-flow[hidden] { display: none; }
+
+/* 26.10: плотная панель (opts.compact) — раскадровка вместо списка шагов. Кадры — миниатюры экранов шагов: текущий
+   шире и в кольце цвета подсветки, пройденные приглушены. Под лентой — крупный номер шага (заливка — цвета краёв
+   экрана, --am-*), действие и «почему так» строкой. Смена шага: номер и текст проявляются из размытия (is-swap). */
+.pt--compact .pt-side { gap: 16px; }
+.pt--compact .pt-title { font-size: clamp(28px, 2.6vw, 40px); }
+.pt--compact .pt-lead { font-size: 15px; }
+.pt-reel { display: flex; gap: 6px; height: clamp(46px, 4.4vw, 60px); margin: 4px 0 0; padding: 0; list-style: none; }
+.pt-reel li { flex: 1 1 0; min-width: 0; transition: flex-grow 0.42s cubic-bezier(0.23, 1, 0.32, 1); }
+.pt-reel li:has(.is-now) { flex-grow: 2.6; }
+.pt-reel button { position: relative; display: block; width: 100%; height: 100%; padding: 0; overflow: hidden; border: 0; border-radius: 10px; background: #111214; cursor: pointer; box-shadow: inset 0 0 0 1px var(--pt-line); }
+.pt-reel img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; opacity: 0.38; filter: saturate(0.6); transition: opacity 0.3s ease, filter 0.3s ease, scale 0.42s cubic-bezier(0.23, 1, 0.32, 1); }
+.pt-reel .is-past img { opacity: 0.6; }
+.pt-reel .is-now img { opacity: 1; filter: none; scale: 1.04; }
+.pt-reel button::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 2px transparent; transition: box-shadow 0.3s ease; pointer-events: none; }
+.pt-reel .is-now::after { box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--am-r) 55%, #fff), 0 0 22px color-mix(in oklab, var(--am-l) 60%, transparent); }
+.pt-reel .pt-k { position: absolute; left: 5px; top: 5px; width: 18px; height: 18px; font-size: 10.5px; background: rgba(10, 10, 12, 0.72); box-shadow: none; color: var(--pt-soft); }
+.pt-reel .pt-k svg { width: 11px; height: 11px; }
+.pt-reel .is-now .pt-k { background: var(--pt-fg); color: #0f0f10; }
+.pt-reel .is-past .pt-k { color: var(--pt-fg); }
+@media (hover: hover) and (pointer: fine) { .pt-reel button:hover img { opacity: 0.85; } }
+.pt-reel button:focus-visible { outline: 2px solid var(--pt-fg); outline-offset: 2px; }
+
+.pt-now { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 16px; margin-top: 4px; }
+.pt-now-k { display: flex; align-items: baseline; gap: 2px; margin: 0; line-height: 0.9; }
+.pt-now-k b { font-size: clamp(54px, 5vw, 76px); font-weight: 700; letter-spacing: -0.05em; font-variant-numeric: tabular-nums;
+  background: linear-gradient(135deg, #fff 20%, color-mix(in oklab, var(--am-r) 70%, #fff) 60%, color-mix(in oklab, var(--am-l) 80%, #8fa2ff)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.pt-now-k span { font-size: 15px; font-weight: 500; color: var(--pt-faint); font-variant-numeric: tabular-nums; }
+.pt-now-act { margin: 0; font-size: clamp(17px, 1.4vw, 20px); font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; color: var(--pt-fg); text-wrap: balance; }
+.pt-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.pt-why--line { display: flex; gap: 10px; align-items: flex-start; padding: 0; background: none; box-shadow: none; border-radius: 0; font-size: 14.5px; line-height: 1.5; color: var(--pt-soft); }
+.pt-why--line .pt-spark { width: 16px; height: 16px; margin-top: 3px; }
+.pt-ctrls--compact { display: flex; align-items: center; gap: 6px; }
+.pt-go { display: inline-flex; align-items: center; gap: 8px; height: 42px; margin-left: auto; padding: 0 8px 0 18px; border: 0; border-radius: 999px; background: var(--pt-fg); color: #0f0f10; font: 600 14.5px/1 var(--font, inherit); cursor: pointer; transition: scale 0.16s ease-out, opacity 0.2s ease; }
+.pt-go svg { width: 26px; height: 26px; padding: 4px; border-radius: 50%; background: #0f0f10; color: #fff; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; rotate: 90deg; }
+.pt-go:active { scale: 0.97; }
+.pt-go:disabled { opacity: 0.3; cursor: default; }
+.pt-go:focus-visible { outline: 2px solid var(--pt-fg); outline-offset: 2px; }
+.pt.is-done .pt-go { display: none; }
+.pt--compact.is-done [data-again] { width: auto; padding: 0 14px; margin-left: auto; border-radius: 999px; }
+@media (prefers-reduced-motion: no-preference) {
+  .pt-now-k.is-swap, .pt-now-act.is-swap, [data-why-text].is-swap { animation: pt-swap 0.5s cubic-bezier(0.23, 1, 0.32, 1) both; }
+  .pt-now-act.is-swap { animation-delay: 0.05s; }
+  [data-why-text].is-swap { animation-delay: 0.12s; }
+}
+@keyframes pt-swap { from { opacity: 0; transform: translateY(6px); filter: blur(6px); } }
+@media (max-width: 860px) { .pt-reel { height: 52px; } .pt-now-k b { font-size: 56px; } }
+
+/* 26.10: подсветка шейдером (ambientGL.ts): холст поверх тех же границ, что у пятен; пятна тогда не рисуются */
+.pt-amb-gl { position: absolute; inset: 0; width: 100%; height: 100%; filter: blur(14px) saturate(1.25); opacity: 0; animation: pt-amb-in 1.2s ease-out 0.1s forwards; }
+.pt-amb.has-gl i { display: none; }
+@keyframes pt-amb-in { to { opacity: 1; } }
