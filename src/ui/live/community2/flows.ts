@@ -11,7 +11,8 @@ import { createRenderer, type Bundle } from "../grif2/render";
 import { hint, make, stagger, type Flow } from "../grif2/kit";
 import type { Stage } from "../grif2/stage";
 
-const r = createRenderer(data as Bundle, "cm", (n, base) => `${base}cases/community/live2/${n}.webp`);
+/* 26.10: рендер, прокрутка к слою и оживление общие с демо решений (demos.ts) */
+export const r = createRenderer(data as Bundle, "cm", (n, base) => `${base}cases/community/live2/${n}.webp`);
 
 /** верх слоя внутри экрана — сумма offsetTop до корня экрана */
 function topOf(s: Stage, el: HTMLElement) {
@@ -20,7 +21,7 @@ function topOf(s: Stage, el: HTMLElement) {
   return y;
 }
 /** сцена доезжает до слоя: он встаёт на треть окна сверху */
-function reach(s: Stage, el: HTMLElement | null, calm: boolean) {
+export function reach(s: Stage, el: HTMLElement | null, calm: boolean) {
   const root = s.el?.parentElement;
   if (!el || !root) return;
   root.scrollTo({ top: Math.max(0, topOf(s, el) - root.clientHeight * 0.3), behavior: calm ? "auto" : "smooth" });
@@ -38,10 +39,10 @@ function grow(s: Stage, el: HTMLElement, dy: number) {
   s.el.style.height = `${s.el.offsetHeight + dy}px`;
 }
 /** слой-предок текстового слоя с именем name */
-const up = (el: HTMLElement | null, name: string) => (el?.closest<HTMLElement>(`[data-n="${name}"]`) ?? null);
+export const up = (el: HTMLElement | null, name: string) => (el?.closest<HTMLElement>(`[data-n="${name}"]`) ?? null);
 
 /* лента и история оживают: карточки входят лесенкой, «Прослушать» и реакции выскакивают */
-function liven(el: HTMLElement, key: string) {
+export function liven(el: HTMLElement, key: string) {
   if (key === "feed") stagger(el, '[data-n="Publication Card"], [data-n="Question Card"], [data-n="News"] [data-n="card_content"]', 50, 120);
   if (key === "story") stagger(el, '[data-n="Head"] > *', 60, 120, "g2-pop");
   if (key === "profile") stagger(el, '[data-n="Activity Case"]', 70, 160);

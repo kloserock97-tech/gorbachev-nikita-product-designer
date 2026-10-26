@@ -97,6 +97,7 @@ export const en: CaseStory = {
         title: "The debt in sight: status on the home screen and every payment on one timeline",
         found: "If the total debt status is on the home screen, the feeling of control comes back.",
         did: "A card on the bank's home screen: the next payment, the balance across every instalment and a move button, with the two following payments below. Inside the service, a feed sorted by date: date, shop, payment n of four, amount. Labels carry the meaning: \"before payday\" is a warning, \"closes this instalment\" is a small win.",
+        demo: "plati2:widget",
         image: img(P + "01-sbol-widget.webp", 786, 1704, "The bank's home screen", "hero"),
       },
       {
@@ -105,6 +106,7 @@ export const en: CaseStory = {
         title: "Move the payment to payday in one tap",
         found: "If a payment moves to payday, a missed payment becomes a moved one.",
         did: "When a payment lands in the window before payday, the service offers to move it to the day after and recalculates the schedule. The first move is free and leaves no mark on the credit history, and the confirmation screen says so. The advice is one sentence: the variant where I explained it with a month calendar made people draw the conclusion themselves and left the main flow.",
+        demo: "plati2:move",
         image: img(P + "03-move-confirm.webp", 786, 1704, "Confirming the move"),
       },
       {
@@ -113,6 +115,7 @@ export const en: CaseStory = {
         title: "The storefront disappears when the budget is overloaded",
         found: "If the service warns honestly about overload, short-term volume dips but retention grows.",
         did: "When the month's payments pass a third of free income, the storefront and offers hide, and an unloading plan takes their place. Selling instalments to someone already struggling is a dark pattern, and it's bad business too: LTV in BNPL comes from repeat users.",
+        demo: "plati2:pause",
         image: img(P + "06-hub-overload.webp", 786, 3100, "Overload: an unloading plan in place of the storefront"),
       },
       {
@@ -121,6 +124,7 @@ export const en: CaseStory = {
         title: "\"Safe for your budget\" and where that number comes from",
         found: "If people see what the advice is built on, they can check it before confirming.",
         did: "The service works out the free money until payday, taking normal spending and every instalment into account, and shows it as a ring and a figure. Every piece of advice links to \"how this was calculated\": what was counted, where the spending came from, why this date.",
+        demo: "plati2:numbers",
         image: img(P + "07-where-numbers.webp", 786, 1704, "The \"Where the numbers come from\" screen"),
       },
     ],

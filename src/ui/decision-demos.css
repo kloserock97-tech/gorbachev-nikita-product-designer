@@ -37,3 +37,8 @@
 @media (prefers-reduced-motion: reduce) {
   .dd-cursor { transition: none; }
 }
+
+/* 26.10: демо на экране телефона — сцена светлая в цвет кейса (как плитки контекста), экран скруглён и с тенью,
+   а не чёрные поля по бокам. Тон сцены — --ca-tint (у Restaurant Guru тёплый серый вместо бордового) */
+.dd-view.is-phone { background: linear-gradient(160deg, color-mix(in srgb, var(--ca-tint, var(--case, #5b8cff)) 9%, #f4f5f8), color-mix(in srgb, var(--ca-tint, var(--case, #5b8cff)) 20%, #e4e8ef)); }
+.dd-view.is-phone .dd-root { border-radius: 36px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 40px 80px -30px rgba(20, 30, 50, 0.45); }

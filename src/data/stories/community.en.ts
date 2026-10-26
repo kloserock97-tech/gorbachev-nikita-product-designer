@@ -92,6 +92,7 @@ export const en: CaseStory = {
         title: "One action looks the same everywhere",
         found: "If Follow and reactions sit in the same place everywhere, people remember them the first time.",
         did: "Follow, unfollow and reactions sit in the same place on every page and work the same way. Nielsen calls this consistency.",
+        demo: "community2:pattern",
         image: img(C + "02.webp", 1440, 860, "A story page: Listen, comments and Share in the same places as in the feed"),
       },
       {
@@ -100,6 +101,7 @@ export const en: CaseStory = {
         title: "Writing and discussing come first",
         found: "If writing and discussing are at the centre of the interface, residents will start telling stories themselves.",
         did: "The interface is built around two actions: write a story and reply to one. The form has a title, text and up to ten images, and then the story goes to review. The first residents' stories arrived in week one.",
+        demo: "community2:posts",
         image: img(C + "03.webp", 876, 862, "The \"Tell your story\" form"),
       },
       {
@@ -108,6 +110,7 @@ export const en: CaseStory = {
         title: "The right topic is one click away",
         found: "The easier it is to find an interesting topic, the more likely a person is to stay.",
         did: "I put the topics in one row and kept only the filters people need: every extra filter is one more option, and choosing among many takes longer (Hick's law). For older readers I added hints and wrote the texts in plain words.",
+        demo: "community2:older",
         image: img(C + "01.webp", 1440, 788, "The feed: topics in one row above the cards"),
       },
       {
@@ -116,6 +119,7 @@ export const en: CaseStory = {
         title: "A look made for long reading",
         found: "If the typeface stays legible even at small sizes, people over 55 finish a long story too.",
         did: "I chose Golos Text, a typeface made for screens that stays legible even at small sizes. Contrast follows WCAG, and the palette is black, working greys and one pink accent, #FFECF9.",
+        demo: "community2:ds",
         image: img(C + "06.webp", 1600, 1598, "The type scale", "detail"),
       },
     ],

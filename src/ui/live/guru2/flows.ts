@@ -10,10 +10,11 @@ import { createRenderer, type Bundle } from "../grif2/render";
 import { hint, make, stagger, type Flow } from "../grif2/kit";
 import "./guru.css";
 
-const r = createRenderer(data as Bundle, "rg", (n, base) => `${base}cases/restaurant-guru/live2/${n}.webp`);
+/* экраны и оживление общие с демо решений (demos.ts) */
+export const r = createRenderer(data as Bundle, "rg", (n, base) => `${base}cases/restaurant-guru/live2/${n}.webp`);
 
 /* экраны живут сами: лента входит лесенкой, у гида дышит знак и кольца, частицы плавают, статус подбора с бликом */
-function liven(el: HTMLElement, key: string, instant: boolean) {
+export function liven(el: HTMLElement, key: string, instant: boolean) {
   const all = (sel: string) => [...el.querySelectorAll<HTMLElement>(sel)];
   all('[data-n="Guide Mark"]').forEach((n) => n.classList.add("rg-breathe"));
   all('[data-n^="ring "], [data-n="field-glow"]').forEach((n, i) => { n.style.animationDelay = `${-i * 0.7}s`; n.classList.add("rg-ring"); });
@@ -67,7 +68,7 @@ const guide: Flow = (s, ctx, step) => {
     s.show("thinking");
     const echo = s.find("Query echo");
     const status = s.find("Status");
-    status?.classList.add("g2-sheen");
+    status?.classList.add("g2-shimmer");
     s.type(echo, echo?.textContent?.trim() ?? "", 45);
     s.later(2600, () => go(3));
     return;

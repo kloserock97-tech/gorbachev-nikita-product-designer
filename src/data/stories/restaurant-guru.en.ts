@@ -90,6 +90,7 @@ export const en: CaseStory = {
     items: [
       {
         id: "entry",
+        demo: "guru2:entry",
         insight: "F1",
         title: "The guide got a name and a place in the tab bar",
         found: "If the guide sits where a thumb reaches and the feed shows an example query, people find it without a hint. Before, a \"✦\" icon in the header and a \"✦+\" in the tab bar led to the same place and explained nothing.",
@@ -98,6 +99,7 @@ export const en: CaseStory = {
       },
       {
         id: "density",
+        demo: "guru2:density",
         insight: "F2",
         title: "Three or four places in view, all of them open",
         found: "If several open places are in view, there is something to choose from. Before, a huge card and the \"#59 of 2524\" line left one restaurant in view, and at six in the evening \"Pubs and bars\" led with a bar closed until four.",
@@ -106,6 +108,7 @@ export const en: CaseStory = {
       },
       {
         id: "chips",
+        demo: "guru2:chips",
         insight: "F3",
         title: "Categories are labelled with words",
         found: "If a category is a labelled chip, people pick it in one tap. Before, the category circles had no labels, the outer ones were cut off, and \"Filters\" sat where there was nothing to filter yet.",
@@ -113,6 +116,7 @@ export const en: CaseStory = {
       },
       {
         id: "guide",
+        demo: "guru2:guide",
         title: "The guide answers with a single place card",
         found: "A message thread has nothing to fill it: one question, one answer, and the person leaves for the restaurant. A chat screen promises a conversation that will not happen.",
         did: "Three states: invitation, searching, answer. While it searches, the screen shows an object and the request said back, with no spinner. The answer is a place card with a photo, the facts and a booking button. Suggested answers you can pick without typing come from a teardown of the Drinkit interface.",
@@ -120,6 +124,7 @@ export const en: CaseStory = {
       },
       {
         id: "noai",
+        demo: "guru2:noai",
         insight: "F4",
         title: "The interface never says \"AI\"",
         found: "If the name describes a role rather than the technology, people use the feature more willingly. \"AI\" on a button promises technology, and the person wants dinner.",

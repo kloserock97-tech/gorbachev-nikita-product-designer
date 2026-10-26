@@ -49,6 +49,8 @@ export const flows = { main: make({ w: 1440 }, main, r, (el, key) => { /* сво
    `node tools/f2h/3-decode.cjs <файл> <bundle.json>`.
 4. `node tools/f2h/4-build.cjs <bundle.json> <кейс> <папка> '{"<id>":"<ключ>",…}'` → `src/ui/live/<папка>/screens.json`
    и картинки слоёв в `public/cases/<кейс>/live2/`.
+4а. Дописать кадры в уже собранный набор (новые экраны для демо решений или сценария):
+   `node tools/f2h/4c-merge.cjs <bundle.json> <кейс> <папка> '{"<id>":"<ключ>"}'` — стили и SVG без повторов.
 4б. Картинки слоёв (фото, аватары): 4-build печатает, какие файлы нужны и с каких узлов. Для каждого — временный
    прямоугольник с теми же fills в натуральной пропорции на временной странице → `get_screenshot` → webp в
    `public/cases/<кейс>/live2/i-<хэш>.webp`, в рендере кейса `img: (n, base) => base + "cases/<кейс>/live2/" + n + ".webp"`.

@@ -103,3 +103,4 @@
 
 /* 26.10: бордовый у Restaurant Guru — только на действиях; плитки сцен тонируем тёплым серым, а не цветом кейса */
 .cs[data-case="restaurant-guru"] .ca-tile { --ca-tint: #8a7d74; }
+.cs[data-case="restaurant-guru"] .dd-view { --ca-tint: #8a7d74; }

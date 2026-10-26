@@ -11,7 +11,8 @@ import { hint, make, type Flow } from "../grif2/kit";
 import type { Stage } from "../grif2/stage";
 import "./agents2.css";
 
-const r = createRenderer(data as Bundle, "ag", (n, base) => `${base}cases/ai-agents/live2/${n}.png`);
+/* экраны кейса — общие для прототипа и демо решений (demos.ts) */
+export const r = createRenderer(data as Bundle, "ag", (n, base) => `${base}cases/ai-agents/live2/${n}.png`);
 
 const q = (s: Stage, sel: string) => s.el.querySelector<HTMLElement>(sel);
 const qa = (el: ParentNode, sel: string) => [...el.querySelectorAll<HTMLElement>(sel)];
@@ -33,7 +34,7 @@ function countUp(n: HTMLElement, ms = 700) {
 
 /* в макетах подписи кнопок и бейджей обрезаны по высоте прописных (leading trim): слой ниже кегля, а конвертер этого не
    знает — текст садится на 3–4 px ниже. Строка высотой ровно в слой возвращает подпись в центр */
-function trimCaps(el: HTMLElement) {
+export function trimCaps(el: HTMLElement) {
   for (const n of qa(el, "div")) {
     if (n.children.length || !n.textContent?.trim()) continue;
     const h = n.offsetHeight, fs = parseFloat(getComputedStyle(n).fontSize);
@@ -42,9 +43,11 @@ function trimCaps(el: HTMLElement) {
 }
 
 /* оживление экранов продукта: имена слоёв — из Figma */
-function liven(el: HTMLElement, key: string, instant: boolean) {
+export function liven(el: HTMLElement, key: string, instant: boolean) {
   /* разбор архива идёт: сегменты прогресса загораются по очереди, заготовки рисков переливаются */
   qa(el, '[data-n="Skeleton / Risk Item"] div').forEach((n) => { if (!n.children.length) n.classList.add("g2-shimmer"); });
+  /* реестр грузится: заготовки цифр сводки переливаются (кадр 01.2) */
+  qa(el, '[data-n="Skeleton bar"]').forEach((n) => n.classList.add("g2-shimmer"));
   if (instant) return;
   const stag = (sel: string, step = 45, from = 60, cls = "g2-rise") => qa(el, sel).forEach((n, i) => { n.style.animationDelay = `${from + i * step}ms`; n.classList.add(cls); });
   stag('[data-n="Totals"] > [data-n="Stat Tile"], [data-n="By risk"] > [data-n="Risk Summary Tile"]', 40, 60);
@@ -57,16 +60,18 @@ function liven(el: HTMLElement, key: string, instant: boolean) {
     el.querySelector<HTMLElement>('[data-n="AI mark"]')?.classList.add("g2-breathe");
   }
   el.querySelector<HTMLElement>('[data-n="AI Banner"]')?.classList.add("g2-drop");
+  /* меню сортировки (кадр 01.8) раскрывается, пункты встают по очереди */
+  if (key === "sort") { el.querySelector<HTMLElement>('[data-n="Sort Menu"]')?.classList.add("g2-drop"); stag('[data-n="Sort Menu"] [data-n="Menu Item"]', 45, 90); }
   el.querySelector<HTMLElement>('[data-n="Version Stepper"]')?.classList.add("g2-rise");
 }
 
 /* шторка справа выезжает, фон под ней темнеет; окно-вопрос — по центру над шторкой */
-function drawer(s: Stage, instant = false) {
+export function drawer(s: Stage, instant = false) {
   if (instant) return;
   q(s, ':scope > div > [data-n="Scrim"]')?.classList.add("g2-fade");
   q(s, ':scope > div > [data-n="Drawer"]')?.classList.add("ag-drawer");
 }
-function dialog(s: Stage) {
+export function dialog(s: Stage) {
   q(s, ':scope > div > [data-n="Scrim 2"]')?.classList.add("g2-fade");
   q(s, ':scope > div > [data-n="Dialog"]')?.classList.add("g2-dialog");
 }

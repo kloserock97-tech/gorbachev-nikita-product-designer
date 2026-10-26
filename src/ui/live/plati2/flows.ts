@@ -10,12 +10,13 @@ import { createRenderer, type Bundle } from "../grif2/render";
 import { hint, make, type Flow } from "../grif2/kit";
 import type { Stage } from "../grif2/stage";
 
-const r = createRenderer(data as Bundle, "pc", (n, base) => `${base}cases/plati-chastyami/live2/${n}.png`);
+/* экраны и помощники общие с демо решений (demos.ts) */
+export const r = createRenderer(data as Bundle, "pc", (n, base) => `${base}cases/plati-chastyami/live2/${n}.png`);
 const OUT = "cubic-bezier(0.23, 1, 0.32, 1)";
 const DRAWER = "cubic-bezier(0.32, 0.72, 0, 1)";
 
 /* сумма «103 913 ₽» дорастает от нуля, как будто считается; разделитель тысяч — тот же, что в макете */
-function countUp(s: Stage, el: HTMLElement | null, ms = 700) {
+export function countUp(s: Stage, el: HTMLElement | null, ms = 700) {
   const m = el?.textContent?.match(/^(\D*?)(\d[\d   ]*\d|\d)(.*)$/s);
   if (!el || !m) return;
   const sep = m[2].match(/[   ]/)?.[0] ?? " ";
@@ -27,11 +28,11 @@ function countUp(s: Stage, el: HTMLElement | null, ms = 700) {
     s.later((ms * i) / n, () => { el.textContent = `${m[1]}${fmt(Math.round(to * k))}${m[3]}`; });
   }
 }
-const leaf = (root: ParentNode | null, re: RegExp) => [...(root?.querySelectorAll<HTMLElement>("div") ?? [])].find((n) => !n.children.length && re.test(n.textContent ?? "")) ?? null;
+export const leaf = (root: ParentNode | null, re: RegExp) => [...(root?.querySelectorAll<HTMLElement>("div") ?? [])].find((n) => !n.children.length && re.test(n.textContent ?? "")) ?? null;
 const kids = (el: HTMLElement | null) => [...(el?.children ?? [])] as HTMLElement[];
 
 /* экраны продукта живые: что в макете «приезжает» снизу — шторка, что считается — сумма, что растёт — шкалы */
-function liven(el: HTMLElement, key: string, instant: boolean) {
+export function liven(el: HTMLElement, key: string, instant: boolean) {
   const $ = (n: string) => el.querySelector<HTMLElement>(`[data-n="${n}"]`);
   const lead = (list: (HTMLElement | null | undefined)[], step = 50, from = 60, cls = "g2-rise") =>
     list.filter(Boolean).forEach((n, i) => { n!.style.animationDelay = `${from + i * step}ms`; n!.classList.add(cls); });
@@ -39,7 +40,7 @@ function liven(el: HTMLElement, key: string, instant: boolean) {
   el.querySelectorAll<HTMLElement>('[data-n="бейдж · новое"]').forEach((n) => n.classList.add("g2-pulse"));
   if (instant) return;
   if (key === "home") lead([...kids($("Действия")), $("Виджет / Плати частями")], 60, 80);
-  if (key === "hub" || key === "moved") {
+  if (key === "hub" || key === "moved" || key === "over") {
     lead([...kids($("Быстрые действия")), ...kids($("Content")).slice(0, 4)], 45, 80);
     el.querySelectorAll<HTMLElement>('[data-n="Сегменты"] > *').forEach((n) => n.classList.add("g2-grow"));
   }
@@ -58,6 +59,8 @@ function liven(el: HTMLElement, key: string, instant: boolean) {
     const sheetLeaf = $("осевший листок");
     if (sheetLeaf) { sheetLeaf.style.animationDelay = "260ms"; sheetLeaf.classList.add("g2-drop"); }
   }
+  /* перегрузка (демо решения): шкала нагрузки дорастает до «сейчас 32%» */
+  if (key === "over") el.querySelectorAll<HTMLElement>('[data-n="Шкала нагрузки"] [data-n="поле"] > *').forEach((n, i) => { n.style.animationDelay = `${300 + i * 120}ms`; n.classList.add("g2-grow"); });
   if (key === "why") {
     /* шкала бюджета: сегменты дорастают по очереди; столбики динамики растут снизу */
     el.querySelectorAll<HTMLElement>('[data-n^="сегмент ·"]').forEach((n, i) => { n.style.animationDelay = `${380 + i * 160}ms`; n.classList.add("g2-grow"); });
@@ -69,7 +72,7 @@ function liven(el: HTMLElement, key: string, instant: boolean) {
 }
 
 /* вход в хаб с главного: шапка виджета «Плати частями · 3 покупки ›» */
-const widgetTop = (s: Stage) => s.find("Виджет / Плати частями")?.querySelector<HTMLElement>('[data-n="Top"]') ?? s.find("Виджет / Плати частями");
+export const widgetTop = (s: Stage) => s.find("Виджет / Плати частями")?.querySelector<HTMLElement>('[data-n="Top"]') ?? s.find("Виджет / Плати частями");
 
 const move: Flow = (s, ctx, step) => {
   const go = (k: number) => { ctx.go(k); move(s, ctx, k); };

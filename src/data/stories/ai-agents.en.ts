@@ -79,6 +79,8 @@ export const en: CaseStory = {
     items: [
       {
         id: "auto",
+        /* 26.10: live demo on the Figma screens, like GRIF (src/ui/live/agents2/demos.ts); image is the fallback */
+        demo: "agents2:auto",
         insight: "F1",
         title: "Documents and the risk draft live inside the product",
         found: "If uploading documents and drafting the risks happen in the product itself, preparation will stop eating the time: thirteen sets of reasons from scratch take hours, while much of it is already in the uploaded files.",
@@ -87,6 +89,8 @@ export const en: CaseStory = {
       },
       {
         id: "summary",
+        /* 26.10: live demo on the Figma screens, like GRIF (src/ui/live/agents2/demos.ts); image is the fallback */
+        demo: "agents2:summary",
         title: "The list starts with “what do I pick up”",
         found: "The list answered “what do we have”, and work starts with “what do I pick up”. The volume was counted row by row, and the list has two real questions: “what is new” and “what is on fire”.",
         did: "Four tiles above the list: all agents with growth over the month, assessed, in assessment, and the split by risk level. Sorting has four items: newest, oldest, high level, low level; the current one has a tick and its name is on the button.",
@@ -94,6 +98,8 @@ export const en: CaseStory = {
       },
       {
         id: "filter",
+        /* 26.10: live demo on the Figma screens, like GRIF (src/ui/live/agents2/demos.ts); image is the fallback */
+        demo: "agents2:filter",
         title: "The filter works at once, the amounts are short",
         found: "Many fields to filter by (assessment type, department, risk level, status, two pairs of dates), little room, and the combination is found by trial and error. Forty loss amounts exact to the rouble on one screen, though people only compare them.",
         did: "I made two filter options: an instant one and one with a “Show 235 results” button. We chose the first: the developers said a request to the list is cheap. Selected values show as labels and come off one by one. A header switch turns “1,000,000 ₽” into “1M ₽”, and exact figures are one click away.",
@@ -101,6 +107,8 @@ export const en: CaseStory = {
       },
       {
         id: "na",
+        /* 26.10: live demo on the Figma screens, like GRIF (src/ui/live/agents2/demos.ts); image is the fallback */
+        demo: "agents2:na",
         title: "“Not applicable” only with a reason, unfinished work is safe",
         found: "Some of the 13 risks do not apply to an agent. This used to be settled in email and forgotten a month later, and in a regulated setting someone is bound to ask. The reasons for a risk run to several paragraphs, and a stray click could cost half an hour of work.",
         did: "Until the reason is written, the “Accept” button stays inactive. The risk stays in the list with its comment and a “Restore” button, which also needs an explanation. Leaving with unsaved edits brings up “Leave the form?”, with buttons labelled in words and kept apart.",

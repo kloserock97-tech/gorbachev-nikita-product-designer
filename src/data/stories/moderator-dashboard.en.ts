@@ -86,6 +86,7 @@ export const en: CaseStory = {
     items: [
       {
         id: "registry",
+        demo: "moderator2:registry",
         insight: "F1",
         title: "A list sorted by status",
         found: "If the comments waiting for a check are shown straight away, a moderator does not have to look for them.",
@@ -94,6 +95,7 @@ export const en: CaseStory = {
       },
       {
         id: "inline",
+        demo: "moderator2:inline",
         insight: "F2",
         title: "A decision right in the list",
         found: "If a short, clear comment can be rated in the list without opening a page, the obvious gets closed faster.",
@@ -103,6 +105,7 @@ export const en: CaseStory = {
       },
       {
         id: "card",
+        demo: "moderator2:card",
         insight: "F3",
         title: "A detailed page for the doubtful cases",
         found: "If the post, the author, the reply thread and the complaints are on one screen, a disputed comment does not have to be pieced together.",
@@ -112,6 +115,7 @@ export const en: CaseStory = {
       },
       {
         id: "mechanism",
+        demo: "moderator2:mechanism",
         insight: "F4",
         title: "One way of working for five types of items",
         found: "If the order of actions is the same everywhere, a moderator learns once, and a new section is added without a new interface.",

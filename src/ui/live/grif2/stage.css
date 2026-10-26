@@ -73,7 +73,8 @@
 .g2 .g2-w { display: inline; animation: g2-word 0.42s cubic-bezier(0.23, 1, 0.32, 1) both; }
 @keyframes g2-word { from { opacity: 0; filter: blur(4px); } to { opacity: 1; filter: blur(0); } }
 .g2 .g2-sheen { background: linear-gradient(100deg, currentColor 40%, #fff 50%, currentColor 60%) 0 0 / 260% 100% no-repeat; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: g2-sheen 2.2s linear infinite; }
-@keyframes g2-sheen { from { background-position: 100% 0; } to { background-position: -160% 0; } }
+/* 26.10: позиция 100% → 0%: фон шириной 260% всегда закрывает текст, блик проходит слева направо (было до −160% — фон уезжал, буквы пропадали) */
+@keyframes g2-sheen { from { background-position: 100% 0; } to { background-position: 0% 0; } }
 .g2 [data-hot] { transition: transform 0.16s ease-out; }
 .g2 [data-hot]:active { transform: scale(0.97); }
 @media (prefers-reduced-motion: reduce) {
