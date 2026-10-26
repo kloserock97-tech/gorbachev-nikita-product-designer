@@ -9,7 +9,7 @@ export type Stage = ReturnType<typeof createStage>;
 
 /* 26.10: сцена общая для всех кейсов: r — экраны кейса (createRenderer), по умолчанию GRIF; liven — своё оживление
    экранов кейса поверх общего (имена слоёв у каждого продукта свои) */
-export function createStage(root: HTMLElement, opts: { base: string; calm: boolean; r?: Renderer; liven?: (el: HTMLElement, key: string, instant: boolean) => void }) {
+export function createStage(root: HTMLElement, opts: { base: string; calm: boolean; r?: Renderer; liven?: (el: HTMLElement, key: string, instant: boolean) => void; fix?: (el: HTMLElement, key: string) => void }) {
   const r = opts.r ?? grif;
   r.ensureStyles(opts.base);
   root.classList.add("g2-stage");
@@ -31,6 +31,8 @@ export function createStage(root: HTMLElement, opts: { base: string; calm: boole
     } else old?.remove();
     cur = el;
     root.scrollTop = 0;
+    /* fix — поправки вида экрана (например, обрезка текста по высоте прописных): работают и при «меньше движения» */
+    opts.fix?.(el, key);
     liven(el, key, instant);
     return el;
   }

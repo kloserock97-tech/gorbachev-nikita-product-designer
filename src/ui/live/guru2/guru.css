@@ -1,0 +1,22 @@
+/* 26.10: оживление экранов Restaurant Guru (flows.ts, liven). Только transform/opacity; вход — ease-out
+   cubic-bezier(0.23, 1, 0.32, 1), постоянное — ease-in-out/linear; «меньше движения» — без анимаций (движок не
+   вызывает liven, а классы ниже выключены и здесь). */
+.g2--rg .rg-breathe { animation: rg-breathe 3.2s ease-in-out infinite; }
+@keyframes rg-breathe { 50% { transform: scale(1.04); } }
+.g2--rg .rg-ring { animation: rg-ring 4.8s ease-in-out infinite; }
+@keyframes rg-ring { 50% { transform: scale(1.05); opacity: 0.7; } }
+.g2--rg .rg-float { animation: rg-float 4s ease-in-out infinite; }
+@keyframes rg-float { 50% { transform: translateY(-8px); opacity: 0.55; } }
+.g2--rg .rg-halo { animation: rg-halo 2.4s ease-in-out infinite; }
+@keyframes rg-halo { 50% { transform: scale(1.35); opacity: 0.35; } }
+.g2--rg .rg-knob { animation: rg-knob 2.8s ease-in-out infinite; }
+@keyframes rg-knob { 50% { transform: translateY(-2px); } }
+.g2--rg .rg-card-in { animation: rg-card-in 0.6s cubic-bezier(0.23, 1, 0.32, 1) both; }
+@keyframes rg-card-in { from { opacity: 0; transform: translateY(18px) scale(0.97); } }
+.g2--rg .rg-sheet { animation: rg-sheet 0.5s cubic-bezier(0.32, 0.72, 0, 1) both; }
+@keyframes rg-sheet { from { transform: translateY(110%); } }
+.g2--rg .rg-cta-glow { animation: rg-cta 2.2s ease-in-out infinite; }
+@keyframes rg-cta { 50% { transform: scale(1.02); } }
+@media (prefers-reduced-motion: reduce) {
+  .g2--rg .rg-breathe, .g2--rg .rg-ring, .g2--rg .rg-float, .g2--rg .rg-halo, .g2--rg .rg-knob, .g2--rg .rg-card-in, .g2--rg .rg-sheet, .g2--rg .rg-cta-glow { animation: none; }
+}

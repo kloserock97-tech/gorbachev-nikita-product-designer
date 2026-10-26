@@ -7,6 +7,7 @@ import type { CaseStory, CaseImage } from "../caseStory";
 
 const img = (src: string, w: number, h: number, caption: string, kind = "screen"): CaseImage => ({ src, w, h, caption, kind });
 const R = "cases/restaurant-guru/";
+const L = "cases/restaurant-guru/live2/";
 
 export const en: CaseStory = {
   id: "restaurant-guru",
@@ -159,18 +160,36 @@ export const en: CaseStory = {
       ],
     },
   },
-  /* v114: prototype from the mock-ups — the main flow: home → guide → picking → the place */
-  prototype: {
-    title: "Find somewhere to go tonight",
-    lead: "You're looking for a quiet place for two, and you'll go from the home screen through the guide to a booked table.",
-    steps: [
-      { image: img(R + "01-home.webp", 786, 1704, "Home screen"), spot: [0.5, 0.935], action: "Open the Guide in the middle of the tab bar", why: "The Guide tab sits raised above the others, so you spot it right away." },
-      { image: img(R + "03-guide-invite.webp", 786, 1704, "Invitation"), spot: [0.333, 0.757], action: "Pick \"quiet, for two\"", why: "The chips under the field are ready-made requests, so there's nothing to type." },
-      { image: img(R + "04-guide-thinking.webp", 786, 1704, "Picking"), wait: 2200, action: "The guide is picking a place", why: "A couple of seconds of waiting. The guide says your request back so you can see it understood." },
-      { image: img(R + "05-guide-answer.webp", 786, 1704, "Answer"), spot: [0.5, 0.477], action: "Open \"Ronin\"", why: "The guide suggests one place. The card already has a photo, the key facts and a booking button." },
-      { image: img(R + "09-place-card.webp", 786, 1704, "Place card"), action: "Done: everything for the decision on one screen", why: "The route and a 19:30 table booking are side by side. All that's left is leaving the house." },
-    ],
-  },
+  /* 26.10: the prototype is rebuilt like GRIF's — final Figma screens via tools/f2h (src/ui/live/guru2), two flows as tabs, see the Russian version */
+  prototypes: [
+    {
+      tab: "The guide picks an evening",
+      title: "Find somewhere to go tonight",
+      lead: "You're looking for a quiet place for two and go from the home screen through the guide to the place card.",
+      live: "guru2:guide",
+      device: "phone",
+      steps: [
+        { image: img(L + "s-home.webp", 786, 1704, "Home screen"), action: "Open the Guide in the middle of the tab bar", why: "The Guide tab sits raised above the others, so you spot it right away." },
+        { image: img(L + "s-invite.webp", 786, 1704, "Guide — invitation"), action: "Pick \"quiet, for two\"", why: "The chips under the field are ready-made requests, so there's nothing to type." },
+        { image: img(L + "s-thinking.webp", 786, 1704, "Guide — picking"), action: "The guide is picking a place", why: "A couple of seconds of waiting. No spinner: the guide mark and your request said back to you." },
+        { image: img(L + "s-answer.webp", 786, 1704, "Guide — answer"), action: "Open \"Ronin\"", why: "The guide suggests one place. The card already has a photo, the key facts and a booking button." },
+        { image: img(L + "s-place.webp", 786, 1704, "Place card"), action: "Done: everything for the decision on one screen", why: "Facts, table options and a 19:30 booking side by side. All that's left is leaving the house." },
+      ],
+    },
+    {
+      tab: "Meeting the guide",
+      title: "Learn about the guide from the home screen",
+      lead: "The guide shows up in the feed gradually: three touches, and each can be closed.",
+      live: "guru2:launch",
+      device: "phone",
+      steps: [
+        { image: img(L + "s-promoSheet.webp", 786, 1704, "Touch 1 — guide announcement"), action: "Tap \"Not now\"", why: "The first touch is a card over the home screen. Declining is a text link, not a second button." },
+        { image: img(L + "s-promoBanner.webp", 786, 1704, "Touch 2 — banner in the feed"), action: "Close the banner", why: "The second touch is a feed banner in one purple fill. There's no request field next to it: it's the same action." },
+        { image: img(L + "s-promoHint.webp", 786, 1704, "Touch 3 — contextual hint"), action: "Tap \"Didn't find it? Ask the guide\"", why: "The third touch is a hint above the tab bar that points at the Guide tab." },
+        { image: img(L + "s-invite.webp", 786, 1704, "Guide — invitation"), action: "Done: the guide opens with an invitation", why: "Ready-made requests sit under the field, so you can start without typing." },
+      ],
+    },
+  ],
   takeaways: [],
   gallery: [],
   deepDives: [],

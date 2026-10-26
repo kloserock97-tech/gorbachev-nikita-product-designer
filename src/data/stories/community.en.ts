@@ -164,18 +164,35 @@ export const en: CaseStory = {
     ],
   },
   /* v114: prototype from the mock-ups — the main flow: a reader becomes an author (feed → story → form → published). Full pages from Figma LdUrYy9cNus6q7005xnmXo: 2103:12251, 2109:18727, 2202:7956, 2128:33091 */
-  prototype: {
-    title: "Read a story, then tell your own",
-    lead: "Walk the path of a reader who finishes someone else's story and decides to tell their own.",
-    live: "community",
-    device: "browser",
-    steps: [
-      { image: img(C + "s1-feed.webp", 1440, 3058, "The story feed"), spot: [0.719, 0.727], action: "Open \"The mysterious Dangauerovka\"", why: "Look at the cards: Listen, comments and topics sit in the same place on each one." },
-      { image: img(C + "s1-article.webp", 1440, 4011, "A story page"), spot: [0.817, 0.0092], action: "Want to tell yours? Press \"Tell a story\"", why: "The button is in the header, top right." },
-      { image: img(C + "s1-story.webp", 1440, 1064, "The \"Tell a story\" form"), spot: [0.295, 0.697], action: "Write the story and press Send", why: "The fields are a title, text and pictures. Once you send it, the story goes to a moderator." },
-      { image: img(C + "s1-profile.webp", 1440, 1884, "The author's profile: activity"), action: "Done: the story is published", why: "When a moderator approves the story, it shows up in the shared feed and in the author's profile." },
-    ],
-  },
+  /* 26.10: prototype built like GRIF's — Figma screens (Pilot Layouts, 21061 series) via tools/f2h, two flows
+     as tabs, module src/ui/live/community2. Step images are fallbacks if the live module fails to load */
+  prototypes: [
+    {
+      tab: "Read a story",
+      title: "Read a story and discuss it",
+      lead: "The reader's path: from a card in the feed to your own comment under the story.",
+      live: "community2:read",
+      device: "browser",
+      steps: [
+        { image: img("cases/community/live2/s-feed.webp", 1200, 750, "The feed: editorial articles and residents' stories"), action: "Open the story “The mysterious Dangauerovka”", why: "Editorial articles and residents' stories are mixed in one feed, and the cards share one pattern: Listen, reactions and topics sit in the same place." },
+        { image: img("cases/community/live2/s-story.webp", 1200, 750, "A story page"), action: "Like the story", why: "Reactions sit above the text, in the same place in every article and story, so people find them the first time." },
+        { image: img("cases/community/live2/s-comment.webp", 1200, 750, "A comment under the story"), action: "Write a comment and press Send", why: "Discussing is the second main action after telling a story: the comment field sits right under the text." },
+        { image: img("cases/community/live2/s-done.webp", 1200, 750, "The comment in the discussion"), action: "Done: your comment is in the discussion", why: "Replies are threaded, and each author shows a rating and a status in the Community." },
+      ],
+    },
+    {
+      tab: "Tell a story",
+      title: "Tell your own story",
+      lead: "The “Tell a story” button is on every page, and the form is short.",
+      live: "community2:write",
+      device: "browser",
+      steps: [
+        { image: img("cases/community/live2/s-feed.webp", 1200, 750, "The feed with the button in the header"), action: "Press “Tell a story” in the header", why: "The button sits in the header on every page, so you can tell a story from anywhere." },
+        { image: img("cases/community/live2/s-write.webp", 1200, 750, "The “Tell a story” form"), action: "Fill in the title and text, press Send", why: "The form has a title, the text and an optional picture, and the email is already filled in from the profile. It warns that the story appears after moderation." },
+        { image: img("cases/community/live2/s-profile.webp", 1200, 750, "The author's profile: activity"), action: "Done: the story is in the profile", why: "The profile activity shows everything a person did in the Community, and publishing a story earns points." },
+      ],
+    },
+  ],
   takeaways: [],
   gallery: [],
   deepDives: [],

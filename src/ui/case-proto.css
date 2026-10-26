@@ -4,10 +4,10 @@
    За рамкой — подсветка, как у телевизора: цвета берутся с краёв экрана (--am-l/r/t/b, ambientLight в caseProto.ts). */
 /* шрифты макетов живых прототипов (все OFL, лежат в public/fonts, качаются, только когда нужны): Golos Text — «Плати
    частями», Inter и Manrope — GRIF AI */
-@font-face { font-family: "Golos Text"; font-style: normal; font-weight: 400 900; font-display: swap; src: url("/fonts/golos-cyrillic.woff2") format("woff2"); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "Golos Text"; font-style: normal; font-weight: 400 900; font-display: swap; src: url("/fonts/golos-cyrillic.woff2") format("woff2"); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116, U+20BD; }
 @font-face { font-family: "Golos Text"; font-style: normal; font-weight: 400 900; font-display: swap; src: url("/fonts/golos-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2000-206F, U+20AC, U+2122, U+2190-2199, U+2212; }
 
-@font-face { font-family: "Inter"; font-style: normal; font-weight: 400 700; font-display: swap; src: url("/fonts/inter-cyrillic.woff2") format("woff2"); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 400 700; font-display: swap; src: url("/fonts/inter-cyrillic.woff2") format("woff2"); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116, U+20BD; }
 @font-face { font-family: "Inter"; font-style: normal; font-weight: 400 700; font-display: swap; src: url("/fonts/inter-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2190-2199, U+2212, U+FEFF, U+FFFD; }
 @font-face { font-family: "Manrope"; font-style: normal; font-weight: 400 800; font-display: swap; src: url("/fonts/manrope-cyrillic.woff2") format("woff2"); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
 @font-face { font-family: "Manrope"; font-style: normal; font-weight: 400 800; font-display: swap; src: url("/fonts/manrope-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2190-2199, U+2212, U+FEFF, U+FFFD; }
@@ -247,3 +247,5 @@
 .pt-amb-gl { position: absolute; inset: 0; width: 100%; height: 100%; filter: blur(14px) saturate(1.25); opacity: 0; animation: pt-amb-in 1.2s ease-out 0.1s forwards; }
 .pt-amb.has-gl i { display: none; }
 @keyframes pt-amb-in { to { opacity: 1; } }
+/* 26.10: у телефона экран высокий — в кадре раскадровки виден его верх, а не середина */
+.pt--compact:not(.pt--browser) .pt-reel img { object-position: 50% 0; }

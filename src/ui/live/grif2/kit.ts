@@ -16,12 +16,13 @@ export function hint(s: Stage, el: HTMLElement | null, onTap: () => void) {
   el.addEventListener("click", (e) => { e.stopPropagation(); onTap(); }, { once: true });
 }
 
-/** модуль прототипа: design.w — ширина кадра в Figma; r — экраны кейса; liven — оживление экранов кейса */
-export function make(design: { w: number }, flow: Flow, r?: Renderer, liven?: (el: HTMLElement, key: string, instant: boolean) => void): LiveProto {
+/** модуль прототипа: design.w — ширина кадра в Figma; r — экраны кейса; liven — оживление экранов кейса;
+    fix — поправки вида экрана, работают всегда (и при «меньше движения») */
+export function make(design: { w: number }, flow: Flow, r?: Renderer, liven?: (el: HTMLElement, key: string, instant: boolean) => void, fix?: (el: HTMLElement, key: string) => void): LiveProto {
   return {
     design,
     mount(root, ctx): LiveInstance {
-      const s = createStage(root, { base: ctx.base, calm: ctx.calm, r, liven });
+      const s = createStage(root, { base: ctx.base, calm: ctx.calm, r, liven, fix });
       const show = (k: number) => flow(s, ctx, k);
       show(0);
       return { show, destroy: () => s.destroy() };

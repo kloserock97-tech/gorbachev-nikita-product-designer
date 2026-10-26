@@ -153,18 +153,35 @@ export const en: CaseStory = {
       ],
     },
   },
-  /* v114: prototype from the mock-ups — "move a payment to payday" in three taps; the "why" lines come from the decisions */
-  prototype: {
-    title: "Move a payment to payday",
-    lead: "A payment falls in the days before payday, and you move it right from the bank's home screen.",
-    live: "plati-chastyami",
-    steps: [
-      { image: img(P + "01-sbol-widget.webp", 786, 1704, "The bank's home screen"), spot: [0.8, 0.525], action: "Open your instalments from the home screen", why: "The instalment card sits right on the bank's home screen, so there is no section to hunt for." },
-      { image: img(P + "02-hub-gap.webp", 786, 3436, "The hub: status, advice and the payment timeline"), spot: [0.33, 0.374], action: "Tap the green button to move it to 6 September", why: "The next payment falls in the days before payday, so the service offers to shift it." },
-      { image: img(P + "03-move-confirm.webp", 786, 1704, "Confirming the move"), spot: [0.5, 0.876], action: "Confirm the move", why: "The terms are visible before you tap: the first move is free and the credit history stays clean." },
-      { image: img(P + "04-hub-moved.webp", 786, 3098, "The move is applied, the schedule is recalculated"), action: "Done: the payment is on 6 September, the schedule is recalculated", why: "The money leaves after payday, so there is no late payment and no penalty." },
-    ],
-  },
+  /* 26.10: prototype on the Figma screens one to one, like GRIF (src/ui/live/plati2, pipeline tools/f2h).
+     Two tabs: moving a payment to payday and "Where the numbers come from". Step images are fallbacks */
+  prototypes: [
+    {
+      tab: "Move to payday",
+      title: "Move a payment to payday",
+      lead: "A payment falls in the days before payday, and you move it right from the bank's home screen.",
+      live: "plati2:move",
+      device: "phone",
+      steps: [
+        { image: img("cases/plati-chastyami/live2/s-home.webp", 690, 1498, "The bank's home screen with the instalments widget"), action: "Open your instalments from the home screen", why: "The instalment card sits right on the bank's home screen, so there is no section to hunt for." },
+        { image: img("cases/plati-chastyami/live2/s-hub.webp", 690, 1498, "The hub: what is left to pay and the next payment explained"), action: "Tap “Move to 6 Sep”", why: "The next payment falls in the days before payday, so the service offers to shift it." },
+        { image: img("cases/plati-chastyami/live2/s-confirm.webp", 690, 1498, "The “Check the new schedule” sheet"), action: "Check the dates and tap “Move payment”", why: "Only this payment moves — 3,100 ₽; the other purchases and their dates stay as they are." },
+        { image: img("cases/plati-chastyami/live2/s-moved.webp", 690, 1498, "The move is applied, the payment is on 6 September"), action: "Done: the payment is on 6 September and can still be undone", why: "The money leaves after payday, so there is no late payment and no penalty. The move can be undone until 5 September." },
+      ],
+    },
+    {
+      tab: "Where the numbers come from",
+      title: "Check where the numbers come from",
+      lead: "The advice can be checked: there is a calculation based on your own money behind it.",
+      live: "plati2:why",
+      device: "phone",
+      steps: [
+        { image: img("cases/plati-chastyami/live2/s-home.webp", 690, 1498, "The bank's home screen with the instalments widget"), action: "Open your instalments from the home screen", why: "The way in is the same: the card on the bank's home screen." },
+        { image: img("cases/plati-chastyami/live2/s-hub.webp", 690, 1498, "The hub with the next payment explained"), action: "Tap “Where the numbers come from”", why: "The link sits right under the advice: you can look at the calculation before agreeing." },
+        { image: img("cases/plati-chastyami/live2/s-why.webp", 690, 1498, "The “Where the numbers come from” sheet: the budget until payday"), action: "Done: the calculation is in front of you", why: "The service counts income and spending over the last three months and shows what will be left until payday." },
+      ],
+    },
+  ],
   /* 26.10: Mistakes, takeaways, quote and More screens removed, following the GRIF template */
   takeaways: [],
   gallery: [],

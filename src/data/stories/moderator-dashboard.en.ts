@@ -142,18 +142,50 @@ export const en: CaseStory = {
     ],
   },
   /* v114: prototype from the mock-ups — the "Take into work and approve" scenario from Figma TsqIZDg5rUgbxPNV5ghDZB (section 2494:85199): queue → profile → confirm → in work → approved */
-  prototype: {
-    title: "Check a user and approve",
-    lead: "You take a user from the queue into work and approve their profile, the way a moderator does it in my mock-ups.",
-    device: "browser",
-    steps: [
-      { image: img(F + "moderator-queue.webp", 1440, 1156, "The user queue"), spot: [0.453, 0.33], action: "Open a user from the queue", why: "This is the queue of the Users section. The tabs at the top split it by status." },
-      { image: img(F + "moderator-profile.webp", 1440, 861, "The user profile"), spot: [0.142, 0.205], action: "Press \"Take into work\"", why: "The profile holds everything known about the user. To make a decision, the case is taken into work first." },
-      { image: img(F + "moderator-confirm.webp", 1440, 861, "Confirmation before taking the case"), spot: [0.5, 0.574], action: "Confirm", why: "The dashboard asks once more, so nobody takes a case by an accidental click." },
-      { image: img(F + "moderator-inwork.webp", 1440, 861, "The profile in work"), spot: [0.127, 0.204], action: "Press Approve", why: "The case is in work, and the decision buttons have appeared at the top: approve, freeze, send to a manager or block." },
-      { image: img(F + "moderator-approved.webp", 1440, 861, "The profile is approved"), action: "Done: the profile is approved", why: "The \"Take the next one\" button opens a new case straight away, with no trip back to the queue." },
-    ],
-  },
+  /* 26.10: the prototype is rebuilt like GRIF's, see the Russian version */
+  prototypes: [
+    {
+      tab: "Users",
+      title: "Check a user and approve",
+      lead: "Take a user from the queue into work and approve the profile, the way a moderator does it.",
+      live: "moderator2:users",
+      device: "browser",
+      steps: [
+        { image: img("cases/moderator-dashboard/live2/s-uQueue.webp", 1200, 750, "The user queue, tabs by status"), action: "Open a user from the queue", why: "This is the queue of the Users section. The tabs at the top split it by status." },
+        { image: img("cases/moderator-dashboard/live2/s-uProfile.webp", 1200, 750, "The user profile"), action: "Press “Take into work”", why: "The profile holds everything known about the user. To make a decision, the case is taken into work first." },
+        { image: img("cases/moderator-dashboard/live2/s-uConfirm.webp", 1200, 750, "Confirmation before taking the case"), action: "Confirm: “Take”", why: "The dashboard asks once more, so nobody takes a case by an accidental click." },
+        { image: img("cases/moderator-dashboard/live2/s-uWork.webp", 1200, 750, "The profile in work, decision buttons on top"), action: "Press “Approve”", why: "The case is in work, and the decision buttons have appeared at the top: approve, freeze, send to a manager or block." },
+        { image: img("cases/moderator-dashboard/live2/s-uDone.webp", 1200, 750, "The profile is approved"), action: "Done: the profile is approved", why: "The “Take the next one” button opens a new case straight away, with no trip back to the queue." },
+      ],
+    },
+    {
+      tab: "Comments",
+      title: "Handle a comment from the registry",
+      lead: "A short comment is read right in the registry row, and the page is opened only for the details.",
+      live: "moderator2:comments",
+      device: "browser",
+      steps: [
+        { image: img("cases/moderator-dashboard/live2/s-cList.webp", 1200, 750, "The comment registry by status"), action: "Press “More” in the first row", why: "The registry is split by status: what waits for review comes first. A long comment is cut in the row." },
+        { image: img("cases/moderator-dashboard/live2/s-cRow.webp", 1200, 750, "The comment expanded right in the row"), action: "Click the “New” status", why: "The comment expanded in the row, no page to open. Next to it is “Hide”, a decision right in the list." },
+        { image: img("cases/moderator-dashboard/live2/s-cStatus.webp", 1200, 750, "The status history of the comment"), action: "Open the first comment", why: "The status shows its history: who has already taken the comment and when. If the case is not obvious, it is opened in full." },
+        { image: img("cases/moderator-dashboard/live2/s-cData.webp", 1200, 750, "The comment page: publication, author, tabs"), action: "Press “Take into work”", why: "One page holds the publication, a note about the author and tabs with the reply thread, history and complaints." },
+        { image: img("cases/moderator-dashboard/live2/s-cWork.webp", 1200, 750, "The comment in work, decision buttons on top"), action: "Done: the comment is in work", why: "The decision buttons are at the top: approve, hide, send to a manager or delete." },
+      ],
+    },
+    {
+      tab: "Disputed case",
+      title: "Gather the context of a disputed comment",
+      lead: "The reply thread, history and complaints sit as tabs on one page, with no hunting through the admin panel.",
+      live: "moderator2:disputed",
+      device: "browser",
+      steps: [
+        { image: img("cases/moderator-dashboard/live2/s-dComment.webp", 1200, 750, "The comment page"), action: "Open the “Reply thread” tab", why: "The comment and the publication are on top, a note about the author on the right, decision buttons above." },
+        { image: img("cases/moderator-dashboard/live2/s-dThread.webp", 1200, 750, "The reply thread"), action: "Open the “History” tab", why: "The thread shows the conversation the comment was written in: without it a disputed line cannot be understood." },
+        { image: img("cases/moderator-dashboard/live2/s-dHistory.webp", 1200, 750, "The history of work on the comment"), action: "Open the “Complaints” tab", why: "History shows who has already done what with the comment and why." },
+        { image: img("cases/moderator-dashboard/live2/s-dComplaints.webp", 1200, 750, "Complaints about the comment"), action: "Done: the whole context on one page", why: "Complaints with their reasons are the last tab. A disputed comment does not have to be pieced together." },
+      ],
+    },
+  ],
   /* 26.10: takeaways, the quote and the extra screens are gone, as in GRIF */
   takeaways: [],
   interludes: [],

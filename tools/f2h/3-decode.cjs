@@ -2,7 +2,9 @@
 // node tools/f2h/3-decode.cjs <metadata-файл> <bundle.json>
 const fs = require("fs");
 const [, , inp, out] = process.argv;
-const txt = fs.readFileSync(inp, "utf8");
+let txt = fs.readFileSync(inp, "utf8");
+/* файл от get_metadata — JSON-массив [{type, text}] с экранированными кавычками: сначала достаём текст */
+try { const j = JSON.parse(txt); if (Array.isArray(j)) txt = j.map((x) => x.text ?? "").join(""); } catch { /* уже текст */ }
 const parts = [...txt.matchAll(/name="D(\d{3}):([A-Za-z0-9+/=]+)"/g)].sort((a, b) => +a[1] - +b[1]);
 if (!parts.length) throw new Error("в файле нет фреймов D000:…");
 const b64 = parts.map((m) => m[2]).join("");

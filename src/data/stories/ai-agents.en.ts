@@ -7,6 +7,7 @@ import type { CaseStory, CaseImage } from "../caseStory";
 
 const img = (src: string, w: number, h: number, caption: string, kind = "screen"): CaseImage => ({ src, w, h, caption, kind });
 const A = "cases/ai-agents/";
+const L = A + "live2/";
 
 export const en: CaseStory = {
   id: "ai-agents",
@@ -150,21 +151,52 @@ export const en: CaseStory = {
     ],
   },
   /* v114: prototype from the mock-ups — the risk manager's main flow: registry → agent → archive → draft → risk card → edit. Card and edit are frames 30:2 and 30:332 from Figma XomA0T1zFMATidI4Qq5nEw */
-  prototype: {
-    title: "Assess the risks of a new agent",
-    lead: "Walk the risk manager's route from the agent registry to the first reviewed risk in the draft.",
-    live: "ai-agents",
-    device: "browser",
-    steps: [
-      { image: img(A + "01.webp", 1440, 900, "The list of all AI agents"), spot: [0.255, 0.62], action: "Open an agent from the registry", why: "Above the registry sits a summary: how many agents there are, how many are assessed and how many are in progress." },
-      { image: img(A + "02.webp", 1440, 900, "The agent card before assessment"), spot: [0.405, 0.824], action: "Upload the archive of the agent's documents", why: "The agent has no assessment yet. The documents are uploaded right here, with no administrator involved." },
-      { image: img(A + "03.webp", 1440, 900, "Reading the archive"), wait: 2600, action: "Wait while the model reads the archive", why: "While the parsing runs, the screen shows progress and grey placeholders of the risks to come." },
-      { image: img("cases/figma/agents-review.webp", 1520, 950, "The draft: 13 risks to review"), spot: [0.257, 0.613], action: "Open a risk from the draft", why: "The model suggested 13 risks with levels and reasons. It is a draft, and a person makes the call." },
-      { image: img(A + "proto-risk-card.webp", 1440, 900, "The risk card"), spot: [0.697, 0.942], action: "Press Edit", why: "Next to the level sit the model's reasoning and the documents behind it: you can check it without leaving the card." },
-      { image: img(A + "proto-risk-edit.webp", 1440, 900, "Level, reasoning and a required comment"), spot: [0.887, 0.942], action: "Adjust the level and write why", why: "The model's reasoning stays in view, and the risk manager must add their own. Unsaved text can only be left behind through \"Leave the form?\"." },
-      { image: img("cases/figma/agents-review.webp", 1520, 950, "Risk reviewed: level and reasoning saved"), action: "Done: the level and the comment are saved", why: "The risk is marked as reviewed in the draft, and the comment stays in its history. The rest are waiting their turn." },
-    ],
-  },
+  /* 26.10: prototype built like GRIF's: final Figma screens via tools/f2h, three flows as tabs (src/ui/live/agents2) */
+  prototypes: [
+    {
+      tab: "Agent assessment",
+      title: "Assess the risks of a new agent",
+      lead: "Walk the risk manager's path from the agent registry to the first checked risk in the draft.",
+      live: "agents2:assess",
+      device: "browser",
+      steps: [
+        { image: img(L + "s-reg.webp", 1200, 750, "AI agent registry with a summary"), action: "Open an agent from the registry", why: "Above the registry is a summary: how many agents there are, how many are assessed and how many are in progress." },
+        { image: img(L + "s-card.webp", 1200, 750, "Agent card before assessment"), action: "Upload the archive with the agent's documents", why: "The agent has no assessment yet. Documents are uploaded right here, with no administrator." },
+        { image: img(L + "s-forming.webp", 1200, 750, "The model parses the archive"), action: "Wait while the model parses the archive", why: "While parsing runs, the screen shows progress and grey placeholders of future risks." },
+        { image: img(L + "s-draft.webp", 1200, 750, "Draft: 13 risks to check"), action: "Open a risk from the draft", why: "The model proposed 13 risks with levels and reasoning. It is a draft, a person decides." },
+        { image: img(L + "s-risk.webp", 1200, 750, "Risk card"), action: "Press “Edit”", why: "Next to the level are the model's reasoning and the documents behind it, so it can be checked without leaving the card." },
+        { image: img(L + "s-edit.webp", 1200, 750, "Level and the risk manager's reasoning"), action: "Adjust the level and write why", why: "The model's reasoning stays in view, and the risk manager must write their own: without it Save does nothing." },
+      ],
+    },
+    {
+      tab: "Find an assessment",
+      title: "Find an assessment with the filter",
+      lead: "In the risk assessment registry the right one is a few taps away: filter, values, done.",
+      live: "agents2:filter",
+      device: "browser",
+      steps: [
+        { image: img(L + "s-assess.webp", 1200, 750, "Risk assessment registry"), action: "Open the filter", why: "Each assessment shows the object, owner and losses. The filter sits next to search." },
+        { image: img(L + "s-fsheet.webp", 1200, 750, "Filter panel"), action: "Pick the “High” level", why: "The filter opens as a side panel: assessment object, owner, risk level, status and dates." },
+        { image: img(L + "s-fpicked.webp", 1200, 750, "Values picked, 2 assessments found"), action: "Close the panel to apply the filter", why: "The bottom of the panel shows how many assessments match before you close it." },
+        { image: img(L + "s-fapplied.webp", 1200, 750, "Filter applied"), action: "Done: only the right assessments are left", why: "The picked values sit above the list, and each one is removed with a cross." },
+      ],
+    },
+    {
+      tab: "Risk not applicable",
+      title: "Exclude a risk that does not apply to this agent",
+      lead: "A draft risk can be marked as not applicable, but only with a reason. And it can be brought back.",
+      live: "agents2:na",
+      device: "browser",
+      steps: [
+        { image: img(L + "s-risk.webp", 1200, 750, "Risk card"), action: "Press “Not applicable”", why: "The card shows the level, the model's reasoning and the documents behind it." },
+        { image: img(L + "s-naEmpty.webp", 1200, 750, "“Risk not applicable?” with an empty reason"), action: "Click the reason field", why: "Without a reason “Accept” stays disabled. The reason stays in the assessment history." },
+        { image: img(L + "s-naFilled.webp", 1200, 750, "Reason written"), action: "Press “Accept”", why: "With the reason written the button is enabled. The counter shows the 2000-character limit." },
+        { image: img(L + "s-naDone.webp", 1200, 750, "Risk marked “Not applicable”"), action: "Press “Restore risk”", why: "The risk carries a “Not applicable” tag, and you can see who decided it and when." },
+        { image: img(L + "s-restoreQ.webp", 1200, 750, "“Restore the risk?”"), action: "Confirm “Restore”", why: "The risk returns to the assessment at the “High” level, and the reason for excluding it stays in the history." },
+        { image: img(L + "s-restored.webp", 1200, 750, "Risk back in the assessment"), action: "Done: the risk is back in the assessment", why: "A confirmation appears at the bottom, and the card now shows the risk history." },
+      ],
+    },
+  ],
   takeaways: [],
   gallery: [],
   /* deep dives repeated the decisions almost word for word, so they are hidden; the texts in caseTracks.en.ts stay */
