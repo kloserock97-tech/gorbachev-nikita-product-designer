@@ -316,6 +316,13 @@ function mountOne(fig: HTMLElement, scroller: HTMLElement) {
 }
 
 export function mountDecisionDemos(root: HTMLElement, scroller: HTMLElement) {
-  const stops = [...root.querySelectorAll<HTMLElement>("[data-dd]")].filter((f) => hasDecisionDemo(f.dataset.dd)).map((f) => mountOne(f, scroller));
+  const figs = [...root.querySelectorAll<HTMLElement>("[data-dd]")].filter((f) => hasDecisionDemo(f.dataset.dd));
+  const stops = figs.map((f) => mountOne(f, scroller));
+  /* 26.10, плавность: модули демо и стили их экранов грузим в простое браузера, а не на подъезде к решению */
+  const warm = () => {
+    void import("./live/grif2/render").then(({ grif }) => figs.forEach((f) => void loadDemo(f.dataset.dd!).then((d) => d && (d.r ?? grif).ensureStyles(import.meta.env.BASE_URL))));
+  };
+  const idle = typeof requestIdleCallback === "function" ? requestIdleCallback(warm, { timeout: 4000 }) : setTimeout(warm, 1500);
+  stops.push(() => { if (typeof cancelIdleCallback === "function") cancelIdleCallback(idle); });
   return () => stops.forEach((f) => f());
 }

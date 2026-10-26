@@ -92,25 +92,34 @@ export function ambientShader(box: HTMLElement) {
   const col: Record<string, RGB> = { l: [0.23, 0.26, 0.34], r: [0.23, 0.26, 0.34], t: [0.23, 0.26, 0.34], b: [0.23, 0.26, 0.34] };
   const t0 = performance.now();
 
+  /* 26.10, плавность: где экран внутри холста, меряем только при смене размеров (ResizeObserver) — относительно холста
+     он при прокрутке не двигается. Раньше getBoundingClientRect дважды за кадр заставлял браузер пересчитывать раскладку
+     прямо во время прокрутки */
+  const geo = { w: 0, h: 0, x: 0, y: 0, sw: 0, sh: 0 };
+  const measure = () => {
+    const hr = host!.getBoundingClientRect(), sr = screen!.getBoundingClientRect();
+    Object.assign(geo, { w: hr.width, h: hr.height, x: sr.left - hr.left, y: hr.bottom - sr.bottom, sw: sr.width, sh: sr.height });
+  };
+  const ro = new ResizeObserver(measure);
+  ro.observe(host);
+  ro.observe(screen);
   function frame(now: number) {
     raf = requestAnimationFrame(frame);
-    if (now - last < 33) return;
+    /* свет меняется медленно: 24 кадра в секунду хватает */
+    if (now - last < 41) return;
     last = now;
-    const hr = host!.getBoundingClientRect();
-    if (!hr.width) return;
-    const w = Math.max(2, Math.round(hr.width * K)), h = Math.max(2, Math.round(hr.height * K));
+    if (!geo.w) return;
+    const w = Math.max(2, Math.round(geo.w * K)), h = Math.max(2, Math.round(geo.h * K));
     if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; gl!.viewport(0, 0, w, h); }
     /* цвета краёв — из CSS (они плавно перетекают сами), читаем не каждый кадр */
     if (now - colT > 150) {
       colT = now;
-      const cs = getComputedStyle(box);
+      const cs = getComputedStyle(host!);
       for (const k of ["l", "r", "t", "b"]) { const c = toRGB(cs.getPropertyValue(`--am-${k}`).trim()); if (c) col[k] = c; }
     }
-    const sr = screen!.getBoundingClientRect();
     /* прямоугольник экрана в пикселях холста; ось Y у GL снизу вверх */
-    const x = (sr.left - hr.left) * K, y = (hr.bottom - sr.bottom) * K;
     gl!.uniform2f(u.res, w, h);
-    gl!.uniform4f(u.rect, x, y, sr.width * K, sr.height * K);
+    gl!.uniform4f(u.rect, geo.x * K, geo.y * K, geo.sw * K, geo.sh * K);
     gl!.uniform1f(u.t, (now - t0) / 1000);
     gl!.uniform3fv(u.acc, acc);
     gl!.uniform3fv(u.l, col.l); gl!.uniform3fv(u.r, col.r); gl!.uniform3fv(u.top, col.t); gl!.uniform3fv(u.b, col.b);
@@ -119,8 +128,8 @@ export function ambientShader(box: HTMLElement) {
     gl!.drawArrays(gl!.TRIANGLES, 0, 3);
   }
   return {
-    start() { if (!raf) raf = requestAnimationFrame(frame); },
+    start() { if (!raf) { measure(); raf = requestAnimationFrame(frame); } },
     stop() { cancelAnimationFrame(raf); raf = 0; },
-    destroy() { cancelAnimationFrame(raf); raf = 0; gl.getExtension("WEBGL_lose_context")?.loseContext(); cv.remove(); host.classList.remove("has-gl"); },
+    destroy() { cancelAnimationFrame(raf); raf = 0; ro.disconnect(); gl.getExtension("WEBGL_lose_context")?.loseContext(); cv.remove(); host.classList.remove("has-gl"); },
   };
 }

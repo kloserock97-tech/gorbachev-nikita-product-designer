@@ -648,6 +648,11 @@ function stackLayers(root: HTMLElement, scroller: HTMLElement) {
      окна, 1 — закрыл окно целиком; стили в case-compact.css) */
   if (!root.querySelector(".cs--compact") || matchMedia("(prefers-reduced-motion: reduce)").matches) return () => ro.disconnect();
   let raf = 0;
+  /* 26.10, плавность: раньше на лист ставилась переменная --cover — она наследовалась всему поддереву листа (а в нём
+     живые экраны прототипа), и каждый кадр прокрутки пересчитывал стили тысяч элементов. Теперь пишем scale листа и
+     opacity его тени-элемента напрямую и только когда значение изменилось */
+  const shades = layers.map((el) => { const s = document.createElement("i"); s.className = "cs-shade"; s.setAttribute("aria-hidden", "true"); el.append(s); return s; });
+  const last: string[] = layers.map(() => "");
   const depth = () => {
     raf = 0;
     const vh = scroller.clientHeight, top0 = scroller.getBoundingClientRect().top;
@@ -656,7 +661,11 @@ function stackLayers(root: HTMLElement, scroller: HTMLElement) {
     layers.forEach((el, i) => {
       const next = layers[i + 1];
       const cover = next ? Math.min(1, Math.max(0, 1 - (next.getBoundingClientRect().top - top0) / vh)) : 0;
-      el.style.setProperty("--cover", cover.toFixed(3));
+      const key = cover.toFixed(3);
+      if (key === last[i]) return;
+      last[i] = key;
+      el.style.scale = cover ? String(1 - cover * 0.04) : "";
+      shades[i].style.opacity = String(cover * 0.45);
     });
   };
   const onScroll = () => { if (!raf) raf = requestAnimationFrame(depth); };

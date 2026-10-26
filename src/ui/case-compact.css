@@ -84,26 +84,30 @@
    она не годилась: лист ниже окна прилипает сразу и тут же уходит под следующий — блок не успевали рассмотреть.
    Теперь подложка разворачивается на прокрутке: въезжает скруглённой панелью с полями, к середине окна раскрывается
    во всю ширину экрана, на выходе сворачивается обратно (--cmp-e 0 → 1 → 0, та же рифма, что у ролика наверху) ── */
-@property --cmp-e { syntax: "<number>"; inherits: true; initial-value: 0.6; }
+/* 26.10, плавность: раньше раскрытие шло через наследуемую переменную --cmp-e, которую двигала прокрутка, — каждый кадр
+   пересчитывались стили всей главы, а у подложки менялись поля и радиус (раскладка и перерисовка). Теперь подложка
+   стоит во всю ширину, а раскрывается её clip-path — сама подложка, без пересчёта главы */
 .cs-sec--compare {
   --ink: #f4f5fb; --soft: rgba(244, 245, 251, 0.7); --faint: rgba(244, 245, 251, 0.5); --line: rgba(244, 245, 251, 0.14);
   position: relative; isolation: isolate; color: var(--ink);
 }
 .cs-sec--compare::before {
   content: ""; position: absolute; z-index: -1; inset-block: 0;
-  inset-inline: calc(50% - 50cqw - var(--sx) + (1 - var(--cmp-e)) * clamp(16px, 4vw, 64px));
-  border-radius: calc((1 - var(--cmp-e)) * 48px + 4px);
+  inset-inline: calc(50% - 50cqw - var(--sx));
   background: radial-gradient(120% 70% at 50% 0%, #1b2a6b 0%, #0d1433 46%, #080a14 100%);
-  box-shadow: 0 40px 90px -50px rgba(8, 12, 40, 0.7);
+  clip-path: inset(0 clamp(16px, 4vw, 64px) round 52px);
 }
 .cs--compact .cs-sec--compare { margin-top: clamp(72px, 11vh, 128px); padding-block: clamp(64px, 10vh, 112px); border-top: 0; }
 .cs--compact .cs-sec--compare + .cs-sec { margin-top: clamp(72px, 11vh, 128px); border-top: 0; padding-top: 0; }
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    .cs-sec--compare { animation: cmp-expand linear both; animation-timeline: view(); animation-range: cover 0% cover 100%; }
+    .cs-sec--compare::before { animation: cmp-expand linear both; animation-timeline: view(); animation-range: cover 0% cover 100%; }
   }
 }
-@keyframes cmp-expand { 0% { --cmp-e: 0; } 32%, 68% { --cmp-e: 1; } 100% { --cmp-e: 0; } }
+@keyframes cmp-expand {
+  0%, 100% { clip-path: inset(0 clamp(16px, 4vw, 64px) round 52px); }
+  32%, 68% { clip-path: inset(0 0 round 4px); }
+}
 .cs-sec--compare .cn-lead { color: var(--soft); }
 .cs-sec--compare .cn-card { box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.8); }
 .cs-sec--compare .cn-card--before { background: #15161c; }
@@ -123,10 +127,12 @@
 
 /* глубина: лист, на который наезжает следующий, чуть уходит вглубь и темнеет (--cover 0…1 ставит stackLayers) */
 @media (prefers-reduced-motion: no-preference) {
-  .cs--compact .cs-layer { scale: calc(1 - var(--cover, 0) * 0.04); transform-origin: 50% calc(100% - 50svh); }
-  .cs--compact .cs-layer::after {
-    content: ""; position: absolute; z-index: 3; inset-block: 0; inset-inline: calc(50% - 50cqw - var(--sx));
-    background: #05060a; opacity: calc(var(--cover, 0) * 0.45); pointer-events: none;
+  /* 26.10, плавность: лист и его тень — отдельные слои композитора. Без этого смена масштаба на каждом кадре
+     прокрутки перерисовывала весь лист со всем содержимым (замер: кадр 31 → 6 мс, рывки 29 → 0 на главе «Демо») */
+  .cs--compact .cs-layer { transform-origin: 50% calc(100% - 50svh); will-change: scale; }
+  .cs--compact .cs-layer > .cs-shade {
+    position: absolute; z-index: 3; inset-block: 0; inset-inline: calc(50% - 50cqw - var(--sx));
+    background: #05060a; opacity: 0; pointer-events: none; will-change: opacity;
   }
 }
 

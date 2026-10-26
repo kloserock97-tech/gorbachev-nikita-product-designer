@@ -216,6 +216,8 @@ export function mountProto(root: HTMLElement) {
 
     /* живой модуль: грузится, когда блок близко; экран в его дизайн-ширине ужимается под рамку через zoom */
     let fit: ResizeObserver | null = null;
+    let booted: Promise<void> | null = null;
+    const ensureBoot = () => (booted ??= boot().catch(() => { liveRoot!.textContent = ""; }));
     async function boot() {
       const load = liveLoader(liveRoot!.dataset.live)!;
       const mod = (await load()).default;
@@ -263,11 +265,22 @@ export function mountProto(root: HTMLElement) {
     const seen = new IntersectionObserver(([e]) => {
       if (!e.isIntersecting) return;
       seen.disconnect();
-      if (liveRoot) boot().catch(() => { liveRoot.textContent = ""; });
+      /* модуль уже смонтирован заранее (в простое) — сценарий начинается заново, чтобы его движение было видно */
+      if (liveRoot) { if (booted) void booted.then(() => inst?.show(at)); else ensureBoot(); }
       else reach(pages[at]);
     }, { rootMargin: liveRoot ? "600px 0px" : "0px", threshold: liveRoot ? 0 : 0.3 });
     seen.observe(box);
-    offs.push(() => { box.removeEventListener("click", onClick); clearTimeout(timer); seen.disconnect(); fit?.disconnect(); inst?.destroy(); ambient.stop(); });
+    /* 26.10, плавность: модуль, стили, сборка экрана и шейдер подсветки — в простое браузера сразу после открытия кейса,
+       а не на подъезде к блоку: разбор экранов, тысячи слоёв первого экрана и компиляция шейдера давали рывок прокрутки.
+       Когда блок показался, сценарий просто начинается заново (seen выше) */
+    let idle = 0;
+    if (liveRoot && !box.closest<HTMLElement>("[data-flow-panel][hidden]")) {
+      const warm = () => {
+        liveLoader(liveRoot.dataset.live)?.().then((m) => { m.default.warm?.(BASE); ensureBoot(); ambient.prepare(); }).catch(() => {});
+      };
+      idle = typeof requestIdleCallback === "function" ? requestIdleCallback(warm, { timeout: 3000 }) : setTimeout(warm, 1200);
+    }
+    offs.push(() => { if (typeof cancelIdleCallback === "function") cancelIdleCallback(idle); box.removeEventListener("click", onClick); clearTimeout(timer); seen.disconnect(); fit?.disconnect(); inst?.destroy(); ambient.stop(); });
     if (liveRoot) mark(0); else show(0);
   });
   return () => offs.forEach((f) => f());
@@ -281,6 +294,7 @@ export function mountProto(root: HTMLElement) {
 type RGB = [number, number, number];
 function ambientLight(box: HTMLElement, calm: boolean) {
   const screen = box.querySelector<HTMLElement>("[data-screen]")!;
+  const tinted = [box.querySelector<HTMLElement>(".pt-side"), box.querySelector<HTMLElement>(".pt-amb")].filter(Boolean) as HTMLElement[];
   const cv = document.createElement("canvas");
   cv.width = cv.height = 1;
   const ctx = cv.getContext("2d", { willReadFrequently: true });
@@ -342,7 +356,12 @@ function ambientLight(box: HTMLElement, calm: boolean) {
       t: avg([px(0.25, 0.05), px(0.5, 0.05), px(0.75, 0.05)]),
       b: avg([px(0.25, 0.95), px(0.5, 0.95), px(0.75, 0.95)]),
     };
-    for (const [k, c] of Object.entries(sides)) if (c) box.style.setProperty(`--am-${k}`, tone(c));
+    /* 26.10, плавность: цвета ставим только туда, где они нужны (панель и слой подсветки), а не на весь блок — иначе
+       каждый кадр их плавной смены пересчитывал стили живого экрана с тысячами слоёв */
+    for (const [k, c] of Object.entries(sides)) if (c) {
+      const v = tone(c);
+      for (const el of tinted) if (el.style.getPropertyValue(`--am-${k}`) !== v) el.style.setProperty(`--am-${k}`, v);
+    }
   };
   let t1 = 0, t2 = 0, tick = 0, live = false, lastScroll = 0;
   /* 26.10: свет рисует шейдер (ambientGL.ts); создаётся, когда блок впервые показался, а не на скрытой вкладке */
@@ -360,12 +379,15 @@ function ambientLight(box: HTMLElement, calm: boolean) {
     box.classList.toggle("is-lit", live);
     clearInterval(tick);
     if (live) { sample(); tick = window.setInterval(sample, 1500); }
-    if (live && !calm && gl === undefined) gl = ambientShader(box);
+    if (live) prepare();
     if (live) gl?.start(); else gl?.stop();
   });
   io.observe(box);
+  /** шейдер создаётся заранее (в простое) или когда блок впервые показался — не на скрытой вкладке */
+  function prepare() { if (!calm && gl === undefined) gl = ambientShader(box); }
   return {
     soon,
+    prepare,
     stop() { clearTimeout(t1); clearTimeout(t2); clearInterval(tick); io.disconnect(); gl?.destroy(); screen.removeEventListener("scroll", onScroll, { capture: true }); },
   };
 }

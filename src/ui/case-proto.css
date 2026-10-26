@@ -22,7 +22,6 @@
   --pt-panel: #19191b; --pt-accent: #5b8cff;
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 380px); gap: clamp(28px, 5vw, 88px); align-items: center;
   margin-top: 8px; color: var(--pt-fg);
-  transition: --am-l 1.2s ease, --am-r 1.2s ease, --am-t 1.2s ease, --am-b 1.2s ease;
 }
 /* minmax(0, 1fr): длинный шаг в «поле ввода» (без переноса) не распирает панель под окно прототипа */
 .pt-side { display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; gap: 20px; min-width: 0; }
@@ -244,7 +243,7 @@
 @media (max-width: 860px) { .pt-reel { height: 52px; } .pt-now-k b { font-size: 56px; } }
 
 /* 26.10: подсветка шейдером (ambientGL.ts): холст поверх тех же границ, что у пятен; пятна тогда не рисуются */
-.pt-amb-gl { position: absolute; inset: 0; width: 100%; height: 100%; filter: blur(28px) saturate(1.2); opacity: 0; animation: pt-amb-in 1.2s ease-out 0.1s forwards; }
+.pt-amb-gl { position: absolute; inset: 0; width: 100%; height: 100%; filter: blur(18px) saturate(1.2); opacity: 0; animation: pt-amb-in 1.2s ease-out 0.1s forwards; }
 .pt-amb.has-gl i { display: none; }
 @keyframes pt-amb-in { to { opacity: 1; } }
 /* 26.10: у телефона экран высокий — в кадре раскадровки виден его верх, а не середина */
@@ -263,3 +262,8 @@
 .pt--compact:not(.pt--browser) .pt-reel img { object-fit: cover; object-position: 50% 0; }
 .pt--compact:not(.pt--browser) .pt-reel .is-now img { scale: 1; }
 @media (max-width: 860px) { .pt--compact:not(.pt--browser) .pt-reel li { width: 46px; } .pt--compact:not(.pt--browser) .pt-reel li:has(.is-now) { width: 60px; } }
+
+/* 26.10, плавность: цвета подсветки (--am-*) задаются только панели и слою подсветки и перетекают там же — блок с живым
+   экраном их не наследует, поэтому смена цвета не пересчитывает стили тысяч слоёв экрана */
+.pt-side, .pt-amb { transition: --am-l 1.2s ease, --am-r 1.2s ease, --am-t 1.2s ease, --am-b 1.2s ease; }
+@media (prefers-reduced-motion: reduce) { .pt-side, .pt-amb { transition: none; } }

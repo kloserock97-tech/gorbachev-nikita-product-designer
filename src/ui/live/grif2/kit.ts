@@ -3,7 +3,7 @@
    настоящий слой экрана; нажали — сценарий переходит к следующему шагу и сообщает движку (ctx.go), чтобы панель слева
    переключилась. Шаги сценария = шаги в данных кейса (CasePrototype.steps), по порядку. */
 import type { LiveCtx, LiveInstance, LiveProto } from "../types";
-import type { Renderer } from "./render";
+import { grif, type Renderer } from "./render";
 import { createStage, type Stage } from "./stage";
 
 export type Flow = (s: Stage, ctx: LiveCtx, step: number) => void;
@@ -21,6 +21,7 @@ export function hint(s: Stage, el: HTMLElement | null, onTap: () => void) {
 export function make(design: { w: number }, flow: Flow, r?: Renderer, liven?: (el: HTMLElement, key: string, instant: boolean) => void, fix?: (el: HTMLElement, key: string) => void): LiveProto {
   return {
     design,
+    warm: (base) => { (r ?? grif).ensureStyles(base); },
     mount(root, ctx): LiveInstance {
       const s = createStage(root, { base: ctx.base, calm: ctx.calm, r, liven, fix });
       const show = (k: number) => flow(s, ctx, k);

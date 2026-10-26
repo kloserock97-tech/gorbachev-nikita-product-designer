@@ -26,4 +26,6 @@ export type LiveInstance = {
 export type LiveProto = {
   design: { w: number };
   mount(root: HTMLElement, ctx: LiveCtx): LiveInstance;
+  /** 26.10: подготовка заранее, в простое браузера (стили экранов и т. п.) — чтобы на подъезде к блоку не было рывка */
+  warm?(base: string): void;
 };
