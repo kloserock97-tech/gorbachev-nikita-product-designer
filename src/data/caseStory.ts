@@ -141,6 +141,8 @@ export type CaseStory = {
     team?: { who: string; how: string }[];
     /** цели: каждая вытекает из проблемы в lead */
     goals?: string[];
+    /** 26.10: сцены к целям и ограничениям по порядку (ключи из ui/contextArt.ts); с ними контекст встаёт в «Коротко» картинками */
+    art?: { goals?: string[]; constraints?: string[] };
   };
   journey?: { title: string; lead?: string; steps: JourneyStep[]; measured: string };
   compare?: CaseCompare;

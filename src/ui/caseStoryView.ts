@@ -22,6 +22,7 @@ import { brandMark, goArrow, lookVars, objectPicture } from "./caseLook";
 import { demoBlock, hasDemo, mountDemos } from "./caseDemos";
 import { flowsBlock, mountProto, protoBlock } from "./caseProto";
 import { marks, mountNotes, notesBlock } from "./caseNotes";
+import { contextArtBlock } from "./contextArt";
 import { decisionDemoBlock, hasDecisionDemo, mountDecisionDemos } from "./decisionDemos";
 import { mountOpener, openerBlock } from "./filmOpener";
 import { mockupsHead, mountMockups } from "./mockupsTitle";
@@ -356,7 +357,8 @@ export function sectionsOf(s: CaseStory): Section[] {
   if (s.decisions.film || s.prototype || s.prototypes?.length || hasDemo(s.id)) list.push({ id: "interface", label: t("cs.interface") });
   if (s.gallery.length) list.push({ id: "screens", label: t("cs.screens") });
   if (s.results) list.push({ id: "results", label: t("cs.results") });
-  list.push({ id: "context", label: t("cs.context") });
+  /* 26.10: контекст картинками живёт внутри «Коротко» — своей главы и пункта в оглавлении у него нет */
+  if (!s.context.art) list.push({ id: "context", label: t("cs.context") });
   if (s.journey) list.push({ id: "journey", label: t("cs.journey") });
   if (s.approach && !s.compact) list.push({ id: "approach", label: t("cs.approach") });
   list.push({ id: "research", label: t("cs.research") });
@@ -437,6 +439,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
         <section class="cs-sec">
           ${head(++sec, "brief", t("cs.brief"))}
           <p class="cs-summary" data-reveal>${runIn(s.hero.summary)}</p>
+          ${contextArtBlock(s, mini)}
         </section>
 
         ${s.decisions.film || s.prototype || s.prototypes?.length || hasDemo(s.id) ? `<section class="cs-sec cs-sec--interface cs-zone">
@@ -468,7 +471,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
 
         <p class="cs-break" data-reveal><span>${t("cs.steps")}</span></p>
 
-        <section class="cs-sec cs-sec--context">
+        ${ctx.art ? "" : `        <section class="cs-sec cs-sec--context">
           ${head(++sec, "context", t("cs.context"), ctx.lead)}
           ${ctx.text ? paras(ctx.text) : ""}
           ${ctx.goals?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.goals"))}<ol class="cs-goals">${ctx.goals.map((x, k) => `<li><span>${pad(k + 1)}</span><p>${marks(esc(x))}</p></li>`).join("")}</ol></div>` : ""}
@@ -477,7 +480,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
           ${ctx.constraints?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.constraints"))}<ol class="cs-constraints">${ctx.constraints.map((x, k) => `<li><span>${pad(k + 1)}</span><b>${esc(x.title)}</b><p>${esc(x.text)}</p></li>`).join("")}</ol></div>` : ""}
           ${ctx.team?.length ? `<div class="cs-block" data-reveal>${mini(t("cs.team"))}<ul class="cs-roles">${ctx.team.map((x) => `<li><b>${esc(x.who)}</b><span>${esc(x.how)}</span></li>`).join("")}</ul></div>` : ""}
           ${ctx.myRole ? `<div class="cs-block cs-card cs-card--dark" data-reveal>${mini(t("cs.myrole"))}<p>${esc(ctx.myRole)}</p></div>` : ""}
-        </section>
+        </section>`}
         ${brk("context")}
 
         ${s.journey ? `<section class="cs-sec cs-sec--journey">

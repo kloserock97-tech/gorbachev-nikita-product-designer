@@ -42,6 +42,8 @@ export const en: CaseStory = {
       "Nothing goes out without a confirmation, and everything can be taken back.",
       "Get the product to the investment round: an investor understands how it works within a few minutes.",
     ],
+    /* 26.10: контекст картинками в «Коротко» (ui/contextArt.ts) */
+    art: { goals: ["entry", "live", "confirm", "round"], constraints: ["budget", "nods"] },
     constraints: [
       { title: "A limited budget", text: "Until the investment came, there was little money for research or a team." },
       { title: "No design system and no shared settings", text: "Only wishes about the look and a couple of generated screens." },

@@ -1,0 +1,111 @@
+/* 26.10: цели и ограничения картинками (contextArt.ts). Плитка — в цвет кейса (--s1/--s2), на ней тёмный фрагмент
+   интерфейса GRIF в его же цветах: окно #18181b, кнопка-градиент #6476ea → #4757cc, кольцо #657cf1.
+   Размеры внутри плитки — в cqw, плитка — контейнер. Движение — только transform/opacity, вход ease-out
+   cubic-bezier(0.23, 1, 0.32, 1), постоянное — linear; стартует с классом is-in, «меньше движения» — конечный вид. */
+.ca-block { --ca-ink: #e8e8ea; --ca-win: #18181b; --ca-edge: #2a2a30; --ca-dim: #3a3a42; --ca-acc: #6476ea; --ca-acc-2: #4757cc; --ca-glow: #657cf1; --ca-out: cubic-bezier(0.23, 1, 0.32, 1); }
+
+/* ── сетка: цели в ряд по четыре (на телефоне по две), ограничения — строки с плиткой слева ── */
+.ca-goals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ca-cons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 900px) { .ca-goals { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .ca-cons { grid-template-columns: minmax(0, 1fr); } .ca-goals { gap: 10px; } }
+
+.ca-card { display: grid; align-content: start; gap: 12px; min-width: 0; }
+.ca-card > p { font-size: 15px; line-height: 1.45; color: var(--ink); text-wrap: pretty; }
+.ca-card > p span { display: block; margin-bottom: 4px; font-size: 12.5px; font-weight: 500; color: var(--faint); font-variant-numeric: tabular-nums; }
+.ca-card--row { grid-template-columns: clamp(84px, 9vw, 112px) minmax(0, 1fr); align-items: center; gap: 16px; padding: 10px; border-radius: 18px; background: var(--tile); }
+.ca-card--row b { display: block; font-size: 16px; line-height: 1.3; }
+.ca-card--row p { margin-top: 4px; font-size: 14.5px; line-height: 1.45; color: var(--soft); text-wrap: pretty; }
+@media (max-width: 600px) { .ca-card > p { font-size: 14px; } }
+
+/* ── плитка ── */
+.ca-tile { position: relative; container-type: inline-size; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 18px; background: linear-gradient(160deg, color-mix(in srgb, var(--case) 7%, #f5f6f9), color-mix(in srgb, var(--case) 17%, #e7eaf1)); isolation: isolate; }
+.ca-card--row .ca-tile { aspect-ratio: 1; border-radius: 12px; }
+.ca-tile i, .ca-tile b, .ca-tile span { display: block; font-style: normal; }
+
+/* окно продукта внутри плитки */
+.ca-win { position: absolute; left: 12cqw; right: 12cqw; padding: 5cqw; border-radius: 5cqw; background: var(--ca-win); box-shadow: inset 0 0 0 1px var(--ca-edge), 0 4cqw 9cqw -4cqw rgba(20, 33, 61, 0.45); display: grid; gap: 3.2cqw; }
+.ca-line { height: 2.6cqw; width: var(--w, 80%); border-radius: 2cqw; background: var(--ca-dim); }
+
+/* entry: поле ввода и подсказки */
+.ca-win--entry { top: 50%; translate: 0 -50%; left: 10cqw; right: 10cqw; background: none; box-shadow: none; padding: 0; gap: 4.5cqw; }
+.ca-input { display: flex; align-items: center; gap: 2.4cqw; padding: 4.5cqw 4cqw; border-radius: 5cqw; background: var(--ca-win); box-shadow: inset 0 0 0 1px var(--ca-edge), 0 4cqw 9cqw -4cqw rgba(20, 33, 61, 0.45); }
+.ca-input .ca-line { flex: none; }
+.ca-caret { width: 0.9cqw; height: 5cqw; border-radius: 1cqw; background: var(--ca-ink); }
+.ca-send { margin-left: auto; width: 6.5cqw; height: 6.5cqw; border-radius: 50%; background: linear-gradient(180deg, var(--ca-acc), var(--ca-acc-2)); }
+.ca-chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.6cqw; }
+.ca-chips i { height: 9cqw; border-radius: 3cqw; background: var(--ca-win); box-shadow: inset 0 0 0 1px var(--ca-edge); }
+.ca-chips i.is-hot { position: relative; box-shadow: inset 0 0 0 1px var(--ca-glow), 0 0 0 1.2cqw rgba(101, 124, 241, 0.25); }
+.ca-chips i.is-hot::after { content: ""; position: absolute; inset: -2.4cqw; border-radius: 5cqw; box-shadow: 0 0 0 1cqw rgba(101, 124, 241, 0.3); opacity: 0; }
+
+/* live: шаг со спиннером, прогресс, источники */
+.ca-win--live { top: 14cqw; }
+.ca-step { display: flex; align-items: center; gap: 2.6cqw; }
+.ca-spin { width: 5cqw; height: 5cqw; border-radius: 50%; border: 0.9cqw solid var(--ca-dim); border-top-color: var(--ca-glow); }
+.ca-step .ca-line { flex: 1; background: linear-gradient(90deg, var(--ca-dim) 0 40%, #5a5a66 50%, var(--ca-dim) 60% 100%); background-size: 250% 100%; background-position: 100% 0; }
+.ca-bar { height: 1.6cqw; border-radius: 1cqw; background: var(--ca-edge); overflow: hidden; }
+.ca-bar i { height: 100%; width: 100%; border-radius: inherit; background: var(--ca-glow); transform-origin: left; transform: scaleX(0.62); }
+.ca-srcs { display: flex; gap: 2cqw; margin-top: 1cqw; }
+.ca-srcs i { width: 12cqw; height: 5.5cqw; border-radius: 3cqw; background: color-mix(in srgb, var(--c) 22%, var(--ca-win)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 40%, transparent); }
+
+/* confirm: черновик и плашка отмены */
+.ca-win--confirm { top: 11cqw; box-shadow: inset 0 0 0 1px var(--ca-glow), 0 0 7cqw -1cqw rgba(102, 122, 242, 0.35), 0 4cqw 9cqw -4cqw rgba(20, 33, 61, 0.45); }
+.ca-actions { display: flex; justify-content: flex-end; gap: 2cqw; margin-top: 1cqw; }
+.ca-ghost { width: 14cqw; height: 6.5cqw; border-radius: 2.4cqw; background: var(--ca-edge); }
+.ca-btn { width: 20cqw; height: 6.5cqw; border-radius: 2.4cqw; background: linear-gradient(180deg, var(--ca-acc), var(--ca-acc-2)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22); }
+.ca-toast { position: absolute; left: 50%; bottom: 8cqw; translate: -50% 0; display: flex; align-items: center; gap: 2.2cqw; padding: 2.4cqw 4cqw 2.4cqw 2.6cqw; border-radius: 99cqw; background: #26262c; box-shadow: 0 3cqw 8cqw -3cqw rgba(20, 33, 61, 0.55); white-space: nowrap; }
+.ca-toast b { font-size: max(10px, 4.4cqw); font-weight: 600; line-height: 1; color: #a9b4ff; }
+.ca-ring { width: 5.2cqw; height: 5.2cqw; border-radius: 50%; background: conic-gradient(var(--ca-glow) calc(var(--ca-left, 0.7) * 360deg), var(--ca-dim) 0); -webkit-mask: radial-gradient(circle, transparent 52%, #000 54%); mask: radial-gradient(circle, transparent 52%, #000 54%); }
+@property --ca-left { syntax: "<number>"; inherits: false; initial-value: 0.7; }
+
+/* round: дорожка до раунда */
+.ca-track { position: absolute; left: 12cqw; right: 12cqw; top: 50%; translate: 0 -60%; display: flex; justify-content: space-between; }
+.ca-rail { position: absolute; left: 3cqw; right: 3cqw; top: 2.6cqw; height: 1.2cqw; border-radius: 1cqw; background: color-mix(in srgb, var(--ink) 14%, transparent); }
+.ca-rail i { height: 100%; border-radius: inherit; background: var(--ca-acc); transform-origin: left; transform: scaleX(1); }
+.ca-track span { position: relative; display: grid; justify-items: center; gap: 3cqw; }
+.ca-track span i { width: 6.4cqw; height: 6.4cqw; border-radius: 50%; background: var(--ca-acc); box-shadow: 0 0 0 1.4cqw color-mix(in srgb, var(--case) 10%, #f1f3f7); }
+.ca-track span b { font-size: max(10px, 4.6cqw); font-weight: 600; line-height: 1; color: var(--ink); white-space: nowrap; }
+.ca-track .is-goal i { width: 9cqw; height: 9cqw; margin-top: -1.3cqw; background: radial-gradient(circle at 35% 30%, #8d9bff, var(--ca-acc-2)); box-shadow: 0 0 0 1.4cqw color-mix(in srgb, var(--case) 10%, #f1f3f7), 0 0 0 3cqw rgba(100, 118, 234, 0.25); }
+
+/* budget: одна монетка вместо стопки */
+.ca-coins { position: absolute; left: 50%; bottom: 22cqw; translate: -50% 0; width: 58cqw; display: grid; justify-items: center; }
+.ca-coins i { width: 100%; height: 20cqw; margin-top: -11cqw; border-radius: 50%; }
+.ca-coins i:first-child { margin-top: 0; }
+.ca-coins .is-ghost { border: 1.8cqw dashed color-mix(in srgb, var(--ink) 26%, transparent); }
+.ca-coins .is-real { background: linear-gradient(180deg, #f3cf6a, #d9a93a); box-shadow: inset 0 -4cqw 0 #b9862a, 0 3cqw 6cqw -2cqw rgba(20, 33, 61, 0.35); }
+
+/* nods: пустые ячейки под компоненты, в одной первая кнопка */
+.ca-slots { position: absolute; inset: 24cqw 12cqw; display: grid; grid-template-columns: repeat(3, 1fr); gap: 5cqw; }
+.ca-slots i { border-radius: 4cqw; border: 1.6cqw dashed color-mix(in srgb, var(--ink) 24%, transparent); }
+.ca-slots .is-first { position: relative; border-color: transparent; background: var(--ca-win); display: grid; place-items: center; }
+.ca-slots .is-first b { width: 60%; height: 34%; border-radius: 3cqw; background: linear-gradient(180deg, var(--ca-acc), var(--ca-acc-2)); }
+
+/* ── движение: стартует, когда карточка на экране ── */
+@media (prefers-reduced-motion: no-preference) {
+  .ca-card:not(.is-in) .ca-tile * { animation-play-state: paused !important; }
+  .ca-chips i { animation: ca-pop 0.5s var(--ca-out) both; animation-delay: calc(0.35s + var(--i) * 0.07s); }
+  .ca-chips i.is-hot::after { animation: ca-ring 2.4s ease-out 1.2s infinite; }
+  .ca-caret { animation: ca-blink 1.1s steps(1) infinite; }
+  .ca-spin { animation: ca-spin 0.9s linear infinite; }
+  .ca-step .ca-line { animation: ca-shimmer 1.8s linear infinite; }
+  .ca-bar i { animation: ca-grow 2.6s var(--ca-out) both 0.3s; }
+  .ca-srcs i { animation: ca-pop 0.5s var(--ca-out) both; animation-delay: calc(0.6s + var(--i) * 0.08s); }
+  .ca-toast { animation: ca-rise 0.55s var(--ca-out) both 0.5s; }
+  .ca-ring { animation: ca-undo 8s linear infinite 0.6s; }
+  .ca-rail i { animation: ca-grow-full 1.6s var(--ca-out) both 0.25s; }
+  .ca-track span { animation: ca-pop 0.5s var(--ca-out) both; animation-delay: calc(0.2s + var(--i) * 0.5s); }
+  .ca-track .is-goal i { animation: ca-beat 2.6s ease-in-out infinite 1.6s; }
+  .ca-coins .is-real { animation: ca-drop 0.7s var(--ca-out) both 0.35s; }
+  .ca-slots .is-first { animation: ca-pop 0.55s var(--ca-out) both 0.5s; }
+}
+@keyframes ca-pop { from { opacity: 0; transform: translateY(2cqw) scale(0.94); } }
+@keyframes ca-rise { from { opacity: 0; transform: translateY(5cqw); } }
+@keyframes ca-drop { from { opacity: 0; transform: translateY(-10cqw); } }
+@keyframes ca-blink { 50% { opacity: 0; } }
+@keyframes ca-spin { to { transform: rotate(1turn); } }
+@keyframes ca-shimmer { from { background-position: 100% 0; } to { background-position: -150% 0; } }
+@keyframes ca-grow { from { transform: scaleX(0.08); } }
+@keyframes ca-grow-full { from { transform: scaleX(0); } }
+@keyframes ca-undo { from { --ca-left: 1; } to { --ca-left: 0; } }
+@keyframes ca-ring { 0% { opacity: 0.9; transform: scale(0.96); } 70%, 100% { opacity: 0; transform: scale(1.12); } }
+@keyframes ca-beat { 50% { transform: scale(1.1); } }
