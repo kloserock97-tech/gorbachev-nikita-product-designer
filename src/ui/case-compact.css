@@ -54,13 +54,16 @@
 .cs--compact .cs-decision--row { display: flex; flex-direction: column; gap: 0; padding: 0; border-radius: 0; background: none; }
 .cs--compact .cs-decision--row .dd { align-self: stretch; width: 100%; margin-bottom: 20px; }
 .cs--compact .cs-decision--row h3 { margin: 0 0 14px; max-width: none; font-size: clamp(20px, 1.6vw, 24px); line-height: 1.2; letter-spacing: -0.012em; }
-.cs-dl { margin: 0; border-top: 1px solid var(--line); }
-.cs-dl > div { display: grid; grid-template-columns: 112px minmax(0, 1fr); column-gap: 16px; padding: 12px 0 13px; border-bottom: 1px solid var(--line); }
-.cs-dl dt { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; font-size: 13.5px; font-weight: 600; line-height: 1.5; color: var(--ink); }
-.cs-dl dd { margin: 0; font-size: 15px; line-height: 1.5; color: color-mix(in srgb, var(--ink) 78%, transparent); text-wrap: pretty; }
+/* 26.10: строки решения — метка над текстом, без таблицы и линий (как мета-колонка в кейсах Tailscale):
+   «Гипотеза Н4», «Что сделал» — маленькая серая метка, под ней абзац; «После теста» — мягкая плашка, это главное отличие */
+.cs-dl { display: grid; gap: 14px; margin: 0; }
+.cs-dl > div { display: grid; gap: 4px; }
+.cs-dl dt { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; line-height: 1.4; letter-spacing: 0.01em; color: color-mix(in srgb, var(--ink) 55%, transparent); }
+.cs-dl dd { margin: 0; font-size: 15px; line-height: 1.5; color: color-mix(in srgb, var(--ink) 82%, transparent); text-wrap: pretty; }
+.cs-dl .is-changed { padding: 12px 14px 13px; border-radius: 14px; background: var(--tile-2, color-mix(in srgb, var(--ink) 5%, transparent)); }
+.cs-dl .is-changed dt { color: var(--ink); }
 .cs-dl .is-changed dd { color: var(--ink); }
-.cs--compact .cs-dl .cs-insight { margin: 0; padding: 1px 7px; border-radius: 6px; font-size: 12px; font-weight: 600; line-height: 1.5; }
-@media (max-width: 600px) { .cs-dl > div { grid-template-columns: minmax(0, 1fr); row-gap: 2px; } }
+.cs--compact .cs-dl .cs-insight { margin: 0; padding: 0 7px; border-radius: 6px; font-size: 11.5px; font-weight: 600; line-height: 1.6; }
 .cs--compact .dd { gap: 8px; }
 .cs--compact .dd-view { border-radius: 14px; }
 .cs--compact .dd-step { font-size: 14px; }

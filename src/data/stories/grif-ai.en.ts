@@ -40,7 +40,7 @@ export const en: CaseStory = {
       "A person finds what the assistant can do without a hint.",
       "You can see what the system is doing right now and what the answer is built from.",
       "Nothing goes out without a confirmation, and everything can be taken back.",
-      "An investor understands how the product works within a few minutes.",
+      "Get the product to the investment round: an investor understands how it works within a few minutes.",
     ],
     constraints: [
       { title: "An abstract idea at the start", text: "No research, and the market is only taking shape." },
@@ -85,7 +85,8 @@ export const en: CaseStory = {
   },
   /* v90: the interface film stays below the decisions as the full view. 23.10: one decision per finding */
   decisions: {
-    lead: "Three decisions in the chat. Each one answers its own finding, and I adjusted each one after testing.",
+    /* 26.10: the intro line is gone, see the Russian version */
+    lead: "",
     items: [
       {
         id: "entry",

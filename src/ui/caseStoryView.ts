@@ -526,7 +526,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
 
         <section class="cs-sec cs-sec--decisions">
           ${head(++sec, "decisions", t("cs.decisions"))}
-          <p class="cs-text cs-text--lead" data-reveal>${runIn(s.decisions.lead)}</p>
+          ${s.decisions.lead ? `<p class="cs-text cs-text--lead" data-reveal>${runIn(s.decisions.lead)}</p>` : ""}
           ${s.flow?.folded ? `<details class="cs-fold" data-reveal>
             <summary><span class="cs-deep-title"><b>${esc(s.flow.title)}</b></span><span class="cs-deep-toggle" aria-hidden="true"><i></i></span></summary>
             <div class="cs-fold-body">${flowBody(s.flow)}</div>
