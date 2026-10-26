@@ -276,9 +276,23 @@
     <a href="#work" data-m-go="work"><span data-i18n="nav.work">Work</span></a>
     <a href="#notes" data-m-go="lab"><span data-i18n="nav.lab">Pet projects</span></a>
     <a href="#contact" data-m-go="contact"><span data-i18n="nav.hi">Say hi</span></a>
+    <!-- 26.10: строки с пояснениями — звук переключателем (играет — эквалайзер и название трека), язык, лёгкая версия -->
     <div class="m-menu__row">
-      <button class="m-menu__sound" type="button" aria-pressed="false"><span data-m-sound>Turn sound on</span></button>
-      <a class="m-menu__lite" href="lite.html"><span data-i18n="nav.lite">Lightweight version</span></a>
+      <button class="m-menu__item m-menu__sound" type="button" aria-pressed="false">
+        <span class="m-menu__ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.8 9.6h3.1l4.4-3.5v11.8l-4.4-3.5H3.8z"/><path class="m-menu__wave" d="M14.4 9.3a3.9 3.9 0 0 1 0 5.4M16.9 6.9a7.3 7.3 0 0 1 0 10.2"/></svg></span>
+        <span class="m-menu__txt"><b data-i18n="menu.sound">Sound</b><small><span class="m-menu__eq" aria-hidden="true"><i></i><i></i><i></i></span><span data-m-sound>Music and sounds of the hill</span></small></span>
+        <span class="m-menu__switch" aria-hidden="true"></span>
+      </button>
+      <div class="m-menu__item m-menu__lang" role="group" data-i18n-label="nav.langs" aria-label="Page language">
+        <span class="m-menu__ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg></span>
+        <span class="m-menu__txt"><b data-i18n="menu.lang">Language</b></span>
+        <span class="m-menu__seg"><button type="button" data-m-lang="ru" aria-pressed="false">RU</button><button type="button" data-m-lang="en" aria-pressed="true">EN</button></span>
+      </div>
+      <a class="m-menu__item m-menu__lite" href="lite.html">
+        <span class="m-menu__ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 6h16v10H4zM9 20h6M12 16v4"/></svg></span>
+        <span class="m-menu__txt"><b data-i18n="nav.lite">Lightweight version</b><small data-i18n="menu.lite.note">No 3D, opens fast</small></span>
+        <svg class="m-menu__go" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 16 16 8M9.5 8H16v6.5"/></svg>
+      </a>
     </div>
   </div>
 </nav>

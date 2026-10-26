@@ -33,6 +33,7 @@ export function initSound(scene: Scene) {
 
   let ctx: AudioContext | null = null;
   let engine: Awaited<ReturnType<typeof import("../audio/ambient").createAmbient>> | null = null;
+  let music: ReturnType<typeof import("../audio/music").createMusic> | null = null;
   let loading: Promise<void> | null = null;
   let enabled = false;
   let timer = 0;
@@ -61,8 +62,11 @@ export function initSound(scene: Scene) {
     const dt = Math.min(0.5, (t - last) / 1000);
     last = t;
     const { s, c, f } = chapters(scene.storyProgress);
+    const caseOpen = document.body.classList.contains("case-open");
+    /* заглавная музыка: в открытом кейсе на паузе, при входе в «Кейсы» — припев, с портала — тише и спокойнее */
+    music?.update({ c, f, caseOpen });
     /* в футере холм снова «живой»: s как на первом экране */
-    engine.update({ wind: scene.windNow, weather: scene.weatherKind, s: f > 0.15 ? 0 : s, c, f, focus: scene.computerFocused, caseOpen: document.body.classList.contains("case-open"), portal: f > 0 ? portalAt(f) : 0 }, dt);
+    engine.update({ wind: scene.windNow, weather: scene.weatherKind, s: f > 0.15 ? 0 : s, c, f, focus: scene.computerFocused, caseOpen, portal: f > 0 ? portalAt(f) : 0, music: !!music?.playing }, dt);
   };
 
   const enable = (announce: boolean) => {
@@ -75,7 +79,10 @@ export function initSound(scene: Scene) {
     enabled = true;
     paint();
     tell();
-    loading ??= import("../audio/ambient").then((m) => { engine = m.createAmbient(ctx!); });
+    loading ??= Promise.all([import("../audio/ambient"), import("../audio/music")]).then(([a, m]) => {
+      engine = a.createAmbient(ctx!);
+      music = m.createMusic(ctx!);
+    });
     loading.then(() => {
       if (!enabled || !engine) return;
       last = performance.now();
@@ -92,6 +99,7 @@ export function initSound(scene: Scene) {
     tell();
     clearInterval(timer);
     engine?.fadeOut();
+    music?.fadeOut();
     window.setTimeout(() => { if (!enabled) void ctx?.suspend(); }, 700);
   };
 
@@ -122,7 +130,7 @@ export function initSound(scene: Scene) {
   }
 
   /* для CDP-проверок */
-  Object.assign(window, { __sound: { get state() { return ctx?.state ?? "none"; }, get enabled() { return enabled; }, get loaded() { return !!engine; } } });
+  Object.assign(window, { __sound: { get state() { return ctx?.state ?? "none"; }, get enabled() { return enabled; }, get loaded() { return !!engine; }, get music() { return music && { loaded: music.loaded, playing: music.playing, position: music.position }; } } });
 
   document.addEventListener("visibilitychange", () => {
     if (!ctx) return;

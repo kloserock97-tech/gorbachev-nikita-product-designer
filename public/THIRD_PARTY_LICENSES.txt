@@ -43,6 +43,10 @@ SOUND
 -----
 UI sound cues — uisfx (uisfx.com), "zen" set — sounds CC0 1.0, package MIT.
 Nature ambience — synthesised in code for this project.
+Theme music — "Northern Resonance" by filipposalaris830, Pixabay
+  https://pixabay.com/music/pop-northern-resonance-312036/
+  License: Pixabay Content License — https://pixabay.com/service/license-summary/
+  Changes: trimmed to the first 106.75 s, re-encoded; played in sections (loop and jumps on bar lines).
 
 FONTS
 -----
