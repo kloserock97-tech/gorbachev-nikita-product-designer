@@ -3,7 +3,8 @@
    v56: тексты переписаны простым языком. Факты и цифры те же; термин остаётся в скобках после объяснения.
    v86: вслед за русской версией по ревью Никиты: акцент на участии жителей и дизайн-метриках, повторы вычищены.
    v89: сокращён вслед за русской версией по docs/prompts/case-copy-edit.md.
-   23.10: метрики утвердил Никита: 250+ историй, отказы около 26 %, возвращаемость 12–15 % за неделю; CSI, комментарии, просмотры и время на сайте убраны. */
+   23.10: метрики утвердил Никита: 250+ историй, отказы около 26 %, возвращаемость 12–15 % за неделю; CSI, комментарии, просмотры и время на сайте убраны.
+   26.10: the GRIF template, mirroring the Russian version (see the comments there). */
 import type { CaseStory, CaseImage } from "../caseStory";
 
 const img = (src: string, w: number, h: number, caption: string, kind = "screen"): CaseImage => ({ src, w, h, caption, kind });
@@ -11,6 +12,7 @@ const C = "cases/community/";
 
 export const en: CaseStory = {
   id: "community",
+  compact: true,
   hero: {
     kicker: "Web platform · Mos.ru · 2024",
     title: "Community",
@@ -31,100 +33,135 @@ export const en: CaseStory = {
     { value: "~26%", label: "bounce rate after launch" },
     { value: "12–15%", label: "of readers come back to the site within a week" },
   ],
+  /* 26.10: goals and constraints as pictures in "In brief", built only from what the case already said */
   context: {
-    lead: "Residents had nowhere left to talk about their city.",
-    text:
-      "In two years almost every outlet about city life in Moscow shut down. The news was left with politics and economics, and there was no place to tell a story or discuss a neighbourhood.\n\nI wanted to give residents a place to tell their own story and discuss other people's. The hard part is that texts come from two sides, the editorial team and the residents, and each one has to be checked before it goes live.",
-    team: [
-      { who: "Clients and managers", how: "Before the first mock-up we agreed on the goal: a place where residents write and discuss things themselves. The first version got a feed, stories and comments, and groups and events had to wait." },
-      { who: "Editorial and moderation", how: "One publishing path for two sources: an editorial piece and a resident's story land in the same review queue. Every text shows its status, and a rejected author gets the reason. That queue later grew into the Moderator Dashboard case." },
-      { who: "Engineering", how: "I built our own design system, separate from the one Mos.ru used: buttons, fields and cards in every state. I handed off mock-ups in parts, one release at a time." },
+    lead: "",
+    goals: [
+      "A resident can tell their own story and discuss other people's.",
+      "An editorial piece and a resident's story go through one review path: every text shows its status, and a rejected author gets the reason.",
+      "What you need is one click away, with no complex filters.",
+      "A long text is easy to read, including for people over 55.",
+    ],
+    art: { goals: ["write", "queue", "rubrics", "read"], constraints: ["months", "kit"] },
+    constraints: [
+      { title: "Nine months to MVP", text: "Research, architecture, a prototype, the design system and the launch. Groups and events had to wait." },
+      { title: "Our own design system", text: "Separate from Mos.ru: I built buttons, fields and cards in every state from scratch." },
     ],
   },
+  /* 26.10: numbered findings F1–F4 that the decisions point to; the usability test moved to validation */
   research: {
-    lead: "I looked at two things: what every service like this has, and where they all confuse people in the same way.",
+    lead: "",
     methods: [
       {
         kind: "Competitor analysis",
         question: "What does a site like this need to make sense at all, and where can it stand out?",
         sample: "A handful of key competitors, eleven features",
-        finding:
-          "Every competitor lets you write a post and discuss it. That is the minimum a site like this needs before people get what it is for.",
+        finding: "Every competitor lets you write a post and discuss it.",
         image: img(C + "07.webp", 1820, 1010, "Competitors compared on eleven features", "detail"),
+        insights: [
+          { id: "F1", text: "Writing and discussing are the minimum a site like this needs before people get what it is for." },
+        ],
       },
       {
         kind: "Heuristic review",
         question: "Where do similar services confuse people, and what should we not repeat?",
         sample: "Goals, competitors, reference info, heuristics and feedback on one board",
-        finding:
-          "Everyone makes the same mistake: one action looks different in different places. Follow and unfollow are scattered across screens, and people get lost.",
+        finding: "Everyone makes the same mistake: one action looks different in different places.",
+        insights: [
+          { id: "F2", text: "Follow and unfollow are scattered across screens, and people get lost." },
+        ],
       },
       {
         kind: "User portrait",
         question: "Who will read and write, and what gets in their way?",
         sample: "Two target groups: 24 to 35 and 55+",
-        finding:
-          "People are tired of information noise and want simpler navigation. Most people in the research were like that, and Oleg is built from them.",
-      },
-      {
-        kind: "Usability testing",
-        question: "Do people manage the main things on the first try?",
-        sample: "Ten participants, a clickable prototype",
-        finding: "Nine out of ten people managed to follow and unfollow on the first try.",
+        finding: "Most people are tired of information noise and want simpler navigation.",
+        insights: [
+          { id: "F3", text: "City stories are more often told by older people, and they get lost in complex filters and on crowded screens." },
+          { id: "F4", text: "People read for ten minutes at a stretch, including people over 55." },
+        ],
       },
     ],
-    persona: {
-      name: "Oleg",
-      age: "30",
-      note: "A composite portrait from the research.",
-      pains: ["The news is politics and economics, with almost nothing about the city", "Complex filters and crowded screens"],
-      needs: ["Navigation where you find what you need on the first click", "A place where you can write something yourself when you have a story to tell"],
-    },
   },
   decisions: {
-    lead: "Here is what I changed in the mock-ups after the research.",
-    /* v91: the interface film from Claude Design in place of the live demo */
-    film: { src: C + "film.mp4", poster: C + "film-poster.webp", w: 1920, h: 1080, caption: "Community interface film: feed, topics, audio, story map, profile, events and the story form" },
+    lead: "",
     items: [
       {
         id: "pattern",
+        insight: "F2",
         title: "One action looks the same everywhere",
-        found: "The same mistake from the review: at competitors you have to look for follow and unfollow again on every screen.",
-        did: "Follow, unfollow and reactions sit in the same place on every page and work the same way.",
-        why: "Once people learn where Follow is, they never have to look for it again. Nielsen calls this consistency.",
+        found: "If Follow and reactions sit in the same place everywhere, people remember them the first time.",
+        did: "Follow, unfollow and reactions sit in the same place on every page and work the same way. Nielsen calls this consistency.",
+        image: img(C + "02.webp", 1440, 860, "A story page: Listen, comments and Share in the same places as in the feed"),
       },
       {
         id: "posts",
+        insight: "F1",
         title: "Writing and discussing come first",
-        found: "In the competitor comparison this was the one thing everyone had.",
-        did: "The interface is built around two actions: write a story and reply to one. The form has a title, text and up to ten images, and then the story goes to review.",
-        effect: "The first residents' stories arrived in week one.",
+        found: "If writing and discussing are at the centre of the interface, residents will start telling stories themselves.",
+        did: "The interface is built around two actions: write a story and reply to one. The form has a title, text and up to ten images, and then the story goes to review. The first residents' stories arrived in week one.",
         image: img(C + "03.webp", 876, 862, "The \"Tell your story\" form"),
       },
       {
         id: "older",
-        title: "What brings people back",
-        found: "Next we worked out what would bring people back to the platform. City stories are more often told by older people, though, and they get lost in complex filters and on crowded screens.",
-        did: "We added achievements, a rating and ways to form communities, plan time out and invite friends to events on top of follows and reactions. Take the feed. We assumed that the easier it is to find an interesting topic, the more likely a person is to stay. So I put the topics in one row and kept only the filters people need. For older readers I added hints and wrote the texts in plain words.",
-        why: "Every extra filter is one more option, and the more options there are, the longer people take to choose (Hick's law).",
+        insight: "F3",
+        title: "The right topic is one click away",
+        found: "The easier it is to find an interesting topic, the more likely a person is to stay.",
+        did: "I put the topics in one row and kept only the filters people need: every extra filter is one more option, and choosing among many takes longer (Hick's law). For older readers I added hints and wrote the texts in plain words.",
+        image: img(C + "01.webp", 1440, 788, "The feed: topics in one row above the cards"),
       },
       {
         id: "ds",
+        insight: "F4",
         title: "A look made for long reading",
-        found: "People read for ten minutes at a stretch, including people over 55.",
+        found: "If the typeface stays legible even at small sizes, people over 55 finish a long story too.",
         did: "I chose Golos Text, a typeface made for screens that stays legible even at small sizes. Contrast follows WCAG, and the palette is black, working greys and one pink accent, #FFECF9.",
         image: img(C + "06.webp", 1600, 1598, "The type scale", "detail"),
       },
     ],
   },
-  results: {
-    lead: "The first three months after launch.",
-    outcomes: [
-      { x: "250+ residents' stories in the first three months", y: "Stories that passed moderation and went live.", z: "An interface built around writing and discussing, and one publishing path." },
-      { x: "Bounce rate about 26%, so roughly three in four visits did not bounce", y: "After launch we tracked the bounce rate.", z: "Topics in one row and only the filters people need in the feed." },
-      { x: "12–15% of readers come back to the site within a week", y: "Next we looked at retention through return visits.", z: "Follows, reactions and a feed where an interesting topic is easy to find." },
+  /* 26.10: before — the feed from "Pilot Layouts" (Figma 2103:12251), after — from "Layouts Full" (21061:89858) */
+  compare: {
+    title: "The feed: pilot and full version",
+    lead: "The feed from the pilot mock-ups and from the full ones. Hover a note to see its spot on the screen.",
+    before: {
+      title: "Pilot",
+      image: img(C + "compare-before.webp", 1440, 900, "The pilot feed: menu, topics, story cards and news"),
+      notes: [
+        { id: "a-nav", kind: "about", side: "left", text: "Menu", extra: "Feed, about, feedback", rects: [[0.393, 0.02, 0.27, 0.042]] },
+        { id: "a-rubrics", kind: "about", side: "left", text: "Topics", extra: "All topics in one row above the feed", rects: [[0.069, 0.108, 0.862, 0.043]] },
+        { id: "a-card", kind: "about", side: "left", text: "Story card", extra: "Cover, Listen, comments and topics", rects: [[0.069, 0.171, 0.426, 0.551]] },
+        { id: "a-news", kind: "about", side: "right", text: "News", extra: "Short editorial pieces in a column on the right", rects: [[0.507, 0.18, 0.424, 0.8]] },
+        { id: "m-write", kind: "mine", side: "right", text: "No \"Tell a story\" in the header: the way into the form is a block in the middle of the feed", rects: [[0.85, 0.013, 0.085, 0.05]] },
+        { id: "m-groups", kind: "mine", side: "left", text: "The menu has only the feed and the project pages: groups and events did not make the first version", rects: [[0.393, 0.02, 0.27, 0.042]] },
+        { id: "m-react", kind: "mine", side: "left", text: "You can only discuss and share a story", rects: [[0.083, 0.455, 0.055, 0.028]] },
+      ],
+    },
+    after: {
+      title: "Full version",
+      image: img(C + "compare-after.webp", 1440, 900, "The full feed: Tell a story in the header, an editorial pick, cards with reactions"),
+      notes: [
+        { id: "m-write", kind: "mine", side: "right", text: "\"Tell a story\" is a button in the header, top right", rects: [[0.742, 0.018, 0.149, 0.044]] },
+        { id: "m-groups", kind: "mine", side: "left", text: "The menu now has \"Groups and events\"", rects: [[0.285, 0.02, 0.132, 0.042]] },
+        { id: "m-hero", kind: "mine", side: "right", text: "On top, an editorial pick as a carousel", rects: [[0.069, 0.174, 0.862, 0.483]] },
+        { id: "m-react", kind: "mine", side: "left", text: "Stories got reactions: a like next to the comments", rects: [[0.264, 0.717, 0.076, 0.033]] },
+      ],
+    },
+  },
+  validation: {
+    lead: "I checked it in two rounds.",
+    stages: [
+      {
+        kicker: "Round 1",
+        title: "Usability test of the prototype",
+        text: "Ten participants, a clickable prototype. Nine out of ten managed to follow and unfollow on the first try.",
+      },
+      {
+        kicker: "Round 2",
+        title: "The first three months after launch",
+        text: "We tracked residents' stories that passed moderation, the bounce rate and how many readers came back within a week.",
+      },
     ],
-    points: [],
   },
   /* v114: prototype from the mock-ups — the main flow: a reader becomes an author (feed → story → form → published). Full pages from Figma LdUrYy9cNus6q7005xnmXo: 2103:12251, 2109:18727, 2202:7956, 2128:33091 */
   prototype: {
@@ -139,33 +176,7 @@ export const en: CaseStory = {
       { image: img(C + "s1-profile.webp", 1440, 1884, "The author's profile: activity"), action: "Done: the story is published", why: "When a moderator approves the story, it shows up in the shared feed and in the author's profile." },
     ],
   },
-  takeaways: [
-    "Agree on the goal before the first mock-up. The phrase \"a place where residents take part\" gave us both the contents of the first version and the success metrics.",
-    "We moved smart search and podcasts to the roadmap right away, and the first version shipped sooner.",
-  ],
-  gallery: [
-    {
-      kind: "spot",
-      title: "Editorial and residents in one feed",
-      image: img(C + "01.webp", 1440, 788, "The first-version feed", "hero"),
-      spots: [
-        { x: 46.3, y: 15.5, text: "Topics in one row", decision: "older" },
-        { x: 10.4, y: 54.4, text: "Comments and share", decision: "posts" },
-        { x: 46.3, y: 76.4, text: "Consistent actions", decision: "pattern" },
-      ],
-    },
-    {
-      kind: "bento",
-      title: "How the project grew",
-      images: [
-        img(C + "film-01.webp", 1600, 900, "The feed of living stories"),
-        img(C + "film-03.webp", 1600, 900, "Stories you can listen to"),
-        img(C + "film-04.webp", 1600, 900, "The map of linked stories"),
-        img(C + "film-05.webp", 1600, 900, "Profile and reputation"),
-        img(C + "film-06.webp", 1600, 900, "An event in the app"),
-        img(C + "film-07.webp", 1600, 900, "The story form"),
-      ],
-    },
-  ],
+  takeaways: [],
+  gallery: [],
   deepDives: [],
 };

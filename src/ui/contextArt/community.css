@@ -1,1 +1,78 @@
-/* 26.10: свои детали сцен кейса community (префикс ca-) */
+/* 26.10: свои детали сцен кейса community (префикс ca-). Светлый интерфейс «Сообщества»: белые карточки, чёрный
+   #141512, пастель рубрик, розовый акцент #FFECF9. Размеры — в cqw плитки, движение — transform/opacity */
+.ca-tile { --cm-ink: #141512; --cm-pink: #ffecf9; --cm-line: #e6e3df; }
+.ca-cm-card { position: absolute; border-radius: 4.5cqw; background: #fff; box-shadow: 0 0 0 1px rgba(20, 21, 18, 0.06), 0 4cqw 9cqw -5cqw rgba(20, 21, 18, 0.35); }
+.ca-cm-l { display: block; height: 2.4cqw; width: var(--w, 80%); border-radius: 2cqw; background: var(--cm-line); transform-origin: left; }
+.ca-cm-l--b { height: 3.6cqw; background: var(--cm-ink); }
+
+/* write: форма истории и пузырь обсуждения */
+.ca-cm-form { left: 12cqw; right: 22cqw; top: 10cqw; display: grid; gap: 2.6cqw; padding: 5cqw; }
+.ca-cm-pics { display: flex; gap: 2cqw; margin-top: 1cqw; }
+.ca-cm-pics i { width: 10cqw; height: 8cqw; border-radius: 1.8cqw; background: linear-gradient(135deg, #f5d7e9, var(--cm-pink)); }
+.ca-cm-pics i:nth-child(2) { background: linear-gradient(135deg, #cfeefa, #e2f8ff); }
+.ca-cm-pics i:nth-child(3) { background: linear-gradient(135deg, #e3f1c7, #f4fbe4); }
+.ca-cm-btn { justify-self: start; width: 22cqw; height: 6.4cqw; margin-top: 1cqw; border-radius: 99cqw; background: var(--cm-ink); }
+.ca-cm-bubble { position: absolute; right: 8cqw; bottom: 9cqw; display: flex; align-items: center; gap: 2cqw; width: 40cqw; padding: 3cqw 3.4cqw; border-radius: 4cqw 4cqw 1cqw 4cqw; background: var(--cm-pink); box-shadow: 0 3cqw 7cqw -4cqw rgba(20, 21, 18, 0.35); }
+.ca-cm-av { flex: none; width: 5.4cqw; height: 5.4cqw; border-radius: 50%; background: var(--cm-ink); }
+.ca-cm-bubble .ca-cm-l { flex: 1; background: rgba(20, 21, 18, 0.18); }
+
+/* queue: три текста в одной очереди, у каждого статус; у отклонённого — строка причины */
+.ca-cm-q { position: absolute; left: 10cqw; right: 10cqw; top: 50%; translate: 0 -50%; display: grid; gap: 2.6cqw; }
+.ca-cm-row { display: flex; align-items: center; gap: 3cqw; padding: 3.2cqw 3.6cqw; border-radius: 3.6cqw; background: #fff; box-shadow: 0 0 0 1px rgba(20, 21, 18, 0.06), 0 3cqw 7cqw -5cqw rgba(20, 21, 18, 0.35); }
+.ca-cm-row .ca-cm-l { flex: none; }
+.ca-cm-src { flex: none; width: 6cqw; height: 6cqw; border-radius: 50%; background: var(--cm-pink); box-shadow: inset 0 0 0 0.8cqw #f6c6e4; }
+.ca-cm-src--ed { border-radius: 1.6cqw; background: var(--cm-ink); box-shadow: none; }
+.ca-cm-st { flex: none; margin-left: auto; width: 13cqw; height: 5cqw; border-radius: 99cqw; }
+.ca-cm-st--ok { background: #d6f5e3; box-shadow: inset 0 0 0 0.7cqw #2fa86a; }
+.ca-cm-st--wait { background: #f2f2f2; box-shadow: inset 0 0 0 0.7cqw #b9b6b0; }
+.ca-cm-st--no { background: #fde4e0; box-shadow: inset 0 0 0 0.7cqw #d9603b; }
+.ca-cm-reason { justify-self: end; width: 46%; height: 2.4cqw; margin-top: -1cqw; border-radius: 2cqw; background: rgba(217, 96, 59, 0.45); transform-origin: right; }
+
+/* rubrics: строка рубрик, чёрная подложка выбранной переезжает; ниже карточки */
+.ca-cm-chips { position: absolute; left: 10cqw; right: 10cqw; top: 14cqw; display: flex; gap: 2.4cqw; }
+.ca-cm-chips i { position: relative; z-index: 1; flex: 1; height: 7.6cqw; border-radius: 99cqw; background: var(--c); box-shadow: 0 0 0 1px rgba(20, 21, 18, 0.06); }
+.ca-cm-pick { position: absolute; z-index: 2; left: 0; top: 0; width: calc((100% - 7.2cqw) / 4); height: 7.6cqw; border-radius: 99cqw; background: var(--cm-ink); opacity: 0.92; }
+.ca-cm-cards { position: absolute; left: 10cqw; right: 10cqw; top: 28cqw; bottom: 10cqw; display: grid; grid-template-columns: 1fr 1fr; gap: 3cqw; }
+.ca-cm-cards .ca-cm-card { position: relative; display: block; background: linear-gradient(180deg, #f3dfe9 0 52%, #fff 52%); }
+
+/* read: страница истории — «Аа», строки и полоска прочитанного */
+.ca-cm-page { left: 14cqw; right: 14cqw; top: 10cqw; bottom: 10cqw; display: grid; align-content: start; gap: 3cqw; padding: 6cqw 6cqw; overflow: hidden; }
+.ca-cm-progress { position: absolute; left: 0; top: 0; height: 1.6cqw; width: 100%; background: #f6a7d3; transform-origin: left; transform: scaleX(0.58); }
+.ca-cm-aa { font: 600 15cqw/1 "Golos Text", "Onest", sans-serif; letter-spacing: -0.04em; color: var(--cm-ink); margin-bottom: 1cqw; }
+
+/* months: девять клеток, заполняются по очереди; девятая — запуск, розовая и с кольцом */
+.ca-cm-months { position: absolute; inset: 20cqw 18cqw; display: grid; grid-template-columns: repeat(3, 1fr); gap: 5cqw; }
+.ca-cm-months i { border-radius: 4cqw; background: var(--cm-ink); }
+.ca-cm-months .is-mvp { background: #f6a7d3; box-shadow: 0 0 0 1.6cqw #fff, 0 0 0 3cqw rgba(246, 167, 211, 0.55); }
+
+/* kit: кнопка в трёх состояниях и поле */
+.ca-cm-kit { position: absolute; inset: 16cqw 14cqw; display: grid; gap: 5cqw; align-content: center; }
+.ca-cm-k { height: 13cqw; border-radius: 99cqw; }
+.ca-cm-k--fill { background: var(--cm-ink); }
+.ca-cm-k--line { background: #fff; box-shadow: inset 0 0 0 1.4cqw var(--cm-ink); }
+.ca-cm-k--off { background: #d9d6d1; }
+.ca-cm-k--field { border-radius: 3cqw; background: #fff; box-shadow: inset 0 0 0 1px #cfccc6; }
+
+@media (prefers-reduced-motion: no-preference) {
+  :is(.ca-cm-form, .ca-cm-page) .ca-cm-l { animation: ca-cm-grow 0.6s cubic-bezier(0.23, 1, 0.32, 1) both; animation-delay: calc(0.25s + var(--i, 0) * 0.08s); }
+  .ca-cm-pics i { animation: ca-pop 0.5s cubic-bezier(0.23, 1, 0.32, 1) both; animation-delay: calc(0.5s + var(--i) * 0.07s); }
+  .ca-cm-btn { animation: ca-pop 0.5s cubic-bezier(0.23, 1, 0.32, 1) both 0.75s; }
+  .ca-cm-bubble { animation: ca-rise 0.55s cubic-bezier(0.23, 1, 0.32, 1) both 1s; }
+  .ca-cm-row { animation: ca-cm-in 0.55s cubic-bezier(0.23, 1, 0.32, 1) both; animation-delay: calc(0.2s + var(--i) * 0.14s); }
+  .ca-cm-st--wait { animation: ca-cm-blink 1.6s ease-in-out infinite 1s; }
+  .ca-cm-reason { animation: ca-cm-grow-r 0.5s cubic-bezier(0.23, 1, 0.32, 1) both 0.9s; }
+  .ca-cm-pick { animation: ca-cm-pick 6s cubic-bezier(0.77, 0, 0.175, 1) infinite 0.6s; }
+  .ca-cm-cards .ca-cm-card { animation: ca-rise 0.55s cubic-bezier(0.23, 1, 0.32, 1) both; animation-delay: calc(0.3s + var(--i) * 0.1s); }
+  .ca-cm-progress { animation: ca-cm-read 4.5s linear infinite 0.4s; }
+  .ca-cm-aa { animation: ca-pop 0.55s cubic-bezier(0.23, 1, 0.32, 1) both 0.15s; }
+  .ca-cm-months i { animation: ca-pop 0.42s cubic-bezier(0.23, 1, 0.32, 1) both; animation-delay: calc(0.2s + var(--i) * 0.11s); }
+  .ca-cm-months .is-mvp { animation: ca-pop 0.42s cubic-bezier(0.23, 1, 0.32, 1) both 1.2s, ca-beat 2.6s ease-in-out infinite 1.8s; }
+  .ca-cm-k { animation: ca-cm-in 0.5s cubic-bezier(0.23, 1, 0.32, 1) both; animation-delay: calc(0.25s + var(--i) * 0.12s); }
+}
+@keyframes ca-cm-grow { from { transform: scaleX(0); } }
+@keyframes ca-cm-grow-r { from { transform: scaleX(0); opacity: 0; } }
+@keyframes ca-cm-in { from { opacity: 0; transform: translateX(-6cqw); } }
+@keyframes ca-cm-blink { 50% { opacity: 0.45; } }
+/* подложка выбранной рубрики переезжает: первая → третья → вторая → первая */
+@keyframes ca-cm-pick { 0%, 18% { transform: translateX(0); } 30%, 50% { transform: translateX(calc(200% + 4.8cqw)); } 62%, 82% { transform: translateX(calc(100% + 2.4cqw)); } 94%, 100% { transform: translateX(0); } }
+@keyframes ca-cm-read { from { transform: scaleX(0.08); } to { transform: scaleX(1); } }

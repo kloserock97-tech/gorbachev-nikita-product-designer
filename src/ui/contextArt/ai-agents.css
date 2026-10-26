@@ -1,1 +1,106 @@
-/* 26.10: свои детали сцен кейса ai-agents (префикс ca-) */
+/* 26.10: свои детали сцен кейса ai-agents (префикс ca-ag-). Светлый интерфейс реестра рисков: карточки белые,
+   рамка #E9EBEF, текст-полоски #DADDE2, основная кнопка #0E8552, статусы: согласовано — мятный, оценка — голубой.
+   Размеры в cqw плитки; движение — transform/opacity, вход ease-out, постоянное — linear. */
+.ca-tile { --ag-line: #dadde2; --ag-edge: #e9ebef; --ag-green: #0e8552; --ag-mint: #c9ffe6; --ag-blue: #2d78e8; --ag-ink: #1f2328; }
+
+.ca-tile .ca-ag-card { position: absolute; left: 11cqw; right: 11cqw; top: 50%; translate: 0 -50%; display: grid; gap: 3.2cqw; padding: 5cqw; border-radius: 4.5cqw; background: #fff; box-shadow: inset 0 0 0 1px var(--ag-edge), 0 4cqw 9cqw -4cqw rgba(18, 40, 28, 0.28); }
+.ca-tile .ca-ag-title { height: 3.2cqw; width: 62%; border-radius: 2cqw; background: var(--ag-ink); opacity: 0.85; }
+.ca-tile .ca-ag-sub { height: 2.2cqw; width: 40%; border-radius: 2cqw; background: var(--ag-line); }
+.ca-tile .ca-ag-line { height: 2.4cqw; width: var(--w, 60%); border-radius: 2cqw; background: var(--ag-line); }
+
+/* versions: чипы версий, у пройденных — галочка */
+.ca-tile .ca-ag-vers { display: flex; gap: 2.2cqw; margin-top: 1cqw; }
+.ca-tile .ca-ag-vers span { display: flex; align-items: center; gap: 1.4cqw; padding: 1.6cqw 2.4cqw 1.6cqw 1.6cqw; border-radius: 99cqw; background: #f0f2f5; box-shadow: inset 0 0 0 1px var(--ag-edge); }
+.ca-tile .ca-ag-vers span i { width: 6cqw; height: 2cqw; border-radius: 2cqw; background: var(--ag-line); }
+.ca-tile .ca-ag-ok { display: grid; place-items: center; width: 4.4cqw; height: 4.4cqw; border-radius: 50%; background: var(--ag-green); }
+.ca-tile .ca-ag-ok svg, .ca-tile .ca-ag-pill svg, .ca-tile .ca-ag-steps svg { width: 70%; height: 70%; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ca-tile .ca-ag-vers .is-new { background: #e7f0fd; box-shadow: inset 0 0 0 1px #c7dcfb; }
+.ca-tile .ca-ag-dot { width: 4.4cqw; height: 4.4cqw; border-radius: 50%; background: var(--ag-blue); box-shadow: 0 0 0 1.2cqw rgba(45, 120, 232, 0.2); }
+
+/* upload: поле загрузки, файл, прогресс, заготовки */
+.ca-tile .ca-ag-drop { display: grid; place-items: center; height: 17cqw; border-radius: 3.5cqw; border: 0.7cqw dashed #b8bec6; background: #f7f8fa; }
+.ca-tile .ca-ag-file { position: relative; width: 9cqw; height: 11cqw; border-radius: 1.4cqw; background: #fff; box-shadow: inset 0 0 0 0.6cqw var(--ag-green), 0 2cqw 4cqw -2cqw rgba(0, 0, 0, 0.3); }
+.ca-tile .ca-ag-file b { position: absolute; left: 2cqw; right: 2cqw; top: 4cqw; height: 1.4cqw; border-radius: 1cqw; background: var(--ag-green); opacity: 0.5; box-shadow: 0 2.6cqw 0 var(--ag-green); }
+.ca-tile .ca-ag-prog { height: 1.8cqw; border-radius: 1cqw; background: #e9ebef; overflow: hidden; }
+.ca-tile .ca-ag-prog i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #2563eb, #7c3aed); transform-origin: left; transform: scaleX(0.78); }
+.ca-tile .ca-ag-skel { height: 2.6cqw; width: var(--w, 92%); border-radius: 2cqw; background: #eceef1; }
+
+/* depts: четыре строки заключений */
+.ca-tile .ca-ag-card--depts { gap: 2.4cqw; }
+.ca-tile .ca-ag-row { display: flex; align-items: center; gap: 2.4cqw; }
+.ca-tile .ca-ag-ava { flex: none; width: 5.4cqw; height: 5.4cqw; border-radius: 50%; background: color-mix(in srgb, var(--c, #8a9099) 22%, #fff); box-shadow: inset 0 0 0 0.5cqw color-mix(in srgb, var(--c, #8a9099) 60%, #fff); }
+.ca-tile .ca-ag-row .ca-ag-line { flex: none; }
+.ca-tile .ca-ag-pill { display: grid; place-items: center; margin-left: auto; width: 9cqw; height: 4.6cqw; border-radius: 99cqw; background: var(--ag-mint); }
+.ca-tile .ca-ag-pill svg { stroke: var(--ag-green); }
+
+/* stepper: четыре шага версии */
+.ca-tile .ca-ag-steps { position: relative; display: flex; justify-content: space-between; }
+.ca-tile .ca-ag-rail { position: absolute; left: 4cqw; right: 4cqw; top: 50%; height: 0.9cqw; margin-top: -0.45cqw; border-radius: 1cqw; background: var(--ag-edge); }
+.ca-tile .ca-ag-rail i { display: block; width: 66%; height: 100%; border-radius: inherit; background: var(--ag-green); transform-origin: left; }
+.ca-tile .ca-ag-steps span { position: relative; display: grid; place-items: center; width: 8cqw; height: 8cqw; border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 0.6cqw var(--ag-edge); }
+.ca-tile .ca-ag-steps .is-done { background: var(--ag-green); box-shadow: none; }
+.ca-tile .ca-ag-steps .is-done b { display: grid; place-items: center; width: 100%; height: 100%; }
+.ca-tile .ca-ag-steps .is-now { box-shadow: inset 0 0 0 0.8cqw var(--ag-blue); }
+.ca-tile .ca-ag-steps .is-now b { width: 3cqw; height: 3cqw; border-radius: 50%; background: var(--ag-blue); }
+.ca-tile .ca-ag-labels { display: flex; justify-content: space-between; }
+.ca-tile .ca-ag-labels i { width: 13cqw; height: 2cqw; border-radius: 2cqw; background: var(--ag-line); }
+.ca-tile .ca-ag-labels i:nth-child(3) { background: #9fc2f5; }
+
+/* audit: журнал решений (плитка квадратная) */
+.ca-tile .ca-ag-log { position: absolute; inset: 14cqw 10cqw; display: grid; align-content: center; gap: 4cqw; }
+.ca-tile .ca-ag-entry { display: flex; align-items: center; gap: 4cqw; padding: 4cqw; border-radius: 6cqw; background: #fff; box-shadow: inset 0 0 0 1px var(--ag-edge); }
+.ca-tile .ca-ag-entry .ca-ag-ava { width: 9cqw; height: 9cqw; --c: #0e8552; }
+.ca-tile .ca-ag-entry .ca-ag-line { flex: 1; height: 4cqw; }
+.ca-tile .ca-ag-time { flex: none; width: 12cqw; height: 4cqw; border-radius: 2cqw; background: #eceef1; }
+
+/* ds: готовые детали дизайн-системы */
+.ca-tile .ca-ag-kit { position: absolute; inset: 16cqw; display: grid; grid-template-columns: 1fr 1fr; gap: 7cqw; align-content: center; }
+.ca-tile .ca-ag-k { height: 16cqw; border-radius: 5cqw; }
+.ca-tile .ca-ag-k--btn { background: var(--ag-green); box-shadow: 0 2cqw 5cqw -2cqw rgba(14, 133, 82, 0.6); }
+.ca-tile .ca-ag-k--tog { position: relative; align-self: center; height: 13cqw; border-radius: 99cqw; background: var(--ag-green); }
+.ca-tile .ca-ag-k--tog b { position: absolute; right: 1.6cqw; top: 1.6cqw; width: 9.8cqw; height: 9.8cqw; border-radius: 50%; background: #fff; }
+.ca-tile .ca-ag-k--badge { align-self: center; height: 11cqw; border-radius: 99cqw; background: var(--ag-mint); box-shadow: inset 0 0 0 1px #9fe3c5; }
+.ca-tile .ca-ag-k--field { background: #fff; box-shadow: inset 0 0 0 1.2cqw var(--ag-line); }
+
+/* stream: лента версий */
+.ca-tile .ca-ag-ticker { position: absolute; inset: 12cqw 14cqw; overflow: hidden; -webkit-mask-image: linear-gradient(180deg, transparent, #000 22%, #000 78%, transparent); mask-image: linear-gradient(180deg, transparent, #000 22%, #000 78%, transparent); }
+.ca-tile .ca-ag-belt { display: grid; gap: 5cqw; }
+.ca-tile .ca-ag-belt span { display: flex; align-items: center; gap: 4cqw; height: 15cqw; padding: 0 5cqw; border-radius: 99cqw; background: #fff; box-shadow: inset 0 0 0 1px var(--ag-edge); }
+.ca-tile .ca-ag-belt b { flex: none; width: 6cqw; height: 6cqw; border-radius: 50%; background: var(--ag-green); }
+.ca-tile .ca-ag-belt span:nth-child(3n + 2) b { background: var(--ag-blue); }
+.ca-tile .ca-ag-belt i { height: 4cqw; width: var(--w); border-radius: 2cqw; background: var(--ag-line); }
+
+/* nomap: узлы и пунктирные связи */
+.ca-tile .ca-ag-map { position: absolute; inset: 0; }
+.ca-tile .ca-ag-node { position: absolute; width: 14cqw; height: 14cqw; margin: -7cqw 0 0 -7cqw; border-radius: 4cqw; background: #fff; box-shadow: inset 0 0 0 1px var(--ag-edge), 0 2cqw 5cqw -2cqw rgba(18, 40, 28, 0.3); }
+.ca-tile .ca-ag-node::after { content: ""; position: absolute; inset: 4.5cqw; border-radius: 50%; background: var(--ag-green); opacity: 0.8; }
+.ca-tile .ca-ag-node.is-q { background: transparent; box-shadow: inset 0 0 0 1.2cqw #b8bec6; }
+.ca-tile .ca-ag-node.is-q::after { inset: 5cqw; background: #b8bec6; }
+.ca-tile .ca-ag-link { position: absolute; height: 0; border-top: 1.2cqw dashed #b8bec6; transform-origin: left center; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .ca-tile .ca-ag-vers span { animation: ca-pop 0.5s var(--ca-out) both; animation-delay: calc(0.3s + var(--i) * 0.12s); }
+  .ca-tile .ca-ag-ok { animation: ca-ag-tick 0.4s var(--ca-out) both; animation-delay: calc(0.55s + var(--i, 0) * 0.32s); }
+  .ca-tile .ca-ag-vers span:nth-child(2) .ca-ag-ok { animation-delay: 0.87s; }
+  .ca-tile .ca-ag-vers span:nth-child(3) .ca-ag-ok { animation-delay: 1.19s; }
+  .ca-tile .ca-ag-dot { animation: ca-beat 1.8s ease-in-out infinite 1.5s; }
+  .ca-tile .ca-ag-file { animation: ca-drop 0.7s var(--ca-out) both 0.3s; }
+  .ca-tile .ca-ag-prog i { animation: ca-grow 2.4s var(--ca-out) both 0.8s; }
+  .ca-tile .ca-ag-skel { animation: ca-pop 0.45s var(--ca-out) both; animation-delay: calc(1.2s + var(--i) * 0.12s); }
+  .ca-tile .ca-ag-row { animation: ca-pop 0.45s var(--ca-out) both; animation-delay: calc(0.25s + var(--i) * 0.07s); }
+  .ca-tile .ca-ag-pill { animation: ca-ag-tick 0.45s var(--ca-out) both; animation-delay: calc(0.7s + var(--i) * 0.42s); }
+  .ca-tile .ca-ag-rail i { animation: ca-grow-full 1.6s var(--ca-out) both 0.3s; }
+  .ca-tile .ca-ag-steps span { animation: ca-pop 0.45s var(--ca-out) both; animation-delay: calc(0.2s + var(--i) * 0.35s); }
+  .ca-tile .ca-ag-steps .is-now b { animation: ca-beat 1.8s ease-in-out infinite 1.4s; }
+  .ca-tile .ca-ag-entry { animation: ca-ag-in 0.55s var(--ca-out) both; animation-delay: calc(0.25s + var(--i) * 0.14s); }
+  .ca-tile .ca-ag-k { animation: ca-pop 0.5s var(--ca-out) both; animation-delay: calc(0.25s + var(--i) * 0.1s); }
+  .ca-tile .ca-ag-k--tog b { animation: ca-ag-toggle 0.5s var(--ca-out) both 1s; }
+  .ca-tile .ca-ag-belt { animation: ca-ag-belt 6s linear infinite; }
+  .ca-tile .ca-ag-node { animation: ca-pop 0.45s var(--ca-out) both; animation-delay: calc(0.2s + var(--i) * 0.22s); }
+  .ca-tile .ca-ag-link { animation: ca-ag-draw 0.6s var(--ca-out) both; animation-delay: calc(0.5s + var(--i) * 0.35s); }
+}
+@keyframes ca-ag-tick { from { opacity: 0; transform: scale(0.6); } }
+@keyframes ca-ag-in { from { opacity: 0; transform: translateY(-5cqw); } }
+@keyframes ca-ag-toggle { from { transform: translateX(-15cqw); } }
+@keyframes ca-ag-belt { to { transform: translateY(-60cqw); } }
+@keyframes ca-ag-draw { from { opacity: 0; transform: scaleX(0); } }

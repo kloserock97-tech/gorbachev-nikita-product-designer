@@ -19,7 +19,7 @@
 @media (max-width: 600px) { .ca-card > p { font-size: 14px; } }
 
 /* ── плитка ── */
-.ca-tile { position: relative; container-type: inline-size; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 18px; background: linear-gradient(160deg, color-mix(in srgb, var(--case) 7%, #f5f6f9), color-mix(in srgb, var(--case) 17%, #e7eaf1)); isolation: isolate; }
+.ca-tile { position: relative; container-type: inline-size; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 18px; background: linear-gradient(160deg, color-mix(in srgb, var(--ca-tint, var(--case)) 7%, #f5f6f9), color-mix(in srgb, var(--ca-tint, var(--case)) 17%, #e7eaf1)); isolation: isolate; }
 .ca-card--row .ca-tile { aspect-ratio: 1; border-radius: 12px; }
 .ca-tile i, .ca-tile b, .ca-tile span { display: block; font-style: normal; }
 

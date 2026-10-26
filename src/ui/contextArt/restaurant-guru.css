@@ -1,1 +1,105 @@
-/* 26.10: свои детали сцен кейса restaurant-guru (префикс ca-) */
+/* 26.10: свои детали сцен кейса restaurant-guru (префикс ca-rg-). Светлый интерфейс приложения на плитке:
+   лист #fff, нейтрали почти без тепла, бордовый #9E1B32 — только действие, фиолетовый #6E4BF0 — гид,
+   зелёный #2E6B4F — «открыто». Фото мест — тёплые градиенты. */
+.ca-tile--search, .ca-tile--shelf, .ca-tile--guide, .ca-tile--open, .ca-tile--sources, .ca-tile--brand { --rg-red: #9e1b32; --rg-violet: #6e4bf0; --rg-green: #2e6b4f; --rg-line: #e4e4e7; --rg-ink: #1d1d1f; }
+.ca-tile [class^="ca-rg"] .ca-line, .ca-rg-card .ca-line, .ca-rg-mono .ca-line { background: var(--rg-line); }
+
+/* лист приложения */
+.ca-rg-sheet { position: absolute; left: 10cqw; right: 10cqw; display: grid; gap: 3.4cqw; padding: 5cqw; border-radius: 6cqw; background: #fff; box-shadow: 0 4cqw 10cqw -5cqw rgba(20, 33, 61, 0.35), 0 0 0 1px rgba(20, 33, 61, 0.05); }
+.ca-rg-sheet--search { top: 50%; translate: 0 -50%; }
+.ca-rg-sheet--open { top: 8cqw; gap: 2.6cqw; padding: 4.2cqw 5cqw; }
+
+/* поле поиска с набором */
+.ca-rg-field { display: flex; align-items: center; gap: 2cqw; height: 10cqw; padding: 0 3.4cqw; border-radius: 5cqw; background: #f2f2f4; }
+.ca-rg-lens { flex: none; width: 3.6cqw; height: 3.6cqw; border-radius: 50%; border: 0.8cqw solid #8a8a90; }
+.ca-rg-typed { height: 2.6cqw; width: 40%; border-radius: 2cqw; background: var(--rg-ink); transform-origin: left; }
+.ca-rg-caret { width: 0.6cqw; height: 4.4cqw; border-radius: 1cqw; background: var(--rg-red); }
+.ca-rg-row { display: flex; align-items: center; gap: 3cqw; }
+.ca-rg-row > span { flex: 1; display: grid; gap: 1.8cqw; min-width: 0; }
+.ca-rg-star { flex: none; font: 600 max(9px, 3.6cqw)/1 var(--font, system-ui); color: var(--rg-ink); }
+.ca-rg-star::before { content: "★ "; color: var(--rg-red); }
+
+/* фото места — тёплые градиенты */
+.ca-rg-ph { flex: none; width: 13cqw; height: 13cqw; border-radius: 3.4cqw; }
+.ca-rg-ph--a { background: radial-gradient(circle at 70% 30%, #f6b26b, transparent 45%), linear-gradient(150deg, #7a2f24, #2b1712); }
+.ca-rg-ph--b { background: radial-gradient(circle at 30% 35%, #ffd27a, transparent 40%), linear-gradient(160deg, #3c4a3a, #161c16); }
+.ca-rg-ph--c { background: radial-gradient(circle at 60% 40%, #e9a7a0, transparent 45%), linear-gradient(140deg, #5a3a52, #20151e); }
+
+/* полка карточек */
+.ca-rg-shelf { position: absolute; left: 9cqw; top: 13cqw; display: flex; gap: 3.4cqw; }
+.ca-rg-card { position: relative; flex: none; width: 34cqw; display: grid; gap: 2.6cqw; padding: 2.4cqw 2.4cqw 3.4cqw; border-radius: 5cqw; background: #fff; box-shadow: 0 4cqw 9cqw -5cqw rgba(20, 33, 61, 0.35); }
+.ca-rg-card .ca-rg-ph { width: 100%; height: 30cqw; border-radius: 3.4cqw; }
+.ca-rg-heart { position: absolute; right: 5cqw; top: 5cqw; width: 5cqw; height: 5cqw; border-radius: 50%; background: rgba(255, 255, 255, 0.85); }
+.ca-rg-heart::after { content: ""; position: absolute; inset: 1.3cqw; border-radius: 50% 50% 0 50%; background: var(--rg-red); rotate: 45deg; scale: 0.9; }
+
+/* строка гида и вкладка */
+.ca-rg-ask { position: absolute; left: 9cqw; right: 9cqw; top: 18cqw; display: flex; align-items: center; gap: 3cqw; height: 13cqw; padding: 0 2.4cqw; border-radius: 5cqw; background: #fff; box-shadow: inset 0 0 0 0.6cqw var(--rg-violet), 0 4cqw 9cqw -5cqw rgba(110, 75, 240, 0.45); }
+.ca-rg-ask .ca-rg-q { flex: none; background: #c9bdfb; }
+.ca-rg-compass { position: relative; flex: none; width: 7cqw; height: 7cqw; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #8d74ff, #2d1d73); }
+.ca-rg-compass::after { content: ""; position: absolute; left: 50%; top: 18%; width: 1.4cqw; height: 64%; margin-left: -0.7cqw; border-radius: 1cqw; background: linear-gradient(#fff 50%, #ff9c9c 50%); rotate: 25deg; }
+.ca-rg-go { flex: none; margin-left: auto; width: 8cqw; height: 8cqw; border-radius: 50%; background: var(--rg-violet); }
+.ca-rg-tabs { position: absolute; left: 10cqw; right: 10cqw; bottom: 10cqw; display: flex; align-items: center; justify-content: space-around; height: 13cqw; border-radius: 99cqw; background: rgba(255, 255, 255, 0.8); box-shadow: 0 4cqw 9cqw -5cqw rgba(20, 33, 61, 0.35), inset 0 0 0 1px rgba(20, 33, 61, 0.06); }
+.ca-rg-tabs > i { width: 4.4cqw; height: 4.4cqw; border-radius: 1.4cqw; background: #c7c7cc; }
+.ca-rg-tabs > b { display: grid; place-items: center; width: 10cqw; height: 10cqw; margin-top: -5cqw; border-radius: 50%; background: #fff; box-shadow: 0 0 0 0.6cqw var(--rg-violet), 0 3cqw 6cqw -2cqw rgba(110, 75, 240, 0.6); }
+
+/* открыто сейчас */
+.ca-rg-time { display: flex; align-items: center; gap: 1.6cqw; margin: 0 0 0.6cqw; font: 600 max(9px, 3.6cqw)/1 var(--font, system-ui); color: var(--rg-ink); }
+.ca-rg-time i { width: 2.4cqw; height: 2.4cqw; border-radius: 50%; background: var(--rg-red); }
+.ca-rg-sheet--open .ca-rg-ph { width: 10cqw; height: 10cqw; border-radius: 2.6cqw; }
+.ca-rg-open, .ca-rg-shut { width: fit-content; font: 600 max(8px, 3cqw)/1 var(--font, system-ui); font-style: normal; color: var(--rg-green); }
+.ca-rg-open::before { content: ""; display: inline-block; width: 1.8cqw; height: 1.8cqw; margin-right: 1.2cqw; border-radius: 50%; background: var(--rg-green); vertical-align: 0.2cqw; }
+.ca-rg-shut { color: #8a8a90; }
+.ca-rg-closed { opacity: 0.4; }
+
+/* стопка исследований */
+.ca-rg-papers { position: absolute; inset: 0; }
+.ca-rg-paper { position: absolute; left: 50%; top: 50%; width: 46cqw; height: 58cqw; margin: -29cqw 0 0 -23cqw; border-radius: 4cqw; background: #fff; box-shadow: 0 3cqw 8cqw -4cqw rgba(20, 33, 61, 0.35), inset 0 0 0 1px rgba(20, 33, 61, 0.06);
+  background-image: linear-gradient(var(--rg-line) 0 0), linear-gradient(var(--rg-line) 0 0), linear-gradient(var(--rg-line) 0 0);
+  background-size: 70% 3cqw, 56% 3cqw, 64% 3cqw; background-position: 6cqw 7cqw, 6cqw 13cqw, 6cqw 19cqw; background-repeat: no-repeat; }
+.ca-rg-paper[style*="--i:0"] { transform: rotate(-9deg) translate(-6cqw, 2cqw); }
+.ca-rg-paper[style*="--i:1"] { transform: rotate(6deg) translate(5cqw, 1cqw); }
+.ca-rg-bars { position: absolute; left: 9cqw; right: 9cqw; bottom: 7cqw; height: 20cqw; display: flex; align-items: flex-end; gap: 4.5cqw; }
+.ca-rg-bars i { flex: 1; border-radius: 1.6cqw 1.6cqw 0 0; background: #e4e4e7; transform-origin: bottom; }
+.ca-rg-bars i:nth-child(1) { height: 40%; }
+.ca-rg-bars i:nth-child(2) { height: 72%; background: #71717a; }
+.ca-rg-bars i:nth-child(3) { height: 54%; }
+
+/* бордовый — только действие */
+.ca-rg-mono { position: absolute; inset: 20cqw 16cqw; display: grid; align-content: center; gap: 6cqw; padding: 8cqw; border-radius: 7cqw; background: #fff; box-shadow: 0 4cqw 10cqw -5cqw rgba(20, 33, 61, 0.35); }
+.ca-rg-mono .ca-line { height: 5cqw; border-radius: 3cqw; }
+.ca-rg-btn { height: 12cqw; border-radius: 99cqw; background: var(--rg-red); box-shadow: 0 3cqw 6cqw -2cqw rgba(158, 27, 50, 0.55); }
+
+/* ── движение: стартует, когда карточка на экране; «меньше движения» — сразу конечный вид ── */
+@media (prefers-reduced-motion: no-preference) {
+  .ca-card:not(.is-in) [class^="ca-rg"], .ca-card:not(.is-in) [class^="ca-rg"] * { animation-play-state: paused !important; }
+  .ca-rg-typed { animation: ca-rg-type 2.4s steps(8, end) 0.3s both; }
+  .ca-rg-caret { animation: ca-rg-blink 1.05s steps(1) infinite; }
+  .ca-rg-found { animation: ca-rg-up 0.5s cubic-bezier(0.23, 1, 0.32, 1) 2.7s both; }
+  .ca-rg-card { animation: ca-rg-in 0.6s cubic-bezier(0.23, 1, 0.32, 1) both; animation-delay: calc(0.25s + var(--i) * 0.12s); }
+  .ca-rg-heart::after { animation: ca-rg-beat 0.5s cubic-bezier(0.23, 1, 0.32, 1) 1.1s both; }
+  .ca-rg-ask { animation: ca-rg-up 0.55s cubic-bezier(0.23, 1, 0.32, 1) 0.25s both; }
+  .ca-rg-ask .ca-rg-q { transform-origin: left; animation: ca-rg-grow 0.9s cubic-bezier(0.23, 1, 0.32, 1) 0.6s both; }
+  .ca-rg-tabs > b { animation: ca-rg-lift 0.6s cubic-bezier(0.23, 1, 0.32, 1) 0.7s both; }
+  .ca-rg-compass::after { animation: ca-rg-needle 3.2s ease-in-out 1s infinite; }
+  .ca-rg-sheet--open .ca-rg-row { animation: ca-rg-up 0.5s cubic-bezier(0.23, 1, 0.32, 1) both; animation-delay: calc(0.3s + var(--i, 0) * 0.1s); }
+  .ca-rg-closed { animation: ca-rg-away 0.8s cubic-bezier(0.23, 1, 0.32, 1) 1.1s both; }
+  .ca-rg-open::before { animation: ca-rg-pulse 2s ease-in-out 1s infinite; }
+  .ca-rg-paper { animation: ca-rg-drop 0.6s cubic-bezier(0.23, 1, 0.32, 1) both; animation-delay: calc(0.2s + var(--i) * 0.14s); }
+  .ca-rg-bars i { animation: ca-rg-bar 0.8s cubic-bezier(0.23, 1, 0.32, 1) 0.8s both; }
+  .ca-rg-btn { animation: ca-rg-beat 0.5s cubic-bezier(0.23, 1, 0.32, 1) 0.6s both; }
+}
+@keyframes ca-rg-type { from { transform: scaleX(0); } }
+@keyframes ca-rg-blink { 50% { opacity: 0; } }
+@keyframes ca-rg-up { from { opacity: 0; transform: translateY(4cqw); } }
+@keyframes ca-rg-in { from { opacity: 0; transform: translateX(10cqw); } }
+@keyframes ca-rg-beat { 0% { opacity: 0; transform: scale(0.6); } 60% { transform: scale(1.08); } }
+@keyframes ca-rg-grow { from { transform: scaleX(0.2); opacity: 0; } }
+@keyframes ca-rg-lift { from { transform: translateY(5cqw) scale(0.9); opacity: 0; } }
+@keyframes ca-rg-needle { 50% { rotate: -20deg; } }
+@keyframes ca-rg-away { from { opacity: 1; transform: none; } to { opacity: 0.4; transform: translateY(2cqw); } }
+@keyframes ca-rg-pulse { 50% { opacity: 0.35; } }
+@keyframes ca-rg-drop { from { opacity: 0; translate: 0 -8cqw; } }
+@keyframes ca-rg-bar { from { transform: scaleY(0); } }
+
+/* 26.10: бордовый у Restaurant Guru — только на действиях; плитки сцен тонируем тёплым серым, а не цветом кейса */
+.cs[data-case="restaurant-guru"] .ca-tile { --ca-tint: #8a7d74; }

@@ -155,3 +155,12 @@ mark.cn-todo { padding: 0 4px; border-radius: 4px; background: #ffe27a; color: #
   .cn-note, .cn-box, .cn-card, .cn-seg-thumb, .cn-pin { transition: none; }
   .cn-dlg[open], .cn-note.is-swap .cn-note-text { animation: none; }
 }
+
+/* 26.10: экраны телефона (кейсы с мобильным продуктом). Карточка на странице — телефон целиком на сцене 16:10;
+   в окне снимок не шире 420 px и не выше окна, колонки заметок ближе к нему */
+.cn-card--tall .cn-card-shot { position: relative; aspect-ratio: 16 / 10; background: color-mix(in srgb, #fff 8%, transparent); }
+.cn-card--tall .cn-card-shot img { position: absolute; top: 4%; left: 50%; width: auto; height: 92%; translate: -50% 0; border-radius: 14px; }
+.cn-dlg.is-tall .cn-stage { grid-template-columns: minmax(200px, 300px) minmax(0, min(420px, calc((100dvh - 190px) * 0.46))) minmax(200px, 300px); }
+.cn-dlg.is-tall.is-wipe .cn-stage { grid-template-columns: minmax(0, min(460px, calc((100dvh - 190px) * 0.46))); }
+.cn-dlg.is-tall .cn-shot > .cn-img, .cn-dlg.is-tall .cn-wipe { border-radius: 28px; }
+@media (max-width: 900px) { .cn-dlg.is-tall .cn-shot { width: min(100%, 340px); align-self: center; } }

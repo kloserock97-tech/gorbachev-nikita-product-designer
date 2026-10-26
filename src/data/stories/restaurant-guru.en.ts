@@ -2,11 +2,7 @@
    discovery app for iOS, plus a guide that finds a place from a sentence. Facts and figures come from
    the research board behind the project (27 sources); screens exported from Figma (`fHFPiy79mJmlrdEeVGeWY3`).
    The word "concept" appears exactly once — as the kicker label.
-   v86: following the Russian version after Nikita's review: design metrics and the guide's product target on
-   top, other companies' numbers stay in the research and are no longer presented as the result, hypotheses
-   no longer marked as confirmed, repetition removed.
-   v88: metrics, Outcome and Next steps removed: nothing was measured for a concept.
-   v89: shortened following the Russian version, by docs/prompts/case-copy-edit.md. */
+   26.10: moved to the GRIF template, mirroring the Russian version (see the comment there). */
 import type { CaseStory, CaseImage } from "../caseStory";
 
 const img = (src: string, w: number, h: number, caption: string, kind = "screen"): CaseImage => ({ src, w, h, caption, kind });
@@ -14,6 +10,7 @@ const R = "cases/restaurant-guru/";
 
 export const en: CaseStory = {
   id: "restaurant-guru",
+  compact: true,
   hero: {
     kicker: "Concept · iOS · 2026",
     title: "Restaurant Guru",
@@ -29,17 +26,23 @@ export const en: CaseStory = {
     tags: ["Mobile", "Marketplace", "AI feature", "Redesign"],
   },
   kpis: [],
+  /* 26.10: goals come from the former context text (the screen's three jobs) and the closed-places decision */
   context: {
-    lead: "The screen showed one restaurant and hid the feature the product wanted to push.",
-    text:
-      "A discovery app's home screen has three jobs. One person knows the place and searches for it by name. Another has no idea and scrolls collections. A third is ready to describe it, \"somewhere quiet with a terrace, for two, under two thousand\", and expects an answer.\n\nThe old screen mixed all three together, and the guide hid behind an icon in the top corner, out of thumb reach.",
+    lead: "",
+    goals: [
+      "Someone who knows the place finds it by name.",
+      "Someone with no idea chooses from several places, not from one card.",
+      "Someone ready to describe the evening in words sees right away where to do it.",
+      "The best slots on the screen go to places you can walk into right now.",
+    ],
+    art: { goals: ["search", "shelf", "guide", "open"], constraints: ["sources", "brand"] },
     constraints: [
       { title: "No users of its own", text: "There were no interviews and no testing, so every decision leans on a published study with a number and a link." },
       { title: "The brand already exists", text: "The brand's deep red can only go on actions. People read red as an error, so it can't be spread across the screen." },
     ],
   },
   research: {
-    lead: "I gathered studies where design decisions carry a price tag.",
+    lead: "",
     methods: [
       {
         kind: "Audit",
@@ -47,6 +50,9 @@ export const en: CaseStory = {
         sample: "Heuristic walk-through of the live screen",
         finding:
           "Six zones: the guide out of thumb reach, search narrowed by one example, category icons with no labels, one restaurant per screen, closed places in the premium slots, and two unnamed icons leading to the same function.",
+        insights: [
+          { id: "F1", text: "A feature the product is pushing cannot sit in a blind spot, and the guide hid behind an icon in the top corner." },
+        ],
       },
       {
         kind: "Evidence base",
@@ -54,13 +60,17 @@ export const en: CaseStory = {
         sample: "27 sources: McKinsey, Baymard, NN/g, Yelp, Tripadvisor",
         finding:
           "Hidden navigation slows people by up to 39% and cuts discoverability by 20% (NN/g). With mediocre lists and filters 67–90% abandon the task, against 17–33% where they are done well (Baymard). 75% of phone interactions happen with a thumb, so the important things belong in the lower half of the screen.",
+        insights: [
+          { id: "F2", text: "People need to see several places at once to have something to choose from." },
+          { id: "F3", text: "A ready-made intent in one tap beats an empty search field." },
+        ],
       },
       {
         kind: "Benchmark",
         question: "Is an icon in the corner enough for the guide, or does it need its own tab?",
         sample: "Yelp, Google Maps, Tripadvisor",
         finding:
-          "After a 400% rise in leads Yelp moved its assistant into its own bottom tab. Google put \"Ask Maps\" right under the search field. At Tripadvisor, users of AI features bring two to three times the revenue. So I moved the guide out of the corner and into the main navigation.",
+          "After a 400% rise in leads Yelp moved its assistant into its own bottom tab. Google put \"Ask Maps\" right under the search field. At Tripadvisor, users of AI features bring two to three times the revenue.",
       },
       {
         kind: "Study",
@@ -68,77 +78,86 @@ export const en: CaseStory = {
         sample: "Cicek, Gursoy & Lu, Journal of Hospitality Marketing & Management, 2024",
         finding:
           "With the product held identical, mentioning AI lowered intention to use it in every test, because emotional trust drops. The study was run on hospitality, which is exactly this industry.",
+        insights: [
+          { id: "F4", text: "The word \"AI\" in a feature's name lowers people's wish to use it." },
+        ],
       },
     ],
-    hypotheses: {
-      intro: "Three assumptions shaped the structure of the screen.",
-      items: [
-        { text: "People need to see several places at once to have something to choose from.", verdict: "Dense cards and a compact list" },
-        { text: "A ready-made intent in one tap beats an empty search field.", verdict: "A row of labelled chips" },
-        { text: "A feature the product is pushing cannot sit in a blind spot.", verdict: "The guide in the centre tab and as a line in the feed" },
-      ],
-    },
   },
   decisions: {
-    lead: "Six changes, from the way into the guide to what it is called.",
+    lead: "",
     items: [
       {
         id: "entry",
+        insight: "F1",
         title: "The guide got a name and a place in the tab bar",
-        found: "A \"✦\" icon in the header and a \"✦+\" in the tab bar led to the same place and explained nothing.",
-        did: "Two connected entries under one name: a line in the feed with a live example query, and a raised \"Guide\" tab in the centre of the tab bar. The header icon is gone.",
-        effect: "The example query in the feed shows right away that you can write to the guide in plain words.",
-        why: "A thumb reaches the bottom bar without shifting your grip on the phone, so that's where you put what you want to promote.",
-        basis: "NN/g on hidden navigation, Hoober on thumbs, Yelp Assistant.",
+        found: "If the guide sits where a thumb reaches and the feed shows an example query, people find it without a hint. Before, a \"✦\" icon in the header and a \"✦+\" in the tab bar led to the same place and explained nothing.",
+        did: "Two connected entries under one name: a line in the feed with a live example query, and a raised \"Guide\" tab in the centre of the tab bar. The header icon is gone. A thumb reaches the bottom bar without shifting your grip: 75% of phone interactions happen with a thumb.",
         image: img(R + "01-home.webp", 786, 1704, "Home screen", "hero"),
       },
       {
-        id: "chips",
-        title: "Categories are labelled with words",
-        found: "Category circles with no labels, the outer ones cut off, and \"Filters\" where there was nothing to filter yet.",
-        did: "A row of labelled chips (\"For you\", \"Dinner\", \"Bars\", \"Coffee\") plus a separate filters button. The order of the chips follows the time of day.",
-        effect: "You can tell the category at a glance now. Filters moved into the results, where there is something to filter.",
-        why: "A label is read faster than an icon is decoded. Nielsen has a heuristic about this: it's easier to recognise a word than to remember what a picture means.",
-        basis: "Baymard on lists and filtering; four to six options in a set.",
-      },
-      {
         id: "density",
-        title: "Three or four places in view",
-        found: "A huge card and the \"#59 of 2524\" line left one restaurant in view.",
-        did: "A \"For you\" shelf with two cards in frame and a compact \"Open now nearby\" list: photo on the left, facts on the right. The ranking line moved into the place page.",
-        effect: "There is a choice where there used to be a single option.",
-        why: "One option is not a choice, and twenty-four are worse than six.",
-        basis: "NN/g: people read 20–28% of a page. Iyengar & Lepper: 30% against 3% conversion at six options versus twenty-four.",
+        insight: "F2",
+        title: "Three or four places in view, all of them open",
+        found: "If several open places are in view, there is something to choose from. Before, a huge card and the \"#59 of 2524\" line left one restaurant in view, and at six in the evening \"Pubs and bars\" led with a bar closed until four.",
+        did: "A \"For you\" shelf with two cards in frame and a compact \"Open now nearby\" list: photo on the left, opening hours and distance on the right. Location and time of day sit in the header and drive everything below. The ranking line moved into the place page. Six options sell better than twenty-four: 30% against 3% in Iyengar & Lepper.",
         image: img(R + "02-home-scrolled.webp", 786, 1704, "Collections and a compact list"),
       },
       {
-        id: "context",
-        title: "Closed places do not get the best slots",
-        found: "At six in the evening \"Pubs and bars\" led with a bar closed until four: the screen didn't know what time it was.",
-        did: "Location and time of day sit in the header and drive everything below. The \"Open now nearby\" block shows opening hours and distance.",
-        effect: "The premium slots go to places you can walk into right now.",
-        why: "The app answers \"where do I go now\", so \"now\" belongs in the structure of the screen.",
+        id: "chips",
+        insight: "F3",
+        title: "Categories are labelled with words",
+        found: "If a category is a labelled chip, people pick it in one tap. Before, the category circles had no labels, the outer ones were cut off, and \"Filters\" sat where there was nothing to filter yet.",
+        did: "A row of labelled chips (\"For you\", \"Dinner\", \"Bars\", \"Coffee\") plus a separate filters button. The order of the chips follows the time of day. Filters moved into the results, where there is something to filter: with well-made lists and filters 17–33% abandon the task, against 67–90% (Baymard).",
       },
       {
         id: "guide",
         title: "The guide answers with a single place card",
-        found: "A message thread has nothing to fill it: one question, one answer, and the person leaves for the restaurant.",
-        did: "Three states: invitation, searching, answer. While it searches, the screen shows an object and the request said back, with no spinner. The answer is a place card with a photo, the facts and a booking button.",
-        effect: "While you wait, you can see the guide understood the request, and from the answer card you can book a table straight away.",
-        why: "A chat screen promises a conversation that will not happen.",
-        basis: "A teardown of the Drinkit interface: suggested answers you can pick without typing anything.",
+        found: "A message thread has nothing to fill it: one question, one answer, and the person leaves for the restaurant. A chat screen promises a conversation that will not happen.",
+        did: "Three states: invitation, searching, answer. While it searches, the screen shows an object and the request said back, with no spinner. The answer is a place card with a photo, the facts and a booking button. Suggested answers you can pick without typing come from a teardown of the Drinkit interface.",
         image: img(R + "05-guide-answer.webp", 786, 1704, "The guide's answer", "hero"),
       },
       {
         id: "noai",
+        insight: "F4",
         title: "The interface never says \"AI\"",
-        found: "\"AI\" on a button promises technology, and the person wants dinner.",
-        did: "The tab is called \"Guide\", the heading promises an outcome, and the mark is a compass. Transparency stays: the guide lists what it's looking through and shows what the answer rests on.",
-        effect: "The interface dropped the word that lowered people's intention to use the feature in the Cicek study.",
-        why: "The name describes the role or the action, like Google's \"Help me write\" and Spotify's \"DJ\".",
-        basis: "Cicek, Gursoy & Lu (2024).",
+        found: "If the name describes a role rather than the technology, people use the feature more willingly. \"AI\" on a button promises technology, and the person wants dinner.",
+        did: "The tab is called \"Guide\", the heading promises an outcome, and the mark is a compass. That's how Google (\"Help me write\") and Spotify (\"DJ\") name their features. Transparency stays: the guide lists what it's looking through and shows what the answer rests on.",
       },
     ],
+  },
+  /* 26.10: before — a Restaurant Advisor screenshot from the board (Figma 191:15551), after — 01-home.webp */
+  compare: {
+    title: "Home screen: before and after",
+    lead: "On the left, the app's home screen before the redesign; on the right, the new one. Hover a note to see its spot on the screen.",
+    before: {
+      title: "Before",
+      image: img(R + "compare-before.webp", 786, 1704, "Restaurant Advisor home screen before the redesign: a \"Quick bite\" search, category icons, one big restaurant card"),
+      notes: [
+        { id: "a-loc", kind: "about", side: "left", text: "Location", extra: "A city or the current spot", rects: [[0.03, 0.072, 0.6, 0.038]] },
+        { id: "a-search", kind: "about", side: "left", text: "Search", extra: "A search field for places", rects: [[0.036, 0.139, 0.923, 0.067]] },
+        { id: "a-cats", kind: "about", side: "left", text: "Categories", extra: "Restaurants, bars, cafés and other kinds of place", rects: [[0.0, 0.278, 1.0, 0.095]] },
+        { id: "a-feed", kind: "about", side: "right", text: "Collections", extra: "\"Restaurants\", \"Pubs and bars\" and other shelves", rects: [[0.036, 0.41, 0.928, 0.33]] },
+        { id: "m-ai", kind: "mine", side: "right", text: "The way into the guide is an \"AI ✦\" icon in the corner, out of thumb reach", rects: [[0.79, 0.072, 0.16, 0.035]] },
+        { id: "m-search", kind: "mine", side: "left", text: "Search is narrowed by one example: \"Quick bite\"", rects: [[0.036, 0.139, 0.923, 0.067]] },
+        { id: "m-cats", kind: "mine", side: "left", text: "Category icons have no labels, the outer ones are cut off, and \"Filters\" sits where there is nothing to filter", rects: [[0.0, 0.278, 1.0, 0.095], [0.716, 0.239, 0.236, 0.028]] },
+        { id: "m-density", kind: "mine", side: "left", text: "One huge card and the \"#59 of 2524\" line: one restaurant in view", rects: [[0.036, 0.456, 0.928, 0.21], [0.048, 0.711, 0.7, 0.024]] },
+        { id: "m-time", kind: "mine", side: "right", text: "At six in the evening \"Pubs and bars\" leads with a bar closed until 16:00", rects: [[0.06, 0.853, 0.35, 0.034]] },
+        { id: "m-tabs", kind: "mine", side: "right", text: "A tab bar of five unlabelled icons, with a puzzling \"✦+\" in the middle", rects: [[0.048, 0.922, 0.904, 0.067]] },
+      ],
+    },
+    after: {
+      title: "After",
+      image: img(R + "01-home.webp", 786, 1704, "The new home screen: collection of the week, labelled chips, the guide line and the \"For you\" shelf"),
+      notes: [
+        { id: "m-ai", kind: "mine", side: "left", text: "A guide line in the feed with a live example query", rects: [[0.053, 0.617, 0.894, 0.067]] },
+        { id: "m-search", kind: "mine", side: "right", text: "The field says \"Place, cuisine or dish\"", rects: [[0.053, 0.131, 0.894, 0.058]] },
+        { id: "m-cats", kind: "mine", side: "left", text: "Labelled chips (\"For you\", \"Dinner\", \"Bars\", \"Coffee\") and a separate filters button", rects: [[0.041, 0.539, 0.93, 0.048]] },
+        { id: "m-density", kind: "mine", side: "left", text: "The \"For you\" shelf: two cards in frame, the ranking line moved into the place page", rects: [[0.053, 0.794, 0.947, 0.106]] },
+        { id: "m-time", kind: "mine", side: "right", text: "City and time in the header drive everything below", rects: [[0.036, 0.067, 0.615, 0.044]] },
+        { id: "m-tabs", kind: "mine", side: "right", text: "Five labelled tabs, with the Guide raised in the middle", rects: [[0.048, 0.909, 0.904, 0.079]] },
+      ],
+    },
   },
   /* v114: prototype from the mock-ups — the main flow: home → guide → picking → the place */
   prototype: {
@@ -152,30 +171,7 @@ export const en: CaseStory = {
       { image: img(R + "09-place-card.webp", 786, 1704, "Place card"), action: "Done: everything for the decision on one screen", why: "The route and a 19:30 table booking are side by side. All that's left is leaving the house." },
     ],
   },
-  takeaways: [
-    "With no users of your own, other people's research is a reasonable foundation. The rules are to name the source behind every number and never pass someone else's result off as your own.",
-    "To someone deciding where to have dinner, \"Guide\" and \"AI assistant\" are two different products, even though the feature behind them is the same.",
-  ],
-  gallery: [
-    {
-      kind: "stack",
-      title: "The guide: invitation, search, answer",
-      images: [
-        img(R + "03-guide-invite.webp", 786, 1704, "Invitation"),
-        img(R + "04-guide-thinking.webp", 786, 1704, "Searching"),
-        img(R + "05-guide-answer.webp", 786, 1704, "Answer"),
-      ],
-    },
-    {
-      kind: "bento",
-      title: "Launching the guide, and the place page",
-      images: [
-        img(R + "06-promo-sheet.webp", 786, 1704, "Touch 1: launch announcement"),
-        img(R + "07-promo-banner.webp", 786, 1704, "Touch 2: a card in the feed"),
-        img(R + "08-promo-hint.webp", 786, 1704, "Touch 3: a hint in search"),
-        img(R + "09-place-card.webp", 786, 1704, "Place page"),
-      ],
-    },
-  ],
+  takeaways: [],
+  gallery: [],
   deepDives: [],
 };

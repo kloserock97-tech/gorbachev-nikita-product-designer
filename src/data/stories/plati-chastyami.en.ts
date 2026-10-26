@@ -2,11 +2,11 @@
    app could look like a few years from now. Facts come from the project's research board and from a
    frame-by-frame teardown of screen recordings of the live app; screens exported from Figma
    (`BzIehGAJZ6BPyHDEFYffyA`). The word "concept" appears exactly once — as the kicker label.
-   v86: following the Russian version after Nikita's review: design metrics of the route on top (5 → 0),
-   the hypotheses' product metrics moved to the Outcome, hypotheses no longer marked as confirmed, repetition removed.
-   v88: metrics, Outcome and Next steps removed: nothing was measured for a concept.
-   v89: shortened following the Russian version, by docs/prompts/case-copy-edit.md.
-   23.10: AI-writing patterns removed after the Russian version (slogans, triples, repeated ideas, Miller). No metrics, it's a concept. */
+   v88: metrics, Outcome and Next steps removed: nothing was measured for a concept. 23.10: AI-writing patterns removed.
+   26.10: moved to the GRIF template (compact), mirroring the Russian version: context paragraphs, Mistakes, takeaways,
+   quote, More screens, the funnel and the separate hypotheses list are gone. Goals come only from existing text,
+   findings F1–F5 from the methods, hypotheses became each decision's "Hypothesis". Six decisions merged into four.
+   No validation: the concept wasn't tested. Before/After — the "02 · Before → after" section in Figma. */
 import type { CaseStory, CaseImage } from "../caseStory";
 
 const img = (src: string, w: number, h: number, caption: string, kind = "screen"): CaseImage => ({ src, w, h, caption, kind });
@@ -14,6 +14,7 @@ const P = "cases/plati-chastyami/";
 
 export const en: CaseStory = {
   id: "plati-chastyami",
+  compact: true,
   hero: {
     kicker: "Concept · Fintech · 2026",
     title: "Pay in Parts",
@@ -29,24 +30,32 @@ export const en: CaseStory = {
     tags: ["Fintech", "BNPL", "Mobile", "Personalisation"],
   },
   kpis: [],
+  /* 26.10: context as pictures inside "In brief" (ui/contextArt/plati-chastyami.ts), see the Russian version */
   context: {
-    lead: "More people pay in instalments every year, and the complaints stay the same.",
-    text:
-      "Instalments stopped being a niche thing: the market grew two and a half to three times in a year and came under regulatory supervision. The idea is simple. A purchase is split into four payments every two weeks, and you can pay this way in hundreds of thousands of shops, right at the till too.\n\nYet the service is rated 2.8 out of 5, and the complaints repeat: charges nobody understands, a penalty for one day late, lost refunds. So people already use instalments. They just don't trust them.\n\nA bank has an advantage a stand-alone instalment service lacks: it sees both the salary and the spending. So it can honestly say \"you can't afford this right now\" or move a payment to the day after payday.",
+    lead: "",
+    goals: [
+      "How much to pay and when is visible right on the bank's home screen.",
+      "The service warns about a payment you can't afford before any penalty and moves it to payday.",
+      "When the budget is overloaded, the service stops selling.",
+      "Advice can be checked, and the person presses the button.",
+    ],
+    art: { goals: ["home", "move", "pause", "why"], constraints: ["rec", "font"] },
     constraints: [
       { title: "No live screenshots exist", text: "The bank doesn't publish them, so the audit was built from screen recordings." },
       { title: "The wrong typeface", text: "The bank's font isn't in Figma, so the mock-up uses a close relative. The caveat is in the file." },
     ],
   },
   research: {
-    lead: "Screen recordings of the live app were enough to see where the service sits and where it breaks. After that I backed each decision with studies and examples from Klarna, Monzo and others.",
+    lead: "",
     methods: [
       {
         kind: "Screen recording teardown",
         question: "Where does the service actually sit, and what happens when you tap it?",
         sample: "Two screen recordings of the real app, taken apart frame by frame",
-        finding:
-          "Three conclusions no description mentions: the service hides in a sheet of the \"Credit\" tab, tapping it leaves for the browser, and it is missing from the \"All services\" catalogue altogether.",
+        finding: "Three conclusions no description mentions.",
+        insights: [
+          { id: "F1", text: "The service hides in a sheet of the \"Credit\" tab, tapping it leaves for the browser, and it is missing from the \"All services\" catalogue altogether. The answer to \"how much and when do I pay\" sits five steps in." },
+        ],
       },
       {
         kind: "Audit",
@@ -54,13 +63,21 @@ export const en: CaseStory = {
         sample: "The structure of the section from the FAQ, the web account and reviews",
         finding:
           "Six faults: the word \"Credit\" with no credit agreement, a list of orders that never shows the total debt, silent lateness with a loud penalty, terms you only learn after buying, a storefront over debt management, and separate dates for every order.",
+        insights: [
+          { id: "F2", text: "Three instalments make twelve dates, and the total debt is nowhere to be seen. Hence complaints like \"charged me for who knows what\"." },
+          { id: "F3", text: "Lateness comes silently, and the penalty and the call arrive the same day. A penalty for one day late is one of the most common complaints in reviews." },
+          { id: "F4", text: "The storefront competes for attention with managing the debt." },
+        ],
       },
       {
         kind: "Evidence base",
         question: "What is known about extra steps, unexpected charges and proactive nudges?",
         sample: "Spool, Baymard, McKinsey, Accenture, Klarna, Bank of America",
         finding:
-          "Removing one forced step before payment once brought $300M a year. Unexpected charges cause 39% of abandoned carts. 71% of customers want an assistant in their bank's app, but 82% want to confirm every action it takes. So the assistant is a co-pilot: it suggests, and the person confirms.",
+          "Removing one forced step before payment once brought $300M a year. Unexpected charges cause 39% of abandoned carts.",
+        insights: [
+          { id: "F5", text: "71% of customers want an assistant in their bank's app, but 82% want to confirm every action it takes. So the assistant in the concept only suggests, and the person confirms." },
+        ],
       },
       {
         kind: "Patterns",
@@ -70,88 +87,71 @@ export const en: CaseStory = {
           "Klarna extends the due date, Zip moves a payment by up to seven days, Monzo Flex collapses every instalment into one monthly date and splits past purchases. None of them ties a payment to payday.",
       },
     ],
-    hypotheses: {
-      intro: "Four hypotheses behind the solution.",
-      items: [
-        { text: "An aggregate status on the home screen gives back the feeling of control.", verdict: "Status on home" },
-        { text: "Moving a payment to payday turns missed payments into moved ones.", verdict: "Move to payday" },
-        { text: "Warning honestly about overload dents short-term volume but lifts retention.", verdict: "Stop selling" },
-        { text: "Any purchase made yesterday on the card can be split into parts.", verdict: "Retro instalments" },
-      ],
-      measured: "The status and the move have to be tested together. With only the status, people see the problem and have nothing to do about it. With only the move, the problem just gets hidden.",
-    },
-    funnel: {
-      title: "The route to \"how much and when do I pay\". In red, where people get lost.",
-      steps: [
-        { label: "Home screen", note: "The service is not here" },
-        { label: "The \"Credit\" tab", note: "Nobody looks for instalments here, and the word puts people off", drop: true },
-        { label: "\"More offers\" sheet", note: "Between refinancing and a secured loan", drop: true },
-        { label: "List of orders", note: "You see purchases, but not the total debt" },
-        { label: "Order → schedule", note: "The answer on the fifth step" },
-      ],
-      note: "There are no per-step percentages: they aren't public.",
-    },
   },
   decisions: {
-    lead: "The whole concept rests on three rules. People see their debt first, and the storefront comes later. The service warns about a late payment before any penalty is charged. The assistant advises, and the person presses the button.",
+    lead: "",
     items: [
       {
         id: "widget",
-        title: "Status on the home screen",
-        found: "The answer sat five steps in.",
-        did: "A card on the bank's home screen: the next payment, the balance across every instalment and a move button, with the two following payments below.",
-        effect: "How much to pay and when is right on the home screen, and moving a payment takes one tap.",
-        why: "When the debt is out of sight, people remember it on the day it gets charged. The card reminds them every time they open the bank app (Nielsen calls this visibility of system status).",
-        basis: "The case of the one removed step before payment. Klarna.",
+        insight: "F2",
+        title: "The debt in sight: status on the home screen and every payment on one timeline",
+        found: "If the total debt status is on the home screen, the feeling of control comes back.",
+        did: "A card on the bank's home screen: the next payment, the balance across every instalment and a move button, with the two following payments below. Inside the service, a feed sorted by date: date, shop, payment n of four, amount. Labels carry the meaning: \"before payday\" is a warning, \"closes this instalment\" is a small win.",
         image: img(P + "01-sbol-widget.webp", 786, 1704, "The bank's home screen", "hero"),
       },
       {
-        id: "safe",
-        title: "\"Safe for your budget\"",
-        found: "The limit followed credit logic and ignored how much was left until payday.",
-        did: "The service works out the free money until payday, taking normal spending and every instalment into account, and shows it as a ring and a figure.",
-        effect: "There is now an answer to the question people ask themselves before buying.",
-        basis: "Safe-to-spend at Up and Revolut. McKinsey on personalisation.",
-      },
-      {
         id: "move",
+        insight: "F3",
         title: "Move the payment to payday in one tap",
-        found: "Lateness came silently, and the penalty and the call arrived the same day.",
-        did: "When a payment lands in the window before payday, the service offers to move it to the day after and recalculates the schedule. The first move is free and leaves no mark on the credit history, and the confirmation screen says so.",
-        effect: "A payment that would have been missed gets moved ahead of time.",
-        why: "A penalty for one day late is one of the most common complaints in reviews. The move kicks in before that penalty can be charged.",
-        basis: "41% of instalment users have paid late at least once. Klarna, Zip.",
+        found: "If a payment moves to payday, a missed payment becomes a moved one.",
+        did: "When a payment lands in the window before payday, the service offers to move it to the day after and recalculates the schedule. The first move is free and leaves no mark on the credit history, and the confirmation screen says so. The advice is one sentence: the variant where I explained it with a month calendar made people draw the conclusion themselves and left the main flow.",
         image: img(P + "03-move-confirm.webp", 786, 1704, "Confirming the move"),
       },
       {
-        id: "timeline",
-        title: "All payments on one timeline",
-        found: "Three instalments make twelve dates, hence \"charged me for who knows what\".",
-        did: "A feed sorted by date: date, shop, payment n of four, amount. Labels carry the meaning: \"before payday\" is a warning, \"closes this instalment\" is a small win.",
-        effect: "You can see which purchase a charge is for, and nobody has to keep the dates in their head.",
-        basis: "Complaints from reviews. Monzo Flex.",
-        image: img(P + "02-hub-gap.webp", 786, 3436, "The hub: status, advice and the payment timeline", "hero"),
-      },
-      {
         id: "pause",
+        insight: "F4",
         title: "The storefront disappears when the budget is overloaded",
-        found: "The storefront competed for attention with managing the debt.",
-        did: "When the month's payments pass a third of free income, the storefront and offers hide, and an unloading plan takes their place.",
-        effect: "When things get tight, the service stops selling.",
-        why: "Selling instalments to someone already struggling is a dark pattern. It's also bad business: LTV in BNPL comes from repeat users.",
-        basis: "The regulator's stance on nudging BNPL patterns.",
+        found: "If the service warns honestly about overload, short-term volume dips but retention grows.",
+        did: "When the month's payments pass a third of free income, the storefront and offers hide, and an unloading plan takes their place. Selling instalments to someone already struggling is a dark pattern, and it's bad business too: LTV in BNPL comes from repeat users.",
         image: img(P + "06-hub-overload.webp", 786, 3100, "Overload: an unloading plan in place of the storefront"),
       },
       {
         id: "numbers",
-        title: "\"Where the numbers come from\" gets its own screen",
-        found: "Complaints about hidden fees and refusals with no reason.",
-        did: "Every piece of advice links to \"how this was calculated\": what was counted, where the spending came from, why this date.",
-        effect: "You can see what the advice is built on and check the maths yourself.",
-        why: "The 82% who want to confirm every action an assistant takes need to see what exactly they are confirming.",
+        insight: "F5",
+        title: "\"Safe for your budget\" and where that number comes from",
+        found: "If people see what the advice is built on, they can check it before confirming.",
+        did: "The service works out the free money until payday, taking normal spending and every instalment into account, and shows it as a ring and a figure. Every piece of advice links to \"how this was calculated\": what was counted, where the spending came from, why this date.",
         image: img(P + "07-where-numbers.webp", 786, 1704, "The \"Where the numbers come from\" screen"),
       },
     ],
+  },
+  /* 26.10: "before" — a frame of the live app recording from the Figma section "02 · Before → after" (363:6059) */
+  compare: {
+    title: "The \"Credit\" tab and the home screen",
+    lead: "On the left, the bank's live app: the tab where instalments sit today. On the right, the concept. Hover a note to see its spot on the screen.",
+    before: {
+      title: "The live app",
+      image: img(P + "compare-before.webp", 680, 1218, "The \"Credit\" tab in the bank's live app: credit potential and a storefront of loans"),
+      notes: [
+        { id: "a-search", kind: "about", side: "left", text: "Search and catalogue", extra: "Search on top and the services catalogue icon", rects: [[0.168, 0.066, 0.809, 0.049]] },
+        { id: "a-cards", kind: "about", side: "left", text: "Credit potential", extra: "The bank's offers: any purpose, a card, a mortgage, a car loan", rects: [[0.024, 0.255, 0.947, 0.616]] },
+        { id: "a-tabs", kind: "about", side: "right", text: "Bottom navigation", extra: "Home, Savings, For life, Payments, Credit", rects: [[0, 0.928, 1, 0.072]] },
+        { id: "m-word", kind: "mine", side: "left", text: "People look for instalments under \"Credit\", though there is no credit agreement", rects: [[0.041, 0.184, 0.253, 0.038], [0.832, 0.933, 0.147, 0.062]] },
+        { id: "m-hidden", kind: "mine", side: "left", text: "The screen shows a storefront of loans, and the service hides in the \"More offers\" sheet, between refinancing and a secured loan", rects: [[0.024, 0.255, 0.947, 0.616]] },
+        { id: "m-catalog", kind: "mine", side: "right", text: "Pay in Parts is missing from the \"All services\" catalogue altogether", rects: [[0.918, 0.074, 0.059, 0.034]] },
+        { id: "m-home", kind: "mine", side: "right", text: "The service isn't on the home screen: \"how much and when\" is five steps in", rects: [[0.041, 0.933, 0.13, 0.062]] },
+      ],
+    },
+    after: {
+      title: "The concept",
+      image: img(P + "01-sbol-widget.webp", 786, 1704, "The bank's home screen with the Pay in Parts card"),
+      notes: [
+        { id: "m-word", kind: "mine", side: "left", text: "The service is a Pay in Parts card right on the home screen, no \"Credit\" tab needed", rects: [[0.041, 0.502, 0.918, 0.043]] },
+        { id: "m-home", kind: "mine", side: "left", text: "\"How much and when\" is answered at once: the next payment of 3,100 ₽ and 12,450 ₽ left across all", rects: [[0.088, 0.59, 0.824, 0.082]] },
+        { id: "m-hidden", kind: "mine", side: "right", text: "In place of the storefront: the date and a move button, \"Better after payday\", free", rects: [[0.088, 0.681, 0.824, 0.065]] },
+        { id: "m-next", kind: "mine", side: "right", text: "The two following payments below", rects: [[0.082, 0.769, 0.571, 0.041]] },
+      ],
+    },
   },
   /* v114: prototype from the mock-ups — "move a payment to payday" in three taps; the "why" lines come from the decisions */
   prototype: {
@@ -165,39 +165,8 @@ export const en: CaseStory = {
       { image: img(P + "04-hub-moved.webp", 786, 3098, "The move is applied, the schedule is recalculated"), action: "Done: the payment is on 6 September, the schedule is recalculated", why: "The money leaves after payday, so there is no late payment and no penalty." },
     ],
   },
-  mistakes: {
-    lead: "I drew the wrong version of the advice first.",
-    items: [
-      {
-        title: "I explained the advice with a calendar",
-        decided: "Explain the advice with a month calendar: when money arrives, when payments leave, and why the 28th is the worst point.",
-        wrong: "The calendar proved the conclusion beautifully but made the person draw it themselves. That decision gets made in a second, with one hand, standing in a queue.",
-        out: "The variant stayed in the file as a breakdown for anyone who wants to dig in, and left the main flow.",
-        changed: "Now I write the conclusion as one sentence first, then decide whether it needs a picture.",
-      },
-    ],
-  },
-  takeaways: [
-    "Fifteen minutes of going through screen recordings frame by frame was worth more than every FAQ summary.",
-    "I looked for the product's strength in something a competitor physically can't have. Here it's the payday calendar.",
-  ],
-  quote: "I think in a few years people will choose the instalment service that helps them pay on time. I made this concept about exactly that kind of help.",
-  gallery: [
-    {
-      kind: "compare",
-      title: "One zone in two situations",
-      before: img(P + "05-hub-ok.webp", 786, 2362, "All on track"),
-      after: img(P + "04-hub-moved.webp", 786, 3098, "Move applied, schedule recalculated"),
-      labels: ["All on track", "Move applied"],
-    },
-    {
-      kind: "bento",
-      title: "The rejected variant and the calculation breakdown",
-      images: [
-        img(P + "08-variant-b-calendar.webp", 393, 705, "Variant B: a month calendar", "detail"),
-        img(P + "07-where-numbers.webp", 786, 1704, "The calculation breakdown", "detail"),
-      ],
-    },
-  ],
+  /* 26.10: Mistakes, takeaways, quote and More screens removed, following the GRIF template */
+  takeaways: [],
+  gallery: [],
   deepDives: [],
 };

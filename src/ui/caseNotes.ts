@@ -48,7 +48,8 @@ const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 export const marks = (html: string) => html.replace(/\[(ЗАПОЛНИТЬ|TO FILL|проверить|check)(:?)([^\]]*)\]/g, (_m, w, c, rest) => `<mark class="cn-todo">${w}${c}${rest}</mark>`);
 
 /* ── разметка на странице ─────────────────────────────────────────────────── */
-const card = (side: "before" | "after", s: CompareSide) => `<button type="button" class="cn-card cn-card--${side}" data-cn-open="${side}">
+/* 26.10: снимок телефона (выше, чем шире) — в карточке стоит целиком по высоте на сцене, а не растягивается */
+const card = (side: "before" | "after", s: CompareSide) => `<button type="button" class="cn-card cn-card--${side}${s.image.h > s.image.w ? " cn-card--tall" : ""}" data-cn-open="${side}">
     <span class="cn-card-shot"><img src="${BASE}${s.image.src}" alt="${esc(s.image.caption)}" width="${s.image.w}" height="${s.image.h}" loading="lazy" decoding="async"></span>
     <span class="cn-card-foot"><span><em>${tr(T[side])}</em><b>${esc(s.title)}</b></span><span class="cn-card-open">${ICON.open}${tr(T.open)}</span></span>
   </button>`;
@@ -274,6 +275,7 @@ function mountOne(block: HTMLElement) {
     dlg.style.setProperty("--seg", String(order.indexOf(v)));
     dlg.classList.toggle("is-after", v === "after");
     dlg.classList.toggle("is-wipe", v === "wipe");
+    dlg.classList.toggle("is-tall", s.image.h > s.image.w);
     hint.innerHTML = v === "wipe" ? tr(T.hintWipe) : touch.matches ? tr(T.hintTouch) : tr(v === "after" ? T.hintAfter : T.hintBefore);
     cancelAnimationFrame(sweep);
     if (v === "wipe") {

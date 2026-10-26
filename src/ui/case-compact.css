@@ -53,6 +53,8 @@
 .cs--compact .cs-decisions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(40px, 6vh, 64px) clamp(20px, 2.4vw, 32px); }
 .cs--compact .cs-decision--row { display: flex; flex-direction: column; gap: 0; padding: 0; border-radius: 0; background: none; }
 .cs--compact .cs-decision--row .dd { align-self: stretch; width: 100%; margin-bottom: 20px; }
+/* 26.10: картинка решения (у кейсов без живых демо) тянется на ширину карточки, как демо */
+.cs--compact .cs-decision--row > figure { align-self: stretch; width: 100%; margin: 0 0 20px; }
 .cs--compact .cs-decision--row h3 { margin: 0 0 14px; max-width: none; font-size: clamp(20px, 1.6vw, 24px); line-height: 1.2; letter-spacing: -0.012em; }
 /* 26.10: строки решения — метка над текстом, без таблицы и линий (как мета-колонка в кейсах Tailscale):
    «Гипотеза Н4», «Что сделал» — маленькая серая метка, под ней абзац; «После теста» — мягкая плашка, это главное отличие */
@@ -72,7 +74,7 @@
 /* 26.10: нечётное последнее решение не висит одно в половине ряда — на всю ширину: демо слева, текст справа */
 @media (min-width: 901px) {
   .cs--compact .cs-decision--row:last-child:nth-child(odd) { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto 1fr; column-gap: clamp(20px, 2.4vw, 32px); align-items: start; }
-  .cs--compact .cs-decision--row:last-child:nth-child(odd) > .dd { grid-row: 1 / -1; margin-bottom: 0; }
+  .cs--compact .cs-decision--row:last-child:nth-child(odd) > :is(.dd, figure) { grid-row: 1 / -1; margin-bottom: 0; }
   .cs--compact .cs-decision--row:last-child:nth-child(odd) > h3 { margin-top: 2px; }
 }
 /* четыре цели — два ряда по две, а не три и одна */
@@ -136,3 +138,10 @@
   .cs--compact .cs-constraints li { grid-template-columns: 28px minmax(0, 1fr); gap: 4px 10px; }
   .cs--compact .cs-constraints li > p { grid-column: 2; }
 }
+
+/* 26.10: решение с картинкой вместо живого демо (кейсы кроме GRIF). Правило глав «Решения» (case-zones) ставит
+   align-items: center — во flex-колонке плотной карточки это уводит заголовок к центру; возвращаем к левому краю.
+   Сцена картинки одной высоты в обоих решениях ряда: экран вписан в неё, ряд не сползает */
+.cs--compact .cs-sec--decisions .cs-decision--row:has(.cs-decision-img) { align-items: stretch; gap: 0; }
+.cs--compact .cs-decision--row .cs-fig--inline { --stage-h: clamp(240px, 24vw, 360px); }
+.cs--compact .cs-decision--row .cs-stage { height: var(--stage-h); }

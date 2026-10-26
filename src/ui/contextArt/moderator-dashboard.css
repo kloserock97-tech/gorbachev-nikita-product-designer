@@ -1,1 +1,89 @@
-/* 26.10: свои детали сцен кейса moderator-dashboard (префикс ca-) */
+/* 26.10: свои детали сцен кейса moderator-dashboard (префикс ca-md-). Светлый кабинет из макетов: белое окно, розовая шапка
+   таблицы, чёрные кнопки-пилюли, зелёная точка «Новый», фиолетовый акцент кейса. Размеры — cqw плитки. */
+.ca-tile { --md-ink: #17171a; --md-pink: #fbe0ec; --md-grey: #e9e9ee; --md-line: #d4d4dc; --md-green: #2fbf4a; --md-acc: var(--case, #6b55c9); }
+
+/* окно кабинета */
+.ca-md-win { position: absolute; left: 10cqw; right: 10cqw; top: 50%; translate: 0 -50%; display: grid; gap: 2.6cqw; padding: 4.4cqw; border-radius: 4.5cqw; background: #fff; box-shadow: 0 0 0 1px rgba(23, 23, 26, 0.06), 0 4cqw 10cqw -4cqw rgba(35, 26, 58, 0.35); }
+.ca-md-l { height: 2.4cqw; width: var(--w, 60%); border-radius: 2cqw; background: var(--md-line); }
+.ca-md-l--s { width: 14%; margin-left: auto; background: var(--md-grey); }
+
+/* вкладки статусов */
+.ca-md-tabs { display: flex; gap: 1.6cqw; padding: 1.2cqw; border-radius: 3cqw; background: var(--md-grey); }
+.ca-md-tabs i { position: relative; flex: 1; height: 5cqw; border-radius: 2.2cqw; }
+.ca-md-tabs i.is-on { flex: 1.4; background: #fff; box-shadow: 0 0.6cqw 1.6cqw -0.6cqw rgba(0, 0, 0, 0.2); }
+.ca-md-badge { position: absolute; right: -1.2cqw; top: -1.6cqw; width: 4cqw; height: 4cqw; border-radius: 50%; background: #e5484d; box-shadow: 0 0 0 0.8cqw #fff; }
+
+/* строки списка */
+.ca-md-row { display: flex; align-items: center; gap: 2.4cqw; height: 9cqw; padding: 0 3cqw; border-radius: 2.6cqw; background: #f4f4f7; }
+.ca-md-dot { flex: none; width: 2.8cqw; height: 2.8cqw; border-radius: 50%; background: var(--md-green); box-shadow: 0 0 0 1.2cqw rgba(47, 191, 74, 0.15); }
+.ca-md-row.is-dim { opacity: 0.45; }
+.ca-md-row.is-hot { background: #fff; box-shadow: 0 0 0 1px rgba(23, 23, 26, 0.08), 0 2cqw 5cqw -2cqw rgba(35, 26, 58, 0.35); }
+.ca-tile .ca-md-acts { display: flex; gap: 1.6cqw; margin-left: auto; }
+.ca-md-btn { position: relative; width: 13cqw; height: 5.6cqw; border-radius: 3cqw; background: var(--md-ink); }
+.ca-md-btn--ghost { width: 10cqw; background: var(--md-grey); }
+.ca-md-ok { position: absolute; right: -1.6cqw; top: -2cqw; width: 4.6cqw; height: 4.6cqw; border-radius: 50%; background: var(--md-acc); box-shadow: 0 0 0 0.8cqw #fff; }
+.ca-md-ok::after { content: ""; position: absolute; left: 1.5cqw; top: 1cqw; width: 1.2cqw; height: 2.2cqw; border: solid #fff; border-width: 0 0.6cqw 0.6cqw 0; rotate: 45deg; }
+.ca-md-cursor { position: absolute; left: 66cqw; top: 44cqw; width: 6cqw; height: 7.5cqw; fill: #fff; stroke: var(--md-ink); stroke-width: 1.4; stroke-linejoin: round; filter: drop-shadow(0 0.6cqw 1cqw rgba(0, 0, 0, 0.3)); }
+
+/* страница спорного комментария */
+.ca-md-win--page { grid-template-columns: 1.3fr 1fr; grid-template-rows: auto auto; gap: 2.4cqw; padding: 3.6cqw; }
+.ca-md-post, .ca-md-author, .ca-md-thread, .ca-md-flags { display: grid; align-content: start; gap: 1.8cqw; padding: 2.6cqw; border-radius: 2.6cqw; background: #f4f4f7; }
+.ca-md-pic { height: 9cqw; border-radius: 1.8cqw; background: linear-gradient(135deg, color-mix(in srgb, var(--md-acc) 35%, #fff), color-mix(in srgb, var(--md-acc) 70%, #fff)); }
+.ca-md-author { grid-template-columns: 6cqw 1fr; align-items: center; }
+.ca-md-ava { width: 6cqw; height: 6cqw; border-radius: 50%; background: #c9c3e6; }
+.ca-md-karma { grid-column: 1 / -1; height: 1.8cqw; border-radius: 1cqw; background: var(--md-grey); overflow: hidden; }
+.ca-md-karma b { display: block; height: 100%; width: 100%; border-radius: inherit; background: var(--md-green); transform-origin: left; transform: scaleX(0.3); }
+.ca-md-l--in { margin-left: 4cqw; }
+.ca-md-flags { grid-auto-flow: column; justify-content: start; align-content: center; background: var(--md-pink); }
+.ca-md-flags i { width: 4cqw; height: 4cqw; border-radius: 50%; background: #e5484d; }
+
+/* пять типов — один образец */
+.ca-md-five { position: absolute; left: 12cqw; right: 12cqw; top: 50%; translate: 0 -50%; display: grid; gap: 1.8cqw; }
+.ca-md-frow { display: flex; align-items: center; gap: 2.6cqw; height: 9cqw; padding: 0 3cqw; border-radius: 2.6cqw; background: #fff; box-shadow: 0 0 0 1px rgba(23, 23, 26, 0.06), 0 1.6cqw 3.6cqw -2cqw rgba(35, 26, 58, 0.3); }
+.ca-md-ico { flex: none; width: 5cqw; height: 5cqw; border-radius: 1.4cqw; background: var(--md-pink); }
+.ca-md-ico--c { border-radius: 2.5cqw 2.5cqw 2.5cqw 0.6cqw; }
+.ca-md-ico--u { border-radius: 50%; background: #c9c3e6; }
+.ca-md-ico--p { background: color-mix(in srgb, var(--md-acc) 40%, #fff); }
+.ca-md-ico--g { border-radius: 50%; background: radial-gradient(circle at 30% 50%, #c9c3e6 34%, transparent 35%), radial-gradient(circle at 70% 50%, var(--md-pink) 34%, transparent 35%); }
+.ca-md-ico--s { background: var(--md-grey); }
+.ca-md-pill { width: 13cqw; height: 4.4cqw; margin-left: auto; border-radius: 3cqw; background: #f0eef8; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--md-acc) 30%, transparent); }
+
+/* поверх админки: сетка блоков настроек, в одну ячейку встаёт модуль модерации */
+.ca-md-admin { position: absolute; inset: 18cqw 14cqw; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 5cqw; }
+.ca-md-admin i { border-radius: 4cqw; background: rgba(255, 255, 255, 0.6); box-shadow: inset 0 0 0 1px rgba(23, 23, 26, 0.06); }
+.ca-md-admin .ca-md-slot { position: relative; background: none; box-shadow: none; border: 1.4cqw dashed color-mix(in srgb, var(--md-acc) 45%, transparent); }
+.ca-md-slot b { position: absolute; inset: -1.4cqw; border-radius: 4cqw; background: #fff; box-shadow: 0 3cqw 7cqw -3cqw rgba(35, 26, 58, 0.45); }
+.ca-md-slot b::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 32%; border-radius: 4cqw 4cqw 0 0; background: var(--md-acc); }
+
+/* один на весь поток: стопка карточек над человеком */
+.ca-md-pile { position: absolute; left: 50%; bottom: 36cqw; width: 64cqw; translate: -50% 0; display: grid; justify-items: center; }
+.ca-md-pile i { width: 100%; height: 15cqw; margin-top: -6cqw; border-radius: 3cqw; background: #fff; rotate: var(--r); box-shadow: 0 0 0 1px rgba(23, 23, 26, 0.06), 0 2cqw 4cqw -2cqw rgba(35, 26, 58, 0.35); }
+.ca-md-pile i:nth-child(odd) { background: linear-gradient(90deg, var(--md-pink) 0 22%, #fff 22%); }
+.ca-md-person { position: absolute; left: 50%; bottom: 7cqw; width: 26cqw; height: 26cqw; translate: -50% 0; border-radius: 50%; background: radial-gradient(circle at 50% 38%, #fff 22%, transparent 23%), radial-gradient(ellipse at 50% 100%, #fff 44%, transparent 45%), var(--md-acc); }
+
+/* движение: въезд по очереди, нажатие в строке, сборка страницы, стопка растёт */
+@media (prefers-reduced-motion: no-preference) {
+  .ca-md-row[style*="--i"], .ca-md-frow { animation: ca-md-in 0.55s var(--ca-out) both; animation-delay: calc(0.3s + var(--i) * 0.1s); }
+  .ca-md-badge { animation: ca-md-pop 0.5s var(--ca-out) both 0.75s; }
+  .ca-md-dot { animation: ca-md-blink 2.4s ease-in-out infinite 1.4s; }
+  .ca-md-cursor { animation: ca-md-cursor 3.6s var(--ca-out) infinite 0.4s; }
+  .ca-md-btn:not(.ca-md-btn--ghost) { animation: ca-md-press 3.6s ease-out infinite 0.4s; }
+  .ca-md-ok { animation: ca-md-ok 3.6s var(--ca-out) infinite 0.4s; }
+  .ca-md-post, .ca-md-author, .ca-md-thread, .ca-md-flags { animation: ca-md-in 0.55s var(--ca-out) both; animation-delay: calc(0.3s + var(--i) * 0.14s); }
+  .ca-md-karma b { animation: ca-md-grow 1.6s var(--ca-out) both 0.9s; }
+  .ca-md-flags i { animation: ca-md-pop 0.45s var(--ca-out) both 1.1s; }
+  .ca-md-flags i:nth-child(2) { animation-delay: 1.2s; }
+  .ca-md-flags i:nth-child(3) { animation-delay: 1.3s; }
+  .ca-md-slot b { animation: ca-md-slot 0.8s var(--ca-out) both 0.5s; }
+  .ca-md-pile i { animation: ca-md-drop 0.6s var(--ca-out) both; animation-delay: calc(0.3s + var(--i) * 0.16s); }
+}
+@keyframes ca-md-in { from { opacity: 0; transform: translateY(3cqw); } }
+@keyframes ca-md-pop { from { opacity: 0; transform: scale(0.6); } }
+@keyframes ca-md-blink { 50% { opacity: 0.55; } }
+@keyframes ca-md-grow { from { transform: scaleX(0.02); } }
+@keyframes ca-md-slot { from { opacity: 0; transform: translateY(14cqw); } }
+@keyframes ca-md-drop { from { opacity: 0; transform: translateY(-16cqw); } }
+/* курсор подъезжает к «Одобрить», нажимает и уходит; кнопка проседает, отметка выскакивает и гаснет к следующему кругу */
+@keyframes ca-md-cursor { 0% { opacity: 0; transform: translate(10cqw, 10cqw); } 18% { opacity: 1; transform: translate(0, 0); } 30% { transform: translate(0, 0) scale(0.9); } 36%, 80% { opacity: 1; transform: translate(0, 0); } 100% { opacity: 0; transform: translate(4cqw, 6cqw); } }
+@keyframes ca-md-press { 0%, 26% { transform: scale(1); } 31% { transform: scale(0.94); } 37%, 100% { transform: scale(1); } }
+@keyframes ca-md-ok { 0%, 30% { opacity: 0; transform: scale(0.6); } 40%, 84% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1); } }
