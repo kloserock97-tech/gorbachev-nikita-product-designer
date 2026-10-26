@@ -10,6 +10,11 @@ import { getLang, t } from "../i18n";
 import { pad2 as pad } from "../lib/format";
 import { tidy } from "../lib/typograph";
 import "./context-art.css";
+import { scenes as community } from "./contextArt/community";
+import { scenes as aiAgents } from "./contextArt/ai-agents";
+import { scenes as moderator } from "./contextArt/moderator-dashboard";
+import { scenes as plati } from "./contextArt/plati-chastyami";
+import { scenes as guru } from "./contextArt/restaurant-guru";
 
 const esc = (s: string) => tidy(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const L = (ru: string, en: string) => (getLang() === "ru" ? ru : en);
@@ -57,13 +62,17 @@ const ART: Record<string, () => string> = {
     </div>`,
 };
 
+/* 26.10: у каждого кейса свои сцены (src/ui/contextArt/<id>.ts); сцены GRIF — выше, в ART */
+const SCENES: Record<string, Record<string, () => string>> = { "grif-ai": ART, community, "ai-agents": aiAgents, "moderator-dashboard": moderator, "plati-chastyami": plati, "restaurant-guru": guru };
+
 /** цели и ограничения картинками — внутри «Коротко»; пусто, если у кейса нет context.art */
 export function contextArtBlock(s: CaseStory, mini: (label: string) => string) {
   const art = s.context.art;
   if (!art) return "";
   const goals = s.context.goals ?? [];
   const cons = s.context.constraints ?? [];
-  const tile = (key: string | undefined) => (key && ART[key] ? `<div class="ca-tile ca-tile--${key}" aria-hidden="true">${ART[key]()}</div>` : "");
+  const own = SCENES[s.id] ?? {};
+  const tile = (key: string | undefined) => { const sc = key ? own[key] : undefined; return sc ? `<div class="ca-tile ca-tile--${key}" aria-hidden="true">${sc()}</div>` : ""; };
   return `
     ${goals.length ? `<div class="cs-block ca-block">${mini(t("cs.goals"))}
       <ol class="ca-goals">${goals.map((g, k) => `<li class="ca-card" data-reveal style="--rd:${k}">${tile(art.goals?.[k])}<p><span>${pad(k + 1)}</span>${esc(g)}</p></li>`).join("")}</ol>
