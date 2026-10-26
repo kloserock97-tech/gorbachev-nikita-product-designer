@@ -297,10 +297,10 @@ body {
 /* мостик между пунктом дока и панелью — курсор не «проваливается» в щель */
 .work-menu::before { content: ""; position: absolute; left: 0; right: 0; top: -12px; height: 12px; }
 
-/* v111: пэт-проекты — без колонки категорий, карточки в три колонки */
-.work-menu--lab { width: min(860px, calc(100vw - 32px)); }
+/* v111: пэт-проекты — без колонки категорий. v124: проектов семь — четыре колонки, чтобы все встали в два ряда */
+.work-menu--lab { width: min(1040px, calc(100vw - 32px)); }
 .work-menu--lab .work-menu__body { grid-template-columns: 1fr; }
-.work-menu--lab .work-menu__grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+.work-menu--lab .work-menu__grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
 .lab-open .dock a[data-nav='lab']:not(.is-active) { color: #1b1a16; background: rgba(255, 255, 255, 0.9); }
 .work-menu__body { display: grid; grid-template-columns: 220px 1fr; grid-template-rows: minmax(0, 1fr); gap: 22px; flex: 1 1 auto; min-height: 0; }
 
