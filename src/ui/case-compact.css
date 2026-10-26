@@ -66,6 +66,14 @@
 .cs--compact .dd-step { font-size: 14px; }
 .cs--compact .dd-btn { width: 34px; height: 34px; }
 @media (max-width: 900px) { .cs--compact .cs-decisions { grid-template-columns: minmax(0, 1fr); } }
+/* 26.10: нечётное последнее решение не висит одно в половине ряда — на всю ширину: демо слева, текст справа */
+@media (min-width: 901px) {
+  .cs--compact .cs-decision--row:last-child:nth-child(odd) { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto 1fr; column-gap: clamp(20px, 2.4vw, 32px); align-items: start; }
+  .cs--compact .cs-decision--row:last-child:nth-child(odd) > .dd { grid-row: 1 / -1; margin-bottom: 0; }
+  .cs--compact .cs-decision--row:last-child:nth-child(odd) > h3 { margin-top: 2px; }
+}
+/* четыре цели — два ряда по две, а не три и одна */
+@media (min-width: 601px) { .cs--compact .cs-goals:has(> li:nth-child(4):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* ── «До и после» — тёмно-синяя глава в общем потоке страницы. Отдельным листом, на который наезжает следующий,
    она не годилась: лист ниже окна прилипает сразу и тут же уходит под следующий — блок не успевали рассмотреть.

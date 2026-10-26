@@ -34,14 +34,12 @@ export const en: CaseStory = {
   /* 23.10: the case is one chain, mirroring the Russian version: problem → journey → goals → findings → decisions
      (each answers a finding) → before/after → validation → numbers. fill-in markers were removed at Nikita's request */
   context: {
-    lead: "People switch off an assistant that speaks first after a couple of misses.",
-    text:
-      "GRIF is a personal assistant that comes to you first. It connects to your mail, messengers, calendar and finances, notices when something needs doing and brings a ready solution. The person only agrees or declines.\n\nBut services have taught people the opposite habit: the person asks, the system answers. When an assistant shows up with something that matters, people are glad. When it shows up with a trifle or at the wrong moment, they switch it off. So the main job of the interface is to make a person trust GRIF with a whole task: hand over the meeting notes and send an email they did not write.",
+    /* 26.10: the problem headline and paragraphs are gone, see the Russian version */
+    lead: "",
     goals: [
       "A person finds what the assistant can do without a hint.",
       "You can see what the system is doing right now and what the answer is built from.",
       "Nothing goes out without a confirmation, and everything can be taken back.",
-      "Text is readable: contrast meets WCAG AA.",
       "An investor understands how the product works within a few minutes.",
     ],
     constraints: [
@@ -51,18 +49,7 @@ export const en: CaseStory = {
       { title: "A real team and a deadline", text: "Development needed regular, clear deliveries, and investment rounds were already on the calendar." },
     ],
   },
-  journey: {
-    title: "A follow-up after a meeting",
-    lead: "The main scenario I tested the chat on: the meeting is over and the agreements need to go out in an email.",
-    steps: [
-      { kicker: "Before", title: "The meeting is over", note: "A call with Sergey from AcmeCorp, the notes are in the calendar and the threads", outside: true },
-      { kicker: "Step 1", title: "Hand over the task", note: "One sentence in the input or the “Reply to Sergey” suggestion" },
-      { kicker: "Step 2", title: "GRIF gathers context", note: "Calendar, threads and notes. The person waits but sees what is happening" },
-      { kicker: "Step 3", title: "Check the brief and the email", note: "The sources are listed under the brief, the email comes as a draft" },
-      { kicker: "Step 4", title: "Send or take back", note: "The email will not go out without a confirmation, and it can be taken back after sending" },
-    ],
-    measured: "I counted unassisted task success on steps 1, 3 and 4: find an action, launch it and undo it. GRIF does step 2 on its own.",
-  },
+  /* 26.10: «Путь пользователя» убран по просьбе Никиты */
   /* 24.10: раздел «Подход» убран по просьбе Никиты */
 
   /* the product's own brand material and a photograph break up the chapters: a long page is read by scrolling */
@@ -71,7 +58,8 @@ export const en: CaseStory = {
   /* 23.10: the nine hypotheses are no longer a separate list. Four about the chat moved into the decisions,
      two about investors moved into validation, three about the feed were dropped: the case covers the chat only */
   research: {
-    lead: "First I looked at how assistants talk to people, then I showed people the first versions of the chat.",
+    /* 26.10: заголовок главы убран по просьбе Никиты */
+    lead: "",
     methods: [
       {
         kind: "Competitor analysis",
@@ -97,7 +85,7 @@ export const en: CaseStory = {
   },
   /* v90: the interface film stays below the decisions as the full view. 23.10: one decision per finding */
   decisions: {
-    lead: "Four decisions in the chat. Each one answers its own finding, and I adjusted each one after testing.",
+    lead: "Three decisions in the chat. Each one answers its own finding, and I adjusted each one after testing.",
     items: [
       {
         id: "entry",
@@ -117,21 +105,14 @@ export const en: CaseStory = {
         changed: "The draft had a spinner with the word “Checking…” in place of the steps. It was replaced with steps because a spinner does not tell you what is going on.",
         demo: "grif-reading",
       },
+      /* 26.10: “no confirmation” and “can be taken back” merged into one decision, both answer F4 */
       {
         id: "confirm",
         insight: "F4",
-        title: "Nothing goes out without a confirmation",
-        found: "If the interface says “I won't send this without your confirmation”, the fear that it will get it wrong and send goes away.",
-        did: "The email arrives as a draft: recipient, subject, text. At the bottom is the line “I'll send it only after your yes” and three buttons: Don't send, Edit and Send. The Feed works the same way: the email to Sergey sits under “Waiting for you” and goes out only when you press the button.",
+        title: "Nothing goes out without your yes, and a sent email can be taken back",
+        found: "If the interface says “I won't send this without your confirmation” and lets you undo what was sent, the fear that it will get it wrong and send goes away, and people confirm more boldly.",
+        did: "The email arrives as a draft: recipient, subject, text. At the bottom is the line “I'll send it only after your yes” and three buttons: Don't send, Edit and Send. After sending, Undo stays for 8 seconds, and what GRIF remembered about Sergey can be undone right away.",
         demo: "grif-confirm",
-      },
-      {
-        id: "undo",
-        insight: "F4",
-        title: "A sent email can be taken back",
-        found: "If a sent action can be undone, people confirm more boldly.",
-        did: "After sending, Undo stays for 8 seconds. What GRIF remembered can be undone right away, and a record forgotten in Memory can be restored within 10 seconds.",
-        demo: "grif-undo",
       },
     ],
     /* 24.10: the interface film is gone: it was shot on the pre-redesign UI */

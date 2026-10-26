@@ -123,21 +123,14 @@ const DEMOS: Record<string, Demo> = {
       },
     ],
   },
+  /* 26.10: «без подтверждения» и «можно вернуть» — одно решение и один ролик: черновик ждёт «да» → «Отправить» → отмена */
   "grif-confirm": {
     beats: [
       {
-        cap: { ru: "Письмо приходит черновиком", en: "The email arrives as a draft" },
+        cap: { ru: "Письмо приходит черновиком и ждёт вашего «да»", en: "The email arrives as a draft and waits for your yes" },
         run: async (c) => {
           c.s.show("pending");
-          const card = c.s.find("Action card");
-          card?.classList.add("g2-await");
-          c.ring(card);
-          await c.point(card, 0.5, 0.35);
-        },
-      },
-      {
-        cap: { ru: "«Отправлю только после вашего «да»»", en: "“I'll send it only after your yes”" },
-        run: async (c) => {
+          c.s.find("Action card")?.classList.add("g2-await");
           const line = c.s.text("Отправлю только после вашего «да»");
           c.ring(line?.parentElement ?? line);
           await c.point(line, 0.5, 0.5);
@@ -145,54 +138,25 @@ const DEMOS: Record<string, Demo> = {
         hold: 1900,
       },
       {
-        cap: { ru: "В Ленте то же: решения ждут вас в «Ждут вас»", en: "Same in the Feed: decisions wait under “Waiting for you”" },
+        cap: { ru: "Уходит только по вашей кнопке", en: "It goes out only when you press the button" },
         run: async (c) => {
-          c.s.show("feed");
-          await c.wait(500);
-          const group = c.s.find("Group / Ждут вас");
-          c.ring(group);
           const send = c.s.find("Button/Отправить");
+          c.ring(send);
           await c.point(send, 0.5, 0.5);
           await c.press(send);
         },
-        hold: 2000,
       },
-    ],
-  },
-  "grif-undo": {
-    beats: [
       {
         cap: { ru: "Письмо ушло, но «Отменить» держится 8 секунд", en: "Sent, but “Undo” stays for 8 seconds" },
         run: async (c) => {
           c.s.show("done");
           const card = c.s.find("Action card");
+          card?.classList.add("g2-rise");
           c.ring(card);
           c.s.countdown(card);
           await c.point(c.s.text("Отменить · 8 с"), 0.5, 0.5);
         },
-        hold: 2200,
-      },
-      {
-        cap: { ru: "Запомненное тоже можно отменить", en: "What it remembered can be undone too" },
-        run: async (c) => {
-          const note = c.s.find("Memory note");
-          c.ring(note);
-          await c.point(c.s.text("Отменить", note), 0.5, 0.5);
-        },
-      },
-      {
-        cap: { ru: "Забытое в Памяти — «Вернуть» в течение 10 секунд", en: "Forgotten in Memory: “Restore” for 10 seconds" },
-        run: async (c) => {
-          c.s.show("forget");
-          c.s.find("Dialog / Forget")?.classList.add("g2-hide");
-          c.s.find("Overlay")?.classList.add("g2-hide");
-          const toast = c.s.find("Toast / after forget");
-          toast?.classList.add("g2-rise");
-          c.ring(toast);
-          c.s.countdown(toast);
-          await c.point(toast, 0.75, 0.5);
-        },
-        hold: 2200,
+        hold: 2600,
       },
     ],
   },
