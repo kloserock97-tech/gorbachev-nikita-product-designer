@@ -149,7 +149,7 @@ export const en: CaseStory = {
   },
   /* 26.10: timing on real assessments is a check of the finished product, moved here from the research */
   validation: {
-    lead: "I checked it on real assessments.",
+    lead: "",
     stages: [
       {
         kicker: "Timing",

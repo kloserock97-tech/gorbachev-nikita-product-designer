@@ -155,7 +155,7 @@ export const en: CaseStory = {
     },
   },
   validation: {
-    lead: "I checked it in two rounds.",
+    lead: "",
     stages: [
       {
         kicker: "Round 1",

@@ -126,7 +126,7 @@ export const en: CaseStory = {
   },
   /* 26.10: validation in three rounds — the prototype test, the live measurement and the post-launch test (facts of the former Results) */
   validation: {
-    lead: "I checked it in three rounds.",
+    lead: "",
     stages: [
       {
         kicker: "Stage 1",
