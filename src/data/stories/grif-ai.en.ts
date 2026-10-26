@@ -40,13 +40,12 @@ export const en: CaseStory = {
       "A person finds what the assistant can do without a hint.",
       "You can see what the system is doing right now and what the answer is built from.",
       "Requests are not carried out without a confirmation, and everything can be taken back.",
-      "Get the product to the investment round: an investor understands how it works within a few minutes.",
+      "Show investors the value through design.",
     ],
     /* 26.10: контекст картинками в «Коротко» (ui/contextArt.ts) */
-    art: { goals: ["entry", "live", "confirm", "round"], constraints: ["nods", "budget"] },
+    art: { goals: ["entry", "live", "confirm", "round"], constraints: ["nods"] },
     constraints: [
       { title: "No design system or guidelines at the start", text: "Only wishes about the look and a couple of generated screens." },
-      { title: "Show investors the value through design", text: "" },
     ],
   },
   /* 26.10: «Путь пользователя» убран по просьбе Никиты */
