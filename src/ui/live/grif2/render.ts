@@ -15,7 +15,7 @@ const cls = data.cls as Record<string, string>;
 const expanded = new Map<string, string>();
 let uid = 0;
 
-export type ScreenKey = "new" | "input" | "working" | "pending" | "question" | "done" | "feed" | "feedRun" | "feedEmpty" | "memory" | "forget";
+export type ScreenKey = "new" | "input" | "working" | "pending" | "question" | "done" | "feed" | "feedRun" | "feedEmpty" | "memory" | "forget" | "onb1" | "onb2" | "onb3" | "onb4" | "onb5" | "onb6";
 export const screenSize = (key: ScreenKey) => { const f = frames.get(key)!; return { w: f.w, h: f.h }; };
 
 /** стили экранов: база для абсолютных слоёв + таблица классов из Figma; персонаж — из public */
@@ -52,7 +52,7 @@ function expand(key: ScreenKey) {
       .replace(/ c="/g, ' class="');
     expanded.set(key, h);
   }
-  return h.replace(/ s="(v[0-9a-z]+)"><\/i>/g, (_, k) => `>${svgFor(k)}</i>`);
+  return h.replace(/ s="([a-z][0-9a-z]*)"><\/i>/g, (_, k) => `>${svgFor(k)}</i>`);
 }
 
 /** экран целиком: корневой слой кадра стоит в 0,0 */

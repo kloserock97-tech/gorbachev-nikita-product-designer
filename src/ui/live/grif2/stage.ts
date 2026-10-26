@@ -57,6 +57,15 @@ export function createStage(root: HTMLElement, opts: { base: string; calm: boole
     if (key === "feed" || key === "feedRun" || key === "feedEmpty") stagger(all('[data-n="Main Container"] [data-n^="Group"] > [data-n^="Row"]'), 35, 60);
     if (key === "feedRun") stagger(kids('[data-n="Steps"]'), 260, 200), all('[data-n="Steps"] [data-n="icon/okc"]').forEach((n, i) => { n.style.animationDelay = `${300 + i * 260}ms`; n.classList.add("g2-pop"); });
     if (key === "memory" || key === "forget") stagger([...kids('[data-n="Recently remembered"]'), ...kids('[data-n="Dossier grid"]')], 45, 60);
+    if (key.startsWith("onb")) {
+      /* знакомство: персонаж выходит и покачивается, крыло за ним проявляется медленно */
+      all('[data-n="Character · знакомство"]').forEach((n) => n.classList.add("g2-hello"));
+      all('[data-n="Meet hero"] > i').forEach((n) => n.classList.add("g2-fade-slow"));
+      /* шкала «Знакомство · n из 5»: заполненные сегменты дорастают */
+      all('[data-n="Intro progress"] div').forEach((n) => { if (n.offsetHeight > 0 && n.offsetHeight <= 4 && n.offsetWidth > 4 && !n.children.length) n.classList.add("g2-grow"); });
+      /* чек-лист итога: галочки по очереди */
+      all('[data-n="Intro checklist"] i').forEach((n, i) => { n.style.animationDelay = `${500 + i * 220}ms`; n.classList.add("g2-pop"); });
+    }
   }
 
   /** кольцо-подсказка отдельным слоем поверх экрана: родители слоя в Figma обрезают содержимое, кольцо на самом
@@ -73,7 +82,19 @@ export function createStage(root: HTMLElement, opts: { base: string; calm: boole
     m.className = "g2-mark";
     m.style.cssText = `left:${x - pad}px;top:${y - pad}px;width:${target.offsetWidth + pad * 2}px;height:${target.offsetHeight + pad * 2}px;--k:${k};border-radius:${r + pad}px`;
     cur.append(m);
+    pan(m);
     return m;
+  }
+
+  /* телефон: окно движка листается вбок (.pt-screen.is-pan) — довозим его до подсказки, как в Community */
+  function pan(el: HTMLElement) {
+    const scr = root.parentElement;
+    if (!scr || !scr.classList.contains("is-pan")) return;
+    const a = el.getBoundingClientRect();
+    const b = scr.getBoundingClientRect();
+    if (a.left >= b.left + 6 && a.right <= b.right - 6) return;
+    const left = a.width > b.width ? scr.scrollLeft + a.left - b.left - 8 : scr.scrollLeft + (a.left + a.right) / 2 - (b.left + b.right) / 2;
+    scr.scrollTo({ left, behavior: opts.calm ? "auto" : "smooth" });
   }
 
   /** текст печатается словами, как стриминг ответа */

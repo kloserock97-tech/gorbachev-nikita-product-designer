@@ -1,10 +1,9 @@
-/* 24.10: живые прототипы GRIF на финальных экранах из Figma (секция 1066:3810). Три сценария — три модуля
-   для движка caseProto (контракт live/types.ts): шаги панели слева совпадают с шагами в данных кейса.
-   · Чат «Письмо после встречи»: новый чат → подсказка «Ответить Сергею» → ответ собирается на глазах →
-     «Отправить» → «Письмо отправлено» с обратным отсчётом отмены.
-   · Лента: задача в работе → разобрать очередь «Отправить» → «Всё разобрано».
-   · Память: досье → запись про маму → «Забыть?» → «Запись забыта · Вернуть».
-   Точка нажатия — настоящий слой экрана (кнопка, карточка), найденный по имени из Figma; вокруг него кольцо .pt-hint. */
+/* 24.10: живые прототипы GRIF на финальных экранах из Figma (секция 1066:3810). Два сценария — два модуля для движка
+   caseProto (контракт live/types.ts): шаги панели слева совпадают с шагами в данных кейса.
+   · Знакомство в чате: имя → чем занимаетесь → «Запомнил 3 факта» → подключить почту → первая задача → итог.
+   · Письмо после встречи: новый чат → подсказка «Ответить Сергею» → ответ собирается на глазах → «Отправить» →
+     «Письмо отправлено» с обратным отсчётом отмены.
+   Точка нажатия — настоящий слой экрана, найденный по имени из Figma; кольцо вокруг него рисует stage.mark */
 import type { LiveCtx, LiveInstance, LiveProto } from "../types";
 import { createStage, type Stage } from "./stage";
 
@@ -62,58 +61,45 @@ const chat: Flow = (s, ctx, step) => {
   s.countdown(card);
 };
 
-/* ── лента: задача в работе → очередь → всё разобрано ── */
-const feed: Flow = (s, ctx, step) => {
-  const go = (k: number) => { ctx.go(k); feed(s, ctx, k); };
-  if (step === 0) {
-    s.show("feed");
-    hint(s, s.hot("Готовлю бриф к встрече с командой", 2), () => go(1));
-    return;
-  }
-  if (step === 1) {
-    s.show("feedRun");
-    const panel = s.find("Preview", true) ?? s.find("Panel", true);
-    panel?.classList.add("g2-rise");
-    hint(s, s.find("Button/Отправить"), () => {
-      /* строки очереди уходят одна за другой, потом лента пустеет */
-      const rows = [...(s.find("Group / Ждут вас")?.querySelectorAll<HTMLElement>(":scope > [data-n='Row']") ?? [])];
-      rows.forEach((r, i) => s.later(140 * i, () => r.classList.add("g2-gone")));
-      s.later(140 * rows.length + 380, () => go(2));
-    });
-    return;
-  }
-  s.show("feedEmpty");
+/* ── знакомство в чате (онбординг): шесть кадров «Онбординг — знакомство 1–6» ──
+   Каждый ход: ответ человека выезжает справа, ответ GRIF собирается по частям, длинный текст печатается словами,
+   шкала «Знакомство · n из 5» дорастает, кольцо встаёт на следующее действие */
+function turn(s: Stage, onReady: () => void) {
+  const thread = s.find("Thread");
+  const msgs = [...(thread?.children ?? [])] as HTMLElement[];
+  const user = [...msgs].reverse().find((m) => m.dataset.n === "User message");
+  const agent = [...msgs].reverse().find((m) => m.dataset.n === "Agent message");
+  let t = 0;
+  if (user) { user.classList.add("g2-from-right"); t = 360; }
+  const dur = s.reveal(agent ?? null, 320, 0, (kid, at) => {
+    const text = [...kid.querySelectorAll<HTMLElement>("div"), kid].find((n) => !n.children.length && (n.textContent ?? "").length > 48);
+    return text ? s.stream(text, t + at, 26) : 0;
+  });
+  /* reveal считает от нуля — сдвигаем на время выезда ответа человека */
+  if (t && agent) [...agent.children].forEach((k) => ((k as HTMLElement).style.animationDelay = `${t}ms`));
+  s.later(t + dur, onReady);
+}
+
+const onboarding: Flow = (s, ctx, step) => {
+  const go = (k: number) => { ctx.go(k); onboarding(s, ctx, k); };
+  const key = (["onb1", "onb2", "onb3", "onb4", "onb5", "onb6"] as const)[Math.min(step, 5)];
+  s.show(key);
+  const target = (): HTMLElement | null => {
+    if (step === 0) return s.hot("Никита", 1, s.find("Answer chips"));
+    if (step === 1) return s.find("Chip / selected");
+    if (step === 2) return s.find("Button/Всё верно");
+    if (step === 3) return s.find("Button/Подключить Google");
+    if (step === 4) return s.find("Button/Отправить");
+    return null;
+  };
+  if (step === 4) s.find("Action card")?.classList.add("g2-await");
+  turn(s, () => {
+    /* отсчёт отмены идёт с момента, когда карточка «Письмо отправлено» уже на виду */
+    if (step === 5) s.countdown(s.find("Action card"));
+    const el = target();
+    if (el) hint(s, el, () => go(step + 1));
+  });
 };
 
-/* ── память: забыть запись и вернуть ── */
-const memory: Flow = (s, ctx, step) => {
-  const go = (k: number) => { ctx.go(k); memory(s, ctx, k); };
-  if (step === 0) {
-    s.show("memory");
-    const mama = s.hot("Мама", 1);
-    hint(s, mama, () => go(1));
-    /* карточка людей ниже первого экрана окна — доезжаем до неё */
-    if (mama) s.later(500, () => mama.scrollIntoView({ block: "center", behavior: ctx.calm ? "auto" : "smooth" }));
-    return;
-  }
-  const el = s.show("forget", true);
-  const dialog = s.find("Dialog / Forget"), overlay = s.find("Overlay"), toast = s.find("Toast / after forget");
-  const root = el.parentElement!;
-  if (step === 1) {
-    toast?.classList.add("g2-hide");
-    overlay?.classList.add("g2-fade");
-    dialog?.classList.add("g2-dialog");
-    if (dialog) root.scrollTop = Math.max(0, dialog.offsetTop - 160);
-    hint(s, s.hot("Забыть", 1, dialog), () => go(2));
-    return;
-  }
-  dialog?.classList.add("g2-hide");
-  overlay?.classList.add("g2-hide");
-  root.scrollTop = 0;
-  toast?.classList.add("g2-drop");
-  s.countdown(toast);
-};
-
+export const grifOnboarding = make({ w: 1440 }, onboarding);
 export const grifChat = make({ w: 1440 }, chat);
-export const grifFeed = make({ w: 1440 }, feed);
-export const grifMemory = make({ w: 1440 }, memory);

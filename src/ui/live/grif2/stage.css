@@ -51,3 +51,11 @@
   .g2 .g2-spin, .g2 .g2-grow, .g2 .g2-pulse, .g2 .g2-breathe, .g2 .g2-breathe-slow, .g2 .g2-float, .g2 .g2-shimmer, .g2 .g2-pop, .g2 .g2-dialog, .g2 .g2-drop, .g2 .g2-await::after, .g2 .g2-mark::after { animation: none; }
   .g2 .g2-shimmer { -webkit-mask-image: none; mask-image: none; }
 }
+
+/* 24.10: знакомство в чате — ответ человека выезжает справа, персонаж выходит и дальше покачивается, крыло проявляется */
+.g2 .g2-from-right { animation: g2-from-right 0.34s cubic-bezier(0.23, 1, 0.32, 1) both; }
+@keyframes g2-from-right { from { opacity: 0; translate: 16px 0; } to { opacity: 1; translate: 0 0; } }
+.g2 .g2-hello { animation: g2-hello 0.6s cubic-bezier(0.23, 1, 0.32, 1) both, g2-float 3.4s ease-in-out 0.6s infinite; }
+@keyframes g2-hello { from { opacity: 0; scale: 0.9; translate: 0 8px; } to { opacity: 1; scale: 1; translate: 0 0; } }
+.g2 .g2-fade-slow { animation: g2-in 1.2s ease 0.15s both; }
+@media (prefers-reduced-motion: reduce) { .g2 .g2-from-right, .g2 .g2-hello, .g2 .g2-fade-slow { animation: none; } }

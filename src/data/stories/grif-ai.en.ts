@@ -203,8 +203,23 @@ export const en: CaseStory = {
   /* 23.10: Никита оставил две метрики: task success rate 87% и time-to-market 3 нед → 5 дн, остальные убраны */
   /* 23.10: раздел «Результат» убран по просьбе Никиты — цифры остаются в карточках под шапкой */
 
-  /* 24.10: three flows on the final Figma screens (section 1066:3810), see the Russian version */
+  /* 25.10: two flows (onboarding, email) on the final Figma screens (section 1066:3810), see the Russian version */
   prototypes: [
+    {
+      tab: "Getting acquainted",
+      title: "Get to know GRIF in a couple of minutes",
+      lead: "Onboarding happens right in the chat: five short steps, and by the end the first real task is done.",
+      live: "grif-onboarding",
+      device: "browser",
+      steps: [
+        { image: img("cases/grif-ai/live2/s-onb1.webp", 1200, 750, "GRIF says hello and asks what to call you"), action: "Pick what GRIF should call you: “Nikita”", why: "The options come from your Google account, and you can type your own. The bar below shows there are only five steps." },
+        { image: img("cases/grif-ai/live2/s-onb2.webp", 1200, 750, "GRIF remembered the name and asks what you do"), action: "Pick “I run partnerships”", why: "Right under the answer you see what GRIF remembered and a link to Memory. Your work tells it which tasks to take on." },
+        { image: img("cases/grif-ai/live2/s-onb3.webp", 1200, 750, "The “Remembered about you” card: three facts with sources"), action: "Check what GRIF understood and press “All correct”", why: "Each fact says where it came from: the conversation or the browser. Anything wrong can be fixed right there." },
+        { image: img("cases/grif-ai/live2/s-onb4.webp", 1200, 750, "A request to connect mail and calendar"), action: "Press “Connect Google”", why: "Before connecting, GRIF says what it will see, what it won't do without your yes and where to switch it off. Access is read-only." },
+        { image: img("cases/grif-ai/live2/s-onb5.webp", 1200, 750, "The first task: a draft email to Sergey waits for confirmation"), action: "Check the draft to Sergey and press Send", why: "The first task comes from the inbox: Sergey has waited two days for a reply. It also shows the rule: GRIF asks before anything irreversible." },
+        { image: img("cases/grif-ai/live2/s-onb6.webp", 1200, 750, "Email sent, the onboarding checklist and what to do next"), action: "Done: the email is out, onboarding is almost over", why: "Undo stays for 8 seconds, the task went to the Feed, and below are ideas for what to start with for your kind of work." },
+      ],
+    },
     {
       tab: "Email after a meeting",
       title: "Send a follow-up after the meeting",
@@ -216,30 +231,6 @@ export const en: CaseStory = {
         { image: img("cases/grif-ai/live2/s-pending.webp", 1200, 750, "The answer builds up: thinking, actions, brief, email"), action: "GRIF puts together the brief and the email", why: "The answer appears in parts: how long it thought, what it did, the brief and the draft email." },
         { image: img("cases/grif-ai/live2/s-pending.webp", 1200, 750, "The email waits for confirmation"), action: "Check the email and press Send", why: "The card says “I'll send it only after your yes”, and the email does not go out until you press the button." },
         { image: img("cases/grif-ai/live2/s-done.webp", 1200, 750, "The email is sent, undo is still there"), action: "Done: the email is out, and you can still undo it", why: "Undo stays for 8 seconds, and what GRIF remembered about Sergey can be crossed out right away." },
-      ],
-    },
-    {
-      tab: "Feed",
-      title: "Clear the feed in a minute",
-      lead: "On top is what waits for your decision, below is what GRIF is doing on its own.",
-      live: "grif-feed",
-      device: "browser",
-      steps: [
-        { image: img("cases/grif-ai/live2/s-feed.webp", 1200, 750, "The feed: waiting for you, now, done, next"), action: "Open the task “Preparing the brief for the team meeting”", why: "Running tasks come with a progress bar and a step, so you see how much is left." },
-        { image: img("cases/grif-ai/live2/s-feedRun.webp", 1200, 750, "Live steps of the task on the right"), action: "Clear the queue: press Send", why: "The task steps are on the right and can be stopped. Queue rows wait for one tap: GRIF prepared everything." },
-        { image: img("cases/grif-ai/live2/s-feedEmpty.webp", 1200, 750, "All cleared"), action: "Done: nothing waits for a decision", why: "An empty feed says GRIF will finish the remaining tasks itself and will write if it needs you." },
-      ],
-    },
-    {
-      tab: "Memory",
-      title: "Remove what GRIF should not keep",
-      lead: "Everything GRIF remembered is out in the open, and any record can be forgotten.",
-      live: "grif-memory",
-      device: "browser",
-      steps: [
-        { image: img("cases/grif-ai/live2/s-memory.webp", 1200, 750, "The dossier: what GRIF knows about Nikita"), action: "Open the “Mom” card", why: "Memory works like a dossier: about you, people, preferences, rules. Each record shows where it came from." },
-        { image: img("cases/grif-ai/live2/s-forget.webp", 1200, 750, "Forget this record?"), action: "Press Forget", why: "Before deleting, GRIF shows the whole record and says plainly that chats where it came up will stay." },
-        { image: img("cases/grif-ai/live2/s-forget.webp", 1200, 750, "Record forgotten, can be restored"), action: "Done: the record is forgotten and can be restored", why: "Restore stays for 10 seconds, like undo for an email in the chat." },
       ],
     },
   ],
