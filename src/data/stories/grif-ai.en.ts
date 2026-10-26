@@ -157,7 +157,7 @@ export const en: CaseStory = {
   },
   /* 23.10: the investor run moved here from research: it tested the finished product */
   validation: {
-    lead: "I tested it in three rounds.",
+    lead: "",
     stages: [
       {
         kicker: "Round 1",
