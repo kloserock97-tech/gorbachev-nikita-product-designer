@@ -1,4 +1,4 @@
-/* Заметки на первом экране (v28): одна карточка, листается по страницам. Свои проекты Никиты: четыре графических
+/* Заметки на первом экране (v28): одна карточка, листается по страницам. Свои проекты Никиты: пять графических
    демо с живой панелью настроек и код, а с v88 ещё полка UI-решений Shelf и трекер поиска работы Marathon.
    Тексты — в словарях (i18n/en.ts, ru.ts) под ключами notes.<id>.*; здесь только то, что от языка
    не зависит. Все проекты опубликованы: код на github.com/kloserock97-tech, демо на GitHub Pages. */
@@ -10,7 +10,7 @@ type NoteVideo = { webm: string; mp4: string };
 /** meta — стек и год строкой под заголовком описания (от языка не зависит);
     glyph — свой штриховой значок проекта: содержимое svg с viewBox 0 0 64 64 (v58) */
 /** logo — живой знак вместо ролика (v88, ui/noteLogo.ts); image тогда — неподвижный кадр того же знака */
-export type Note = { id: "hill" | "drift" | "sail" | "meadow" | "shelf" | "marathon"; image: string; points: number; meta: string; glyph: string; links?: NoteLinks; video?: NoteVideo; logo?: NoteLogo };
+export type Note = { id: "hill" | "drift" | "sail" | "meadow" | "overgrowth" | "shelf" | "marathon"; image: string; points: number; meta: string; glyph: string; links?: NoteLinks; video?: NoteVideo; logo?: NoteLogo };
 
 const notes: Note[] = [
   {
@@ -54,6 +54,17 @@ const notes: Note[] = [
     points: 3,
     links: { demo: "https://kloserock97-tech.github.io/meadow-walk/", repo: "https://github.com/kloserock97-tech/meadow-walk" },
   },
+  /* v124: бывший загрузчик «живой сад» отдельным демо. Ролик снят покадрово с живого демо и начинается с заросшей плиты */
+  {
+    id: "overgrowth",
+    meta: "three.js · GLSL · 2026",
+    /* плита сбоку: лёд слева, кочки мха справа и цветок */
+    glyph: '<rect x="8" y="40" width="48" height="11" rx="3"/><path d="M11 40l3-9 4 5 3-7 3 11"/><path d="M28 40c2-6 7-6 9-1 2-5 8-5 10 0 2-3 6-3 7 1"/><path d="M50 34V22"/><circle cx="50" cy="17" r="4"/>',
+    image: "ui/card-overgrowth.webp",
+    video: { webm: "ui/card-overgrowth.webm", mp4: "ui/card-overgrowth.mp4" },
+    points: 3,
+    links: { demo: "https://kloserock97-tech.github.io/overgrowth/", repo: "https://github.com/kloserock97-tech/overgrowth" },
+  },
   /* v88: не графика, а продукты для себя — полка UI-решений и трекер поиска работы. Обложка — живой знак */
   {
     id: "shelf",
@@ -77,7 +88,7 @@ const notes: Note[] = [
   },
 ];
 
-/* v97: порядок показа — Marathon, Shelf, затем четыре графических демо (в главе «Пэт-проекты» и в карточке холма,
+/* v97: порядок показа — Marathon, Shelf, затем пять графических демо (в главе «Пэт-проекты» и в карточке холма,
    где перед ними стоят три кейса — fieldNote.ts) */
-const ORDER: Note["id"][] = ["marathon", "shelf", "hill", "drift", "sail", "meadow"];
+const ORDER: Note["id"][] = ["marathon", "shelf", "hill", "drift", "sail", "meadow", "overgrowth"];
 export default ORDER.map((id) => notes.find((n) => n.id === id)!);

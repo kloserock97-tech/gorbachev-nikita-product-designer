@@ -22,7 +22,7 @@ Scrolling drives a three-part story:
 
 3. The camera returns to the hill at dusk. Fireflies come out, Kelly sleeps curled up in the armchair, and the footer holds the contacts: a mail button, Telegram, LinkedIn and the address itself, which copies when you click it.
 
-The note card on the first screen flips through four of my side projects: [Windcrest](https://github.com/kloserock97-tech/windcrest) (the grass of this hill as a demo of its own), [Driftfield](https://github.com/kloserock97-tech/driftfield) (a particle cloud in a curl-noise field), [Nightsail](https://github.com/kloserock97-tech/nightsail) (a giant marble head surfacing from a night sea under a column of light) and [Meadow Walk](https://github.com/kloserock97-tech/meadow-walk) (an endless flight over a windy meadow). Each has a live demo with every parameter on a panel.
+The note card on the first screen flips through five of my side projects: [Windcrest](https://github.com/kloserock97-tech/windcrest) (the grass of this hill as a demo of its own), [Driftfield](https://github.com/kloserock97-tech/driftfield) (a particle cloud in a curl-noise field), [Nightsail](https://github.com/kloserock97-tech/nightsail) (a giant marble head surfacing from a night sea under a column of light) [Meadow Walk](https://github.com/kloserock97-tech/meadow-walk) (an endless flight over a windy meadow) and [Overgrowth](https://github.com/kloserock97-tech/overgrowth) (a glass slab that thaws and grows over with moss, once this site's loading screen). Each has a live demo with every parameter on a panel.
 
 The retro computer can also be clicked on the hill. Its screen shows a small 2000s-style home page.
 
