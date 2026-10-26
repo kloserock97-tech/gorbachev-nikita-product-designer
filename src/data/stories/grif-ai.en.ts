@@ -43,10 +43,8 @@ export const en: CaseStory = {
       "Get the product to the investment round: an investor understands how it works within a few minutes.",
     ],
     constraints: [
-      { title: "An abstract idea at the start", text: "No research, and the market is only taking shape." },
       { title: "A limited budget", text: "Until the investment came, there was little money for research or a team." },
       { title: "No design system and no shared settings", text: "Only wishes about the look and a couple of generated screens." },
-      { title: "A real team and a deadline", text: "Development needed regular, clear deliveries, and investment rounds were already on the calendar." },
     ],
   },
   /* 26.10: «Путь пользователя» убран по просьбе Никиты */
