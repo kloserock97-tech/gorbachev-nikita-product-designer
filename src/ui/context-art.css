@@ -118,3 +118,5 @@
    текста этапа не задевают подписи внутри схемы */
 .cs-stages li.cs-stage--art > p { color: inherit; }
 .cs-stages .ca-tile b { font-size: inherit; font-weight: inherit; }
+/* одно ограничение — карточка на всю ширину, а не половина пустой строки */
+.ca-cons:has(> li:only-child) { grid-template-columns: minmax(0, 1fr); }
