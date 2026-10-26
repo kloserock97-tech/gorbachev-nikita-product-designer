@@ -145,3 +145,5 @@
 .cs--compact .cs-sec--decisions .cs-decision--row:has(.cs-decision-img) { align-items: stretch; gap: 0; }
 .cs--compact .cs-decision--row .cs-fig--inline { --stage-h: clamp(240px, 24vw, 360px); }
 .cs--compact .cs-decision--row .cs-stage { height: var(--stage-h); }
+/* 26.10: «Коротко» несколькими абзацами — между ними небольшой воздух */
+.cs-summary + .cs-summary { margin-top: 0.7em !important; }

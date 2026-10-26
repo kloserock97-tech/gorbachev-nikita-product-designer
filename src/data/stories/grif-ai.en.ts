@@ -17,18 +17,18 @@ export const en: CaseStory = {
     title: "GRIF AI",
     tagline: "I built a design department out of AI agents and took the product from concept to an MVP with a design system in React.",
     summary:
-      "GRIF is an assistant that comes to you first: it notices tasks in your mail and calendar and brings a ready solution. The main design job was to make people trust it with a whole task and not fear a mistake. We built it from zero on a small budget, so AI agents put together most of the design: I prepared the design system and the rules, connected Figma to Claude through MCP and set up a pipeline to GitHub and Storybook. Agents built screens and components, I owned the vision, fixes and animations.",
+      "GRIF is an assistant that comes to you first: it notices tasks in your mail and calendar and brings a ready solution.\n\nThe main design job was to make people trust it with a whole task and not fear a mistake.\n\nAI agents put together most of the screens: I prepared the design system and the rules, connected Figma to Claude through MCP and set up a pipeline to GitHub and Storybook. I refined the vision and brought the interface to life and made it feel human with animations and precise fixes.",
     facts: [
-      ["Role", "Founding Product Designer"],
+      ["Role", "Product Designer"],
       ["Company", "GRIF AI"],
       ["Timeline", "2025–2026"],
-      ["Platform", "Web and desktop app"],
+      ["Platform", "Web (mobile first) and desktop app"],
     ],
     tags: ["AI", "Design system", "B2C", "MVP"],
   },
   /* 23.10: Никита оставил две метрики: task success rate 87% и time-to-market 3 нед → 5 дн */
   kpis: [
-    { value: "3 wk → 5 d", label: "time-to-market for a new feature, from idea to code" },
+    { value: "3 wk → 5 d", label: "time-to-market for a new feature, from idea to production" },
     { value: "87%", label: "unassisted task success rate in usability tests" },
   ],
   /* 23.10: the case is one chain, mirroring the Russian version: problem → journey → goals → findings → decisions
@@ -39,14 +39,14 @@ export const en: CaseStory = {
     goals: [
       "A person finds what the assistant can do without a hint.",
       "You can see what the system is doing right now and what the answer is built from.",
-      "Nothing goes out without a confirmation, and everything can be taken back.",
+      "Requests are not carried out without a confirmation, and everything can be taken back.",
       "Get the product to the investment round: an investor understands how it works within a few minutes.",
     ],
     /* 26.10: контекст картинками в «Коротко» (ui/contextArt.ts) */
-    art: { goals: ["entry", "live", "confirm", "round"], constraints: ["budget", "nods"] },
+    art: { goals: ["entry", "live", "confirm", "round"], constraints: ["nods", "budget"] },
     constraints: [
-      { title: "A limited budget", text: "Until the investment came, there was little money for research or a team." },
-      { title: "No design system and no shared settings", text: "Only wishes about the look and a couple of generated screens." },
+      { title: "No design system or guidelines at the start", text: "Only wishes about the look and a couple of generated screens." },
+      { title: "Show investors the value through design", text: "Until the investment came, there was little money for research or a team — the interface itself had to show the value." },
     ],
   },
   /* 26.10: «Путь пользователя» убран по просьбе Никиты */
@@ -76,9 +76,9 @@ export const en: CaseStory = {
         sample: "Tests and interviews on the first versions of the chat.",
         finding: "Trust dropped over small things, not over big mistakes.",
         insights: [
-          { id: "F2", text: "An action with no entry point does not exist for a person. People looked where they already look: in the input and in the suggestions under it." },
-          { id: "F3", text: "While the system thinks in silence, a person cannot tell whether it is working or stuck. A finished answer with no source got checked by hand." },
-          { id: "F4", text: "People were scared the assistant would get it wrong and send the email itself, and that a started action could not be stopped." },
+          { id: "F2", text: "The habit of solving tasks in a chat is not fully formed yet. It will be easier for people to steer agents with dynamic buttons and familiar widgets." },
+          { id: "F3", text: "AI still hallucinates, so the whole process can't be delegated. For the product to get stickier, the agent's whole chain of reasoning and actions must be visible and undoable." },
+          { id: "F4", text: "To stand apart from popular services, every added service and access should bring value right away as tasks solved, with no direct request from the user." },
         ],
       },
     ],
@@ -91,17 +91,17 @@ export const en: CaseStory = {
       {
         id: "entry",
         insight: "F2",
-        title: "Entry points where people already look",
-        found: "If an action has an entry point in the input or in the suggestions under it, people find it without a hint.",
-        did: "The input sits in the middle of a new chat, with three suggestions from today's tasks under it. Typing @ picks a source right in the input: mail, calendar, Notion.",
+        title: "The agent can be steered with buttons, not only words",
+        found: "If ready actions from today's tasks sit under the input, people use the agent even without a habit of solving tasks in a chat.",
+        did: "The input sits in the middle of a new chat, with three action suggestions from mail and calendar under it: one tap and the task is running. Typing @ picks a source right in the input: mail, calendar, Notion.",
         changed: "In the first version the suggestion cards had a two-line description that got cut off with an ellipsis. Now a suggestion is one line with a task.",
         demo: "grif-entry",
       },
       {
         id: "reading",
         insight: "F3",
-        title: "You can see GRIF reading and where the answer comes from",
-        found: "If you can see the system reading and the answer names its source, people double-check it less.",
+        title: "The whole chain of reasoning and actions is in sight",
+        found: "If every step of the agent and the sources of the answer are visible, people trust it with a task even though AI can still be wrong.",
         did: "While GRIF works, the answer and the input show which step is running and what is left. When it is done, “Thought for 12 s” and “Ran 4 actions” stay, and under the answer you see what it was built from: Gmail, Notion, Calendar.",
         changed: "The draft had a spinner with the word “Checking…” in place of the steps. It was replaced with steps because a spinner does not tell you what is going on.",
         demo: "grif-reading",
@@ -109,9 +109,9 @@ export const en: CaseStory = {
       /* 26.10: “no confirmation” and “can be taken back” merged into one decision, both answer F4 */
       {
         id: "confirm",
-        insight: "F4",
-        title: "Nothing goes out without your yes, and a sent email can be taken back",
-        found: "If the interface says “I won't send this without your confirmation” and lets you undo what was sent, the fear that it will get it wrong and send goes away, and people confirm more boldly.",
+        insight: "F3",
+        title: "No request runs without your yes, and what's done can be taken back",
+        found: "If the agent does nothing irreversible without a confirmation and what it did can be undone, delegating to it stops being scary.",
         did: "The email arrives as a draft: recipient, subject, text. At the bottom is the line “I'll send it only after your yes” and three buttons: Don't send, Edit and Send. After sending, Undo stays for 8 seconds, and what GRIF remembered about Sergey can be undone right away.",
         demo: "grif-confirm",
       },
@@ -122,7 +122,7 @@ export const en: CaseStory = {
      In the final mock-up the placeholder is 3.67, the warning 3.90 and the profile email 3.40, also under 4.5 */
   compare: {
     title: "A new chat: the first version and the final one",
-    lead: "The first version of the new chat failed the WCAG contrast check. Hover a note to see its spot on the screen.",
+    lead: "The first version of the new chat failed the WCAG contrast check. Tap the screen to see the detailed review.",
     before: {
       title: "First version",
       image: img(G + "compare-before.webp", 1440, 900, "The first version of a new chat: an orb, a Hi, there greeting, three cards and the input"),
@@ -183,18 +183,18 @@ export const en: CaseStory = {
   /* 25.10: two flows (onboarding, email) on the final Figma screens (section 1066:3810), see the Russian version */
   prototypes: [
     {
-      tab: "Getting acquainted",
-      title: "Get to know GRIF in a couple of minutes",
-      lead: "Onboarding happens right in the chat: five short steps, and by the end the first real task is done.",
+      tab: "Onboarding",
+      title: "Into the service in 5 steps",
+      lead: "A progress bar gets more people to the end of the flow. Preloaded quick-action suggestions shorten the path.",
       live: "grif-onboarding",
       device: "browser",
       steps: [
-        { image: img("cases/grif-ai/live2/s-onb1.webp", 1200, 750, "GRIF says hello and asks what to call you"), action: "Pick what GRIF should call you: “Nikita”", why: "The options come from your Google account, and you can type your own. The bar below shows there are only five steps." },
-        { image: img("cases/grif-ai/live2/s-onb2.webp", 1200, 750, "GRIF remembered the name and asks what you do"), action: "Pick “I run partnerships”", why: "Right under the answer you see what GRIF remembered and a link to Memory. Your work tells it which tasks to take on." },
-        { image: img("cases/grif-ai/live2/s-onb3.webp", 1200, 750, "The “Remembered about you” card: three facts with sources"), action: "Check what GRIF understood and press “All correct”", why: "Each fact says where it came from: the conversation or the browser. Anything wrong can be fixed right there." },
-        { image: img("cases/grif-ai/live2/s-onb4.webp", 1200, 750, "A request to connect mail and calendar"), action: "Press “Connect Google”", why: "Before connecting, GRIF says what it will see, what it won't do without your yes and where to switch it off. Access is read-only." },
-        { image: img("cases/grif-ai/live2/s-onb5.webp", 1200, 750, "The first task: a draft email to Sergey waits for confirmation"), action: "Check the draft to Sergey and press Send", why: "The first task comes from the inbox: Sergey has waited two days for a reply. It also shows the rule: GRIF asks before anything irreversible." },
-        { image: img("cases/grif-ai/live2/s-onb6.webp", 1200, 750, "Email sent, the onboarding checklist and what to do next"), action: "Done: the email is out, onboarding is almost over", why: "Undo stays for 8 seconds, the task went to the Feed, and below are ideas for what to start with for your kind of work." },
+        { image: img("cases/grif-ai/live2/s-onb1.webp", 1200, 750, "GRIF says hello and asks what to call you"), action: "Choosing a name", why: "Options come from your Google account, and you can type your own." },
+        { image: img("cases/grif-ai/live2/s-onb2.webp", 1200, 750, "GRIF remembered the name and asks what you do"), action: "Choosing a role", why: "Dynamic chips (built from the most frequent choices) preload relevant skills into the agent." },
+        { image: img("cases/grif-ai/live2/s-onb3.webp", 1200, 750, "The “Remembered about you” card: three facts with sources"), action: "Confirming the choices", why: "The agent's actions are transparent, clear and under control from the very start." },
+        { image: img("cases/grif-ai/live2/s-onb4.webp", 1200, 750, "A request to connect mail and calendar"), action: "Adding access", why: "A set of suggested tools, with a way to limit the agent's rights." },
+        { image: img("cases/grif-ai/live2/s-onb5.webp", 1200, 750, "The first task: a draft email to Sergey waits for confirmation"), action: "Showing what it can do", why: "Based on its access and rights, the agent loads the first task and does it in front of the user." },
+        { image: img("cases/grif-ai/live2/s-onb6.webp", 1200, 750, "Email sent, the onboarding checklist and what to do next"), action: "Done: onboarding finished, the first task is done", why: "Undo stays for 8 seconds, and the task went to the Feed. Below are hints about what else the agent can help with." },
       ],
     },
     {

@@ -100,6 +100,9 @@ const head = (n: number, id: string, label: string, lead?: string) => `
     ${lead ? `<h2 class="cs-lead" data-reveal>${keepHyphens(esc(lead))}</h2>` : ""}
   </header>`;
 
+/** 26.10: «Коротко» абзацами (пустая строка в данных); жирное начало — у первого */
+const summaryParas = (text: string) => text.split(/\n{2,}/).map((x, k) => `<p class="cs-summary" data-reveal>${k ? esc(x) : runIn(x)}</p>`).join("");
+
 /** абзацы разделяются пустой строкой в данных */
 const paras = (text: string, cls = "cs-text") => text.split(/\n{2,}/).map((x) => `<p class="${cls}" data-reveal>${esc(x)}</p>`).join("");
 
@@ -319,7 +322,7 @@ function compactBody(s: CaseStory) {
   return `
         <section class="cs-sec">
           ${head(++sec, "brief", t("cs.outcome"))}
-          <p class="cs-summary" data-reveal>${runIn(s.hero.summary)}</p>
+          ${summaryParas(s.hero.summary)}
           ${main}
         </section>
 
@@ -438,7 +441,7 @@ export function renderStory(s: CaseStory, i: number, n: number, nextId: string, 
 
         <section class="cs-sec">
           ${head(++sec, "brief", t("cs.brief"))}
-          <p class="cs-summary" data-reveal>${runIn(s.hero.summary)}</p>
+          ${summaryParas(s.hero.summary)}
           ${contextArtBlock(s, mini)}
         </section>
 

@@ -229,7 +229,7 @@ const en = {
   /* v41: страница кейса как один рассказ */
   "cs.contents": "Contents",
   "cs.brief": "In brief",
-  "cs.interface": "The finished interface",
+  "cs.interface": "Design decisions demo",
   "cs.context": "Context",
   "cs.origin": "Where the brief came from",
   "cs.roles": "Who is involved",

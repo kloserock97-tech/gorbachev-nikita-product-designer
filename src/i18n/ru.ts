@@ -232,7 +232,7 @@ const ru: Record<keyof typeof en, string> = {
   /* v41: страница кейса как один рассказ */
   "cs.contents": "Содержание",
   "cs.brief": "Коротко",
-  "cs.interface": "Готовый интерфейс",
+  "cs.interface": "Демо дизайн-решений",
   "cs.context": "Контекст",
   "cs.origin": "Откуда пришла задача",
   "cs.roles": "Кто участвует",
