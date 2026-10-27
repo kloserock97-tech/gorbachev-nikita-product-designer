@@ -81,3 +81,7 @@
   .g2 .g2-flow, .g2 .g2-caret::before, .g2 .g2-w, .g2 .g2-sheen { animation: none; }
   .g2 .g2-sheen { -webkit-text-fill-color: currentColor; background: none; }
 }
+
+/* 27.10: кольцо-подсказка прототипа нажимается само, с запасом ~14 экранных пикселей вокруг (--k — обратный масштаб) */
+.g2 .g2-mark.is-tap { pointer-events: auto; cursor: pointer; }
+.g2 .g2-mark.is-tap::before { content: ""; position: absolute; inset: calc(-14px * var(--k, 1)); border-radius: inherit; }

@@ -267,3 +267,43 @@
    экраном их не наследует, поэтому смена цвета не пересчитывает стили тысяч слоёв экрана */
 .pt-side, .pt-amb { transition: --am-l 1.2s ease, --am-r 1.2s ease, --am-t 1.2s ease, --am-b 1.2s ease; }
 @media (prefers-reduced-motion: reduce) { .pt-side, .pt-amb { transition: none; } }
+
+/* 27.10: телефон (самый частый экран 393 × 852, видимая высота 660–750) — глава прототипа целиком в одном экране:
+   вкладки, окно, название, шаг и управление. Веб-прототип: окно на всю ширину, весь кадр 16:10 (без прокрутки вбок),
+   панель под ним сжата. Мобильный прототип: телефон слева (46 % ширины), панель справа. */
+@media (max-width: 600px) {
+  .pt-flows { gap: 10px; }
+  .pt-flows .pt-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+  .pt-flows .pt-tabs::-webkit-scrollbar { display: none; }
+  .pt-flows .pt-tabs button { flex: none; white-space: nowrap; padding: 8px 14px; font-size: 14px; }
+  .pt--compact { gap: 12px; margin-top: 0; }
+  .pt--compact .pt-side { gap: 8px; }
+  .pt--compact .pt-title { font-size: 22px; line-height: 1.12; }
+  .pt--compact .pt-lead, .pt--compact .pt-pan { display: none !important; }
+  .pt--compact .pt-reel { height: 40px; margin-top: 2px; }
+  .pt--compact .pt-now { margin-top: 0; column-gap: 12px; }
+  .pt--compact .pt-now-k b { font-size: 38px; }
+  .pt--compact .pt-now-k span { font-size: 13px; }
+  .pt--compact .pt-now-act { font-size: 15.5px; }
+  .pt--compact .pt-why--line { gap: 8px; font-size: 13px; line-height: 1.4; }
+  .pt--compact .pt-why--line [data-why-text] { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+  .pt--compact .pt-ctrls--compact .pt-icon { width: 36px; height: 36px; }
+  .pt--compact .pt-go { height: 38px; font-size: 13.5px; }
+  .pt--live.pt--browser.pt--compact .pt-window .pt-screen { aspect-ratio: 16 / 10; }
+  .pt--browser.pt--compact .pt-bar { height: 18px; gap: 5px; padding: 0 10px; }
+  .pt--browser.pt--compact .pt-bar i { width: 7px; height: 7px; }
+
+  /* мобильный прототип: телефон и панель рядом */
+  .pt--compact:not(.pt--browser) { grid-template-columns: minmax(0, 46%) minmax(0, 1fr); align-items: start; column-gap: 14px; }
+  .pt--compact:not(.pt--browser) .pt-phone { max-width: none; width: 100%; padding: 5px; border-radius: 26px; }
+  .pt--compact:not(.pt--browser) .pt-screen { border-radius: 21px; }
+  .pt--compact:not(.pt--browser) .pt-title { font-size: 18px; }
+  .pt--compact:not(.pt--browser) .pt-reel { display: none; }
+  .pt--compact:not(.pt--browser) .pt-now { grid-template-columns: minmax(0, 1fr); row-gap: 4px; }
+  .pt--compact:not(.pt--browser) .pt-now-k b { font-size: 34px; }
+  .pt--compact:not(.pt--browser) .pt-now-act { font-size: 14.5px; }
+  .pt--compact:not(.pt--browser) .pt-why--line [data-why-text] { -webkit-line-clamp: 5; }
+  .pt--compact:not(.pt--browser) .pt-why--line .pt-spark { display: none; }
+  .pt--compact:not(.pt--browser) .pt-ctrls--compact { flex-wrap: wrap; }
+  .pt--compact:not(.pt--browser) .pt-go { margin-left: 0; width: 100%; justify-content: space-between; }
+}

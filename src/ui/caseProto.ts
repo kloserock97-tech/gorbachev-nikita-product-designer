@@ -226,7 +226,9 @@ export function mountProto(root: HTMLElement) {
          прокручивается пальцем внутри окна (.pt-screen.is-pan) */
       const size = () => {
         const fitZ = screen.clientWidth / mod.design.w;
-        const z = mod.design.w > 600 ? Math.max(fitZ, 0.5) : fitZ;
+        /* 27.10: в плотной панели окно на телефоне вписывается по ширине целиком (весь кадр, без прокрутки вбок) —
+           мелкие кнопки нажимаются через кольцо-подсказку с запасом вокруг (kit.hint) */
+        const z = mod.design.w > 600 && !box.classList.contains("pt--compact") ? Math.max(fitZ, 0.5) : fitZ;
         screen.classList.toggle("is-pan", z > fitZ + 0.001);
         liveRoot!.style.zoom = String(z);
         liveRoot!.style.width = `${mod.design.w}px`;

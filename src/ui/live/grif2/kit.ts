@@ -10,10 +10,13 @@ export type Flow = (s: Stage, ctx: LiveCtx, step: number) => void;
 
 /** куда нажать: кольцо отдельным слоем поверх экрана (stage.mark) — на самом слое его срезали бы родители */
 export function hint(s: Stage, el: HTMLElement | null, onTap: () => void) {
-  s.mark(el);
+  const m = s.mark(el);
   if (!el) return;
   el.dataset.hot = "";
   el.addEventListener("click", (e) => { e.stopPropagation(); onTap(); }, { once: true });
+  /* 27.10: само кольцо — тоже кнопка, с запасом вокруг (.g2-mark.is-tap): на телефоне окно вписано целиком, и
+     кнопка интерфейса в нём мелкая — палец попадает в кольцо */
+  if (m) { m.classList.add("is-tap"); m.addEventListener("click", (e) => { e.stopPropagation(); el.click(); }, { once: true }); }
 }
 
 /** модуль прототипа: design.w — ширина кадра в Figma; r — экраны кейса; liven — оживление экранов кейса;
