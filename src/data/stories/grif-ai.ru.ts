@@ -28,7 +28,7 @@ export const ru: CaseStory = {
       ["Срок", "2025–2026"],
       ["Платформа", "Web (mobile first) и desktop app"],
     ],
-    tags: ["AI", "Дизайн-система", "B2C", "MVP"],
+    tags: ["AI", "Дизайн-система", "MVP"],
   },
   /* 23.10: Никита оставил две метрики: task success rate 87% и time-to-market 3 нед → 5 дн */
   kpis: [
