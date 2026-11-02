@@ -46,7 +46,7 @@ const ru: Record<keyof typeof en, string> = {
   /* первый экран */
   "hero.name": "Никита Горбачев",
   "hero.role": "Продуктовый дизайнер",
-  "hero.focus": "Consumer- и AI-продукты",
+  "hero.focus": "Consumer и AI продукты",
   "hero.explore": "Смотреть кейсы",
   "hero.tag.strategy": "Веб и мобильные приложения",
   "hero.tag.ai": "AI-ассистенты",
@@ -61,7 +61,6 @@ const ru: Record<keyof typeof en, string> = {
   "stat.gust": "вот это порыв!",
   "stat.weather.label": "Погода",
   "stat.weather.aria": "Сменить погоду",
-  "stat.cases.label": "Кейсов",
   "weather.clear": "Ясно",
   "weather.cloudy": "Облака",
   "weather.rain": "Дождь",

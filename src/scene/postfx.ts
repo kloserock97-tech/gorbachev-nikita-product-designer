@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import { FullScreenQuad } from "three/examples/jsm/postprocessing/Pass.js";
-import { finalFragment, fullscreenVertex, godBlurFragment, godMaskFragment, quarterFragment } from "./shaders";
+import { finalFragment, fullscreenVertex, glowFragment, godBlurFragment, godMaskFragment, quarterFragment } from "./shaders";
 import { TRANSITION } from "./story";
 import { wordsTexture } from "./bgWords";
+import type { Shafts } from "./shafts";
 
 /* Постобработка — своя короткая цепочка вместо EffectComposer.
    Замеры на Intel Arc (экран 2.25, readPixels-бенчмарк) показали, что дороги
@@ -33,6 +34,10 @@ export type PostFx = {
   params: { rays: number; raysEnabled: boolean;
     /* Scroll progress of the world-space doorway in Meadow, 0…1. */
     portal: number;
+    /* v124: объёмные лучи холма (shafts.ts) и цвет солнца этого кадра */
+    shafts: Shafts | null; shaftColor: THREE.Color; shaftSun: number;
+    /* v125: доля затемнения «от солнца» (uLook.x): гаснет, когда солнце уходит за правую кромку */
+    lookSun: number;
     bloom: number;
     bgCheap: boolean; exposure: number; vignette: number; vibrance: number; contrast: number; focus: number; whiteBalance: THREE.Vector3; glitch: number; glitchSeed: number; black: number; radial: number; aberration: number; fill: number; overlay: boolean;
     /* v17, светлая страница с глубиной (как oryzo): studio 0…1 — сила студийного фона,
@@ -121,6 +126,15 @@ export function createPostFx(
   const introRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
   const clear = new THREE.Color();
   const bloomOn = q.get("bloom") !== "0";
+  /* v124 (RDR2): свечение холма без порога — пирамида ½ → ¹⁄₃₂ и обратно до четверти (glowFragment). ?glow=0 — без него,
+     ?glow=0.1 — подбор доли */
+  const glowK = q.get("glow") === "0" ? 0 : Number(q.get("glow") ?? 0.07);
+  const glowDown = Array.from({ length: 5 }, () => new THREE.WebGLRenderTarget(1, 1, small));
+  const glowUp = Array.from({ length: 3 }, () => new THREE.WebGLRenderTarget(1, 1, small));
+  /* v124: объёмные лучи (shafts.ts) — четверть разрешения и её мягкое размытие */
+  const shaftRT = new THREE.WebGLRenderTarget(1, 1, small);
+  const shaftBlurRT = new THREE.WebGLRenderTarget(1, 1, small);
+  const shaftDbg = q.get("shaftdbg") === "1";
   const lookSun = q.get("look") === "0" ? 0 : 0.28;
 
   const sunUv = new THREE.Vector2(0.5, 0.5);
@@ -135,6 +149,11 @@ export function createPostFx(
     fragmentShader: quarterFragment,
     uniforms: { tInput: { value: null }, uR: { value: 0 }, uAspect: { value: 1 }, uMode: { value: 0 } },
   });
+  const glow = new THREE.ShaderMaterial({
+    ...flat,
+    fragmentShader: glowFragment,
+    uniforms: { tInput: { value: null }, tLow: { value: null }, uTexel: { value: new THREE.Vector2() }, uMode: { value: 0 } },
+  });
   const blur = new THREE.ShaderMaterial({
     ...flat,
     fragmentShader: godBlurFragment,
@@ -143,7 +162,7 @@ export function createPostFx(
   /* ?tone=neutral|agx|punchy — сравнение тонмапперов; по умолчанию Neutral */
   const toneMode = ({ neutral: 0, agx: 1, punchy: 2 } as Record<string, number>)[q.get("tone") ?? ""] ?? 0;
   const params = {
-    rays: 0.17, // v107: 0,32 заливали кадр персиковой пеленой, дерево тонуло; 0,12 — Никите мало цвета
+    rays: q.has("rayk") ? Number(q.get("rayk")) : 0.17, // v107: 0,32 заливали кадр персиковой пеленой, дерево тонуло; 0,12 — Никите мало цвета
     raysEnabled: true,
     bgCheap: false,
     portal: 0,
@@ -183,6 +202,11 @@ export function createPostFx(
     alt: 0,
     altRender: null as ((target: THREE.WebGLRenderTarget, destination?: THREE.Texture) => void) | null,
     overlayCamera: null as THREE.Camera | null,
+    /* v124: объёмные лучи холма — модуль из shafts.ts и цвет солнца этого кадра (погода его меняет) */
+    shafts: null as Shafts | null,
+    shaftColor: new THREE.Color(1, 0.8, 0.5),
+    shaftSun: 1,
+    lookSun: 1,
     onOverlay: undefined as ((before: boolean) => void) | undefined,
   };
   const final = new THREE.ShaderMaterial({
@@ -235,6 +259,11 @@ export function createPostFx(
       tIntro: { value: introRT.texture },
       tBloom: { value: introRT.texture },
       uBloom: { value: 0 },
+      tGlow: { value: glowUp[2].texture },
+      uGlow: { value: 0 },
+      tShafts: { value: shaftBlurRT.texture },
+      uShafts: { value: 0 },
+      uShaftCol: { value: params.shaftColor },
       uLook: { value: q.get("look") === "0" ? new THREE.Vector3(0, 0, 1) : new THREE.Vector3(0.28, 0.6, 0.35) },
       uSunUv: { value: sunUv },
       uIntro: { value: 0 },
@@ -300,6 +329,10 @@ export function createPostFx(
       blurB.setSize(qw, qh);
       shieldRT.setSize(qw, qh);
       mask.uniforms.uAspect.value = w / h;
+      glowDown.forEach((t, i) => t.setSize(Math.max(1, Math.round(W / 2 ** (i + 1))), Math.max(1, Math.round(H / 2 ** (i + 1)))));
+      glowUp.forEach((t, i) => t.setSize(glowDown[3 - i].width, glowDown[3 - i].height));
+      shaftRT.setSize(qw, qh);
+      shaftBlurRT.setSize(qw, qh);
     },
     render() {
       /* заливка закрыла кадр целиком — холм (220k травинок) не рисуем вовсе */
@@ -441,12 +474,46 @@ export function createPostFx(
         camera.layers.mask = layers;
         renderer.setClearColor(clear, alpha);
       }
+      /* v124: свечение холма — только когда холм резкий и виден целиком (под размытием кейсов и лугом не нужно) */
+      const glowOn = glowK > 0 && !covered && !altFull && !low && !portalOn;
+      if (glowOn) {
+        let srcTex: THREE.Texture = sceneRT.texture, sw = sceneRT.width, hh = sceneRT.height;
+        glowDown.forEach((t, i) => {
+          glow.uniforms.tInput.value = srcTex;
+          glow.uniforms.uTexel.value.set(1 / sw, 1 / hh);
+          glow.uniforms.uMode.value = i === 0 ? 1 : 0;
+          draw(glow, t);
+          srcTex = t.texture; sw = t.width; hh = t.height;
+        });
+        glow.uniforms.uMode.value = 2;
+        let low2 = glowDown[4];
+        glowUp.forEach((t, i) => {
+          glow.uniforms.tInput.value = glowDown[3 - i].texture;
+          glow.uniforms.tLow.value = low2.texture;
+          glow.uniforms.uTexel.value.set(1 / low2.width, 1 / low2.height);
+          draw(glow, t);
+          low2 = t;
+        });
+      }
+      final.uniforms.uGlow.value = glowOn ? glowK : 0;
+      const sh = params.shafts;
+      const shaftsOn = !!sh && sh.strength > 0 && params.shaftSun > 0.01 && !covered && !altFull && !low && !portalOn;
+      if (shaftsOn) {
+        sh.update();
+        draw(sh.material, shaftRT);
+        quarter.uniforms.uMode.value = 0;
+        quarter.uniforms.tInput.value = shaftRT.texture;
+        quarter.uniforms.uR.value = 0.007;
+        draw(quarter, shaftBlurRT);
+      }
+      /* полосы есть, пока светит солнце: под сплошными облаками и в дождь гаснут (shaftSun — из погоды) */
+      final.uniforms.uShafts.value = shaftsOn ? (shaftDbg ? -1 : sh.strength * params.shaftSun) : 0;
       final.uniforms.uShield.value = shield ? 0.72 : 0;
       final.uniforms.uRays.value = params.rays * raysVisible;
       final.uniforms.uExposure.value = params.exposure;
       final.uniforms.uVignette.value = params.vignette;
       /* затемнение от солнца — только у холма: солнце в кадре луга и портала другое */
-      final.uniforms.uLook.value.x = lookSun * (1 - Math.min(1, params.alt)) * (portalOn ? 0 : 1);
+      final.uniforms.uLook.value.x = lookSun * params.lookSun * (1 - Math.min(1, params.alt)) * (portalOn ? 0 : 1);
       final.uniforms.uVibrance.value = params.vibrance;
       final.uniforms.uContrast.value = params.contrast;
       final.uniforms.uFocus.value = params.focus * (portalOn ? THREE.MathUtils.smoothstep(params.portal, 0.8, 1) : 1);
@@ -486,7 +553,7 @@ export function createPostFx(
       };
       const prev = renderer.getRenderTarget();
       renderer.setRenderTarget(maskRT);
-      const a = renderer.compileAsync(scene([mask, blur, quarter]), cam);
+      const a = renderer.compileAsync(scene([mask, blur, quarter, glow]), cam);
       renderer.setRenderTarget(halfRT);
       const c = renderer.compileAsync(scene([final]), cam);
       renderer.setRenderTarget(shieldRT);
@@ -509,6 +576,8 @@ export function createPostFx(
       renderer.setRenderTarget(prev);
     },
     dispose() {
+      [...glowDown, ...glowUp, shaftRT, shaftBlurRT].forEach((t) => t.dispose());
+      glow.dispose();
       [sceneRT, bgRT, bgBlurRT, shadowRT, pcRT, maskRT, blurA, blurB, shieldRT, halfRT, altRT, altBgRT, altBlurRT, introRT].forEach((t) => t.dispose());
       [mask, blur, quarter, final, blit, shieldMat].forEach((m) => m.dispose());
       quad.dispose();

@@ -9,6 +9,7 @@ import { initCasesSignpost } from "./ui/casesSignpost";
 import "./ui/hero/hero-mobile.css";
 import "./ui/hero/mobile-nav.css";
 import "./ui/pc-hud.css";
+import "./ui/hero/clear-glass.css";
 import { initMobileNav } from "./ui/hero/mobileNav";
 import { initLabMenu } from "./ui/labMenu";
 import { initStoryWheel } from "./ui/storyWheel";
@@ -27,8 +28,9 @@ import { initDockNav, trackByScroll, type DockSection } from "./ui/dockNav";
 import { initCaseView } from "./ui/caseView";
 import { liteReason, enterLite, rememberLite } from "./ui/lite";
 import { initLangToggle } from "./ui/langToggle";
+import { initGlassLens } from "./ui/hero/glassLens";
+import { initLiquidButton } from "./ui/hero/liquidButton";
 import { initI18n, onLang, t } from "./i18n";
-import { getCases } from "./data/cases";
 
 /* v74.2: ширина полосы прокрутки. Сетка первого экрана считается от 100vw (с полосой), а всё закреплённое
    (fixed) — от видимой ширины без неё: кнопка звука и кнопки «Кейсов» стояли левее правого поля карточки
@@ -55,6 +57,10 @@ const pauseForCase = (open: boolean) => { if (scene3d) scene3d.paused = open; };
 /* v27: язык страницы (?lang=ru, сохранённый выбор или язык браузера) — до того, как модули соберут
    свою разметку; переключатель стоит в доке */
 initI18n();
+/* v128: преломление в стеклянных плашках (только Chromium с мышью) */
+initGlassLens();
+/* v138: «Смотреть кейсы» — тёмная капсула с кромкой жидкого металла и светом под курсором (свой WebGL-холст) */
+initLiquidButton();
 
 /* v24: лёгкая версия без 3D — нет WebGL2, программный рендер, ?lite=1 или устройство уже оказалось
    слишком медленным (нагрузочный прогон: SwiftShader 0.2 fps, без WebGL — исключение и пустой экран) */
@@ -213,9 +219,7 @@ function start3d(caseView?: CaseView) {
   const showBlades = () => { if (blades) blades.textContent = t("stat.blades.value", { n: Math.round(scene.blades / 1000) }); };
   showBlades();
   onLang(showBlades);
-  /* v92: третья цифра нижнего ряда — сколько кейсов в списке */
-  const casesStat = document.querySelector("[data-stat='cases']");
-  if (casesStat) casesStat.textContent = String(getCases().length);
+  /* v136: третья цифра «N кейсов» убрана с первого экрана (Никита 02.11) */
 
   /* Порядок показа: сцена сразу в финальной позе (без отъезда камеры) — как только
      откалибровалось качество, канвас мягко проявляется целиком; через мгновение за

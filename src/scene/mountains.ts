@@ -180,6 +180,10 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
       uSaddle: { value: Number(q.get("msad") ?? 0.1) },
       /* высота предгорий под солнцем, м (до уменьшения в SCALE); ?mfoot= */
       uFoot: { value: Number(q.get("mfoot") ?? 1100) },
+      /* v125: седловина и предгорья стоят там, где садится солнце в сумерках (SUN_BACK в HillScene), даже когда в ясную
+         погоду солнце справа: силуэт гор за холмом не меняется вместе с погодой */
+      uSide: shared.sky.uSide ?? { value: 0 },
+      uSaddleDir: { value: new THREE.Vector3(-0.08, 0.04, -1).normalize() },
       /* горы отодвинуты дальше, чем лежит их рельеф, м: Никита попросил их подальше (меньше и в дымке). Дальний край
          (FAR + uPush)·SCALE + |PUSH_Z| должен остаться ближе дальней плоскости камеры (400 м); ?mpush=<км> */
       uPush: { value: Math.min(4, Number(q.get("mpush") ?? 3.5)) * 1000 },
@@ -198,7 +202,7 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
       uniform float uFoot;
       uniform float uPush;
       uniform vec2 uLower;
-      uniform vec3 uSunDir;
+      uniform vec3 uSaddleDir;
       uniform sampler2D tMap;
       varying vec3 vReal;
       varying vec3 vWorld;
@@ -210,7 +214,7 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
         /* седловина под солнцем: по азимуту от камеры в сторону солнца хребет опускается, и солнце садится между
            вершинами, а не за ними */
         vec3 w0 = (modelMatrix * vec4(position, 1.0)).xyz;
-        float off = acos(clamp(dot(normalize(w0.xz - cameraPosition.xz), normalize(uSunDir.xz)), -1.0, 1.0));
+        float off = acos(clamp(dot(normalize(w0.xz - cameraPosition.xz), normalize(uSaddleDir.xz)), -1.0, 1.0));
         p.y *= mix(uSaddle, 1.0, smoothstep(0.03, 0.32, off));
         /* v102: дальней гряды больше нет, и под солнцем осталась бы пустая дымка: ближние километры гор пологие.
            Там поднимается гряда предгорий — пологие увалы в 4–8 км, край которых чуть ниже солнца (uFoot — высота
@@ -235,6 +239,7 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
       uniform sampler2D tMap;
       uniform float uScale;
       uniform vec2 uHaze;
+      uniform float uSide;
       uniform vec2 uCool;
       varying vec3 vReal;
       varying vec3 vWorld;
@@ -275,7 +280,16 @@ export function createMountains(renderer: THREE.WebGLRenderer, shared: { sky: Re
            Так дальние хребты ложатся слоями, каждый светлее предыдущего, как в примере */
         float lum = dot(sky, vec3(0.3, 0.59, 0.11));
         vec3 airCol = mix(sky, vec3(lum) * vec3(0.95, 0.93, 1.0), uCool.x * (1.0 - pow(cosA, 6.0)));
+        /* v126 (RDR2, ясно): при боковом солнце даль синеватая и прозрачнее — воздух перед горами в цвет зенита, а
+           освещённые солнцем склоны (справа) тёплые и проступают сквозь дымку */
+        airCol = mix(airCol, mix(vec3(lum), uZenith * 1.05, 0.55), uSide * 0.75);
+        air *= 1.0 - 0.18 * uSide;
+        /* v132: слабее (было 0,6) — на гладких склонах боковое солнце давало металлический блеск */
+        col += alb * uSunCol * smoothstep(-0.1, 0.8, dot(n, uSunDir)) * 0.22 * uSide;
         vec3 c = mix(col, airCol, clamp(air, 0.0, 1.0));
+        /* v132: горы в той же среде, что равнина и небо (aerial в SKY_PARS); свой туман в долинах больше не нужен —
+           подножия тонут в плотном нижнем воздухе сами */
+        if (uAir.z > 0.5) { gl_FragColor = vec4(aerial(col, vWorld), 1.0); return; }
         /* туман в долинах: всё ниже uCool.y заливает светлое облачное море с неровным верхом */
         float top = uCool.y * (0.8 + 0.4 * fbm(p * 0.0016));
         float mist = smoothstep(top + 140.0, top - 80.0, h);

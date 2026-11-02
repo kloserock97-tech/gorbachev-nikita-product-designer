@@ -1,0 +1,224 @@
+/* v125: плашки в стиле Clear (прозрачное стекло, по картинке Никиты 01.11) — подсказки, смена погоды, карточка
+   кейсов и пэт-проектов, выпадающие меню. Стекло почти не размывает сцену под собой: холм виден сквозь плашку, лишь
+   чуть притушен и насыщеннее (затемнение — ради белого текста, иначе он пропадал бы на светлом небе).
+   v126 (Никита: «убери толстый бордер»): вместо трёх внутренних теней — кромка в волос градиентом (фон border-box под
+   прозрачной рамкой), блик-налив сверху, лёгкое размытие с насыщенностью и мягкая далёкая тень.
+   Файл подключается последним (main.ts) и только переопределяет фон, кромку и цвет текста; раскладка и движение
+   остаются в своих файлах. Правила начинаются с html — так они сильнее правил с тем же числом классов, которые
+   приходят позже из ленивых чанков (note-card.css, hero-hints.css). */
+:root {
+  /* стекло: сверху блик-налив, к середине прозрачнее, у низа чуть светлее (отражённый свет снизу) */
+  --cg-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 38%, rgba(255, 255, 255, 0.02) 62%, rgba(255, 255, 255, 0.07) 100%);
+  /* кромка в волос: ярче сверху-слева, почти пропадает по бокам, снизу-справа слабый отсвет — как ребро настоящего стекла */
+  --cg-edge: linear-gradient(140deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.16) 26%, rgba(255, 255, 255, 0.05) 52%, rgba(255, 255, 255, 0.1) 76%, rgba(255, 255, 255, 0.34) 100%);
+  --cg-dim: rgba(14, 16, 10, 0.14);
+  --cg-dim-strong: rgba(14, 16, 10, 0.28);
+  --cg-bg: var(--cg-sheen) padding-box, linear-gradient(var(--cg-dim), var(--cg-dim)) padding-box, var(--cg-edge) border-box;
+  --cg-bg-strong: var(--cg-sheen) padding-box, linear-gradient(var(--cg-dim-strong), var(--cg-dim-strong)) padding-box, var(--cg-edge) border-box;
+  --cg-hair: 1px;
+  --cg-filter: blur(10px) saturate(1.8) brightness(0.9);
+  --cg-filter-strong: blur(16px) saturate(1.7) brightness(0.74);
+  /* тень мягкая и далёкая: плашка парит над сценой, а не лежит на ней */
+  --cg-drop: 0 10px 34px rgba(8, 10, 4, 0.16), 0 1px 3px rgba(8, 10, 4, 0.08);
+  --cg-ink: #fff;
+  --cg-soft: rgba(255, 255, 255, 0.78);
+  --cg-faint: rgba(255, 255, 255, 0.5);
+  --cg-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --cg-hover: rgba(255, 255, 255, 0.12);
+  --cg-on-bg: rgba(255, 255, 255, 0.92);
+  --cg-on-ink: #191914;
+  /* кнопки внутри стекла: та же кромка, заливка светлее */
+  --cg-btn: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06)) padding-box, var(--cg-edge) border-box;
+  --cg-btn-hover: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.14)) padding-box, var(--cg-edge) border-box;
+}
+/* на плотных экранах кромка — один физический пиксель */
+@media (min-resolution: 2dppx) { :root { --cg-hair: 0.5px; } }
+
+/* --cg-bg собирается из --cg-dim; объявленная на :root, она вычисляется там один раз, и переопределение --cg-dim на
+   самой плашке её не меняло (затемнение под карточкой на узком окне и на телефоне молча не работало). Пересобираем
+   на каждой плашке — тогда своё --cg-dim у неё действует */
+html .card--stove, html .work-menu, html .m-menu__in, html .weather-change, html .hint-label, html .pc-hint__pill {
+  --cg-bg: var(--cg-sheen) padding-box, linear-gradient(var(--cg-dim), var(--cg-dim)) padding-box, var(--cg-edge) border-box;
+  --cg-bg-strong: var(--cg-sheen) padding-box, linear-gradient(var(--cg-dim-strong), var(--cg-dim-strong)) padding-box, var(--cg-edge) border-box;
+}
+
+/* ── подсказки и смена погоды ─────────────────────────────────────────────── */
+html .weather-change, html .hint-label, html .pc-hint__pill {
+  color: var(--cg-ink); text-shadow: var(--cg-text-shadow);
+  background: var(--cg-bg); border: var(--cg-hair) solid transparent; box-shadow: var(--cg-drop);
+  -webkit-backdrop-filter: var(--cg-filter); backdrop-filter: var(--cg-filter);
+}
+html .hint-label::after { background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.2)); }
+html .hint-touch .weather-change { background: var(--cg-bg-strong); }
+/* подложка под ячейкой «Погода», пока мышь рядом */
+html .stat--b::before {
+  background: var(--cg-sheen) padding-box, linear-gradient(rgba(14, 16, 10, 0.06), rgba(14, 16, 10, 0.06)) padding-box, var(--cg-edge) border-box;
+  border: var(--cg-hair) solid transparent; box-shadow: none;
+  -webkit-backdrop-filter: var(--cg-filter); backdrop-filter: var(--cg-filter);
+}
+
+/* ── карточка кейсов и пэт-проектов (первый экран) ────────────────────────── */
+html .card--stove {
+  --card-ink: var(--cg-ink);
+  --card-label: var(--cg-soft);
+  background: var(--cg-bg); border: var(--cg-hair) solid transparent;
+  box-shadow: 0 calc(16 * var(--u)) calc(48 * var(--u)) rgba(8, 10, 4, 0.16), 0 1px 3px rgba(8, 10, 4, 0.08);
+  -webkit-backdrop-filter: var(--cg-filter); backdrop-filter: var(--cg-filter);
+  text-shadow: var(--cg-text-shadow);
+}
+html .card--stove:hover { box-shadow: 0 calc(20 * var(--u)) calc(56 * var(--u)) rgba(8, 10, 4, 0.22), 0 1px 3px rgba(8, 10, 4, 0.1); }
+/* раскрытая — то же стекло, но сцена под абзацами притушена сильнее: длинный текст читается спокойно */
+html .card--stove.is-open {
+  background: var(--cg-bg-strong);
+  -webkit-backdrop-filter: var(--cg-filter-strong); backdrop-filter: var(--cg-filter-strong);
+}
+html .card--stove .note-cap__label, html .card--stove .note-deck__count, html .card--stove .note-body p { color: var(--cg-soft); }
+html .card--stove .note-deck__count b { color: var(--cg-ink); }
+html .card--stove .note-glyph { background: var(--cg-btn); border: var(--cg-hair) solid transparent; }
+html .card--stove .knob--note, html .card--stove .note-links a {
+  color: var(--cg-ink); background: var(--cg-btn); border: var(--cg-hair) solid transparent; box-shadow: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+html .card--stove .knob--note:hover, html .card--stove .note-hero:hover ~ .knob--note, html .card--stove .note-links a:hover { background: var(--cg-btn-hover); }
+html .card--stove.is-tight.is-open .card-note__in { scrollbar-color: rgba(255, 255, 255, 0.35) transparent; }
+
+/* ── выпадающие меню: «Кейсы», «Пэт-проекты», меню-бургер ─────────────────── */
+html .work-menu {
+  --wm-ink: var(--cg-ink);
+  --wm-soft: var(--cg-soft);
+  --wm-line: rgba(255, 255, 255, 0.14);
+  background: var(--cg-bg-strong); border: var(--cg-hair) solid transparent;
+  box-shadow: 0 30px 80px rgba(8, 10, 4, 0.24), 0 2px 8px rgba(8, 10, 4, 0.1);
+  -webkit-backdrop-filter: var(--cg-filter-strong); backdrop-filter: var(--cg-filter-strong);
+  text-shadow: var(--cg-text-shadow);
+}
+html .work-menu__filter-n { color: var(--cg-faint); }
+html .work-menu__filter.is-on { background: var(--cg-on-bg); color: var(--cg-on-ink); text-shadow: none; }
+html .work-menu__filter.is-on .work-menu__filter-n { color: rgba(25, 25, 20, 0.5); }
+html .work-menu__thumb { box-shadow: 0 6px 16px rgba(8, 10, 4, 0.16); }
+html .work-menu__bar { background: rgba(255, 255, 255, 0.3); }
+html .work-menu__rail:hover .work-menu__bar, html .work-menu__pane.is-dragging .work-menu__bar { background: rgba(255, 255, 255, 0.55); }
+html .work-menu__all { color: var(--cg-ink); background: var(--cg-btn); border: var(--cg-hair) solid transparent; box-shadow: none; }
+@media (hover: hover) and (pointer: fine) {
+  html .work-menu__filter:not(.is-on):hover { background: var(--cg-hover); }
+  html .work-menu__all:hover { background: var(--cg-on-bg); color: var(--cg-on-ink); text-shadow: none; }
+}
+
+html .m-menu__in {
+  background: var(--cg-bg-strong); border: var(--cg-hair) solid transparent;
+  box-shadow: 0 24px 60px rgba(8, 10, 4, 0.24), 0 2px 8px rgba(8, 10, 4, 0.1);
+  -webkit-backdrop-filter: var(--cg-filter-strong); backdrop-filter: var(--cg-filter-strong);
+  text-shadow: var(--cg-text-shadow);
+}
+html .m-menu__in > a { color: var(--cg-ink); }
+/* v134 (Никита: «стрелка, переключатели и наведение выглядят одинаково»). У каждого элемента своё различимое
+   состояние: покой → наведение → нажатие → включено. На стекле «включено» — сплошное (белая плитка, зелёный
+   ползунок), «доступно» — прозрачное с кромкой, «наведение» — светлее и с кромкой ярче */
+html .m-menu__row { background: transparent; }
+html .m-menu__item { color: var(--cg-ink); box-shadow: inset 0 0 0 1px transparent; transition: background 0.2s ease, box-shadow 0.2s ease, scale 0.16s ease-out, opacity 0.2s var(--m-ease), translate 0.28s var(--m-ease); }
+html .m-menu__txt small { color: var(--cg-soft); }
+html .m-menu__item:focus-visible, html .m-menu__seg button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+/* значок: доступно — стекло с кромкой; включено — белая плитка с тёмным значком */
+html .m-menu__ico { background: var(--cg-btn); border: var(--cg-hair) solid transparent; color: var(--cg-ink); transition: background 0.2s ease, color 0.2s ease, scale 0.2s var(--m-ease); }
+html .m-menu__sound[aria-pressed="true"] .m-menu__ico { background: #fff; color: var(--cg-on-ink); border-color: #fff; }
+/* звук: выключен — тёмный желобок с кромкой и белым ползунком (читается как переключатель, а не как пустое место);
+   включён — зелёный, ползунок справа */
+html .m-menu__switch {
+  width: 40px; height: 24px; background: rgba(10, 12, 6, 0.28);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  transition: background 0.22s ease, box-shadow 0.22s ease;
+}
+html .m-menu__switch::after { top: 3px; left: 3px; width: 18px; height: 18px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35); transition: translate 0.24s var(--m-ease), width 0.16s ease; }
+html .m-menu__sound[aria-pressed="true"] .m-menu__switch { background: #58a83f; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3); }
+html .m-menu__sound[aria-pressed="true"] .m-menu__switch::after { translate: 16px 0; }
+html .m-menu__sound:active .m-menu__switch::after { width: 22px; }
+html .m-menu__sound[aria-pressed="true"]:active .m-menu__switch::after { translate: 12px 0; }
+html .m-menu__sound[aria-pressed="true"] small { color: #c4ecab; }
+html .m-menu__eq i { background: #c4ecab; }
+/* язык: желобок темнее стекла, выбранный — белая плашка с тёмным текстом, другой — светлый текст */
+html .m-menu__seg { background: rgba(10, 12, 6, 0.24); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.2); }
+html .m-menu__seg button { color: rgba(255, 255, 255, 0.72); transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, scale 0.12s ease-out; }
+html .m-menu__seg button[aria-pressed="true"] { background: #fff; color: var(--cg-on-ink); text-shadow: none; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2); cursor: default; }
+/* стрелка «на другую страницу» — круглая кнопка, а не бледный значок */
+html .m-menu__go {
+  box-sizing: border-box; width: 32px; height: 32px; padding: 8px; margin-right: 0; border-radius: 50%;
+  color: var(--cg-ink); background: var(--cg-btn); border: var(--cg-hair) solid transparent;
+  transition: background 0.2s ease, color 0.2s ease, translate 0.2s var(--m-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  html .m-menu__item:not(.m-menu__lang):hover { background: rgba(255, 255, 255, 0.16); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3); }
+  html .m-menu__item:not(.m-menu__lang):hover .m-menu__ico { background: var(--cg-btn-hover); scale: 1.06; }
+  html .m-menu__sound[aria-pressed="true"]:hover .m-menu__ico { background: #fff; }
+  html .m-menu__sound:hover .m-menu__switch { box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.6); }
+  html .m-menu__sound[aria-pressed="true"]:hover .m-menu__switch { background: #63b849; }
+  html .m-menu__seg button[aria-pressed="false"]:hover { background: rgba(255, 255, 255, 0.2); color: #fff; }
+  html .m-menu__lite:hover .m-menu__go { background: #fff; color: var(--cg-on-ink); translate: 2px -2px; }
+}
+
+/* v135 (Никита: «кнопка, иконка в рамке и стрелка в рамке выглядят одинаково») — три уровня в карточке:
+   1) «Открыть кейс» — главное действие: сплошная белая пилюля с тёмным текстом (вторая ссылка, если есть, — стекло);
+   2) круглая стрелка — второстепенное: стекло с кромкой; в раскрытой карточке тише — без заливки, только кромка, чтобы
+      не спорить с главной кнопкой (место то же: стрелка поворачивается вверх и сворачивает, как любой раскрывающийся блок;
+      ещё сворачивают шапка, Esc и нажатие мимо карточки — fieldNote.ts);
+   3) значок проекта — украшение, а не кнопка: без рамки и подложки, приглушённый */
+html .card--stove .note-glyph { background: none; border: 0; box-shadow: none; color: rgba(255, 255, 255, 0.5); }
+html .card--stove .note-links a:first-child { background: #fff; color: var(--cg-on-ink); text-shadow: none; border-color: transparent; box-shadow: 0 4px 14px rgba(8, 10, 4, 0.18); }
+html .card--stove.is-open .knob--note { background: transparent; border: 1px solid rgba(255, 255, 255, 0.45); }
+/* наведение на листалку ‹ › внутри шапки не должно подсвечивать стрелку: подсветка — от шапки, кроме листалки */
+html .card--stove .note-hero:has(.note-deck:hover) ~ .knob--note { background: var(--cg-btn); color: var(--cg-ink); }
+html .card--stove.is-open .note-hero:has(.note-deck:hover) ~ .knob--note { background: transparent; }
+
+/* круглая стрелка карточки и кнопки со стрелкой: наведение — белая заливка и тёмный значок, нажатие — сжатие */
+@media (hover: hover) and (pointer: fine) {
+  html .card--stove .knob--note:hover, html .card--stove .note-hero:not(:has(.note-deck:hover)):hover ~ .knob--note,
+  html .card--stove .note-links a:not(:first-child):hover, html .work-menu__all:hover, html .stat--b:hover .weather-change {
+    background: #fff; color: var(--cg-on-ink); text-shadow: none; border-color: transparent;
+  }
+  /* главная кнопка в наведении — чуть приподнимается и тень гуще (она уже белая) */
+  html .card--stove .note-links a:first-child:hover { translate: 0 -1px; box-shadow: 0 8px 22px rgba(8, 10, 4, 0.26); }
+  html .card--stove .note-deck__btn:hover { opacity: 1; background: rgba(255, 255, 255, 0.18); }
+}
+html .card--stove .note-deck__btn { border-radius: 50%; transition: background 0.2s ease, opacity 0.2s ease, scale 0.12s ease-out; }
+html .card--stove .knob--note:active, html .card--stove .note-links a:active, html .work-menu__all:active, html .stat--b:active .weather-change { scale: 0.95; }
+html .card--stove .knob--note:focus-visible, html .card--stove .note-links a:focus-visible, html .work-menu__all:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* ── телефон: размытие фона над живым холстом дорого (v72), стекло без него, сцену под ним притушиваем сильнее ── */
+@media (hover: none) and (pointer: coarse) {
+  html .card--stove, html .work-menu, html .m-menu__in, html .weather-change, html .hint-label, html .pc-hint__pill, html .stat--b::before {
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+  html .card--stove, html .weather-change, html .hint-label, html .pc-hint__pill { --cg-dim: rgba(14, 16, 10, 0.32); background: var(--cg-bg); }
+  html .card--stove.is-open, html .work-menu, html .m-menu__in { --cg-dim-strong: rgba(14, 16, 10, 0.62); background: var(--cg-bg-strong); }
+}
+
+/* v128: при преломлении (glassLens.ts, только Chromium с мышью) стекло прозрачнее: сцену под ним уже притушивает и
+   насыщает сам фильтр, матовая заливка не нужна. Раскрытой карточке и меню оставлено лёгкое затемнение под текстом */
+/* v133: backgroundOpacity 0.1 из примера — лёгкая светлая заливка стекла, затемнение почти нулевое */
+html.cg-lens {
+  --cg-dim: rgba(255, 255, 255, 0.1);
+  --cg-dim-strong: rgba(14, 16, 10, 0.16);
+  --cg-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 36%, rgba(255, 255, 255, 0) 62%, rgba(255, 255, 255, 0.05) 100%);
+}
+/* подложка «Погоды» — псевдоэлемент, преломление на неё не повесить: стекло без матовости, в тон соседям */
+html.cg-lens .stat--b::before { -webkit-backdrop-filter: blur(1.5px) saturate(1.5) brightness(0.92); backdrop-filter: blur(1.5px) saturate(1.5) brightness(0.92); }
+html .card--stove .note-links a { transition: background 0.25s ease, color 0.25s ease, translate 0.25s ease, box-shadow 0.25s ease, scale 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+/* v135, адаптив карточки:
+   — на телефоне раскрытая карточка прокручивается к верху окна (fieldNote.ts, scrollIntoView) и уезжала под панель
+     с N, языком и меню: листалка «01/13» ложилась на кнопки. Отступ прокрутки — на высоту панели;
+   — точка «Заглянуть внутрь» у компьютера (pc-hint) висит над всем и просвечивала сквозь раскрытую карточку;
+   — над светлым небом (узкое окно, карточка выше по кадру) белый текст на почти прозрачном стекле не читался:
+     сцену под карточкой притушиваем сильнее, чем под мелкими плашками над травой */
+@media (max-width: 900px) {
+  /* + подпись «КЕЙС» над карточкой */
+  html .card--stove { scroll-margin-top: calc(env(safe-area-inset-top) + 100px); }
+}
+body:has(.card--stove.is-open) .pc-hint { opacity: 0; pointer-events: none; }
+html.cg-lens .card--stove { --cg-dim: rgba(14, 16, 10, 0.16); }
+html.cg-lens .card--stove.is-open { --cg-dim-strong: rgba(14, 16, 10, 0.24); }
+
+/* на узком экране меню — шторка во всю ширину прямо поверх заголовка «Никита Горбачев»: сквозь прозрачное стекло буквы
+   спорили с пунктами меню. Подложка почти сплошная, тёмное стекло (и с мышью, и на телефоне) */
+@media (max-width: 900px) {
+  html .m-menu__in, html.cg-lens .m-menu__in { --cg-dim-strong: rgba(30, 32, 26, 0.975); background: var(--cg-bg-strong); }
+}

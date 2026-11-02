@@ -58,7 +58,6 @@ const en = {
   "stat.gust": "a proper gust!",
   "stat.weather.label": "Weather",
   "stat.weather.aria": "Change the weather",
-  "stat.cases.label": "Case studies",
   "weather.clear": "Clear",
   "weather.cloudy": "Cloudy",
   "weather.rain": "Rain",

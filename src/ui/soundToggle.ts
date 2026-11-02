@@ -73,7 +73,7 @@ export function initSound(scene: Scene) {
     if (enabled) return;
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AC) return;
-    /* в том же синхронном обработчике жеста */
+    /* в том же синхронном обработчике жеста — если заранее не успели (prewarm ниже) */
     ctx ??= new AC({ latencyHint: "playback" });
     void ctx.resume();
     enabled = true;
@@ -113,8 +113,25 @@ export function initSound(scene: Scene) {
     if (enabled) { disable(); save("off"); } else { enable(true); save("on"); }
   });
 
+  /* v136: создание AudioContext на Windows — синхронная инициализация звукового устройства, ~230 мс главного потока.
+     Оно стояло в обработчике первого клика, и первое раскрытие меню или карточки запаздывало на четверть секунды.
+     Контекст можно создать и без жеста — он просто останется на паузе, а жест его лишь возобновит (resume в enable,
+     синхронно — как требует iOS). Создаём заранее, когда браузер свободен: на заставке, пока сцена размыта,
+     или через пару секунд после показа. Только если звук включится сам — у выключивших его контекст не нужен */
+  const prewarm = () => {
+    if (ctx) return;
+    const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AC) return;
+    ctx = new AC({ latencyHint: "playback" });
+    void ctx.suspend();
+    /* модули звука — только код (несколько КБ); сам трек (createMusic качает 1,7 МБ) — уже по жесту, в enable */
+    void import("../audio/ambient");
+    void import("../audio/music");
+  };
   /* первый жест на странице включает фон, если звук не выключали */
   if (read() !== "off" && !conn?.saveData) {
+    const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1));
+    window.setTimeout(() => idle(prewarm, { timeout: 3000 }), document.body.classList.contains("intro-loading") ? 300 : 2500);
     const first = (e: Event) => {
       if ((e.target as Element | null)?.closest?.(".sound-fab")) return; // кнопку обработает её click
       if (e instanceof KeyboardEvent && (e.key === "m" || e.key === "M")) return;

@@ -23,6 +23,14 @@ export function initMobileNav() {
   };
   burger.addEventListener("click", () => setOpen(!body.classList.contains("m-menu-open")));
   menu.addEventListener("click", (e) => { if (!(e.target as HTMLElement).closest(".m-menu__in")) setOpen(false); });
+  /* v134: на широком экране меню — небольшая панель, а не шторка на весь экран: нажатие мимо неё попадает не в .m-menu,
+     а в сцену или интерфейс — закрываем и тогда. Само нажатие проходит дальше, как обычно */
+  document.addEventListener("pointerdown", (e) => {
+    if (!body.classList.contains("m-menu-open")) return;
+    const el = e.target as Element | null;
+    if (el?.closest(".m-menu__in, .m-bar__burger")) return;
+    setOpen(false);
+  }, true);
   addEventListener("keydown", (e) => { if (e.key === "Escape") setOpen(false); });
 
   bar.querySelector(".m-bar__mark")?.addEventListener("click", (e) => { e.preventDefault(); setOpen(false); dock("home")?.click(); });

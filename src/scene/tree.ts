@@ -2,9 +2,10 @@
    креслом и карточкой проектов, солнце у неё за спиной: край кроны светится на просвет, а в просветах листвы
    видно небо, и лучи идут прямо сквозь неё.
 
-   Всё процедурное, из одного зерна, как луг: скелет ветвей, кора из конических сегментов, листва — пучки
-   карточек с текстурой листьев, нарисованной на холсте при запуске. Ни модели, ни картинки грузить не нужно,
-   и ничьих ассетов в нём нет. Свет, воздух и ветер — те же функции, что у травы (shaders.ts, barkFragment и
+   Скелет процедурный, из одного зерна, как луг: ветви, кора из конических сегментов, листва — пучки карточек.
+   v129: кора и листья — стоковые снимки CC0 (Poly Haven jolcham_oak_bark_01, ambientCG LeafSet024; авторы — в
+   public/THIRD_PARTY_LICENSES.txt), пучок из листьев атласа собирается на холсте. Пока они грузятся (и при
+   ?treetex=0) — прежние процедурные кора и пучок. Свет, воздух и ветер — те же функции, что у травы (shaders.ts, barkFragment и
    leafFragment), поэтому дерево стоит в той же погоде, что и холм. */
 import * as THREE from "three";
 import { makeRng } from "./terrain";
@@ -57,7 +58,78 @@ function leafTexture(rng: () => number): THREE.Texture {
   return t;
 }
 
+/* v129: пучок из стоковых листьев (public/tree/leaves.webp — атлас 3 × 3 листа, ambientCG LeafSet024, CC0). Та же
+   раскладка, что у нарисованного пучка: черешки от середины, листья по кругу с поворотом наружу. RGB — настоящий
+   цвет листа (sRGB), A — форма. Свой генератор случайных чисел: общий rng дерева трогать нельзя — от него крона */
+function stockLeafCluster(atlas: HTMLImageElement | ImageBitmap, out: HTMLCanvasElement) {
+  const rng = makeRng(0x1eaf5);
+  const S = out.width;
+  const g = out.getContext("2d")!;
+  g.clearRect(0, 0, S, S);
+  g.lineCap = "round";
+  for (let i = 0; i < 7; i++) {
+    const a = rng() * Math.PI * 2;
+    g.strokeStyle = "rgba(78,62,40,1)";
+    g.lineWidth = S / 160;
+    g.beginPath();
+    g.moveTo(S / 2, S / 2);
+    g.lineTo(S / 2 + Math.cos(a) * S * 0.34, S / 2 + Math.sin(a) * S * 0.34);
+    g.stroke();
+  }
+  const cell = atlas.width / 3;
+  for (let i = 0; i < 170; i++) {
+    const ang = rng() * Math.PI * 2;
+    const r = Math.sqrt(rng()) * S * 0.38;
+    const x = S / 2 + Math.cos(ang) * r, y = S / 2 + Math.sin(ang) * r;
+    const size = S * (0.075 + rng() * 0.045);
+    const cx = Math.floor(rng() * 3), cy = Math.floor(rng() * 3);
+    g.save();
+    g.translate(x, y);
+    /* лист в атласе стоит черешком вниз — поворачиваем верхушкой от центра пучка */
+    g.rotate(ang + Math.PI / 2 + (rng() - 0.5) * 1.0);
+    /* лист чуть светлее или темнее — пучок не выглядит штампом */
+    g.filter = `brightness(${(0.8 + rng() * 0.4).toFixed(2)}) saturate(${(0.9 + rng() * 0.25).toFixed(2)})`;
+    g.drawImage(atlas, cx * cell, cy * cell, cell, cell, -size / 2, -size / 2, size, size);
+    g.restore();
+  }
+  g.filter = "none";
+}
+
 export type TreeOptions = { base: V; height: number; lean: V; seed?: number; msaa: boolean };
+
+/* v129: стоковые текстуры дерева (CC0): кора Poly Haven jolcham_oak_bark_01, листья ambientCG LeafSet024. Грузятся
+   после старта; до них дерево рисуется прежним процедурным. ?treetex=0 — только процедурное */
+function loadStock(barkMat: THREE.ShaderMaterial, leafMat: THREE.ShaderMaterial) {
+  if (/[?&]treetex=0/.test(location.search)) return;
+  const base = import.meta.env.BASE_URL;
+  const loader = new THREE.TextureLoader();
+  const tex = (url: string, srgb: boolean) => loader.loadAsync(base + url).then((t) => {
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    t.anisotropy = 8;
+    return t;
+  });
+  void Promise.all([tex("tree/bark.webp", true), tex("tree/bark-n.webp", false)]).then(([c, n]) => {
+    barkMat.uniforms.tBark.value = c;
+    barkMat.uniforms.tBarkN.value = n;
+    barkMat.uniforms.uBarkStock.value = 1;
+  }).catch(() => {});
+  const img = new Image();
+  img.decoding = "async";
+  img.src = base + "tree/leaves.webp";
+  img.decode().then(() => {
+    const c = document.createElement("canvas");
+    c.width = c.height = 512;
+    stockLeafCluster(img, c);
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 4;
+    const old = leafMat.uniforms.uLeafTex.value as THREE.Texture;
+    leafMat.uniforms.uLeafTex.value = t;
+    leafMat.uniforms.uLeafStock.value = 1;
+    old.dispose();
+  }).catch(() => {});
+}
 
 export function createTree(uniforms: Record<string, THREE.IUniform>, o: TreeOptions) {
   const rng = makeRng(o.seed ?? 0x51a7e);
@@ -134,11 +206,19 @@ export function createTree(uniforms: Record<string, THREE.IUniform>, o: TreeOpti
      корневыми «лапами». aTan — ось ветви в вершине: вдоль неё шейдер вытягивает трещины коры. Нормали — по
      готовой поверхности, чтобы валики и лапы давали свет и тень. Генератор случайных чисел здесь не трогаем:
      после коры из него берётся подбивка кроны, и она бы сдвинулась */
-  const bp: number[] = [], bt: number[] = [], bi: number[] = [];
+  const bp: number[] = [], bt: number[] = [], bi: number[] = [], buv: number[] = [];
+  /* v129: развёртка под стоковую кору (public/tree/bark.webp, 1 × 2 м). По окружности текстура укладывается целое
+     число раз (иначе на шве обрыв), один повтор ~BARK_TILE м; вдоль ветви — в той же пропорции 1 : 2. У каждого
+     кольца k + 1 вершина: последняя повторяет первую с u = повторы — шов без растяжки текстуры */
+  const BARK_TILE = 0.55;
+  const seams: [number, number][] = [];
   limbs.forEach(({ pts: raw, rad: rawR, cont }, li0) => {
     if (rawR[0] < 0.015) return;
     const trunk = li0 === 0;
+    /* v130: кончики тонких ветвей торчали из кроны голыми прутиками — последний отрезок у них не строим: листья на
+       кончике остаются и закрывают обрез */
     let pts = raw, rad = rawR;
+    if (rawR[0] < 0.035 && raw.length >= 3) { pts = raw.slice(0, -1); rad = rawR.slice(0, -1); }
     if (rawR[0] > 0.04) {
       const sub = (raw.length - 1) * 3;
       pts = new THREE.CatmullRomCurve3(raw, false, "centripetal").getPoints(sub);
@@ -153,6 +233,9 @@ export function createTree(uniforms: Record<string, THREE.IUniform>, o: TreeOpti
     const dir0 = new THREE.Vector3().subVectors(pts[pts.length - 1], pts[0]).normalize();
     const ref = Math.abs(dir0.y) < 0.9 ? UP : new THREE.Vector3(1, 0, 0);
     const base = bp.length / 3;
+    const circ = Math.PI * 2 * rad[0];
+    const reps = Math.max(1, Math.round(circ / BARK_TILE));
+    const vScale = reps / (2 * circ);
     let along = 0;
     for (let i = 0; i < pts.length; i++) {
       if (i > 0) along += pts[i].distanceTo(pts[i - 1]);
@@ -161,8 +244,10 @@ export function createTree(uniforms: Record<string, THREE.IUniform>, o: TreeOpti
       const v = new THREE.Vector3().crossVectors(tan, u);
       /* у земли (y = 0 дерева) ствол расширяется, под землёй — во всю ширину корней */
       const low = Math.exp(-Math.max(pts[i].y, 0) / 0.3);
-      for (let j = 0; j < k; j++) {
+      for (let j = 0; j <= k; j++) {
         const t = (j / k) * Math.PI * 2;
+        buv.push((j / k) * reps, along * vScale);
+        if (j === k) seams.push([bp.length / 3, bp.length / 3 - k]);
         const cs = Math.cos(t), sn = Math.sin(t);
         const nx = u.x * cs + v.x * sn, ny = u.y * cs + v.y * sn, nz = u.z * cs + v.z * sn;
         const flare = trunk ? 1 + 0.5 * low + 0.45 * low * Math.max(0, Math.cos(5 * t + 0.7)) ** 2 : 1;
@@ -172,9 +257,10 @@ export function createTree(uniforms: Record<string, THREE.IUniform>, o: TreeOpti
         bt.push(tan.x, tan.y, tan.z);
       }
     }
+    const ring = k + 1;
     for (let i = 0; i < pts.length - 1; i++) {
       for (let j = 0; j < k; j++) {
-        const a = base + i * k + j, b = base + i * k + ((j + 1) % k), c2 = a + k, d2 = b + k;
+        const a = base + i * ring + j, b = a + 1, c2 = a + ring, d2 = b + ring;
         bi.push(a, b, c2, b, d2, c2);
       }
     }
@@ -186,14 +272,27 @@ export function createTree(uniforms: Record<string, THREE.IUniform>, o: TreeOpti
     const ci = bp.length / 3;
     bp.push(cap.x, cap.y, cap.z);
     bt.push(tip.x, tip.y, tip.z);
-    const last = base + (n - 1) * k;
-    for (let j = 0; j < k; j++) bi.push(last + j, last + ((j + 1) % k), ci);
+    buv.push(reps * 0.5, (along + rad[n - 1]) * vScale);
+    const last = base + (n - 1) * ring;
+    for (let j = 0; j < k; j++) bi.push(last + j, last + j + 1, ci);
   });
   const barkGeo = new THREE.BufferGeometry();
   barkGeo.setAttribute("position", new THREE.Float32BufferAttribute(bp, 3));
   barkGeo.setAttribute("aTan", new THREE.Float32BufferAttribute(bt, 3));
+  barkGeo.setAttribute("uv", new THREE.Float32BufferAttribute(buv, 2));
   barkGeo.setIndex(bi);
   barkGeo.computeVertexNormals();
+  /* шовные вершины — общая нормаль, иначе вдоль шва видна светлая полоса */
+  {
+    const nrm = barkGeo.getAttribute("normal") as THREE.BufferAttribute;
+    const a = new THREE.Vector3(), b = new THREE.Vector3();
+    for (const [i, j] of seams) {
+      a.fromBufferAttribute(nrm, i); b.fromBufferAttribute(nrm, j);
+      a.add(b).normalize();
+      nrm.setXYZ(i, a.x, a.y, a.z); nrm.setXYZ(j, a.x, a.y, a.z);
+    }
+    nrm.needsUpdate = true;
+  }
   barkGeo.computeBoundingSphere();
 
   /* крона: центр и радиус — по пучкам */
@@ -245,14 +344,16 @@ export function createTree(uniforms: Record<string, THREE.IUniform>, o: TreeOpti
   const bark = new THREE.Mesh(barkGeo, new THREE.ShaderMaterial({
     vertexShader: barkVertex,
     fragmentShader: barkFragment,
-    uniforms: { ...shared, uCrownC: { value: crown }, uCrownR: { value: crownR } },
+    /* v129: стоковая кора — пока не загрузилась, рисуется прежняя процедурная (uBarkStock = 0) */
+    uniforms: { ...shared, uCrownC: { value: crown }, uCrownR: { value: crownR }, tBark: { value: null }, tBarkN: { value: null }, uBarkStock: { value: 0 } },
   }));
   const leafMat = new THREE.ShaderMaterial({
     vertexShader: leafVertex,
     fragmentShader: leafFragment,
     side: THREE.DoubleSide,
-    uniforms: { ...shared, uCrown: { value: crown }, uLeafTex: { value: leafTexture(rng) }, uA2C: { value: o.msaa ? 1 : 0 } },
+    uniforms: { ...shared, uCrown: { value: crown }, uLeafTex: { value: leafTexture(rng) }, uA2C: { value: o.msaa ? 1 : 0 }, uLeafStock: { value: 0 }, uCrownR: { value: crownR }, uHoles: { value: /[?&]holes=0/.test(location.search) ? 0 : Number(new URLSearchParams(location.search).get("holes") ?? 1) } },
   });
+  loadStock(bark.material as THREE.ShaderMaterial, leafMat);
   leafMat.alphaToCoverage = true;
   const leaves = new THREE.Mesh(leafGeo, leafMat);
   const group = new THREE.Group();

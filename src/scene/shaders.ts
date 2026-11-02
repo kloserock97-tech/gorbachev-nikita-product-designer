@@ -31,7 +31,26 @@ vec3 screenSpill(vec3 w){
 }
 `;
 
+/* v124 (атмосфера по RDR2, доклад Ф. Бауэра, SIGGRAPH 2019, сл. 29–31; код свой): рассеяние воздуха — два лепестка
+   Хеньи–Гринстейна. Узкий (g ≈ 0,8) даёт тугой ореол у солнца, широкий (g ≈ 0,3) — мягкое тёплое зарево на полнеба;
+   снизу фаза ограничена, поэтому и в стороне от солнца воздух чуть светится, а не проваливается в серое. Лепестки
+   нормированы на 1 в сторону солнца — множители у вызывающих остаются в прежнем масштабе. uPhase: x — доля широкого
+   лепестка, y — нижняя граница; ?phase=0 — один лепесток, как до v124 */
+const PHASE = /* glsl */ `
+#ifndef PHASE_PARS
+#define PHASE_PARS
+uniform vec2 uPhase;
+float hgPeak(float g, float mu){ return (1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * mu, 1.5) * ((1.0 - g) * (1.0 - g) / (1.0 + g)); }
+float airPhase(float g, float mu){
+  float p = hgPeak(g, mu);
+  if (uPhase.x <= 0.0) return p;
+  return max(mix(p, hgPeak(0.3, mu), uPhase.x), uPhase.y);
+}
+#endif
+`;
+
 const LIGHT_PARS = /* glsl */ `
+${PHASE}
 uniform float uBackLight;
 /* v80: свет травы в духе Unreal: x — просвет (Two Sided Foliage), y — доля неба внутри дёрна, z — сила затенения
    у корня; w — запас */
@@ -59,14 +78,14 @@ uniform float uWet;
    трава, цветы и земля видят меньше неба, а за предметом, в стороне от солнца, ещё и теряют просвет: закрыта
    самая яркая часть неба — зарево над холмом. Без этого валуны и ножки мебели «стоят на картинке», а не в траве.
    uOcc: xy — центр пятна (мир, xz), z — радиус, w — сила; w = 0 — слот пуст */
-uniform vec4 uOcc[6];
+uniform vec4 uOcc[7];
 uniform float uOccOn;
 /* x — доля неба, y — доля солнца и просвета (1 — ничего не закрыто) */
 vec2 groundOcc(vec3 w){
   vec2 k = vec2(1.0);
   if (uOccOn < 0.5) return k;
   vec2 away = normalize(-uSunDir.xz + 1e-5);
-  for (int i = 0; i < 6; i++){
+  for (int i = 0; i < 7; i++){
     vec4 o = uOcc[i];
     if (o.w < 0.001) continue;
     vec2 d = (w.xz - o.xy) / o.z;
@@ -75,6 +94,9 @@ vec2 groundOcc(vec3 w){
     float along = dot(d, away);
     float across = abs(d.x * away.y - d.y * away.x);
     float tail = smoothstep(0.2, 0.9, along) * (1.0 - smoothstep(0.6, 1.15, across)) * (1.0 - smoothstep(1.4, 3.0, along));
+    /* v130: седьмой слот — крона дерева: только закрытое небо под ней, без хвоста и без солнца (настоящую тень кроны
+       кладёт hillSun по снимку кроны) */
+    if (i == 6) { k.x *= 1.0 - o.w * (1.0 - smoothstep(0.35, 1.25, r)); continue; }
     k.x *= 1.0 - o.w * max(1.0 - smoothstep(0.75, 1.9, r), tail * 0.6);
     k.y *= 1.0 - o.w * max(1.0 - smoothstep(0.8, 1.3, r), tail);
   }
@@ -84,13 +106,66 @@ vec2 groundOcc(vec3 w){
 /* Тени облаков, плывущие по лугу (GoT). Узор — сумма четырёх синусоид, а не шум с хешем:
    ту же функцию повторяет JS (src/scene/weather.ts), чтобы кресло и собака темнели
    ровно тогда, когда под ними проходит тень. 1 — солнце, ~0.4 — под облаком. */
+/* v124 (RDR2, контровой свет): тень гребня. Солнце в 2° над горизонтом — гребень закрывает его почти всему переднему
+   склону; на свету остаются полоса у вершины и всё, что выше линии тени (карта высот из shafts.ts, та же, что у
+   объёмных лучей). Склон к камере живёт светом неба, а гребень и верхушки травы горят — как на закатных кадрах RDR2.
+   uHillShade — сила (0 — как до v124, ?hillsh=0) */
+uniform sampler2D tHillSh;
+uniform vec4 uHillRect;
+uniform float uHillShade;
+/* v125: тень кроны на лугу — силуэт дерева со стороны солнца (тот же снимок, что у объёмных лучей). При боковом
+   солнце крона кладёт на траву длинную тень с просветами листвы; у самой кроны затеняет её дальнюю сторону.
+   Имена с «Sh»: uCrown у листвы занят */
+uniform sampler2D tCrownSh;
+uniform mat4 uCrownShMat;
+uniform vec4 uCrownSh;
+/* v131: глубина кроны со стороны солнца (shafts.ts) — настоящая тень кроны, мягкая (5 выборок со сдвигом) */
+uniform sampler2D tCrownD;
+uniform float uCrownTexel;
+float crownSun(vec3 w){
+  vec4 c = uCrownShMat * vec4(w, 1.0);
+  vec2 cq = c.xy * 0.5 + 0.5;
+  if (cq.x <= 0.0 || cq.x >= 1.0 || cq.y <= 0.0 || cq.y >= 1.0) return 1.0;
+  float z = c.z * 0.5 + 0.5 - 0.0022;
+  float r = uCrownTexel * 1.6;
+  float s = step(z, textureLod(tCrownD, cq, 0.0).r) + step(z, textureLod(tCrownD, cq + vec2(r, r * 0.4), 0.0).r)
+          + step(z, textureLod(tCrownD, cq + vec2(-r * 0.4, r), 0.0).r) + step(z, textureLod(tCrownD, cq + vec2(-r, -r * 0.4), 0.0).r)
+          + step(z, textureLod(tCrownD, cq + vec2(r * 0.4, -r), 0.0).r);
+  return s * 0.2;
+}
+/* v126 (RDR2, ясно): лепка склонов. Трава светится по нормали травинки, и склоны к солнцу и от солнца выходили
+   одинаковыми — холм читался плоским. Нормаль купола (тот же, что в terrain.ts) даёт крупную светотень: бок к солнцу
+   горит, бок от солнца уходит в свет неба. Только у самой земли — крона и камни свои. uSlopeLight — сила (боковое
+   солнце — 1, закат за холмом — 0: там склон и так в тени гребня) */
+uniform float uSlopeLight;
+float slopeSun(vec3 w){
+  if (uSlopeLight <= 0.0) return 1.0;
+  float h = 2.3 * exp(-(w.x * w.x / 46.24 + w.z * w.z / 19.36));
+  vec3 n = normalize(vec3(h * 2.0 * w.x / 46.24, 1.0, h * 2.0 * w.z / 19.36));
+  float k = smoothstep(-0.05, 0.75, dot(n, uSunDir));
+  float near = 1.0 - smoothstep(0.35, 1.2, w.y - h);
+  return mix(1.0, mix(0.35, 1.0, k), uSlopeLight * near);
+}
+float hillSun(vec3 w){
+  if (uHillShade <= 0.0) return 1.0;
+  float lit = slopeSun(w);
+  vec2 hq = (w.xz - uHillRect.xy) * uHillRect.zw;
+  if (hq.x > 0.0 && hq.x < 1.0 && hq.y > 0.0 && hq.y < 1.0) {
+    float h = textureLod(tHillSh, hq, 0.0).r;
+    lit = smoothstep(h - 0.18, h + 0.32, w.y);
+  }
+  /* тень кроны: не полная — сквозь листву всё же просеивается свет */
+  if (uCrownSh.w > 0.0) lit *= mix(0.12, 1.0, crownSun(w));
+  return mix(1.0, lit, uHillShade);
+}
 float cloudShade(vec3 w){
-  if (uCloud.z < 0.001) return 1.0;
+  float hs = hillSun(w);
+  if (uCloud.z < 0.001) return hs;
   vec2 p = w.xz * 0.11 + uCloud.xy;
   float n = 0.5 + 0.22 * sin(p.x + p.y * 0.6) + 0.18 * sin(-0.7 * p.x + 1.3 * p.y + 1.7)
               + 0.12 * sin(2.1 * p.x + 1.9 * p.y + 4.1) + 0.08 * sin(-2.9 * p.x + 0.8 * p.y + 2.3);
   float edge = 1.0 - uCloud.z;
-  return mix(1.0, 0.4, smoothstep(edge - 0.07, edge + 0.07, n));
+  return mix(1.0, 0.4, smoothstep(edge - 0.07, edge + 0.07, n)) * hs;
 }
 #ifndef DOG_UNIFORM
 #define DOG_UNIFORM
@@ -124,8 +199,7 @@ float airFog(vec3 w, float dist){
 vec3 fogTint(vec3 w){
   vec3 v = normalize(w - cameraPosition);
   float mu = dot(v, uSunDir);
-  const float g = 0.7;
-  float hg = (1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * mu, 1.5) * ((1.0 - g) * (1.0 - g) / (1.0 + g));
+  float hg = airPhase(0.7, mu);
   vec3 cool = uFogCol * mix(vec3(1.0), vec3(0.86, 0.92, 1.02), uAerial.y);
   vec3 fog = mix(cool, uFogCol, smoothstep(-0.2, 0.6, mu)) + uSunCol * hg * 0.16 * uAerial.x;
   /* даль (равнина за холмом) уходит в цвет горизонта — в тот же, в котором тонут подножия гряд: иначе земля
@@ -134,7 +208,8 @@ vec3 fogTint(vec3 w){
      склоны холма слева ложились оранжевой полосой поверх тумана */
   float hl = dot(uSkyHorizon, vec3(0.3, 0.59, 0.11));
   vec3 farc = mix(uSkyHorizon, vec3(hl * 1.08) * vec3(1.0, 0.97, 0.93), 0.55);
-  return mix(fog, farc + uSunCol * hg * 0.16 * uAerial.x, smoothstep(14.0, 30.0, length(w - cameraPosition)) * uAerial.y);
+  /* v132: дистанция — за вычетом отъезда камеры (uFogShift), как в airFog: иначе при длинном фокусе холм белел */
+  return mix(fog, farc + uSunCol * hg * 0.16 * uAerial.x, smoothstep(14.0, 30.0, length(w - cameraPosition) - uFogShift) * uAerial.y);
 }
 ${SCREEN_SPILL}
 /* v117 (по мотивам igloo, код свой): дымка не гасит яркое — то, что светлее воздуха (трава и цветы в контровом свете,
@@ -751,6 +826,7 @@ void main(){
 /* v72: цвет неба по направлению — общий для неба и дальнего плана (vista.ts): дальняя гряда в дымке
    берёт ровно тот цвет, что небо прямо за ней, и растворяется в нём без шва */
 export const SKY_PARS = /* glsl */ `
+${PHASE}
 uniform vec3 uZenith;
 uniform vec3 uHigh;
 uniform vec3 uMid;
@@ -764,8 +840,7 @@ uniform float uMie;
    светятся вокруг солнца согласованно. Сильнее у горизонта: там луч солнца идёт через толщу воздуха */
 vec3 skyMie(vec3 d){
   float mu = dot(d, uSunDir);
-  const float g = 0.76;
-  float hg = (1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * mu, 1.5) * ((1.0 - g) * (1.0 - g) / (1.0 + g));
+  float hg = airPhase(0.8, mu);
   float low = 1.0 - smoothstep(-0.05, 0.45, d.y) * 0.7;
   return uSunCol * hg * 0.22 * low * uMie;
 }
@@ -783,6 +858,42 @@ vec3 skyBase(vec3 d){
 }
 /* v107 (пример Никиты 22.10): туман в низинах — светлое облачное море, а не цвет оранжевого горизонта: та же яркость,
    что у неба за ним, но почти без цвета, чуть тёплый */
+/* v132 (RDR2: одна среда для всего дальнего — доклад Ф. Бауэра, SIGGRAPH 2019: туман по высоте поверх глобального,
+   подсветка — небо в направлении взгляда; код свой). Раньше каждый дальний слой — равнина, туман у подножия гор,
+   небо ниже горизонта, сами горы — красился своей формулой дымки и своим цветом, и на каждом стыке выходила полоса:
+   розовая, оранжевая, бежевая, оливковая. Теперь у них одна формула: пропускание воздуха × цвет поверхности +
+   подсвеченный воздух. Плотность падает с высотой экспонентой: низины и подножия тонут в одном цвете, вершины
+   проступают. Подсветка — небо у горизонта по азимуту взгляда; где воздуха мало, она голубее (рассеяние Рэлея),
+   где его толща — сходится к цвету горизонта. uAir: x — плотность у земли, 1/м; y — высота спада, м; z — 0/1
+   (0 — прежние формулы, ?air=0); w — доля плотности, не зависящая от высоты (тонкая дымка и у вершин) */
+uniform vec4 uAir;
+/* второй, приземный слой (у RDR2 — карта тумана поверх общего): плотный и низкий — низины, дальняя равнина и подножия
+   гор на одной высоте тонут одинаково, и между ними не остаётся полосы. x — плотность, y — высота спада, м */
+uniform vec2 uAirLow;
+float heightAvg(float h0, float h1, float H){
+  float e0 = exp(-h0 / H), e1 = exp(-h1 / H);
+  float dh = h1 - h0;
+  return abs(dh) < 0.01 ? e0 : (e0 - e1) * H / dh;
+}
+float airDepth(vec3 w){
+  float dist = length(w - cameraPosition);
+  float h0 = cameraPosition.y, h1 = w.y;
+  return uAir.x * dist * (heightAvg(h0, h1, uAir.y) + uAir.w) + uAirLow.x * dist * heightAvg(h0, h1, uAirLow.y);
+}
+vec3 airHorizon(vec3 d){
+  vec3 h = normalize(vec3(d.x, max(d.y, 0.0) + 0.004, d.z));
+  float cosA = max(dot(h, uSunDir), 0.0);
+  return skyBase(h) + uSunCol * (pow(cosA, 90.0) * 0.3 + pow(cosA, 12.0) * 0.06) + skyMie(h);
+}
+vec3 aerial(vec3 c, vec3 w){
+  vec3 d = normalize(w - cameraPosition);
+  float T = exp(-airDepth(w));
+  vec3 hor = airHorizon(d);
+  /* тонкий воздух — цвет неба чуть выше горизонта по тому же азимуту: голубее и холоднее */
+  vec3 thin = skyBase(normalize(vec3(d.x, 0.32, d.z)));
+  thin = mix(thin, vec3(dot(thin, vec3(0.3, 0.59, 0.11))), 0.15) * 0.95;
+  return c * T + mix(thin, hor, 1.0 - T) * (1.0 - T);
+}
 vec3 mistTone(vec3 sky){
   float l = dot(sky, vec3(0.3, 0.59, 0.11));
   return mix(sky, vec3(l * 1.08) * vec3(1.0, 0.97, 0.93), 0.55);
@@ -818,7 +929,31 @@ float cloudFbm(vec2 p){
   return s / 0.96875;
 }
 /* слой облаков на «потолке»: направление делится на высоту — у горизонта узор сжимается перспективой и тает в
-   дымке. Тело облака чуть темнее и холоднее неба, тонкие края и всё, что против солнца, светятся. rgb — цвет, a — доля */
+   дымке. rgb — цвет, a — доля.
+   v124 (по RDR2: у облаков объём и свет, сл. 28–31 доклада Бауэра; код свой): плотность узора — толщина облака. Два
+   шага по узору в сторону солнца дают, сколько облака свет проходит до этой точки: глубина в тени, край к солнцу
+   светится (пропускание по Беру), тонкий край против солнца — серебристая кайма (рассеяние вперёд, g 0,8), а
+   «порох» (мало вещества — мало и рассеяния внутрь) не даёт толстой середине стать белым пятном. Подсветка снизу —
+   цвет горизонта, сверху — зенита. ?cv=0 — прежние плоские облака */
+uniform float uCloudVol;
+/* v124 (RDR2: дождевой туман тянется из облаков вниз, сл. 19): в дождь у горизонта висят завесы — тёмные косые
+   полосы от нижней кромки туч до земли, редкие и неровные по азимуту, медленно плывут с ветром. uRain — сила дождя */
+uniform float uRain;
+vec3 rainCurtains(vec3 d, vec3 c){
+  if (uRain < 0.01 || d.y > 0.34) return c;
+  float az = atan(d.x, -d.z);
+  float k = d.y * 2.2; /* наклон завес по ветру */
+  float band = cloudNoise(vec2((az + k) * 9.0 + uCloud.x * 0.6, 3.7)) * 0.65 + cloudNoise(vec2((az + k) * 31.0 - uCloud.x, 8.1)) * 0.35;
+  float streak = 0.75 + 0.25 * cloudNoise(vec2((az + k) * 260.0, d.y * 6.0 + uCloud.y * 3.0));
+  float m = smoothstep(0.42, 0.74, band) * smoothstep(0.32, 0.08, d.y) * smoothstep(-0.04, 0.0, d.y) * streak * uRain;
+  float l = dot(c, vec3(0.3, 0.59, 0.11));
+  return mix(c, vec3(l * 0.72) * vec3(0.95, 0.98, 1.03), m * 0.65);
+}
+float cloudFbm3(vec2 p){
+  float s = 0.0, a = 0.5;
+  for (int k = 0; k < 3; k++){ s += a * cloudNoise(p); p = CLOUD_ROT * p * 2.07 + vec2(17.3, -9.1); a *= 0.5; }
+  return s / 0.875;
+}
 vec4 skyClouds(vec3 d, vec3 sky){
   if (uClouds < 0.001 || d.y < 0.004) return vec4(sky, 0.0);
   vec2 p = d.xz / (d.y + 0.07);
@@ -826,22 +961,76 @@ vec4 skyClouds(vec3 d, vec3 sky){
   /* искривление: медленное поле сдвигает узор — облака не тянутся ровными полосами */
   vec2 warp = vec2(cloudNoise(p * 0.35 + vec2(3.1, 7.7)), cloudNoise(p * 0.35 + vec2(-5.3, 1.9))) - 0.5;
   /* сумма октав кучкуется около 0,5 — растягиваем, иначе порог покрытия почти ничего не пропускает */
-  float n = clamp((cloudFbm(p + warp * 2.2) - 0.5) * 2.1 + 0.5, 0.0, 1.0);
+  vec2 pw = p + warp * 2.2;
+  float n = clamp((cloudFbm(pw) - 0.5) * 2.1 + 0.5, 0.0, 1.0);
   float cover = clamp(uCloud.z * 1.1 + uCloudLook.y, 0.0, 0.92);
-  float c = smoothstep(1.0 - cover - 0.06, 1.0 - cover + 0.38, n);
+  float lo = 1.0 - cover - 0.06, hi = 1.0 - cover + 0.38;
+  float c = smoothstep(lo, hi, n);
   c *= smoothstep(0.012, 0.11, d.y) * uClouds;
   float thin = c * (1.0 - c) * 4.0;
-  float fwd = pow(max(dot(d, uSunDir), 0.0), 5.0);
-  vec3 body = sky * mix(vec3(1.0), vec3(0.86, 0.88, 0.95), uCloudLook.x);
-  vec3 lit = sky * 1.03 + uSunCol * (0.05 + 0.55 * fwd) * uCloudLook.z;
-  vec3 col = mix(body, lit, clamp(thin * 0.75 + fwd * 0.35, 0.0, 1.0));
-  return vec4(mix(sky, col, c * 0.85), c);
+  float mu = dot(d, uSunDir);
+  float fwd = pow(max(mu, 0.0), 5.0);
+  if (uCloudVol < 0.5) {
+    vec3 body = sky * mix(vec3(1.0), vec3(0.86, 0.88, 0.95), uCloudLook.x);
+    vec3 lit = sky * 1.03 + uSunCol * (0.05 + 0.55 * fwd) * uCloudLook.z;
+    vec3 col = mix(body, lit, clamp(thin * 0.75 + fwd * 0.35, 0.0, 1.0));
+    return vec4(mix(sky, col, c * 0.85), c);
+  }
+  /* сколько облака между точкой и солнцем: два шага по узору к солнцу (в той же развёртке потолка) */
+  vec2 toSun = normalize(uSunDir.xz * vec2(0.55, 1.1) + 1e-5) * 0.22 * uCloudLook.w;
+  float od = 0.0;
+  for (int k = 1; k <= 2; k++) {
+    float nk = clamp((cloudFbm3(pw + toSun * float(k)) - 0.5) * 2.1 + 0.5, 0.0, 1.0);
+    od += smoothstep(lo, hi, nk);
+  }
+  float dens = smoothstep(lo, hi + 0.25, n);
+  float trans = exp(-(od * 1.1 + dens * 0.8) * (0.8 + uCloudLook.x * 0.6));
+  float powder = 1.0 - exp(-dens * 5.0);
+  float ph = max(mix(hgPeak(0.8, mu), hgPeak(0.3, mu), 0.4), 0.18);
+  vec3 sunLight = uSunCol * trans * mix(1.0, powder, 0.6) * ph * 0.42 * uCloudLook.z;
+  /* подсветка небом: снизу тёплый горизонт, сверху холодный зенит; толстое — темнее */
+  vec3 amb = mix(uHorizon * 0.78, mix(uMid, uZenith, 0.5) * 0.92, 0.35 + 0.4 * (1.0 - dens));
+  amb *= mix(1.0, 0.62, dens * uCloudLook.x * 0.6);
+  vec3 col = amb + sunLight + uSunCol * thin * fwd * 0.5 * uCloudLook.z;
+  return vec4(mix(sky, col, c * 0.92), c);
+}
+
+/* v126 (RDR2, ясный вечер): редкие кучевые облака невысоко над горизонтом. Клубы круглые (узор не растянут вдоль
+   горизонта, как у слоистых облаков погоды), порог высокий — облаков мало. Свет — два шага по узору к солнцу: бок к
+   солнцу (справа) светлый и тёплый, теневой — голубовато-серый, в цвет зенита; тонкие края светятся. У самого горизонта
+   облака тонут в дымке. uCumulus — сила (0 — нет, ?clearclouds=0) */
+uniform float uCumulus;
+uniform float uSide;
+vec3 skyCumulus(vec3 d, vec3 sky){
+  if (uCumulus < 0.001 || d.y < 0.0 || d.y > 0.6) return sky;
+  vec2 p = d.xz / (d.y + 0.06) * 0.32 + uCloud.xy * 0.25 + vec2(4.7, -2.3);
+  vec2 warp = vec2(cloudNoise(p * 0.5 + vec2(1.3, 8.1)), cloudNoise(p * 0.5 + vec2(-6.2, 2.4))) - 0.5;
+  vec2 pw = p + warp * 0.9;
+  float n = cloudFbm(pw);
+  float c = smoothstep(0.55, 0.72, n);
+  /* больше облаков у горизонта, к зениту — ни одного */
+  c *= smoothstep(0.03, 0.1, d.y) * (1.0 - smoothstep(0.3, 0.58, d.y)) * uCumulus;
+  if (c < 0.002) return sky;
+  vec2 toSun = normalize(uSunDir.xz + 1e-5) * 0.12;
+  float od = smoothstep(0.53, 0.75, cloudFbm3(pw + toSun)) + smoothstep(0.53, 0.75, cloudFbm3(pw + toSun * 2.2)) * 0.7;
+  float lit = exp(-od * 1.0);
+  float thin = c * (1.0 - c) * 4.0;
+  float lum = dot(sky, vec3(0.3, 0.59, 0.11));
+  vec3 shade = mix(vec3(lum) * vec3(0.9, 0.93, 1.0), uZenith, 0.4) * 0.8;
+  vec3 light = vec3(1.04, 1.0, 0.95) * max(lum, 0.7) * 1.22 + uSunCol * 0.12;
+  vec3 col = mix(shade, light, lit) + uSunCol * thin * lit * 0.08;
+  col = mix(col, sky, smoothstep(0.06, 0.012, d.y) * 0.7);
+  return mix(sky, col, c);
 }
 
 void main(){
   vec3 d = normalize(vDir);
-  vec4 cl = skyClouds(d, skyBase(d));
-  vec3 c = cl.rgb;
+  vec4 cl = skyClouds(d, skyCumulus(d, skyBase(d)));
+  vec3 c = rainCurtains(d, cl.rgb);
+  /* v127: в облачную погоду и в дождь солнце за тучами сзади над холмом — тучи там светлее и теплее: светлое пятно
+     за кроной держит глубину кадра, когда теней нет */
+  float hid = max(dot(d, uSunDir), 0.0);
+  c += uGlow * (pow(hid, 10.0) * 0.32 + pow(hid, 3.0) * 0.08) * uClouds * (1.0 - uSide) * smoothstep(-0.02, 0.06, d.y);
   /* v107: ниже горизонта, в щели между равниной и подножием гор, — то же облачное море, а не оранжевая полоса */
   /* v119 (Никита: «белое у гор непонятно что»): ниже горизонта — тот же тёплый цвет горизонта, а не молочный туман */
   c = mix(c, mix(c, mistTone(c), 0.25), smoothstep(0.0, -0.025, d.y));
@@ -851,6 +1040,9 @@ void main(){
   float halo = pow(cosA, 900.0) * 2.2 + pow(cosA, 90.0) * 0.45 + pow(cosA, 12.0) * 0.06;
   float disc = smoothstep(0.99965, 0.99985, cosA) * uSunDisc * (1.0 - cl.a);
   c += uSunCol * (halo + disc) + skyMie(d);
+  /* v132: ниже горизонта — тот же цвет, в котором тонут даль и подножия (aerial): без своей полосы. После ореола
+     солнца — в airHorizon он уже учтён, иначе ложился дважды светлой полосой */
+  if (uAir.z > 0.5 && d.y < 0.0) c = mix(c, airHorizon(d), smoothstep(0.0, -0.01, d.y));
 
   /* дизеринг против полос в плавном градиенте */
   float dither = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
@@ -914,6 +1106,9 @@ void main(){
     : clamp(0.24 + 0.76 * smoothstep(15.0, 300.0, dist), 0.0, 1.0); /* v119: к краю равнины — ровно цвет неба, без ступеньки у горизонта */
   fogc = mix(fogc, sky, smoothstep(80.0, 300.0, dist));
   vec3 col = mix(soil, fogc, fog);
+  /* у самого края сетки (квадрат 740 м) равнина дорастворяется в цвет горизонта — иначе её прямой край читался линией
+     под подножием гор; к этой дали воздух и так почти всё закрыл */
+  if (uAir.z > 0.5) col = mix(aerial(soil, vW), airHorizon(d), smoothstep(320.0, 366.0, max(abs(vW.x), abs(vW.z))));
   /* 3: дальняя часть долины под светлым туманом — ровный слой с мягким верхом, ближний луг над ним */
   if (uMeadow > 2.5) {
     float m = smoothstep(55.0, 150.0, dist) * (1.0 - smoothstep(-2.0, 1.5, vW.y + 4.3 - 2.2 * meadowK));
@@ -1056,7 +1251,15 @@ vec3 treeSway(vec3 local, vec3 world){
   float g = gustAt(uTreeBase.xz);
   vec3 wind = vec3(uWindDir.x, 0.0, uWindDir.y);
   float slow = sin(uTime * 0.83 + 1.3) * 0.6 + sin(uTime * 1.37) * 0.4;
-  return wind * uWind * k * k * (0.05 * slow + 0.14 * g);
+  vec3 sway = wind * uWind * k * k * (0.05 * slow + 0.14 * g);
+  /* v131 (ветер ярусами, как у деревьев RDR2): ствол клонится целиком медленно, а каждая ветвь качается в своей фазе —
+     тем сильнее, чем дальше от оси ствола. Фаза — гладкое поле по локальным координатам: ветка и её листья движутся
+     вместе, соседние ветви — вразнобой */
+  float arm = max(length(local.xz) - 0.25, 0.0) * smoothstep(0.3, 0.55, k);
+  float ph = sin(local.x * 1.7 + local.z * 0.9) * 2.0 + sin(local.y * 1.1 - local.x * 0.6) * 1.6;
+  float b = sin(uTime * (1.6 + 0.25 * sin(ph)) + ph) * (0.55 + 0.45 * g);
+  sway += (wind * 0.7 + vec3(0.0, 0.45, 0.0)) * uWind * arm * b * 0.035;
+  return sway;
 }
 `;
 
@@ -1070,11 +1273,13 @@ varying float vDist;
 varying float vY;
 varying vec3 vL;
 varying vec3 vTan;
+varying vec2 vBarkUv;
 void main(){
   vec4 wp = modelMatrix * vec4(position, 1.0);
   wp.xyz += treeSway(position, wp.xyz);
   vW = wp.xyz;
   vN = normalize(mat3(modelMatrix) * normal);
+  vBarkUv = uv;
   vY = position.y;
   vL = position;
   vTan = aTan;
@@ -1092,12 +1297,29 @@ export const barkFragment = /* glsl */ `
 ${LIGHT_PARS}
 uniform vec3 uCrownC;     /* центр кроны (локально) */
 uniform float uCrownR;
+/* v129: стоковая кора (tree.ts loadStock): цвет с запечённым затенением и карта нормалей; uBarkStock = 0 — процедурная */
+uniform sampler2D tBark;
+uniform sampler2D tBarkN;
+uniform float uBarkStock;
 varying vec3 vW;
 varying vec3 vN;
 varying float vDist;
 varying float vY;
 varying vec3 vL;
 varying vec3 vTan;
+varying vec2 vBarkUv;
+/* нормаль из карты без готовых касательных: базис по производным экрана от позиции и развёртки */
+vec3 barkNormal(vec3 n, vec3 tn){
+  vec3 dp1 = dFdx(vW), dp2 = dFdy(vW);
+  vec2 du1 = dFdx(vBarkUv), du2 = dFdy(vBarkUv);
+  vec3 c2 = cross(dp2, n), c1 = cross(n, dp1);
+  vec3 T = c2 * du1.x + c1 * du2.x;
+  vec3 B = c2 * du1.y + c1 * du2.y;
+  float m = max(dot(T, T), dot(B, B));
+  if (m < 1e-12) return n;
+  float inv = inversesqrt(m);
+  return normalize(T * inv * tn.x + B * inv * tn.y + n * tn.z);
+}
 float hb(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
 float nb(vec3 p){
   vec3 i = floor(p), f = fract(p);
@@ -1127,9 +1349,22 @@ void main(){
   bark = mix(bark, mix(vec3(0.022, 0.036, 0.010), vec3(0.050, 0.068, 0.016), ridge), moss * 0.8);
   float lich = smoothstep(0.74, 0.78, nb(vL * 9.0 + 7.0)) * (1.0 - moss);
   bark = mix(bark, vec3(0.085, 0.09, 0.066), lich * 0.3);
+  if (uBarkStock > 0.5) {
+    /* снимок настоящей коры: цвет (затенение в бороздах уже запечено), рельеф — из карты нормалей. Снимок сделан при
+       ровном дневном свете и светлее нашей коры в закатной тени — приглушён. Мох у земли — прежний, поверх */
+    vec3 tc = texture2D(tBark, vBarkUv).rgb;
+    float tl = dot(tc, vec3(0.2126, 0.7152, 0.0722));
+    ridge = smoothstep(0.03, 0.14, tl);
+    bark = tc * 0.5;
+    bark = mix(bark, bark * vec3(0.7, 1.05, 0.45) + vec3(0.004, 0.012, 0.0), moss * 0.55);
+    vec3 tn = texture2D(tBarkN, vBarkUv).xyz * 2.0 - 1.0;
+    N = barkNormal(N0, normalize(vec3(tn.xy * 1.3, tn.z)));
+  }
   float inCrown = 1.0 - smoothstep(0.55, 1.05, length(vL - uCrownC) / uCrownR);
-  float ao = mix(0.6, 1.0, ridge) * (1.0 - 0.45 * inCrown);
-  float sunVis = cloudShade(vW) * (1.0 - 0.75 * inCrown);
+  /* v130: у земли ствол темнее — трава и корни закрывают небо; раньше он входил в траву светлым */
+  float ao = mix(0.6, 1.0, ridge) * (1.0 - 0.45 * inCrown) * mix(0.45, 1.0, smoothstep(0.0, 0.8, vY));
+  /* v131: тень кроны на ветках и стволе — пятнами, из карты тени кроны (cloudShade → crownSun) */
+  float sunVis = cloudShade(vW) * (1.0 - 0.25 * inCrown);
   vec3 light = shIrradiance(N) * uAmbient * 0.7 * ao + uSunCol * max(dot(N, uSunDir), 0.0) * sunVis;
   float rim = pow(1.0 - max(dot(N0, V), 0.0), 4.0) * pow(max(dot(-V, uSunDir), 0.0), 4.0) * mix(0.25, 1.0, ridge) * sunVis;
   vec3 c = bark * light + uSunCol * vec3(0.20, 0.14, 0.06) * rim;
@@ -1152,7 +1387,23 @@ varying float vDist;
 varying float vDepth;
 varying float vRand;
 varying float vSunSide;
+varying vec3 vLocal;
+/* v130: окна в кроне — пучки, попавшие в «окно» объёмного шума, не рисуются целиком (у живой кроны просвет — это
+   отсутствующая ветка с листвой, а не прозрачный лист). Только снаружи сердцевины: она держит массу. ?holes=0 — без окон */
+uniform float uHoles;
+float wh(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+float wn3(vec3 p){
+  vec3 i = floor(p), f = fract(p);
+  vec3 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(wh(i), wh(i + vec3(1, 0, 0)), u.x), mix(wh(i + vec3(0, 1, 0)), wh(i + vec3(1, 1, 0)), u.x), u.y),
+             mix(mix(wh(i + vec3(0, 0, 1)), wh(i + vec3(1, 0, 1)), u.x), mix(wh(i + vec3(0, 1, 1)), wh(i + vec3(1, 1, 1)), u.x), u.y), u.z);
+}
 void main(){
+  vLocal = position;
+  if (uHoles > 0.0 && aLeaf.y > 0.3 && wn3(aCluster * 0.85 + 2.7) > 1.0 - 0.36 * uHoles) {
+    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+    return;
+  }
   vec4 wp = modelMatrix * vec4(position, 1.0);
   wp.xyz += treeSway(position, wp.xyz);
   /* листья трепещут: пучок покачивается вокруг своей ветки */
@@ -1176,6 +1427,11 @@ ${LIGHT_PARS}
 uniform sampler2D uLeafTex;
 uniform float uA2C;       /* 1 — MSAA есть, край листа сглаживается покрытием */
 uniform float uLeafTrans; /* v81: сила просвета листвы (HillScene, ?ltr=) */
+/* v129: 1 — пучок из стоковых листьев (tree.ts stockLeafCluster): в текстуре настоящий цвет листа, а не каналы-данные */
+uniform float uLeafStock;
+/* v130: центр кроны (локально) и её радиус — для светотени по высоте и окон в силуэте */
+uniform vec3 uCrown;
+uniform float uCrownR;
 varying vec3 vW;
 varying vec3 vN;
 varying vec2 vUv;
@@ -1183,20 +1439,58 @@ varying float vDist;
 varying float vDepth;
 varying float vRand;
 varying float vSunSide;
+varying vec3 vLocal;
+float lh(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+float ln3(vec3 p){
+  vec3 i = floor(p), f = fract(p);
+  vec3 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(lh(i), lh(i + vec3(1, 0, 0)), u.x), mix(lh(i + vec3(0, 1, 0)), lh(i + vec3(1, 1, 0)), u.x), u.y),
+             mix(mix(lh(i + vec3(0, 0, 1)), lh(i + vec3(1, 0, 1)), u.x), mix(lh(i + vec3(0, 1, 1)), lh(i + vec3(1, 1, 1)), u.x), u.y), u.z);
+}
 void main(){
   vec4 t = texture2D(uLeafTex, vUv);
+  /* v130: окна в кроне. Была сплошная масса без единого просвета — «брокколи» из картона. У внешней оболочки порог
+     альфы местами поднимается по крупному шуму (по локальным координатам — окна не плывут с ветром): там остаются
+     только самые плотные листья, сквозь остальное видно небо. Глубь кроны не трогаем — она держит массу */
+  /* край окна рваный: по соседству с ним пучки редеют — порог альфы поднимается по тому же шуму */
+  float holes = smoothstep(0.5, 0.64, ln3(vLocal * 0.85 + 2.7)) * smoothstep(0.3, 0.8, vDepth);
+  float th = 0.45 + 0.3 * holes;
   /* альфа к покрытию с заострением (Ben Golus): на дальних мип-уровнях альфа листвы усредняется и крона
      «худеет»; деление на fwidth возвращает листу чёткий край шириной в пиксель */
-  float a = uA2C > 0.5 ? clamp((t.a - 0.45) / max(fwidth(t.a), 1e-4) + 0.5, 0.0, 1.0) : step(0.45, t.a);
+  float a = uA2C > 0.5 ? clamp((t.a - th) / max(fwidth(t.a), 1e-4) + 0.5, 0.0, 1.0) : step(th, t.a);
+  /* v130: карточка, повёрнутая к камере ребром, растягивала листья в смазанные штрихи — гасим её по углу (нормаль
+     карточки — по производным экрана) */
+  vec3 Nc = normalize(cross(dFdx(vW), dFdy(vW)));
+  /* порог жёсткий: полупрозрачная карточка смешивалась с небом в серый призрак */
+  a *= smoothstep(0.24, 0.28, abs(dot(Nc, normalize(cameraPosition - vW))));
   if (a < 0.02) discard;
   vec3 N = normalize(vN);
   vec3 V = normalize(cameraPosition - vW);
   /* два тона листвы: оливка травы и более жёлтая зелень, по листу и по пучку */
   vec3 albedo = mix(vec3(0.030, 0.058, 0.014), vec3(0.055, 0.078, 0.018), clamp(t.g * 0.7 + vRand * 0.5, 0.0, 1.0)) * (0.7 + 0.3 * t.r);
+  /* стоковый лист: снимок при ровном свете светлее и зеленее нашей закатной листвы — приглушён и чуть сдвинут в оливку,
+     у пучков свой тон (vRand), чтобы крона не была однородной. lum — яркость листа вместо прежнего канала R */
+  float lum = t.r;
+  if (uLeafStock > 0.5) {
+    lum = clamp(dot(t.rgb, vec3(0.2126, 0.7152, 0.0722)) * 3.0, 0.0, 1.0);
+    albedo = t.rgb * vec3(0.27, 0.23, 0.17) * mix(0.8, 1.15, vRand);
+    /* v130: насыщенность ближе к траве: крона была самым зелёным пятном кадра, особенно в облачную погоду */
+    albedo = mix(vec3(dot(albedo, vec3(0.2126, 0.7152, 0.0722))), albedo, 0.72);
+    /* v131: пестрота кроны — каждый пятый пучок старше и желтее, молодые на кончиках светлее; так крона у RDR2 не
+       читается одной заливкой */
+    albedo = mix(albedo, albedo * vec3(1.25, 1.05, 0.55), smoothstep(0.78, 0.95, vRand) * 0.7);
+    albedo *= 1.0 + 0.18 * smoothstep(0.75, 1.0, vDepth) * smoothstep(-0.2, 0.8, (vLocal.y - uCrown.y) / max(uCrownR, 1e-3));
+  }
+  /* v130: светотень по высоте. Низ кроны не видит неба (его закрывает сама крона) — темнее и холоднее, верх ловит
+     свет неба. Без этого низ и верх были одинаковыми, и крона читалась плоской */
+  float hc = (vLocal.y - uCrown.y) / max(uCrownR, 1e-3);
+  float skyOpen = mix(0.4, 1.12, smoothstep(-0.95, 0.75, hc));
   /* внутри кроны темнее: туда не добирается ни небо, ни солнце */
   float ao = mix(0.38, 1.0, vDepth);
-  float sunLit = smoothstep(-0.35, 0.55, vSunSide) * mix(0.35, 1.0, vDepth);
-  vec3 light = shIrradiance(N) * uAmbient * 0.8 * ao
+  /* v131: внутреннюю тень теперь даёт настоящая карта тени кроны (crownSun в cloudShade) — прежняя оценка по стороне
+     кроны и глубине осталась мягкой поправкой: лист, повёрнутый от солнца, всё же темнее */
+  float sunLit = smoothstep(-0.6, 0.45, vSunSide) * mix(0.7, 1.0, vDepth);
+  vec3 light = shIrradiance(N) * uAmbient * 0.8 * ao * skyOpen * mix(vec3(0.96, 0.98, 1.03), vec3(1.0), smoothstep(-0.6, 0.2, hc))
              + uSunCol * max(dot(N, uSunDir), 0.0) * sunLit * cloudShade(vW);
   /* v81: лист на просвет по модели Two Sided Foliage, как у травы (Unreal): обёрнутый диффуз по −N·L на
      лепесток рассеяния к солнцу. Сквозь крону свет проходит только там, где она тонкая: по контуру и с
@@ -1208,8 +1502,23 @@ void main(){
   float scatter = 0.25 * 0.36 / (3.14159 * ggx * ggx) + 0.9 * pow(voL, 8.0);
   float thin = max(pow(1.0 - abs(dot(N, V)), 2.0), smoothstep(-0.1, 0.7, vSunSide)) * smoothstep(0.5, 1.0, vDepth);
   vec3 transCol = mix(vec3(0.16, 0.36, 0.03), vec3(0.30, 0.33, 0.06), vRand * 0.7);
-  vec3 trans = transCol * uSunCol * wrapNoL * scatter * thin * (0.35 + 0.65 * t.r) * cloudShade(vW);
+  /* на просвет — цвет самого листа, светлее и желтее (свет прошёл сквозь лист) */
+  if (uLeafStock > 0.5) transCol = mix(transCol, t.rgb * vec3(0.7, 0.75, 0.3), 0.35);
+  vec3 trans = transCol * uSunCol * wrapNoL * scatter * thin * (0.35 + 0.65 * lum) * cloudShade(vW);
   vec3 c = albedo * light + trans * uLeafTrans;
+  /* v131: восковой блеск листа — отражённое небо по Френелю и узкий блик солнца, по нормали самой карточки (у пучка
+     листья смотрят в разные стороны — блеск рассыпается искрами). В дождь мокрые листья блестят сильнее */
+  vec3 Ncard = Nc * sign(dot(Nc, V));
+  float fres = pow(1.0 - clamp(dot(Ncard, V), 0.0, 1.0), 5.0);
+  vec3 skyRef = shIrradiance(reflect(-V, Ncard)) * uAmbient;
+  vec3 Hs = normalize(uSunDir + V);
+  float glint = pow(max(dot(Ncard, Hs), 0.0), 40.0);
+  /* отражённое небо — около 4 % у листа (у мокрого вдвое больше): прежние четверть давали белые мазки на листьях вкось */
+  c += (skyRef * (0.004 + 0.03 * fres) + uSunCol * glint * 0.03 * cloudShade(vW) * vDepth) * (1.0 + uWet * 1.2) * mix(0.5, 1.0, lum);
+  /* v130: контровая кайма. Солнце за кроной (сумерки) — края силуэта, где листва тонкая, светятся золотом, как
+     трава на гребне; раньше край был бурой массой */
+  float sil = pow(1.0 - abs(dot(N, V)), 3.0) * smoothstep(0.55, 1.0, vDepth);
+  c += uSunCol * vec3(0.42, 0.3, 0.1) * sil * pow(voL, 5.0) * (0.4 + 0.6 * lum) * cloudShade(vW) * 0.5;
   /* дерево стоит дальше кресла, но воздух на нём слабее, чем на траве той же дали: тёмная крона держит
      глубину кадра, а бледная сливалась с небом */
   c = applyFog(c, vW, airFog(vW, vDist) * 0.6);
@@ -1386,6 +1695,46 @@ void main(){
 }
 `;
 
+/* v124 (RDR2: свечение без порога, по разбору кадра imgeself; код и веса свои): пирамида свечения.
+   Вниз — 13 выборок (крест 2×2 блоков: центр, четыре ближних и восемь дальних), на первом шаге каждая выборка ещё и
+   гасится по своей яркости — одинокий яркий пиксель (блик на подушке, искра пыльцы) не раздувается в пятно и не
+   мигает. Вверх — «палатка» 3×3 из уровня ниже плюс текущий уровень. Порога нет: светится всё пропорционально
+   яркости, поэтому небо у солнца и светлая дымка мягко растекаются на силуэты, как в воздухе, а тёмная трава почти
+   ничего не отдаёт. uMode 0 — вниз, 1 — вниз с гашением ярких одиночек, 2 — вверх */
+export const glowFragment = /* glsl */ `
+uniform sampler2D tInput;
+uniform sampler2D tLow;
+uniform vec2 uTexel;
+uniform int uMode;
+varying vec2 vUv;
+vec3 tap(vec2 o){ return min(textureLod(tInput, vUv + o * uTexel, 0.0).rgb, vec3(24.0)); }
+float tame(vec3 c){ return 1.0 / (1.0 + dot(c, vec3(0.2126, 0.7152, 0.0722))); }
+vec3 quad4(vec3 a, vec3 b, vec3 c, vec3 d){
+  if (uMode != 1) return (a + b + c + d) * 0.25;
+  float wa = tame(a), wb = tame(b), wc = tame(c), wd = tame(d);
+  return (a * wa + b * wb + c * wc + d * wd) / (wa + wb + wc + wd);
+}
+void main(){
+  if (uMode == 2) {
+    vec3 t = vec3(0.0);
+    for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
+      float w = (x == 0 ? 2.0 : 1.0) * (y == 0 ? 2.0 : 1.0);
+      t += textureLod(tLow, vUv + vec2(float(x), float(y)) * uTexel, 0.0).rgb * w;
+    }
+    gl_FragColor = vec4(textureLod(tInput, vUv, 0.0).rgb + t / 16.0, 1.0);
+    return;
+  }
+  vec3 c = tap(vec2(0.0));
+  vec3 n0 = tap(vec2(-1.0, -1.0)), n1 = tap(vec2(1.0, -1.0)), n2 = tap(vec2(-1.0, 1.0)), n3 = tap(vec2(1.0, 1.0));
+  vec3 f0 = tap(vec2(-2.0, -2.0)), f1 = tap(vec2(0.0, -2.0)), f2 = tap(vec2(2.0, -2.0));
+  vec3 f3 = tap(vec2(-2.0, 0.0)), f4 = tap(vec2(2.0, 0.0));
+  vec3 f5 = tap(vec2(-2.0, 2.0)), f6 = tap(vec2(0.0, 2.0)), f7 = tap(vec2(2.0, 2.0));
+  vec3 r = quad4(n0, n1, n2, n3) * 0.5
+    + quad4(f0, f1, f3, c) * 0.125 + quad4(f1, f2, c, f4) * 0.125
+    + quad4(f3, c, f5, f6) * 0.125 + quad4(c, f4, f6, f7) * 0.125;
+  gl_FragColor = vec4(r, 1.0);
+}`;
+
 /* радиальное размытие к солнцу — классика GPU Gems 3, гл. 13 */
 export const godBlurFragment = /* glsl */ `
 uniform sampler2D tInput;
@@ -1465,6 +1814,11 @@ uniform float uTear;       /* v19: нижний край оторванной с
 uniform float uBgBlur;     /* v19: размытие сцены-фона в главе «Кейсы» (само размытие — в четвертном проходе) */
 uniform sampler2D tIntro;  /* v95: расфокус заставки — кадр, размытый двумя четвертными проходами */
 uniform sampler2D tBloom;  /* v114: ореол ярких мест портала (два четвертных прохода) */
+uniform sampler2D tGlow;   /* v124: пирамида свечения холма (glowFragment), сумма пяти уровней */
+uniform sampler2D tShafts; /* v124: объёмные лучи (shafts.ts): r — знаковая поправка освещённости воздуха с учётом рассеяния */
+uniform float uShafts;
+uniform vec3 uShaftCol;
+uniform float uGlow;       /* доля свечения в кадре: кадр смешивается с ним, а не складывается — яркость сохраняется */
 /* v117 (по мотивам igloo, код и значения свои): x — затемнение от солнца вместо круглой виньетки, y — «плёночный» тон:
    тени чуть холоднее и лиловее, света теплее; z — доля прежней круглой виньетки; ?look=0 — как было */
 uniform vec3 uLook;
@@ -1584,6 +1938,7 @@ vec3 grade(vec3 hdr){
 }
 
 void main(){
+  if (uShafts < -0.5) { vec4 sd = texture2D(tShafts, vUv); gl_FragColor = vec4(0.5 + sd.r * 2.0, sd.g, 0.5 + sd.r * 2.0, 1.0); return; }
   vec3 rays = texture2D(tRays, vUv).rgb * uRayTint * uRays;
   if (uShield > 0.0) rays *= 1.0 - uShield * texture2D(tShield, vUv).r;
   /* глитч интро (конец кадра SYS_CAM у референса): горизонтальные полосы разной
@@ -1705,6 +2060,15 @@ void main(){
   /* глава «Кейсы»: tScene уже размытый задник из четвертного прохода (quarterFragment) */
   /* контраст до тонмаппинга — в лог-пространстве вокруг средне-серого (см. grade) */
   if (uBloom > 0.001) e += texture2D(tBloom, uv).rgb * uBloom;
+  /* воздух в тени кроны и гребня темнее — множителем, чтобы не менять оттенок (вычитание тёплого света солнца уводило
+     тень в синеву), и не больше чем на треть: дымка — лишь часть цвета травы за ней. Просветы освещённого воздуха у
+     солнца — тёплой добавкой */
+  if (uShafts > 0.001) {
+    float sv = texture2D(tShafts, uv).r * uShafts * (1.0 - uIntro);
+    /* в тени уходит тёплый свет солнца, а голубой свет неба остаётся: красный гаснет сильнее синего */
+    e = e * (1.0 + max(min(sv, 0.0), -0.34) * vec3(1.0, 0.92, 0.76)) + uShaftCol * max(sv, 0.0) * 0.35;
+  }
+  if (uGlow > 0.001) e = mix(e, texture2D(tGlow, uv).rgb * 0.2, uGlow);
   vec3 c = grade((e + rays) * uExposure * uWhiteBalance);
   vec2 q = vUv - 0.5;
   c *= 1.0 - dot(q, q) * uVignette * uLook.z;

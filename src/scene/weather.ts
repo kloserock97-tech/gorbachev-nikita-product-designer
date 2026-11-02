@@ -29,6 +29,17 @@ const DUSK: Palette = {
   horizon: new THREE.Color("#d99a78"), glow: new THREE.Color("#e8946a"),
 };
 
+/* v125: боковое солнце (ясно): солнце за правой кромкой, в кадре — небо в стороне от него. Зенит голубой, к горизонту
+   светлее; v126: у горизонта напротив солнца — розоватый «пояс Венеры», как в RDR2 вечером (золото — только к солнцу, uGlow); дымка прохладнее, свет солнца — золото чуть выше заката */
+const SIDE: Palette = {
+  zenith: new THREE.Color("#7598c2"), high: new THREE.Color("#a3bad2"), mid: new THREE.Color("#dcdfdc"),
+  horizon: new THREE.Color("#e9c8b3"), glow: new THREE.Color("#ffbd68"),
+};
+const FOG_SIDE = new THREE.Color("#dcdcd2");
+/* ?sidelight=доля, на которую слабеет свет неба,прибавка солнца */
+const SIDE_LIGHT = (new URLSearchParams(location.search).get("sidelight") ?? "0.38,0.45").split(",").map(Number);
+const SIDE_AMB = SIDE_LIGHT[0], SIDE_SUN = SIDE_LIGHT[1];
+const SUN_SIDE_COL = new THREE.Color(2.55, 1.72, 0.92);
 const FOG_OVERCAST = new THREE.Color("#b9bab2");
 const FOG_DUSK = new THREE.Color("#a98a86");
 const TMP = new THREE.Color();
@@ -70,7 +81,13 @@ export class Weather {
   private dusk = 0;
   /** v96: доля облаков в небе — 0 в ясную погоду, 1 в облачную, дождь и сумерки; плавно, как остальная погода */
   get cloudShare() { return Math.min(1, this.overcast + this.dusk); }
+  /** v124: доля прямого солнца для объёмных лучей — под сплошными облаками и в дождь их нет, в сумерках есть */
+  /** v124: сила дождя 0…1 — для завес у горизонта в небе */
+  get rainShare() { return this.rain; }
+  get sunShare() { return (1 - this.overcast) ** 2; }
   private wet = 0;
+  /** v125: 0 — солнце за горами, 1 — справа (ясно); пишет HillScene по нынешнему направлению солнца */
+  side = 0;
   private cloudOffset = new THREE.Vector2(3.1, -1.7);
 
   /* базовые значения ясного заката: небо, туман, свет и дымка снимаются при создании,
@@ -186,26 +203,31 @@ export class Weather {
 
     /* солнце: слабее под облаками, краснее в сумерках */
     const sunK = (1 - o * 0.72) * (1 - du * 0.35);
-    u.uSunCol.value.copy(b.sun).multiplyScalar(sunK);
+    const sd = this.side;
+    u.uSunCol.value.copy(b.sun).lerp(SUN_SIDE_COL, sd).multiplyScalar(sunK * (1 + SIDE_SUN * sd));
     if (du > 0.001) u.uSunCol.value.lerp(TMP.set(b.sun.r * 1.1, b.sun.g * 0.55, b.sun.b * 0.35).multiplyScalar(sunK), du);
-    u.uAmbient.value = b.ambient * (1 - du * 0.55) * (1 + o * 0.12);
-    u.uFogCol.value.copy(b.fog).lerp(FOG_OVERCAST, o * 0.75).lerp(FOG_DUSK, du * 0.7);
-    u.uHaze.value = b.haze * (1 + o * 0.4 + r * 0.5);
+    /* v127: ясным вечером прямое солнце в разы сильнее неба (RDR2) — свет неба слабее, солнце ярче: тени от кроны и
+       гребня и тёмный передний склон читаются, а не тонут в ровном свете неба */
+    u.uAmbient.value = b.ambient * (1 - du * 0.55) * (1 + o * 0.12) * (1 - SIDE_AMB * sd);
+    u.uFogCol.value.copy(b.fog).lerp(FOG_SIDE, sd * 0.7).lerp(FOG_OVERCAST, o * 0.75).lerp(FOG_DUSK, du * 0.7);
+    /* v126: при боковом солнце воздух прозрачнее — даль чётче, как ясным вечером в RDR2 */
+    u.uHaze.value = b.haze * (1 + o * 0.4 + r * 0.5) * (1 - 0.3 * this.side * (1 - o));
 
     /* небо */
-    const mix = (dst: THREE.Color, clear: THREE.Color, cloudy: THREE.Color, duskC: THREE.Color) =>
-      dst.copy(clear).lerp(cloudy, o).lerp(duskC, du * (1 - o));
-    mix(sky.uZenith.value, b.sky.zenith, OVERCAST.zenith, DUSK.zenith);
-    mix(sky.uHigh.value, b.sky.high, OVERCAST.high, DUSK.high);
-    mix(sky.uMid.value, b.sky.mid, OVERCAST.mid, DUSK.mid);
-    mix(sky.uHorizon.value, b.sky.horizon, OVERCAST.horizon, DUSK.horizon);
-    mix(sky.uGlow.value, b.sky.glow, OVERCAST.glow, DUSK.glow);
-    sky.uSunCol.value.copy(b.skySun).multiplyScalar((1 - o * 0.9) * (1 - du * 0.25));
+    const mix = (dst: THREE.Color, clear: THREE.Color, side: THREE.Color, cloudy: THREE.Color, duskC: THREE.Color) =>
+      dst.copy(clear).lerp(side, sd).lerp(cloudy, o).lerp(duskC, du * (1 - o));
+    mix(sky.uZenith.value, b.sky.zenith, SIDE.zenith, OVERCAST.zenith, DUSK.zenith);
+    mix(sky.uHigh.value, b.sky.high, SIDE.high, OVERCAST.high, DUSK.high);
+    mix(sky.uMid.value, b.sky.mid, SIDE.mid, OVERCAST.mid, DUSK.mid);
+    mix(sky.uHorizon.value, b.sky.horizon, SIDE.horizon, OVERCAST.horizon, DUSK.horizon);
+    mix(sky.uGlow.value, b.sky.glow, SIDE.glow, OVERCAST.glow, DUSK.glow);
+    sky.uSunCol.value.copy(b.skySun).lerp(TMP.setRGB(1.7, 1.3, 0.85), sd).multiplyScalar((1 - o * 0.9) * (1 - du * 0.25));
     sky.uSunDisc.value = b.disc * (1 - o);
 
     /* грейд */
     if (grade && b.exposure >= 0) {
-      fx.params.exposure = b.exposure * (1 - o * 0.08) * (1 - du * 0.4);
+      /* v124: в дождь кадр темнее и тяжелее, как в RDR2 */
+      fx.params.exposure = b.exposure * (1 + sd * 0.05) * (1 - o * 0.08) * (1 - r * 0.12) * (1 - du * 0.4);
       fx.params.rays = b.rays * (1 - o) * (1 + du * 0.4);
       fx.params.vibrance = b.vibrance * (1 - o * 0.6) + du * 0.08;
     }

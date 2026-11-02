@@ -24,6 +24,15 @@ Retro computer — "Old Computer 02", Freepoly.org, via BlenderKit — CC0 1.0
 
 Mug and saucer — made in code for this project (tools/blender-build-props.py).
 
+Tree bark — "Jolcham Oak Bark 01" by Charlotte Baglioni, Poly Haven
+  https://polyhaven.com/a/jolcham_oak_bark_01 — CC0 1.0
+  (public/tree/bark.webp, bark-n.webp: resized, ambient occlusion baked into colour)
+
+Tree leaves — "Leaf Set 024", ambientCG
+  https://ambientcg.com/a/LeafSet024 — CC0 1.0
+  (public/tree/leaves.webp: colour and opacity in one file, resized; the leaf clusters
+  are laid out in code)
+
 LIGHTING
 --------
 HDRI "Qwantani Sunset (Pure Sky)", Poly Haven — CC0 1.0

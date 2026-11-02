@@ -4,6 +4,7 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { fbm, heightAt, makeRng, normalAt } from "./terrain";
 import { loadHdri } from "./hdri";
 import { createPostFx, type PostFx } from "./postfx";
+import { createShafts } from "./shafts";
 import { PortfolioScreen } from "./portfolioScreen";
 import { Dog } from "./dog";
 import { Weather, type WeatherKind } from "./weather";
@@ -59,12 +60,38 @@ function groundOccluders() {
   const props = FOOTPRINTS.map(([x, z, rx, rz], i) => new THREE.Vector4(x * c + z * s, -x * s + z * c, Math.max(rx, rz) * 0.9, i === 0 ? 0.7 : 0.55));
   const all = [...rocks, ...props];
   while (all.length < 6) all.push(new THREE.Vector4());
-  return all.slice(0, 6);
+  /* v130: седьмой слот — крона дерева (ставит placeTree) */
+  return [...all.slice(0, 6), new THREE.Vector4()];
 }
 
-const SUN_DIR = new THREE.Vector3(-0.08, 0.04, -1).normalize();
+/* v125 (просьба Никиты 01.11): в ясную погоду солнце справа-спереди, ~15° над горизонтом — морда Келли, дерево и
+   почти весь луг к камере освещены, крона кладёт длинную тень влево. В сумерках оно садится за горы, как раньше
+   (SUN_BACK), и при смене погоды плавно переезжает. SH неба поворачиваются вслед на лету (rotateSkySH), перезапекать
+   HDRI не нужно. ?sun=x,y,z — подбор бокового, ?sun=back — всегда за горами */
+const SUN_BACK = new THREE.Vector3(-0.08, 0.04, -1).normalize();
+/* v127 (Никита: «поставь солнце, где ему лучше для глубины и акцента»). Ясно — низкое солнце справа и чуть сзади
+   (~10°): свет скользит по гребню слева направо, крона, кресло и Келли получают светотень и кант, длинные тени ложатся
+   через вершину влево, к тексту — это линии, которые ведут взгляд в глубину; передний склон уходит в мягкую тень, а
+   даль светлее — тёмный передний план и светлая глубина, как у Бирштадта. Облака и дождь — солнце за тучами сзади над
+   холмом: светлое пятно неба за деревом даёт глубину, когда теней нет. Сумерки — садится за горы (SUN_BACK) */
+const SUN_SIDE = ((p) => (p === "back" ? SUN_BACK.clone() : new THREE.Vector3(...((p ?? "0.7,0.3,-0.66").split(",").map(Number) as [number, number, number])).normalize()))(new URLSearchParams(location.search).get("sun"));
+const SUN_OVERCAST = new THREE.Vector3(0.3, 0.32, -0.9).normalize();
+const sunFor = (kind: string | null) => (kind === "dusk" ? SUN_BACK : kind === "cloudy" || kind === "rain" ? SUN_OVERCAST : SUN_SIDE);
+/* направление «небесного» света тени реквизита: исходное сверху-сзади, при боковом солнце — за солнцем, но выше (~32°),
+   чтобы тень кресла легла на гребень, а не ушла на пять метров */
+const SHADOW_BASE = new THREE.Vector3(0.25, 1.0, -0.55).normalize();
+const SHADOW_SUN = new THREE.Vector3(SUN_SIDE.x, 0, SUN_SIDE.z).normalize().setY(0.62).normalize();
+/* текущее солнце; объект общий с постобработкой (лучи по маске) — меняется на месте */
+const SUN_DIR = sunFor(new URLSearchParams(location.search).get("weather")).clone();
 const SUN_GOLD = new THREE.Color(2.4, 1.2, 0.4);
-const SHADOW_DIR = new THREE.Vector3(0.25, 1.0, -0.55).normalize();
+const SKY_COOL = new THREE.Vector3();
+const NO_TREE_SHADOW = /[?&]treesh=0/.test(location.search);
+const AIR = ((p) => new THREE.Vector4(...(((p ?? "0.0045,8,1,0.02").split(",").map(Number)) as [number, number, number, number])))(new URLSearchParams(location.search).get("air") === "0" ? "0.0045,8,0,0.02" : new URLSearchParams(location.search).get("air"));
+const AIR_LOW = new THREE.Vector2(...((new URLSearchParams(location.search).get("airlow") ?? "0.005,2.5").split(",").map(Number) as [number, number]));
+const SLOPE_K = Number(new URLSearchParams(location.search).get("slope") ?? 1);
+const CLEAR_CLOUDS = Number(new URLSearchParams(location.search).get("clearclouds") ?? 1);
+const PHASE = ((p) => (p === "0" ? new THREE.Vector2(0, 0) : new THREE.Vector2(...((p ?? "0.3,0.02").split(",").map(Number) as [number, number]))))(new URLSearchParams(location.search).get("phase"));
+const SHADOW_DIR = SHADOW_BASE.clone();
 
 /* v10: камера на 1.8 м дальше (было z 10.8) — ближняя трава мельче и спокойнее */
 const CAMERA_BASE = new THREE.Vector3(0, 1.92, 12.6);
@@ -90,7 +117,11 @@ const PC_BG = !/[?&]pcbg=0/.test(location.search);
 const WORDS = !/[?&]words=0/.test(location.search);
 const MOTION_RES = !/[?&]motionres=0/.test(location.search);
 const FOV_KICK = !/[?&]fovkick=0/.test(location.search);
-const BASE_FOV = 30;
+/* v132 (фокусное расстояние, по кинокамере RDR2): длиннее фокус — уже угол, и камера отъезжает ровно настолько, чтобы
+   холм, кресло и дерево остались того же размера (DOLLY). Даль «прижимается» к герою: горы и небо крупнее, полоса
+   земли между холмом и горизонтом короче. Было 30° по вертикали (~45 мм), стало 27° (~50 мм): сильнее сужать — трава с отъехавшей камеры мельче и в дымке, а края гор уходят за рамку. ?fov=30 — как раньше */
+const BASE_FOV = Number(new URLSearchParams(location.search).get("fov") ?? 27);
+const DOLLY = Math.tan(THREE.MathUtils.degToRad(15)) / Math.tan(THREE.MathUtils.degToRad(BASE_FOV / 2));
 const TUMBLE = !/[?&]tumble=0/.test(location.search);
 const SHADOW_LAYER = 3;
 /* v72: ближние предметы — над ними лучи приглушаются (маска в postfx.ts) */
@@ -148,6 +179,9 @@ export class HillScene {
     /* v107 (пример Никиты 22.10): дымка, небо и солнце без персикового налёта — небо сверху холодное серо-голубое, к
        горизонту золотое, дымка светлая нейтральная, свет солнца жёлтый, а не красно-оранжевый */
     uFogCol: { value: new THREE.Color("#e8dcc0") },
+    /* v124 (RDR2): рассеяние воздуха двумя лепестками (shaders.ts, airPhase): x — доля широкого, y — нижняя граница.
+       ?phase=0 — один лепесток, как раньше; ?phase=0.3,0.02 — подбор */
+    uPhase: { value: PHASE },
     uShadowMap: { value: null as THREE.Texture | null },
     uShadowMatrix: { value: new THREE.Matrix4() },
     uShadowTexel: { value: 1 / 1024 },
@@ -178,6 +212,18 @@ export class HillScene {
     uDogDir: { value: new THREE.Vector2(0, 1) },
     /* тени облаков (сдвиг xy, покрытие z) и мокрая трава — ведёт src/scene/weather.ts */
     uCloud: { value: new THREE.Vector3(0, 0, 0) },
+    /* v124: тень гребня на переднем склоне (shaders.ts, hillSun); карта — из shafts.ts. ?hillsh=0 — без неё, ?hillsh=0.6 — слабее */
+    tHillSh: { value: null as THREE.Texture | null },
+    uHillRect: { value: new THREE.Vector4(0, 0, 1, 1) },
+    uHillShade: { value: Number(new URLSearchParams(location.search).get("hillsh") ?? 1) },
+    /* v125: тень кроны на лугу (shaders.ts, hillSun) — снимок кроны со стороны солнца из shafts.ts */
+    tCrownSh: { value: null as THREE.Texture | null },
+    /* v126: лепка склонов при боковом солнце (shaders.ts, slopeSun) — пишет updateSun по weather.side */
+    uSlopeLight: { value: 0 },
+    uCrownShMat: { value: new THREE.Matrix4() },
+    uCrownSh: { value: new THREE.Vector4(0, 0, 0, 0) },
+    tCrownD: { value: null as THREE.Texture | null },
+    uCrownTexel: { value: 1 / 384 },
     uWet: { value: 0 },
     uOcc: { value: groundOccluders() },
     /* v81: просвет листвы дерева (shaders.ts, leafFragment); подбор ?ltr= */
@@ -227,6 +273,25 @@ export class HillScene {
     this.timer.connect(document);
 
     this.fx = createPostFx(this.renderer, this.scene, this.camera, SUN_DIR, PC_LAYER, SHIELD_LAYER);
+    /* v124: объёмные лучи по RDR2 (shafts.ts); ?shafts=0 — без них */
+    this.fx.params.shafts = createShafts(this.renderer, this.camera, SUN_DIR);
+    this.uniforms.tHillSh.value = this.fx.params.shafts.hill;
+    this.uniforms.uHillRect.value.copy(this.fx.params.shafts.hillRect);
+    this.uniforms.tCrownSh.value = this.fx.params.shafts.crownTexture;
+    this.uniforms.uCrownShMat.value = this.fx.params.shafts.crownMatrix;
+    /* ?treesh=0 — без тени кроны на траве, земле и самом дереве (для сравнения цены) */
+    if (!NO_TREE_SHADOW) this.uniforms.uCrownSh.value = this.fx.params.shafts.crownSphere;
+    this.uniforms.tCrownD.value = this.fx.params.shafts.crownDepth;
+    this.uniforms.uCrownTexel.value = this.fx.params.shafts.crownTexel;
+    {
+      const crownTex = this.fx.params.shafts.crownTexture, crownSph = this.fx.params.shafts.crownSphere, crownD = this.fx.params.shafts.crownDepth;
+      const off = new THREE.Vector4();
+      this.fx.params.shafts.onCapture = (on) => {
+        this.uniforms.tCrownSh.value = on ? null : crownTex;
+        this.uniforms.tCrownD.value = on ? null : crownD;
+        this.uniforms.uCrownSh.value = on || NO_TREE_SHADOW ? off : crownSph;
+      };
+    }
     this.fx.params.onOverlay = this.onPcOverlay;
     this.focusBase = this.fx.params.focus;
 
@@ -397,11 +462,21 @@ export class HillScene {
         uSunDisc: { value: 6 },
         /* v80: широкое свечение неба вокруг солнца (shaders.ts, skyMie); ?mie=0 — без него */
         uMie: { value: /[?&]mie=0/.test(location.search) ? 0 : 0.8 },
+        uPhase: this.uniforms.uPhase,
+        /* v126: доля бокового солнца (weather.side) — горам и облакам ясной погоды */
+        uSide: { value: 0 },
+        /* v132: общая воздушная перспектива дальнего плана (shaders.ts, aerial); ?air=плотность,высота,0|1,доля */
+        uAir: { value: AIR },
+        uAirLow: { value: AIR_LOW },
         /* v96, ?next=1: облака в небе (shaders.ts, skyClouds) — тот же сдвиг и покрытие, что у теней облаков на траве */
         uCloud: this.uniforms.uCloud,
         /* облака — только в сменяемой погоде (облака, дождь, сумерки), в ясную на первом экране их нет (Никита 20.10);
            долю пишет кадр из погоды (cloudShare) */
         uClouds: { value: 0 },
+        /* v124: облака с объёмом и светом (shaders.ts, skyClouds); ?cv=0 — прежние плоские */
+        uRain: { value: 0 },
+        uCumulus: { value: 0 },
+        uCloudVol: { value: /[?&]cv=0/.test(location.search) ? 0 : 1 },
         uCloudLook: { value: new THREE.Vector4(...((new URLSearchParams(location.search).get("cl") ?? "1.6,-0.04,1.4,1").split(",").map(Number) as [number, number, number, number])) },
       },
     });
@@ -418,7 +493,7 @@ export class HillScene {
     const u = this.sky.uniforms;
     this.scene.add(createVista({
       /* v96: uCloud и uMistDrift — плывущий туман в низинах между грядами (?next=1) */
-      sky: { uZenith: u.uZenith, uHigh: u.uHigh, uMid: u.uMid, uHorizon: u.uHorizon, uGlow: u.uGlow, uSunDir: u.uSunDir, uSunCol: u.uSunCol, uMie: u.uMie, uCloud: this.uniforms.uCloud, uMistDrift: { value: this.next ? 1 : 0 } },
+      sky: { uZenith: u.uZenith, uHigh: u.uHigh, uMid: u.uMid, uHorizon: u.uHorizon, uGlow: u.uGlow, uSunDir: u.uSunDir, uSunCol: u.uSunCol, uMie: u.uMie, uPhase: u.uPhase, uAir: u.uAir, uAirLow: u.uAirLow, uCloud: this.uniforms.uCloud, uMistDrift: { value: this.next ? 1 : 0 } },
       sh: this.uniforms.uSH,
       ambient: this.uniforms.uAmbient,
       horizon: this.uniforms.uSkyHorizon,
@@ -427,7 +502,7 @@ export class HillScene {
        свободен: десяток октав шума на слабой видеокарте не должен задерживать первый кадр. ?mtn=off — без гор */
     if (!/[?&]mtn=off/.test(location.search)) {
       const m = createMountains(this.renderer, {
-        sky: { uZenith: u.uZenith, uHigh: u.uHigh, uMid: u.uMid, uHorizon: u.uHorizon, uGlow: u.uGlow, uSunDir: u.uSunDir, uSunCol: u.uSunCol, uMie: u.uMie },
+        sky: { uZenith: u.uZenith, uHigh: u.uHigh, uMid: u.uMid, uHorizon: u.uHorizon, uGlow: u.uGlow, uSunDir: u.uSunDir, uSunCol: u.uSunCol, uMie: u.uMie, uPhase: u.uPhase, uSide: u.uSide, uAir: u.uAir, uAirLow: u.uAirLow },
       });
       this.scene.add(m.mesh);
       const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 0));
@@ -446,12 +521,17 @@ export class HillScene {
     this.tree = createTree(this.uniforms, { base: new THREE.Vector3(), height: 5.6, lean: new THREE.Vector3(-0.2, 0, 0.1), msaa: true });
     this.scene.add(this.tree.group);
     this.placeTree();
+    this.fx.params.shafts?.setTree(this.tree.group);
   }
   private placeTree() {
     if (!this.tree) return;
     const k = Math.min(1, Math.max(0, (this.camera.aspect - 0.6) / 0.7));
     const x = 2.8 + (0.95 - 2.8) * k, z = -5.2 + (-2.7 + 5.2) * k;
     this.tree.place(x, heightAt(x, z) - 0.05, z, 0.85 - 0.07 * k);
+    /* v130: трава под кроной не видит неба — пятно заземления по проекции кроны на землю (shaders.ts, groundOcc, слот 7) */
+    const c = this.tree.crownTopWorld(new THREE.Vector3());
+    const occ = this.uniforms.uOcc.value[6];
+    if (!/[?&]occ=0/.test(location.search)) occ.set(x + (c.x - x) * 0.5, z + (c.z - z) * 0.5, 2.1 * (0.85 - 0.07 * k), 0.45);
   }
 
   private buildGround() {
@@ -485,9 +565,23 @@ export class HillScene {
   }
 
   private restPos = new THREE.Vector3();
+  /** v132: на сколько метров камера отъехала ради длинного фокуса — на столько же отодвигается ближняя дымка */
+  private dollyExtra = 0;
   /* без выделения памяти: вызывается каждый кадр; кому нужна копия — клонирует */
   private cameraRest() {
-    return this.restPos.lerpVectors(CAMERA_PIVOT, CAMERA_BASE, this.camDistance).add(CAMERA_REST_OFF).add(HERO_PULL_OFF);
+    this.restPos.lerpVectors(CAMERA_PIVOT, CAMERA_BASE, this.camDistance).add(CAMERA_REST_OFF).add(HERO_PULL_OFF);
+    /* отъезд по горизонтали, высота та же: длинный фокус снимают с низкой точки — горизонт и горы остаются над гребнем;
+       отъезд вдоль взгляда поднимал камеру, и горы уходили за холм */
+    if (DOLLY !== 1) {
+      const dx = this.restPos.x - CAMERA_TARGET.x, dz = this.restPos.z - CAMERA_TARGET.z;
+      const h = Math.hypot(dx, dz), dy = this.restPos.y - CAMERA_TARGET.y;
+      const d = Math.hypot(h, dy), want = d * DOLLY;
+      const k = Math.sqrt(Math.max(want * want - dy * dy, 0)) / Math.max(h, 1e-3);
+      this.restPos.x = CAMERA_TARGET.x + dx * k;
+      this.restPos.z = CAMERA_TARGET.z + dz * k;
+      this.dollyExtra = want - d;
+    }
+    return this.restPos;
   }
 
   /* Всё посаженное (трава, цветы, пампасы, колоски) — одной группой: посадка зависит от позы
@@ -906,9 +1000,26 @@ export class HillScene {
     g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(n * 3), 3));
     g.setAttribute("aSeed", new THREE.BufferAttribute(seed, 4));
     const U = this.uniforms;
+    const su = this.fx.params.shafts?.strength ? this.fx.params.shafts.material.uniforms : null;
     this.motes = new THREE.Points(g, new THREE.ShaderMaterial({
-      uniforms: { uTime: U.uTime, uWindDir: U.uWindDir, uSunDir: U.uSunDir, uSunCol: U.uSunCol, uScale: { value: 900 * this.dpr } },
+      /* v124: пылинки видны только в солнце — те же карты тени холма и кроны, что у объёмных лучей (shafts.ts) */
+      uniforms: { uTime: U.uTime, uWindDir: U.uWindDir, uSunDir: U.uSunDir, uSunCol: U.uSunCol, uScale: { value: 900 * this.dpr },
+        ...(su ? { tHill: su.tHill, uHillRect: su.uHillRect, tCrown: su.tCrown, uCrownMat: su.uCrownMat, uCrown: su.uCrown } : {}) /* tCrown — глубина кроны */ },
+      defines: su ? { MOTE_SHADE: "" } : {},
       vertexShader: `attribute vec4 aSeed; uniform float uTime; uniform vec2 uWindDir; uniform vec3 uSunDir; uniform float uScale;
+        #ifdef MOTE_SHADE
+        uniform sampler2D tHill; uniform vec4 uHillRect; uniform sampler2D tCrown; uniform mat4 uCrownMat; uniform vec4 uCrown;
+        float moteLit(vec3 p) {
+          vec2 hq = (p.xz - uHillRect.xy) * uHillRect.zw;
+          float lit = 1.0;
+          if (hq.x > 0.0 && hq.x < 1.0 && hq.y > 0.0 && hq.y < 1.0) { float h = textureLod(tHill, hq, 0.0).r; lit = smoothstep(h - 0.1, h + 0.2, p.y); }
+          vec4 c = uCrownMat * vec4(p, 1.0);
+          vec2 cq = c.xy * 0.5 + 0.5;
+          if (cq.x > 0.0 && cq.x < 1.0 && cq.y > 0.0 && cq.y < 1.0 && uCrown.w > 0.0)
+            lit *= step(c.z * 0.5 + 0.5, textureLod(tCrown, cq, 0.0).r + 0.002);
+          return lit;
+        }
+        #endif
         varying float vA; varying float vAng;
         void main() {
           /* коробка вокруг холма перед камерой; ветер сносит, по краю — обход по кругу */
@@ -923,7 +1034,11 @@ export class HillScene {
           vec3 V = normalize((modelMatrix * vec4(p, 1.0)).xyz - cameraPosition);
           float toSun = pow(max(dot(V, uSunDir), 0.0), 6.0);
           float glint = pow(abs(sin(tumble)), 6.0);
-          vA = (0.08 + 0.92 * glint) * (0.25 + 1.6 * toSun) * smoothstep(1.0, 3.0, -mv.z) * (1.0 - smoothstep(16.0, 26.0, -mv.z));
+          float lit = 1.0;
+          #ifdef MOTE_SHADE
+          lit = moteLit((modelMatrix * vec4(p, 1.0)).xyz);
+          #endif
+          vA = mix(0.12, 1.0, lit) * (0.08 + 0.92 * glint) * (0.25 + 1.6 * toSun * lit) * smoothstep(1.0, 3.0, -mv.z) * (1.0 - smoothstep(16.0, 26.0, -mv.z));
           gl_Position = projectionMatrix * mv;
           gl_PointSize = clamp((0.035 + aSeed.x * 0.03) * uScale / max(0.3, -mv.z), 1.0, 9.0);
         }`,
@@ -1033,6 +1148,74 @@ export class HillScene {
 
   private lights: HillLights | null = null;
 
+  /* ---- v125: солнце переезжает вместе с погодой ---- */
+  private skyBase: { sh: THREE.SphericalHarmonics3; yaw: number } | null = null;
+  private sunApplied = new THREE.Vector3();
+  private sunFrame = 0;
+  private shadowWant = new THREE.Vector3();
+  private shSamples: { d: THREE.Vector3; b: number[] }[] | null = null;
+  private updateSun(dt: number) {
+    const target = sunFor(this.weather.kind);
+    if (SUN_DIR.distanceToSquared(target) > 1e-8) SUN_DIR.lerp(target, 1 - Math.exp(-dt / 2.2)).normalize();
+    if (this.sunApplied.distanceToSquared(SUN_DIR) < 1e-8) return;
+    const settled = SUN_DIR.distanceToSquared(target) < 1e-6;
+    /* доля «ясного бокового» солнца: 1 — оно на месте, 0 — в сумеречном или пасмурном положении */
+    const d0 = Math.max(SUN_BACK.dot(SUN_SIDE), SUN_OVERCAST.dot(SUN_SIDE));
+    this.weather.side = d0 > 0.999 ? 0 : THREE.MathUtils.clamp((SUN_DIR.dot(SUN_SIDE) - d0) / (1 - d0), 0, 1);
+    this.fx.params.lookSun = 1 - this.weather.side;
+    this.uniforms.uSlopeLight.value = this.weather.side * SLOPE_K;
+    this.sky.uniforms.uSide.value = this.weather.side;
+    this.uniforms.uSunDir.value.copy(SUN_DIR);
+    this.fx.params.shafts?.setSun(SUN_DIR);
+    if (this.lights) this.lights.rim.position.copy(SUN_DIR).multiplyScalar(10).add(this.lights.rim.target.position);
+    /* SH и отражения — через три кадра на ходу (небо меняется медленно), точно — когда солнце встало */
+    if (settled || (this.sunFrame++ & 3) === 0) this.rotateSkySH();
+    this.sunApplied.copy(SUN_DIR);
+    /* тень реквизита — когда солнце встало: переснять её на ходу каждый кадр незачем */
+    if (settled) {
+      const want = this.shadowWant.copy(SHADOW_BASE).lerp(SHADOW_SUN, this.weather.side).normalize();
+      if (want.distanceToSquared(SHADOW_DIR) > 1e-5) {
+        SHADOW_DIR.copy(want);
+        if (this.lights) {
+          this.lights.key.position.copy(SHADOW_DIR).multiplyScalar(6).add(this.lights.key.target.position);
+          this.renderer.shadowMap.needsUpdate = true;
+        }
+        this.rebakeProps?.();
+      }
+    }
+  }
+  /** SH неба запечены под солнце за горами (bake-hdri.mjs); для нынешнего солнца поворачиваем их вокруг вертикали:
+      проекция повёрнутого неба на базис по 256 направлениям — доли миллисекунды */
+  private rotateSkySH() {
+    const base = this.skyBase;
+    if (!base) return;
+    const th = Math.atan2(SUN_BACK.z, SUN_BACK.x) - Math.atan2(SUN_DIR.z, SUN_DIR.x);
+    this.scene.environmentRotation.y = base.yaw + th;
+    if (!this.shSamples) {
+      const n = 256, ga = Math.PI * (3 - Math.sqrt(5));
+      this.shSamples = Array.from({ length: n }, (_, i) => {
+        const y = 1 - ((i + 0.5) / n) * 2, r = Math.sqrt(1 - y * y);
+        const d = new THREE.Vector3(Math.cos(i * ga) * r, y, Math.sin(i * ga) * r);
+        const b = new Array<number>(9);
+        THREE.SphericalHarmonics3.getBasisAt(d, b);
+        return { d, b };
+      });
+    }
+    const inv = new THREE.Matrix3().setFromMatrix4(new THREE.Matrix4().makeRotationY(-th));
+    const out = this.uniforms.uSH.value;
+    out.forEach((v) => v.set(0, 0, 0));
+    const dr = new THREE.Vector3(), c = new THREE.Vector3();
+    const w = (4 * Math.PI) / this.shSamples.length;
+    for (const { d, b } of this.shSamples) {
+      base.sh.getAt(dr.copy(d).applyMatrix3(inv), c);
+      for (let i = 0; i < 9; i++) out[i].addScaledVector(c, b[i] * w);
+    }
+    /* v126: при боковом солнце свет неба холоднее — SH запечены с закатного HDRI, где всё небо тёплое; в тени тогда нет
+       голубого, и кадр выходил пастельным. В RDR2 тень в ясный вечер синеватая */
+    const sd = this.weather.side;
+    if (sd > 0) out.forEach((v) => v.multiply(SKY_COOL.set(1 - 0.16 * sd, 1 - 0.04 * sd, 1 + 0.2 * sd)));
+  }
+
   private buildLights() {
     const top = heightAt(0, 0);
     /* ключ для реквизита: мягкая тень кресла на себя */
@@ -1082,8 +1265,11 @@ export class HillScene {
         this.resolveEnv();
         this.assetsReady++;
         this.scene.environmentRotation.y = h.yaw;
+        this.skyBase = { sh: h.sh.clone(), yaw: h.yaw };
+        this.sunApplied.set(0, 0, 0); // повернуть SH и отражения под нынешнее солнце в ближайшем кадре
         this.scene.environmentIntensity = 0.7;
         h.sh.coefficients.forEach((c, i) => this.uniforms.uSH.value[i].copy(c));
+        this.rotateSkySH();
         /* v107: цвет солнца из HDRI почти красный (2,4 / 0,83 / 0,05) — луг и дымка уходили в персик. Свет жёлто-золотой */
         this.uniforms.uSunCol.value.copy(h.sunColor).multiplyScalar(2.4).lerp(SUN_GOLD, 0.65);
         this.weather.setLightBase(this.uniforms.uSunCol.value, 0.38);
@@ -2106,7 +2292,6 @@ ${SCREEN_SPILL}`)
       this.scene.overrideMaterial = over;
       this.renderer.setRenderTarget(prevTarget);
       this.scene.background = bg;
-      depthOnly.dispose();
 
       this.uniforms.uShadowMap.value = rt.depthTexture;
       this.uniforms.uShadowMatrix.value.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
@@ -2131,7 +2316,15 @@ ${SCREEN_SPILL}`)
     const compiled = this.renderer.compileAsync(twins, cam, this.scene);
     this.renderer.setRenderTarget(prev);
     void Promise.race([compiled, new Promise((r) => setTimeout(r, 3000))]).catch(() => {}).then(bake);
+    /* v127: свет тени реквизита поворачивается за солнцем (updateSun) — тогда снимок переснимается с нового направления */
+    this.rebakeProps = () => {
+      cam.position.copy(center).addScaledVector(SHADOW_DIR, 6);
+      cam.lookAt(center);
+      cam.updateMatrixWorld();
+      bake();
+    };
   }
+  private rebakeProps: (() => void) | null = null;
 
   /* ------------------------------------------------------------------ */
 
@@ -2299,7 +2492,8 @@ ${SCREEN_SPILL}`)
     /* v72: на вертикальном экране камера отъезжает на ~6 м, и дымка по расстоянию (airFog) густела на весь
        склон — цвет на телефоне был блёклым, серо-оливковым. Дымку сдвигаем на величину отъезда: склон в том же
        воздухе, что на широком экране, дальний план — по-прежнему в дымке */
-    this.uniforms.uFogShift.value = (this.camDistance - 1) * CAMERA_BASE.distanceTo(CAMERA_PIVOT);
+    this.cameraRest(); // v132: обновить dollyExtra под новую дистанцию
+    this.uniforms.uFogShift.value = (this.camDistance - 1) * CAMERA_BASE.distanceTo(CAMERA_PIVOT) + this.dollyExtra;
     /* v68: боковой разворот кадра — только там, где для него есть ширина. На вертикальном экране
        угол обзора по горизонтали втрое уже, и тот же разворот вынес бы кресло с компьютером за
        правую кромку. Поэтому на телефоне кадр остаётся прежним, центральным, а к широкому экрану
@@ -2387,8 +2581,17 @@ ${SCREEN_SPILL}`)
     this.uniforms.uWind.value = (this.reduced ? 0.25 : 1) * this.weather.windScale + this.gustAmount(this.uniforms.uTime.value);
     /* пока играет интро, экспозицией и цветом постобработки управляет оно */
     this.weather.update(dt, true);
+    this.fx.params.shaftColor.copy(this.uniforms.uSunCol.value);
+    this.fx.params.shaftSun = this.weather.sunShare;
+    /* v126: ?clearclouds=0 — ясная погода без облаков (как решил Никита 20.10, до просьбы «докрутить ясную до RDR2») */
     this.sky.uniforms.uClouds.value = this.next ? this.weather.cloudShare : 0;
+    /* v126: кучевые облака ясного вечера — только при боковом солнце и тают, когда небо затягивает погода */
+    this.sky.uniforms.uCumulus.value = CLEAR_CLOUDS * this.weather.side * (1 - this.weather.cloudShare);
+    this.sky.uniforms.uRain.value = this.weather.rainShare;
     this.updateStory(dt);
+    this.updateSun(dt);
+    /* карты тени холма и кроны нужны траве и земле, даже когда лучи выключены */
+    if (!this.hillHidden()) this.fx.params.shafts?.prepare();
 
     const fixed = this.opts.fixedCamera;
     if (fixed) {

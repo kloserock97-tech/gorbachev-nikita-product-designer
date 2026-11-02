@@ -147,7 +147,9 @@ function createPlain(shared: { sky: Record<string, THREE.IUniform>; sh: THREE.IU
     const x = pos.getX(i), z = pos.getZ(i);
     const r = Math.max(Math.abs(x), Math.abs(z));
     /* v112, ?meadow=2: пологие увалы на лугу — от 50 м, до 7 м; ближе ровно, чтобы не спорить со склоном холма */
-    const roll = MEADOW === 2 ? (fbm(x * 0.011 + 3.1, z * 0.011 - 1.7, 3) - 0.35) * 16 * sm(45, 120, r) : 0;
+    /* v132: дальше ~170 м увалы сходят на нет — их гребни на фоне дымки резали даль прямой линией; там равнина ровная и
+       тонет в приземном тумане (aerial в shaders.ts), как низины у RDR2 */
+    const roll = MEADOW === 2 ? (fbm(x * 0.011 + 3.1, z * 0.011 - 1.7, 3) - 0.35) * 16 * sm(45, 120, r) * (1 - sm(150, 240, r)) : 0;
     pos.setY(i, heightAt(x, z) - 0.08 - 3.2 * sm(GROUND_HALF - 0.5, 42, r) + roll);
   }
   const mat = new THREE.ShaderMaterial({

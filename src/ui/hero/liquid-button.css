@@ -1,0 +1,30 @@
+/* v138: «Смотреть кейсы» — тёмная капсула с кромкой жидкого металла и лужицей света под курсором (liquidButton.ts),
+   по образу кнопки со страницы Sylva на threeui.com. Холст рисует тело, кромку и свет; прежние слои металлической
+   кнопки (размытие, рамка, бегущий блик по ободу, проблеск) выключены */
+.cta.cta--liquid {
+  background: none; border-color: transparent;
+  -webkit-backdrop-filter: blur(12px) saturate(1.4); backdrop-filter: blur(12px) saturate(1.4);
+  color: #fff; font-weight: 600; letter-spacing: 0.005em;
+  text-shadow: 0 1px 3px rgba(20, 16, 6, 0.5);
+  box-shadow: 0 calc(10 * var(--u)) calc(26 * var(--u)) rgba(40, 30, 12, 0.22), 0 calc(2 * var(--u)) calc(5 * var(--u)) rgba(40, 30, 12, 0.14);
+  padding: 0 calc(30 * var(--u)) 0 calc(24 * var(--u)); gap: calc(12 * var(--u));
+  transition: scale 0.16s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+}
+.cta.cta--liquid::before, .cta.cta--liquid > .metal-rim { display: none; }
+/* холст шире кнопки на --lq-m: свет переливается за нижнюю кромку, кнопке нужен overflow: visible */
+.cta.cta--liquid { overflow: visible; }
+.cta-liquid { position: absolute; z-index: 0; pointer-events: none; left: calc(-1 * var(--lq-m, 30px)); top: calc(-1 * var(--lq-m, 30px)); width: calc(100% + 2 * var(--lq-m, 30px)); height: calc(100% + 2 * var(--lq-m, 30px)); }
+.cta.cta--liquid > .lbl, .cta.cta--liquid > .cta-lines { position: relative; z-index: 1; }
+.cta-lines { flex: none; width: calc(20 * var(--u)); height: calc(20 * var(--u)); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+@media (hover: hover) and (pointer: fine) {
+  .cta.cta--liquid:hover { box-shadow: 0 calc(12 * var(--u)) calc(30 * var(--u)) rgba(10, 12, 8, 0.34), 0 calc(2 * var(--u)) calc(5 * var(--u)) rgba(10, 12, 8, 0.22); }
+}
+.cta.cta--liquid:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+@media (max-width: 900px) {
+  .cta.cta--liquid { color: #fff; padding: 0 max(24px, calc(34 * var(--u))) 0 max(18px, calc(24 * var(--u))); }
+  .cta-lines { width: max(18px, calc(22 * var(--u))); height: max(18px, calc(22 * var(--u))); }
+}
+/* на телефоне без размытия фона (дорого над живым холстом) — тело и так почти непрозрачное */
+@media (hover: none) and (pointer: coarse) {
+  .cta.cta--liquid { -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
