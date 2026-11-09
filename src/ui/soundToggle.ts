@@ -22,6 +22,8 @@ type Scene = {
 };
 
 const KEY = "hill-sound";
+/* v139: клавиша M по физическому положению (e.code) — в русской раскладке e.key даёт «ь», и M не работала */
+const isM = (e: KeyboardEvent) => e.code === "KeyM" || e.key === "m" || e.key === "M";
 
 export function initSound(scene: Scene) {
   const btn = document.querySelector<HTMLButtonElement>(".sound-fab");
@@ -108,7 +110,7 @@ export function initSound(scene: Scene) {
     if (enabled) { disable(); save("off"); } else { enable(true); save("on"); }
   });
   addEventListener("keydown", (e) => {
-    if (e.key !== "m" && e.key !== "M") return;
+    if (!isM(e)) return;
     if ((e.target as HTMLElement).closest("input, textarea, [contenteditable]") || e.metaKey || e.ctrlKey || e.altKey) return;
     if (enabled) { disable(); save("off"); } else { enable(true); save("on"); }
   });
@@ -133,8 +135,8 @@ export function initSound(scene: Scene) {
     const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1));
     window.setTimeout(() => idle(prewarm, { timeout: 3000 }), document.body.classList.contains("intro-loading") ? 300 : 2500);
     const first = (e: Event) => {
-      if ((e.target as Element | null)?.closest?.(".sound-fab")) return; // кнопку обработает её click
-      if (e instanceof KeyboardEvent && (e.key === "m" || e.key === "M")) return;
+      if ((e.target as Element | null)?.closest?.(".sound-fab, .m-bar__sound, .m-menu__sound")) return; // кнопку обработает её click (v139: и кнопки звука в панели и меню)
+      if (e instanceof KeyboardEvent && isM(e)) return;
       off();
       enable(false);
     };

@@ -11,6 +11,8 @@ import "./ui/hero/mobile-nav.css";
 import "./ui/pc-hud.css";
 import "./ui/hero/clear-glass.css";
 import { initMobileNav } from "./ui/hero/mobileNav";
+import { initSoundButton } from "./ui/hero/soundButton";
+import "./ui/hero/sky-tone.css";
 import { initLabMenu } from "./ui/labMenu";
 import { initStoryWheel } from "./ui/storyWheel";
 import { HillScene, type HillSceneOptions } from "./scene/HillScene";
@@ -175,7 +177,11 @@ function start3d(caseView?: CaseView) {
   const weatherLabel = (k: typeof scene.weatherKind) => t(`weather.${k}` as "weather.clear");
   const weatherStat = document.querySelector<HTMLElement>("[data-action='weather']");
   const weatherText = document.querySelector("[data-stat='wind']");
-  const showWeather = () => { if (weatherText) weatherText.textContent = weatherLabel(scene.weatherKind); };
+  /* v139: html[data-sky] — по нему текст первого экрана меняет тон вместе с небом (ui/hero/sky-tone.css) */
+  const showWeather = () => {
+    if (weatherText) weatherText.textContent = weatherLabel(scene.weatherKind);
+    document.documentElement.dataset.sky = scene.weatherKind;
+  };
   showWeather();
   onLang(showWeather);
   const changeWeather = () => {
@@ -389,6 +395,7 @@ function start3d(caseView?: CaseView) {
   }
   initLangToggle();
   initMobileNav();
+  initSoundButton();
   document.querySelector(".pc-back")?.addEventListener("click", closePc);
   window.addEventListener("wheel", (e) => {
     if (!scene.computerFocused) return;

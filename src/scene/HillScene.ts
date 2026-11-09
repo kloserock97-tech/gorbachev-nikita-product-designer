@@ -4,6 +4,7 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { fbm, heightAt, makeRng, normalAt } from "./terrain";
 import { loadHdri } from "./hdri";
 import { createPostFx, type PostFx } from "./postfx";
+import { FramePacer } from "./pacing";
 import { createShafts } from "./shafts";
 import { PortfolioScreen } from "./portfolioScreen";
 import { Dog } from "./dog";
@@ -2454,7 +2455,12 @@ ${SCREEN_SPILL}`)
        Кадр сжимается финальным проходом с фильтром (см. uDown в shaders.ts). Слабый ноутбук лестница
        и регулятор уводят обратно к родному разрешению — ниже него пол не пускает. */
     const native = Math.min(window.devicePixelRatio || 1, 2.25);
-    this.dprMax = this.phone ? native : Math.max(native, Math.min(1.5, native * 1.5));
+    /* v139 (стенд Detroit 09.11, docs/research/detroit-become-human.md): суперсэмплинга больше нет. Никита сравнил на стенде
+       и выбрал MSAA 4× в разрешении по экрану: на обычном экране — родное, пиксель в пиксель (трава резче, чем после
+       сжатия из 1,5), на Retina — три четверти родного, как Detroit на PS4 Pro (одна картинка, меняется только
+       разрешение). Замер GPU на Intel Arc 140T: обычный экран 7,3 мс против 14,5, Retina 16,9 против 26,2 (42 → 82 кадра).
+       Цена — на обычном экране мелкие текстуры реквизита чуть грубее. Телефон — как был. ?dpr=1.5 — прежний вид */
+    this.dprMax = this.phone ? native : native < 1.5 ? native : native * 0.75;
     const forced = Number(new URLSearchParams(location.search).get("dpr"));
     if (forced > 0) { this.dprMax = forced; this.qualityScale = 1; }
     /* ступень качества задаёт долю от максимума; раньше здесь было min(текущий, максимум)
@@ -2524,10 +2530,23 @@ ${SCREEN_SPILL}`)
   /* Потолок частоты кадров. На экранах 120–165 Гц сцена без него рисовала до 165
      кадров, грела видеокарту и ноутбук сбрасывал частоты. Трава и так плавная на 60.
      ?fps=0 — без потолка, ?fps=30 — экономный режим. */
-  private readonly frameInterval = (() => {
+  private frameInterval = (() => {
     const f = Number(new URLSearchParams(location.search).get("fps") ?? 60);
     return f > 0 ? 1000 / f : 0;
   })();
+  /** v139: не держит 60 — ровные 30 (scene/pacing.ts) */
+  private readonly pacer = new FramePacer();
+  private setFrameCap(fps: number) {
+    this.frameInterval = fps > 0 ? 1000 / fps : 0;
+    this.vsyncSkip = 0;
+    this.vsyncSamples = [];
+    this.rafCount = 0;
+    this.nextFrameAt = 0;
+  }
+  /** для замеров: текущий потолок кадров и медиана интервала, по которой решал pacer */
+  get pacing() {
+    return { cap: this.frameInterval > 0 ? Math.round(1000 / this.frameInterval) : 0, locked: this.pacer.locked, median: this.pacer.median };
+  }
   private nextFrameAt = 0;
   private onScreen = true;
   /** v26: страница кейса закрывает сцену целиком — цикл стоит, канвас держит последний кадр */
@@ -2643,6 +2662,8 @@ ${SCREEN_SPILL}`)
     }
     if (this.storyS > 0) this.onStoryFrame?.();
     this.fx.render();
+    const onHill = this.settled && this.storyCh1 <= 0.02 && this.storyCh2 <= 0 && this.storyCh3 <= 0 && !this.focusOn && !document.body.classList.contains("intro-loading");
+    if (this.pacer.frame(now, onHill)) this.setFrameCap(30);
     this.renderedFrames++;
     if (this.assetsReady >= 2) this.resolvePresentation();
     if (!this.storyWarm && this.settled && this.pc && this.assetsReady >= 2) this.warmStory();

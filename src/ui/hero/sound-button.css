@@ -1,0 +1,75 @@
+/* v139: звук снаружи бургер-меню — пилюля «звук │ меню» (выбор Никиты со стенда 09.11, вариант B). Кнопка нажимает
+   .sound-fab (soundToggle.ts), клавиша M — везде. Пока звук играет, вместо динамика пляшут три столбика.
+   Поведение — soundButton.ts. Подключается после mobile-nav.css. */
+
+.m-bar__sound { display: none; }
+.m-menu__kbd { display: none; }
+
+.m-bar__sound {
+  display: inline-grid; place-items: center; position: relative; flex: none;
+  height: 40px; width: 44px; padding: 0; border: 0; border-radius: 12px; cursor: pointer;
+  background: transparent; color: #2a2923; -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, color 0.25s ease, opacity 0.3s ease;
+}
+.m-bar__sound > * { grid-area: 1 / 1; }
+.m-bar__spk { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; overflow: visible; transition: opacity 0.25s ease, scale 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.m-bar__spk .sf-spk { fill: currentColor; stroke-width: 1.2; }
+/* играет — вместо динамика три столбика */
+.m-bar__eq { display: inline-flex; align-items: center; gap: 3px; height: 14px; opacity: 0; scale: 0.6; transition: opacity 0.25s ease, scale 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.m-bar__eq i { display: block; width: 2.5px; height: 100%; border-radius: 2px; background: currentColor; scale: 1 0.3; }
+.sound-on .m-bar__spk { opacity: 0; scale: 0.6; }
+.sound-on .m-bar__eq { opacity: 1; scale: 1; }
+.sound-on .m-bar__eq i { animation: snd-eq 0.95s ease-in-out infinite alternate; }
+.sound-on .m-bar__eq i:nth-child(2) { animation-duration: 0.7s; animation-delay: -0.35s; }
+.sound-on .m-bar__eq i:nth-child(3) { animation-duration: 1.15s; animation-delay: -0.6s; }
+@keyframes snd-eq { from { scale: 1 0.25; } to { scale: 1 1; } }
+.sound-on .m-bar__sound { color: #3d6a2b; }
+.m-bar__sound:focus-visible { outline: 2px solid #11110f; outline-offset: 2px; }
+
+/* подпись «Звук · M» — под кнопкой: при наведении и на 2,6 с после смены состояния (.is-tell) */
+.m-bar__tip {
+  position: absolute; top: calc(100% + 8px); right: 50%; translate: 50% -4px;
+  display: inline-flex; align-items: center; gap: 7px; padding: 6px 9px 6px 11px; border-radius: 10px; white-space: nowrap;
+  background: #23221d; color: #f6f3ec; font: 500 12.5px/1 var(--font); letter-spacing: 0.01em;
+  opacity: 0; pointer-events: none; transition: opacity 0.18s ease, translate 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.m-bar__tip kbd { padding: 3px 5px; border-radius: 5px; background: rgba(255, 255, 255, 0.16); font: 600 11px/1 var(--font); }
+@media (hover: hover) and (pointer: fine) {
+  .m-bar__sound:hover .m-bar__tip, .m-bar__sound:focus-visible .m-bar__tip { opacity: 1; translate: 50% 0; transition-delay: 0.25s; }
+}
+.m-bar__sound.is-tell .m-bar__tip { opacity: 1; translate: 50% 0; }
+@media (hover: none), (pointer: coarse) { .m-bar__tip kbd { display: none; } }
+.m-menu-open .m-bar__tip { opacity: 0 !important; }
+
+/* подсказка M в строке «Звук» меню — только с клавиатурой и мышью */
+@media (hover: hover) and (pointer: fine) {
+  .m-menu__kbd { display: inline-block; margin-left: auto; margin-right: 10px; padding: 4px 7px; border-radius: 6px; background: rgba(35, 34, 29, 0.07); color: #6d6a5e; font: 600 11.5px/1 var(--font); }
+  .m-menu__sound .m-menu__switch { margin-left: 0; }
+}
+
+/* ── компьютер: звук и меню — одна светлая пилюля с волосяным разделителем ── */
+@media (min-width: 901px) {
+  .m-bar__sound { border-radius: 12px 0 0 12px; margin-right: -6px; background: rgba(255, 252, 245, 0.42); }
+  .m-bar__burger { color: #2a2923; border-radius: 0 12px 12px 0; background: rgba(255, 252, 245, 0.42); }
+  .m-bar__burger::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 1px; background: rgba(35, 34, 29, 0.16); }
+  .m-bar__sound:hover, .m-bar__burger:hover, .m-menu-open .m-bar__burger { background: rgba(255, 255, 255, 0.7); }
+}
+
+/* ── телефон: круги звука и меню сливаются в одну пилюлю ── */
+@media (max-width: 900px) {
+  .m-bar__sound {
+    width: 42px; border: 1px solid rgba(255, 255, 255, 0.72); border-right: 0; border-radius: 999px 0 0 999px; margin-right: -10px;
+    background: rgba(255, 252, 245, 0.5); color: #23221d;
+  }
+  .m-bar__spk { width: 18px; height: 18px; }
+  .m-bar__eq { height: 12px; gap: 2.5px; }
+  .m-bar__eq i { width: 2px; }
+  .m-bar__burger { width: 42px; border-radius: 0 999px 999px 0; border-left: 0; }
+  .m-bar__burger::before { content: ""; position: absolute; left: 0; top: 11px; bottom: 11px; width: 1px; background: rgba(35, 34, 29, 0.18); }
+  .m-menu-open .m-bar__burger::before { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-bar__eq i { animation: none !important; }
+  .sound-on .m-bar__eq i { scale: 1 0.7; }
+}

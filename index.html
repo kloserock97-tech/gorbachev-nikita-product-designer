@@ -264,6 +264,12 @@
     <svg viewBox="-10 -10 100 120" aria-hidden="true"><path d="M0 100H20V74.538C30.615 90.372 44.633 100 60 100H80V0H60V82.704C40.662 82.704 24.437 55.963 20 19.897V0H0Z"/></svg>
   </a>
   <button class="m-bar__lang" type="button" data-i18n-label="nav.lang" aria-label="Читать по-русски"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg><span data-i18n="nav.lang.short">RU</span></button>
+  <!-- v139: звук снаружи меню — пилюля «звук │ меню» со столбиками (ui/hero/soundButton.ts, sound-button.css), кнопка нажимает .sound-fab -->
+  <button class="m-bar__sound" type="button" aria-pressed="false" data-i18n-label="nav.sound.off" aria-label="Sound is off. Turn it on">
+    <svg class="m-bar__spk" viewBox="0 0 24 24" aria-hidden="true"><path class="sf-spk" d="M3.8 9.6h3.1l4.4-3.5v11.8l-4.4-3.5H3.8z"/><path class="sf-x" d="m15 9.7 4.6 4.6m0-4.6L15 14.3"/></svg>
+    <span class="m-bar__eq" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="m-bar__tip" aria-hidden="true"><span data-snd-tip>Sound</span><kbd>M</kbd></span>
+  </button>
   <button class="m-bar__burger" type="button" aria-expanded="false" aria-controls="m-menu" data-i18n-label="nav.menu" aria-label="Menu"><i></i><i></i><i></i></button>
 </div>
 <nav class="m-menu" id="m-menu" data-i18n-label="nav.menu" aria-label="Menu" inert>
@@ -277,6 +283,7 @@
       <button class="m-menu__item m-menu__sound" type="button" aria-pressed="false">
         <span class="m-menu__ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.8 9.6h3.1l4.4-3.5v11.8l-4.4-3.5H3.8z"/><path class="m-menu__wave" d="M14.4 9.3a3.9 3.9 0 0 1 0 5.4M16.9 6.9a7.3 7.3 0 0 1 0 10.2"/></svg></span>
         <span class="m-menu__txt"><b data-i18n="menu.sound">Sound</b><small><span class="m-menu__eq" aria-hidden="true"><i></i><i></i><i></i></span><span data-m-sound>Music and sounds of the hill</span></small></span>
+        <kbd class="m-menu__kbd" aria-hidden="true">M</kbd>
         <span class="m-menu__switch" aria-hidden="true"></span>
       </button>
       <div class="m-menu__item m-menu__lang" role="group" data-i18n-label="nav.langs" aria-label="Page language">

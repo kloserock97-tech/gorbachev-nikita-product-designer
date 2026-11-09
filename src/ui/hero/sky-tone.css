@@ -1,0 +1,67 @@
+/* v139: цвет текста первого экрана следует за погодой (просьба Никиты 09.11: «при смене погоды доп текст сливается с фоном»).
+   Тёплые серые строки подобраны под светлое ясное небо. В облака, дождь и сумерки небо темнеет, и контраст серых строк
+   с ним падал до 1,0–1,7. Цвет выбран по замеру чистого неба за каждой строкой (текст скрыт, худший участок строки):
+   какой тон даёт больший контраст там, где строка стоит. На компьютере имя, подзаголовок, теги и разделы стоят на тёмной
+   части неба — светлые с мягкой тенью (облака 3,1–4,5, дождь 3,6–5,1, сумерки 2,8–6,2 против 1,0–1,4 у прежнего серого);
+   подпись у солнца («Проектирую и сам собираю в коде») и язык — на светлой, остаются тёмными. На телефоне текст выше, в
+   светлой части — тёмный везде. В ясную погоду всё как было.
+   Погоду пишет main.ts (html[data-sky]); цвета — типизированные переменные (@property), поэтому переход плавный и идёт
+   вместе с небом (~2 с), а не скачком. Кнопки со своей подложкой (пилюля звука и меню, «Смотреть кейсы», карточка
+   кейса, цифры внизу) от неба не зависят и не меняются. */
+
+@property --hx-name { syntax: "<color>"; inherits: true; initial-value: #1e2219; }
+@property --hx-focus { syntax: "<color>"; inherits: true; initial-value: #767060; }
+@property --hx-tags { syntax: "<color>"; inherits: true; initial-value: #5d594b; }
+@property --hx-tagline { syntax: "<color>"; inherits: true; initial-value: #6d6858; }
+@property --hx-nav { syntax: "<color>"; inherits: true; initial-value: #2a2923; }
+@property --hx-glow { syntax: "<color>"; inherits: true; initial-value: rgba(14, 13, 9, 0); }
+
+/* телефон (и узкое окно): текст стоит выше, в светлой части неба — во всех погодах тёмный выигрывает
+   (замер на чистом небе 390×844, худший участок строки: облака 3,6–5,3 против 2,0–2,8 у светлого, дождь 3,3–4,5
+   против 2,4–2,9, сумерки 7,1–8,5 против 1,4–1,7). Поэтому серые строки здесь просто темнеют */
+:root[data-sky="cloudy"], :root[data-sky="rain"], :root[data-sky="dusk"] {
+  --hx-focus: #34312a;
+  --hx-tags: #34312a;
+  --hx-tagline: #2a271f;
+}
+/* компьютер: имя, подзаголовок, теги и разделы — на тёмной части неба, им светлый (замер одинаков при 1280×720,
+   1440×900 и 1920×1080). Язык справа и подпись у солнца — на светлой, остаются тёмными: «EN» тёмным 5,0–6,3,
+   светлым было бы 2,2–2,8 */
+@media (min-width: 901px) {
+  :root[data-sky="cloudy"], :root[data-sky="rain"], :root[data-sky="dusk"] {
+    --hx-name: #f7f3ea;
+    --hx-focus: #f1ece1;
+    --hx-tags: #f4f0e6;
+    --hx-nav: #f4f1e8;
+    --hx-glow: rgba(14, 13, 9, 0.42);
+  }
+}
+
+/* переход — на контейнерах, которые видят эти цвета: пересчёт стилей идёт только в них, а не во всём документе */
+.hero {
+  transition-property: --hx-name, --hx-focus, --hx-tags, --hx-tagline, --hx-glow;
+  transition-duration: 1.8s;
+  transition-timing-function: ease;
+  transition-delay: 0.15s;
+}
+
+.hero .headline { color: var(--hx-name); text-shadow: 0 1px 22px var(--hx-glow); }
+.hero .focus { color: var(--hx-focus); text-shadow: 0 1px 14px var(--hx-glow); }
+.hero .hero-tags { color: var(--hx-tags); text-shadow: 0 1px 10px var(--hx-glow); }
+.hero .hero-tags__ico svg { filter: drop-shadow(0 1px 4px var(--hx-glow)); }
+.hero .hero-tagline { color: var(--hx-tagline); }
+
+/* разделы — только на первом экране, где под ними небо; в главах у них светлая плашка, там цвет прежний
+   (на телефоне разделов в строке нет, язык и меню — светлые кружки со своей подложкой) */
+@media (min-width: 901px) {
+  /* у .dock свои переходы (notch.css) — дописываем к ним, а не заменяем */
+  .dock { transition: background 0.4s ease, box-shadow 0.4s ease, --hx-nav 1.8s ease 0.15s, --hx-glow 1.8s ease 0.15s; }
+  /* знак «N» — тоже .dock-item, но у него своя тёмная плитка */
+  body[data-section="home"] .dock .dock-item:not(.dock-mark, .is-active, :hover, :focus-visible, [data-near="true"]) { color: var(--hx-nav); text-shadow: 0 1px 10px var(--hx-glow); }
+  body[data-section="home"] .dock .dock-item:not(.dock-mark, .is-active, :hover, :focus-visible, [data-near="true"]) .glyph { filter: drop-shadow(0 1px 4px var(--hx-glow)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero { transition-duration: 0.01s; }
+  .dock { transition-duration: 0.4s, 0.4s, 0.01s, 0.01s; }
+}

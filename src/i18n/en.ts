@@ -21,6 +21,7 @@ const en = {
   "nav.sound.off": "Sound is off. Turn it on",
   "sound.label.on": "Sound is on",
   "sound.label.off": "Turn sound on",
+  "sound.tip.off": "Sound off",
   "nav.menu": "Menu",
   "nav.menu.close": "Close menu",
   "menu.sound": "Sound",
