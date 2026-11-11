@@ -139,6 +139,7 @@ The `tools/` scripts drive a headless Chrome over the DevTools protocol:
 - `cdp-profile.mjs` records a CPU profile of a page or of a moment in the story.
 - `cdp-eval.mjs`, `cdp-shot.mjs` and `cdp-frames.mjs` evaluate code, take screenshots and capture frame sequences.
 - `cdp-story-shots.mjs` shoots the scroll story at a list of progress values (`--ps 0.04,0.1,0.34`) from a single page load.
+- `cdp-load-marks.mjs` times the first screen by milestones (loading screen painted, scene ready, veil starts to melt, Enter) and, with `--compare <other build>`, alternates runs of two builds. Compare only that way: the machine's load drifts between series. It warms the browser up before navigating, because a freshly launched Chrome spends half a second starting its GPU process and whoever touches WebGL first gets the blame.
 - `pre-shader-stalls.js` with `cdp-eval.mjs --pre tools/pre-shader-stalls.js --fresh` lists shader programs that block the main thread on a cold cache. `cdp-profile.mjs --lines <function>` splits a function's self time by source line.
 - `cdp-touch.mjs` emulates a phone with a real finger in Chrome and runs gesture scripts from `tools/touch/*.json` (swipe, fling, screenshot, probe).
 - `cdp-cards.mjs` walks the Work chapter and the side projects on a phone: a finger swipe forward and back, the step buttons, the arrow keys, and whether the chapter stays put when the browser's address bar slides in and out (it changes `innerHeight` without moving the page).
