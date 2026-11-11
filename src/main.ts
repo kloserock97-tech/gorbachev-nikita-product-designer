@@ -308,10 +308,13 @@ function start3d(caseView?: CaseView, introBoot?: IntroBoot) {
     if (intro) {
       // The loading screen shows the hill itself behind the name, so the scene keeps running.
       /* v140: вуаль тает, только когда очередь дел загрузки пуста — иначе они попадают в проявление холма рывком */
-      Promise.all([scene.presentationReady, chores]).then(() => {
-        if (body.classList.contains("lite")) return;
-        intro.ready();
-      });
+      /* и только после прогрева скролл-истории (он идёт кадром позже готовности); без компьютера прогрева нет — не ждём */
+      Promise.all([scene.presentationReady, chores])
+        .then(() => Promise.race([scene.storyWarmed, new Promise((r) => setTimeout(r, 800))]))
+        .then(() => {
+          if (body.classList.contains("lite")) return;
+          intro.ready();
+        });
     } else setTimeout(() => ui.ready(), 280);
   };
   scene.sceneReady.then(start);

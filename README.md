@@ -83,6 +83,7 @@ src/
     postfx.ts        render targets and the post-processing chain
     shaders.ts       GLSL for grass, sky, fog, god rays, final pass
     dog.ts           Kelly: poses, head tracking, sleep, umbrella hat
+    models.ts        fetches and parses the three GLB models before the scene is built, so Draco decodes them meanwhile
     weather.ts       clear / cloudy / rain / dusk
     ...
   intro/             the loading screen: the hill itself in soft focus and graphite behind the name; Enter brings back
@@ -100,7 +101,7 @@ src/
   audio/             nature ambience and UI sound cues
   data/              texts and case list; case stories are one file per language, loaded on demand
   i18n/              the two dictionaries and the language switch
-  lib/               small shared helpers (math, formatting, display-time typography)
+  lib/               small shared helpers (math, formatting, display-time typography, the queue of one-off load chores)
 public/              models (Draco GLB), HDRI, fonts, images, sounds
 tools/               Blender build scripts and Chrome DevTools measurement scripts
 docs/                dev log, prompts behind each iteration, load test report
@@ -119,6 +120,16 @@ Behind the case cards the meadow is fully blurred, so it renders cheaply there. 
 Everyone gets the top quality: native resolution (on screens with a DPR below 1.5 the scene is supersampled at DPR 1.5 and the final pass filters it down), MSAA 4×, all the grass and the god rays. Nothing is measured or lowered behind the visitor's back; if a device can't keep up, the visitor switches to the lite version with the button on the loading screen or in the navigation. The page only falls back to the lite version on its own when 3D can't run at all: no WebGL2, software rendering, a WebGL context that is lost for good, or no frame drawn in 14 seconds. The lower tiers (`?tier=1..8`, a desktop ladder and a phone ladder) are kept for comparisons. Until October 2026 the page measured frame time on load, picked one of these tiers, cached it per GPU for two weeks and let a GPU-timer governor move it; that is gone.
 
 Shaders compile in parallel before the first frame (`KHR_parallel_shader_compile`). Models that arrive later compile after the HDRI is in, because the environment map changes the program key. Without that, the first frame blocked the main thread for about 2.4 seconds on a fast desktop.
+
+The loading order is built around one fact: the scene constructor is a single long task (planting 220k blades takes most of it), and nothing else can happen on the main thread while it runs. So everything that can run elsewhere is started before it or in the middle of it:
+
+- the loading screen is painted first, and the scene is built in the task after that frame;
+- `scene/models.ts` fetches and parses the models before the constructor, so the Draco workers decode them while the grass is planted;
+- lights and fog are set up before the grass, and the shaders of everything already in the scene, the post-processing and the HDRI convolution are handed to the GPU right there, so it compiles while the CPU plants;
+- nothing is drawn, not even the shadow maps, until the programs are ready: drawing earlier makes the main thread wait for the driver;
+- one-off chores (the About words texture, the AudioContext) run from `lib/chores.ts` while the GPU compiles the models' materials, and the veil of the loading screen melts only when that queue is empty.
+
+On a laptop that brought the loading screen from 2.1 s to 0.3 s after navigation and the Enter button from 4.9 s to 3.5 s (`docs/load-test-report.md`, v140).
 
 ### Measuring
 

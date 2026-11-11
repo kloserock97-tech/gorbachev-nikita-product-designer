@@ -1924,6 +1924,12 @@ export class HillScene {
   /** после камеры и позы компьютера, перед рендером — для DOM-слоя, чтобы рамка шла с кадром */
   onStoryFrame?: () => void;
   private storyWarm = false;
+  /* v140: прогрев (буферы постобработки, материалы компьютера на светлой странице) идёт в кадре сразу после готовности
+     сцены. Раньше он прятался в паузе заставки, пока невидимая линия прогресса доезжала до конца; паузы больше нет,
+     и он попадал бы на первые кадры проявления холма */
+  private warmTold = false;
+  private resolveWarmed!: () => void;
+  readonly storyWarmed = new Promise<void>((r) => (this.resolveWarmed = r));
   private canvasRect = { left: 0, top: 0, width: 1, height: 1 };
   private readCanvasRect = () => {
     const r = this.canvas.getBoundingClientRect();
@@ -2693,6 +2699,8 @@ ${SCREEN_SPILL}`)
     this.renderedFrames++;
     if (this.assetsReady >= 2) this.resolvePresentation();
     if (!this.storyWarm && this.settled && this.pc && this.assetsReady >= 2) this.warmStory();
+    /* кадр после прогрева: его буферы и материалы уже позади — заставке можно таять (main.ts) */
+    else if (this.storyWarm && !this.warmTold) { this.warmTold = true; this.resolveWarmed(); }
     /* кресло и HDRI на месте — сцена готова, интерфейс может проявляться */
     if (!this.settled && this.assetsReady === 2) this.settle();
   };
