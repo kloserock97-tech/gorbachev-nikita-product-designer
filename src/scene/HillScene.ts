@@ -641,8 +641,11 @@ export class HillScene {
     /* два LOD, как в Ghost of Tsushima: рядом с камерами — травинка в 7 вершин,
        дальше — один треугольник (3 вершины); на расстоянии разницы не видно */
     const LOD_NEAR = 5.5;
-    const near = { off: [] as number[], nrm: [] as number[], rnd: [] as number[], clump: [] as number[], lean: [] as number[] };
-    const far = { off: [] as number[], nrm: [] as number[], rnd: [] as number[], clump: [] as number[], lean: [] as number[] };
+    /* v140: травинки пишутся сразу в типизированные массивы под полное число травинок, а не в обычные массивы с
+       последующим переводом: 2,9 млн push и копия в Float32Array стоили заметной доли посадки. Значения те же до бита —
+       округление до float32 происходит при записи, как раньше при переводе */
+    const lod = () => ({ n: 0, off: new Float32Array(count * 3), nrm: new Float32Array(count * 3), rnd: new Float32Array(count * 4), clump: new Float32Array(count), lean: new Float32Array(count * 2) });
+    const near = lod(), far = lod();
     const n = { x: 0, y: 1, z: 0 };
     const clump = { cx: 0, cz: 0, id: 0, dist: 0 };
 
@@ -702,8 +705,9 @@ export class HillScene {
 
       const L = Math.hypot(x - cam.x, y - cam.y, z - cam.z) < LOD_NEAR ? near : far;
       normalAt(x, z, n);
-      L.off.push(x, y, z);
-      L.nrm.push(n.x, n.y, n.z);
+      const i = L.n++;
+      L.off[i * 3] = x; L.off[i * 3 + 1] = y; L.off[i * 3 + 2] = z;
+      L.nrm[i * 3] = n.x; L.nrm[i * 3 + 1] = n.y; L.nrm[i * 3 + 2] = n.z;
 
       /* Трава 9–18 см (была 5–10): мелкая трава — это детали мельче пикселя,
          экран их не показывает, а рябит; крупнее форма — спокойнее и реалистичнее */
@@ -721,13 +725,14 @@ export class HillScene {
         if (e < 1.1) len *= 0.05 + 0.95 * smooth(0.8, 1.1, e);
       }
 
-      L.rnd.push(rng() * Math.PI * 2, len, 0, rng());
+      L.rnd[i * 4] = rng() * Math.PI * 2; L.rnd[i * 4 + 1] = len; L.rnd[i * 4 + 2] = 0; L.rnd[i * 4 + 3] = rng();
       const tone = fbm(x * 0.9 + 17.0, z * 0.9 - 3.0, 3) * 0.6 + fbm(x * 5.5 - 3.3, z * 5.5 + 2.1, 2) * 0.4;
-      L.clump.push(Math.min(1, tone * 0.88 + hash01(clump.id, 2) * 0.14));
+      L.clump[i] = Math.min(1, tone * 0.88 + hash01(clump.id, 2) * 0.14);
       /* наклон к центру кочки: сильнее у края ячейки + небольшой разброс */
       const toC = Math.hypot(clump.cx - x, clump.cz - z) || 1;
       const lean = (0.05 + 0.16 * smooth(0.02, 0.14, clump.dist)) * (0.5 + 0.5 * hash01(clump.id, 4));
-      L.lean.push(((clump.cx - x) / toC) * lean + (rng() - 0.5) * 0.36, ((clump.cz - z) / toC) * lean + (rng() - 0.5) * 0.36);
+      L.lean[i * 2] = ((clump.cx - x) / toC) * lean + (rng() - 0.5) * 0.36;
+      L.lean[i * 2 + 1] = ((clump.cz - z) / toC) * lean + (rng() - 0.5) * 0.36;
       k++;
     }
     this.bladeTotal = k;
@@ -744,13 +749,13 @@ export class HillScene {
     this.grassMaterial = material;
     this.grassGeos = [];
     for (const [L, geo] of [[near, bladeGeometry()], [far, bladeGeometryFar()]] as const) {
-      const m = L.off.length / 3;
+      const m = L.n;
       if (!m) continue;
-      geo.setAttribute("aOffset", new THREE.InstancedBufferAttribute(new Float32Array(L.off), 3));
-      geo.setAttribute("aNormal", new THREE.InstancedBufferAttribute(new Float32Array(L.nrm), 3));
-      geo.setAttribute("aRnd", new THREE.InstancedBufferAttribute(new Float32Array(L.rnd), 4));
-      geo.setAttribute("aClump", new THREE.InstancedBufferAttribute(new Float32Array(L.clump), 1));
-      geo.setAttribute("aLean", new THREE.InstancedBufferAttribute(new Float32Array(L.lean), 2));
+      geo.setAttribute("aOffset", new THREE.InstancedBufferAttribute(L.off.slice(0, m * 3), 3));
+      geo.setAttribute("aNormal", new THREE.InstancedBufferAttribute(L.nrm.slice(0, m * 3), 3));
+      geo.setAttribute("aRnd", new THREE.InstancedBufferAttribute(L.rnd.slice(0, m * 4), 4));
+      geo.setAttribute("aClump", new THREE.InstancedBufferAttribute(L.clump.slice(0, m), 1));
+      geo.setAttribute("aLean", new THREE.InstancedBufferAttribute(L.lean.slice(0, m * 2), 2));
       geo.instanceCount = m;
       geo.userData.total = m;
       const mesh = new THREE.Mesh(geo, material);
@@ -758,7 +763,7 @@ export class HillScene {
       this.meadowGroup.add(mesh);
       this.grassGeos.push(geo);
     }
-    this.bladeSplit = { near: near.off.length / 3, far: far.off.length / 3 };
+    this.bladeSplit = { near: near.n, far: far.n };
     this.buildFlowers();
     this.buildPampas();
     this.buildStalks();
