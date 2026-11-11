@@ -125,9 +125,6 @@ a:hover > .ll-round, a:focus-visible > .ll-round { rotate: 45deg; }
 .hero__frame { position: relative; margin: 0; height: clamp(420px, calc(100svh - 7.4vw - 180px), 860px); border-radius: var(--r-xl); overflow: hidden; background: #e7c79a; }
 .hero__frame picture, .hero__frame picture img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 60% 62%; }
 .hero__frame::after { content: ""; position: absolute; inset: auto 0 0; height: 46%; pointer-events: none; background: linear-gradient(0deg, rgba(36, 30, 14, 0.42), transparent); }
-.hero__logos { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0; padding: 0; font-size: 15px; font-weight: 500; }
-.hero__logos li { display: flex; align-items: center; gap: 8px; }
-.hero__logos img { width: 22px; height: 22px; border-radius: 6px; }
 /* колода в кадре: подложка, сверху «Кейс · ‹ 01/12 ›», ниже сама карточка проекта */
 .hero__deck { position: absolute; z-index: 1; right: clamp(12px, 1.6vw, 22px); bottom: clamp(12px, 1.6vw, 22px); width: 320px; padding: 8px; border-radius: 20px; background: rgba(250, 249, 246, 0.94); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(30, 24, 10, 0.18); touch-action: pan-y; }
 .hero__deck:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
@@ -151,7 +148,6 @@ a:hover > .ll-round, a:focus-visible > .ll-round { rotate: 45deg; }
 @media (max-width: 760px) {
   .hero__frame { height: min(78svh, 640px); }
   .hero__frame picture img { object-position: 74% 60%; }
-    .hero__logos { gap: 6px 14px; font-size: 14px; }
   .hero__deck { left: 12px; right: 12px; width: auto; }
 }
 

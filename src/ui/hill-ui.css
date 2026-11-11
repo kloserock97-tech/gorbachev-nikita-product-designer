@@ -159,19 +159,16 @@ body {
 }
 .scene-ready .scene-cover { opacity: 0; }
 
-.js .rise,
-.js .rise-round {
+.js .rise {
   clip-path: none !important;
   opacity: 0;
   translate: 0 14px;
   filter: blur(6px);
 }
 .js .card.rise { translate: 0 22px; scale: 0.96; }
-.js .rise-round { translate: 0 0; scale: 0.9; }
 .js .rise-fade { opacity: 0; }
 .is-ready .rise-fade { opacity: 1; transition: opacity 1.2s var(--ease-enter) var(--d, 0ms); }
 .is-ready .rise,
-.is-ready .rise-round,
 .is-ready .card.rise {
   opacity: 1;
   translate: 0 0;
@@ -206,10 +203,10 @@ body {
 }
 
 /* после входа blur снимаем совсем — фильтр на карточках стоил бы кадров при параллаксе */
-.intro-done .rise, .intro-done .rise-round, .intro-done .dock-item, .intro-done .headline span i { filter: none; }
+.intro-done .rise, .intro-done .dock-item, .intro-done .headline span i { filter: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .js .rise, .js .rise-round, .js .card.rise, .js .dock-item { translate: none; scale: none; filter: none; }
+  .js .rise, .js .card.rise, .js .dock-item { translate: none; scale: none; filter: none; }
   .js .headline span i { filter: none; }
 }
 
@@ -546,13 +543,9 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 .story-p { margin: 0; font-size: clamp(15px, 1.15vw, 23px); line-height: 1.5; color: #3A3A34; max-width: 22em; }
 /* Ссылка на лидерский разбор стоит в ряду абзацев, поэтому выглядит как они, а на ссылку намекает стрелка
    и подчёркивание, которое дорисовывается при наведении — так строка не спорит с текстом рядом. */
-.story-lead { display: inline-block; color: #2b2b26; text-decoration: none; border-bottom: 1px solid color-mix(in srgb, #3A3A34 28%, transparent); transition: border-color 0.25s ease, color 0.25s ease; }
-.story-lead::after { content: " →"; white-space: nowrap; }
-.story-lead:hover, .story-lead:focus-visible { color: #14140f; border-bottom-color: currentColor; }
 /* v74.2: блок About не ловит мышь (pointer-events: none — под ним сцена и компьютер), и ссылка это наследовала:
    на неё нельзя было нажать. Пока страница About на экране, ссылкам нажатие возвращается */
 .story-on .story-hero a { pointer-events: auto; }
-.story-lead:active { scale: 0.98; }
 
 /* вход: как .sf-reveal на Tilda, в обе стороны */
 /* v17: и из размытия, как тексты oryzo.ai — строка «наводится на резкость» */
@@ -874,11 +867,8 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
    Подпись раскрыта первые секунды после входа интерфейса, три секунды после смены состояния (.is-tell ставит
    soundToggle.ts) и под курсором или фокусом; остальное время кнопка — круглый значок и не спорит с контентом.
    Широкий экран — справа вверху, на одной линии с доком; узкий — справа внизу, под большим пальцем. */
-.dock-lang { font: inherit; }
 @media (max-width: 900px) {
   /* в узком доке у пунктов остаются одни иконки; у языка наоборот — буквы понятнее глобуса */
-  .dock-lang .glyph { display: none; }
-  .dock-lang span.dock-lang-l { display: block; font-size: max(12px, calc(13 * var(--u))); letter-spacing: 0.04em; }
 }
 .sound-fab {
   --h: max(40px, calc(46 * var(--u)));
@@ -955,35 +945,11 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
   font-family: Caveat, "Segoe Print", "Comic Sans MS", cursive; color: #2b2a26;
   will-change: transform, opacity;
 }
-.kelly-text {
-  position: absolute; right: 38px; bottom: 96px; white-space: nowrap;
-  font-size: clamp(24px, 1.9vw, 36px); font-weight: 600; line-height: 1;
-  rotate: -6deg; display: inline-flex; align-items: center; gap: 0.18em;
-  opacity: 0; translate: 0 6px;
-  transition: opacity 0.5s ease 0.35s, translate 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.35s;
-}
-.kelly-smile { width: 0.95em; height: 0.95em; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
-.kelly-arrow {
-  position: absolute; right: -26px; bottom: 8px; width: 92px; height: 84px;
-  fill: none; stroke: #2b2a26; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round;
-}
-.kelly-arc, .kelly-head { stroke-dasharray: 160; stroke-dashoffset: 160; }
-.kelly-head { stroke-dasharray: 44; stroke-dashoffset: 44; }
 .kelly-note.is-on { opacity: 1; visibility: visible; transition: opacity 0.2s ease; }
-.kelly-note.is-on .kelly-text { opacity: 1; translate: 0 0; }
-.kelly-note.is-on .kelly-arc { stroke-dashoffset: 0; transition: stroke-dashoffset 0.7s cubic-bezier(0.5, 0, 0.2, 1) 0.6s; }
-.kelly-note.is-on .kelly-head { stroke-dashoffset: 0; transition: stroke-dashoffset 0.3s ease-out 1.25s; }
 /* телефон: подпись в полосе между абзацем и монитором, короткая стрелка вниз к карточке */
 @media (max-width: 900px) {
   /* v107: справа от полароида, в две строки. v110: стрелка — та же дуга, повёрнутая на четверть: идёт от подписи
      влево и упирается в край карточки (раньше перевёрнутая дуга читалась вывернутым крючком) */
-  .kelly-text { font-size: 18px; right: auto; bottom: auto; left: 44px; top: 18px; rotate: -4deg; white-space: normal; width: 4.1em; line-height: 1.05; display: block; }
-  .kelly-smile { display: inline-block; vertical-align: -0.12em; }
-  .kelly-arrow { width: 34px; height: 31px; right: auto; bottom: auto; left: 14px; top: 2px; transform: rotate(90deg); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .kelly-arc, .kelly-head { stroke-dashoffset: 0 !important; transition: none !important; }
-  .kelly-text { translate: none; }
 }
 
 /* ── v23: футер на закатном холме ─────────────────────────────────────────
@@ -1067,7 +1033,7 @@ html:not(.fonts-ready) body:not(.lite) .story-hero { visibility: hidden; }
 /* ── v24: лёгкая версия без 3D (src/ui/lite.ts) ─────────────────────────────
    Та же страница обычной прокруткой: первый экран на постере холма, About на бумаге, сетка кейсов на
    тёмной траве, футер на закатном градиенте. Всё, что управлялось скроллом и сценой, — статично. */
-.lite #scene, .lite .scene-cover, .lite .hero-stats, .lite .story, .lite .story-progress, .lite .vf, .lite .kelly-note, .lite .kelly-zzz, .lite .pc-tip, .lite .pc-hud, .lite .play-wrap, .lite .stat, .lite .cases-count, .lite .cases-bar, .lite .guides { display: none !important; }
+.lite #scene, .lite .scene-cover, .lite .hero-stats, .lite .story, .lite .story-progress, .lite .vf, .lite .kelly-note, .lite .kelly-zzz, .lite .pc-tip, .lite .pc-hud, .lite .stat, .lite .cases-count, .lite .cases-bar, .lite .guides { display: none !important; }
 /* v79: 3D успело запуститься и откатилось на лёгкую версию — слои главы «Кейсы» (колесо, карточка, сцены) убираем,
    иначе они оставались поверх сетки кейсов */
 .lite .cw, .lite .cx { display: none !important; }

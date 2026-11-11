@@ -16,7 +16,7 @@ import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
      закручивается (MeadowPortal). */
 
 export const RING_IN = 3.05;
-export const RING_OUT = 4.3;
+const RING_OUT = 4.3;
 const DEPTH = 1.0;
 
 function rng(seed: number) {

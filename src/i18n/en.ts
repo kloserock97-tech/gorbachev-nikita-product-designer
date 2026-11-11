@@ -176,7 +176,6 @@ const en = {
   "about.marquee": "I’m Nikita, a product designer",
   "about.intro": "I'm Nikita, a product designer. At Sber I led design on internal products, and for Mos.ru I built a service for city stories.",
   "about.p1": "My favourite problems are the tangled ones, full of rules and data, like risk review at a bank or moderation for a city service.",
-  "about.lead": "How I lead a team, and what I do in my first six months somewhere new",
   "about.p2": "I start by talking to users. After release I look at the numbers and decide what to fix next.",
   "about.fact.years": "5+ years",
   "about.fact.years.sub": "in product",
@@ -203,8 +202,6 @@ const en = {
   "cases.prev": "Previous case",
   "cases.next": "Next case",
   "cases.swipe": "Swipe sideways",
-  "cases.f.web": "Web",
-  "cases.f.mobile": "Mobile",
 
   /* v32: заставка главы «Кейсы» над лугом и заметки после ленты */
   "walk.kicker": "Case studies · 2024–2026",

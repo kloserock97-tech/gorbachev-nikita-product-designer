@@ -1,7 +1,6 @@
 /* v103: глава «Кейсы» с указателем (ui/casesSignpost.ts, scene/meadow/signpost3d.ts). Кейс показывает световой столб на
    лугу, поэтому летающей карточки, живых сцен кейсов и знака продукта нет. */
 body.has-signpost .cx-scene,
-body.has-signpost .cx-brand,
 body.has-signpost .cx-center { display: none; }
 
 /* ── широкий экран: список слева и колонка справа — оба по центру экрана по вертикали, столб между ними ── */

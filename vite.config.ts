@@ -12,8 +12,19 @@ const stripGlslComments = (): Plugin => ({
   },
 });
 
+/* v140: DRACOLoader из three ссылается на свои пять файлов декодера через import.meta.url, и сборка кладёт их в
+   dist/assets (1,3 МБ). Сайту они не нужны: декодер берётся из public/draco (setDecoderPath в scene/models.ts),
+   посетитель эти копии никогда не качал — они только утяжеляли выкладку. Убираем их из сборки */
+const dropBundledDraco = (): Plugin => ({
+  name: "drop-bundled-draco",
+  apply: "build",
+  generateBundle(_options, bundle) {
+    for (const file of Object.keys(bundle)) if (/(^|\/)draco_(decoder|wasm_wrapper)-[\w-]+\.(js|wasm)$/.test(file)) delete bundle[file];
+  },
+});
+
 export default defineConfig(({ command }) => ({
-  plugins: [stripGlslComments()],
+  plugins: [stripGlslComments(), dropBundledDraco()],
   /* сборка с относительными путями: сайт открывается и из корня домена, и с адреса GitHub Pages /<repo>/ */
   base: command === "build" ? "./" : "/",
   build: {
@@ -25,7 +36,7 @@ export default defineConfig(({ command }) => ({
            по нескольку раз в день. В отдельном файле он остаётся в кеше браузера между выкатками: вернувшийся
            посетитель докачивает только код сайта. */
         /* v96: только ядро three; дополнения (загрузчики, линии для сцен кейсов) идут с теми чанками, которым нужны */
-        advancedChunks: { groups: [{ name: "three", test: /node_modules[\/]three[\/]build[\/]/ }] },
+        codeSplitting: { groups: [{ name: "three", test: /node_modules[\/]three[\/]build[\/]/ }] },
       },
     },
     /* three один весит больше порога предупреждения, и делить его дальше незачем */

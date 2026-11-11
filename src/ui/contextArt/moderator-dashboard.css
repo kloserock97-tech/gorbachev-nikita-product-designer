@@ -16,7 +16,6 @@
 /* строки списка */
 .ca-md-row { display: flex; align-items: center; gap: 2.4cqw; height: 9cqw; padding: 0 3cqw; border-radius: 2.6cqw; background: #f4f4f7; }
 .ca-md-dot { flex: none; width: 2.8cqw; height: 2.8cqw; border-radius: 50%; background: var(--md-green); box-shadow: 0 0 0 1.2cqw rgba(47, 191, 74, 0.15); }
-.ca-md-row.is-dim { opacity: 0.45; }
 .ca-md-row.is-hot { background: #fff; box-shadow: 0 0 0 1px rgba(23, 23, 26, 0.08), 0 2cqw 5cqw -2cqw rgba(35, 26, 58, 0.35); }
 
 /* время на проверку: было и стало */

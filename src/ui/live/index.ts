@@ -1,7 +1,7 @@
 /* v115: живые прототипы кейсов — каждый своим чанком, грузится, когда блок подъехал к экрану */
 import type { LiveProto } from "./types";
 
-export const LIVE: Record<string, () => Promise<{ default: LiveProto }>> = {
+const LIVE: Record<string, () => Promise<{ default: LiveProto }>> = {
   /* 26.10: прежние модули ручной вёрстки (plati, agents, community) заменены экранами из Figma — <кейс>2/flows.ts */
   /* 24.10: GRIF на финальных экранах из Figma — знакомство и письмо после встречи */
   "grif-onboarding": () => import("./grif2/flows").then((m) => ({ default: m.grifOnboarding })),

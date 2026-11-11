@@ -91,6 +91,3 @@ export const byText = (root: ParentNode, text: string) =>
 /* ── GRIF ── */
 export type ScreenKey = "new" | "input" | "working" | "pending" | "question" | "done" | "feed" | "feedRun" | "feedEmpty" | "memory" | "forget" | "onb1" | "onb2" | "onb3" | "onb4" | "onb5" | "onb6";
 export const grif = createRenderer(data as Bundle, "grif", (n, base) => `${base}cases/grif-ai/live2/${n === "avatar" ? "avatar" : `char-${n}`}.png`);
-export const ensureStyles = grif.ensureStyles;
-export const renderScreen = (key: ScreenKey) => grif.renderScreen(key);
-export const screenSize = (key: ScreenKey) => grif.screenSize(key);

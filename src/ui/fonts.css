@@ -34,7 +34,7 @@
 
 /* главная: первый экран, «Привет», глава «Кейсы», названия и цифры кейсов; страница кейса: заголовки и KPI */
 .headline, .story-hi, .cases-kicker, .cases-now, .sf-title,
-.cw-t, .cw-fact b, .cl-fact b, .cl-title, .case-title,
+.cw-t, .cw-fact b, .case-title,
 .walk-word, .shelf-title, .shelf-name, .shelf-now,
 .cs-hero h1, .cs-hero-brand span, .cs-lead, .cs-kpi b, .cs-takeaway, .cs-next-text b,
 .cs-decision h3, .cs-mistake h3, .cs-deep-head h3, .cs-method h3, .cs-flow-col h3, .cs-part h4,

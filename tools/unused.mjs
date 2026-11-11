@@ -20,7 +20,8 @@ const read = (p) => readFileSync(p, "utf8");
 const srcFiles = walk(join(root, "src"));
 const code = srcFiles.filter((f) => [".ts", ".tsx", ".js"].includes(extname(f)));
 const css = srcFiles.filter((f) => extname(f) === ".css");
-const html = read(join(root, "index.html"));
+/* v140: все страницы сборки, а не только главная — иначе классы и картинки лёгкой версии (lite.html) выходили «неиспользуемыми» */
+const html = ["index.html", "lite.html", "case-scene.html"].map((f) => read(join(root, f))).join(" ");
 const dictFiles = code.filter((f) => rel(f).startsWith("src/i18n/") && !rel(f).endsWith("index.ts"));
 const codeText = code.filter((f) => !dictFiles.includes(f)).map(read).join("\n");
 const cssText = css.map(read).join("\n");

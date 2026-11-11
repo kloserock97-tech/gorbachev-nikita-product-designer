@@ -110,7 +110,7 @@ export const FOOTER: FooterKeys = { ...FOOTER_BASE };
    с той же скоростью, а всё, что за порогом, укладывается в PORTAL_SETTLE экрана — и страница там кончается.
    split — доля хода портала, отданная подходу к порогу; считает layoutTimeline(). */
 const PORTAL_SETTLE = 0.35;
-export const PORTAL = { knee: 0.53, split: 0.86 };
+const PORTAL = { knee: 0.53, split: 0.86 };
 /** прогресс портала 0…1 по прогрессу футера f: до порога — ровно, за ним — быстро */
 export function portalAt(f: number) {
   const u = ramp(f, ...FOOTER.portal);

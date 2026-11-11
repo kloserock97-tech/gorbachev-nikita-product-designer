@@ -147,7 +147,6 @@
 .pt-live-root { position: relative; overflow: hidden; background: #fff; color: #141512; font-family: Onest, "Segoe UI", system-ui, sans-serif; text-align: left; }
 .pt-live-root :where(button, input, textarea, select) { font: inherit; color: inherit; }
 .pt-loading { display: grid; place-items: center; height: 100%; margin: 0; font-size: 15px; color: #8a8b85; }
-.pt-demo { margin: 0; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pt-faint); text-align: center; }
 /* куда нажать: модуль вешает .pt-hint на нужный элемент — вокруг него пульсирует синее кольцо */
 .pt-live-root .pt-hint { animation: pt-hint-ring 1.8s ease-out infinite; }
 @keyframes pt-hint-ring { 0% { box-shadow: 0 0 0 0 rgba(36, 120, 255, 0.55); } 70% { box-shadow: 0 0 0 12px rgba(36, 120, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(36, 120, 255, 0); } }

@@ -10,9 +10,7 @@
 .g2 .g2-rise { animation: g2-rise 0.38s cubic-bezier(0.22, 1, 0.36, 1) both; }
 @keyframes g2-rise { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
 .g2 [data-hot] { cursor: pointer; }
-.g2 .g2-gone { animation: g2-gone 0.3s ease both; }
-@keyframes g2-gone { to { opacity: 0; translate: 0 -6px; } }
-@media (prefers-reduced-motion: reduce) { .g2-in, .g2-out, .g2 .g2-rise, .g2 .g2-gone { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .g2-in, .g2-out, .g2 .g2-rise { animation: none; } }
 
 /* 24.10: экраны живут сами (stage.ts, liven). Кривые — сильный ease-out для появлений, linear для постоянного движения */
 .g2 .g2-rise { animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1); }

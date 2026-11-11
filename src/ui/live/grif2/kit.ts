@@ -34,9 +34,6 @@ export function make(design: { w: number }, flow: Flow, r?: Renderer, liven?: (e
   };
 }
 
-/** переход по шагам внутри сценария: go(k) — сообщить движку и показать шаг k */
-export const stepper = (flow: Flow, s: Stage, ctx: LiveCtx) => (k: number) => { ctx.go(k); flow(s, ctx, k); };
-
 /* ход в чате: ответ человека выезжает справа, ответ собирается по частям, длинный текст проявляется словами */
 export function turn(s: Stage, onReady: () => void, opts: { thread?: string; user?: string; agent?: string } = {}) {
   const thread = s.find(opts.thread ?? "Thread");

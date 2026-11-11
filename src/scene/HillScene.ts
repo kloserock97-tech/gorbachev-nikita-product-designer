@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { disposeModels, startModels } from "./models";
+import { smooth } from "../lib/math";
 import { fbm, heightAt, makeRng, normalAt } from "./terrain";
 import { loadHdri } from "./hdri";
 import { createPostFx, type PostFx } from "./postfx";
@@ -2924,11 +2925,6 @@ ${SCREEN_SPILL}`)
     this.fx.dispose();
     this.renderer.dispose();
   }
-}
-
-function smooth(a: number, b: number, x: number) {
-  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
-  return t * t * (3 - 2 * t);
 }
 
 /* травинка: три ступени и один общий кончик — 7 вершин, 5 треугольников.
