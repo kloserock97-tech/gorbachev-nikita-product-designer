@@ -87,7 +87,11 @@ body.focus-tint.focus-entering #scene { filter: none; }
   appearance: none; cursor: pointer; padding: 10px 18px; border-radius: 999px; border: 1px solid rgba(255, 250, 240, .55);
   background: rgba(255, 250, 240, .32); color: var(--fl-ink); font: 500 13px var(--font); white-space: nowrap;
   -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-  opacity: 0; animation: focus-loader-in 1s ease 1.2s forwards;
+  /* v140: то же появление — 1,2 с тишины и 1 с проявления, — но пауза стоит внутри ключевых кадров, а не в
+     animation-delay. Анимацию в задержке браузер держит в главном потоке, а тот на загрузке занят сборкой холма:
+     кнопка появлялась только после неё, то есть слабому телефону — в самом конце ожидания. Идущую анимацию
+     прозрачности ведёт графический поток, ему сборка не мешает */
+  opacity: 0; animation: focus-loader-late 2.2s ease forwards;
   transition: background .25s ease, border-color .25s ease;
 }
 .focus-loader__fallback svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
@@ -109,6 +113,7 @@ body.focus-loading .dock-wrap { opacity: 0; }
 body.intro-loading .dock-wrap { transition: opacity .9s ease; }
 
 @keyframes focus-loader-in { from { opacity: 0; filter: blur(6px); } to { opacity: 1; filter: blur(0); } }
+@keyframes focus-loader-late { 0%, 54.55% { opacity: 0; filter: blur(6px); } 100% { opacity: 1; filter: blur(0); } }
 
 @media (max-width: 600px) {
   .focus-loader__title { font-size: 10.4vw; }

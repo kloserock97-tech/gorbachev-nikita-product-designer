@@ -16,6 +16,8 @@ import "./ui/hero/sky-tone.css";
 import { initLabMenu } from "./ui/labMenu";
 import { initStoryWheel } from "./ui/storyWheel";
 import { HillScene, type HillSceneOptions } from "./scene/HillScene";
+import { startModels } from "./scene/models";
+import { runChores } from "./lib/chores";
 import { initHeroUi } from "./ui/hero/heroUi";
 import { initWorkMenu } from "./ui/workMenu";
 import { initStory } from "./ui/storyHero";
@@ -28,7 +30,7 @@ import { initSound } from "./ui/soundToggle";
 import { initFooter } from "./ui/footer";
 import { initDockNav, trackByScroll, type DockSection } from "./ui/dockNav";
 import { initCaseView } from "./ui/caseView";
-import { liteReason, enterLite, rememberLite } from "./ui/lite";
+import { liteSaved, liteProbe, enterLite, rememberLite } from "./ui/lite";
 import { initLangToggle } from "./ui/langToggle";
 import { initGlassLens } from "./ui/hero/glassLens";
 import { initLiquidButton } from "./ui/hero/liquidButton";
@@ -44,7 +46,7 @@ import { cue } from "./audio/bus";
 import { CASES, CHAPTER, CHAPTER2, TIMELINE, chapters } from "./scene/story";
 import { setSnapGlide, topFor } from "./ui/storyScroll";
 import { smoothWheel } from "./ui/smoothScroll";
-import { createFocusLoader } from "./intro/focusLoader";
+import { createFocusLoader, type FocusLoader } from "./intro/focusLoader";
 
 
 const params = new URLSearchParams(location.search);
@@ -59,14 +61,19 @@ const pauseForCase = (open: boolean) => { if (scene3d) scene3d.paused = open; };
 /* v27: язык страницы (?lang=ru, сохранённый выбор или язык браузера) — до того, как модули соберут
    свою разметку; переключатель стоит в доке */
 initI18n();
-/* v128: преломление в стеклянных плашках (только Chromium с мышью) */
-initGlassLens();
-/* v138: «Смотреть кейсы» — тёмная капсула с кромкой жидкого металла и светом под курсором (свой WebGL-холст) */
-initLiquidButton();
+/* v128: преломление в стеклянных плашках (только Chromium с мышью).
+   v138: «Смотреть кейсы» — тёмная капсула с кромкой жидкого металла и светом под курсором (свой WebGL-холст).
+   v140: оба стояли здесь, в самом начале, и первыми будили видеокарту — до заставки и до страницы кейса по прямой
+   ссылке. Теперь запускаются там, где нужны: перед сборкой холма (порядок прежний — кнопка меняет поля, а раскладка
+   первого экрана мерится после неё) */
+function heroFx() {
+  initGlassLens();
+  initLiquidButton();
+}
 
 /* v24: лёгкая версия без 3D — нет WebGL2, программный рендер, ?lite=1 или устройство уже оказалось
    слишком медленным (нагрузочный прогон: SwiftShader 0.2 fps, без WebGL — исключение и пустой экран) */
-const lite = liteReason(params);
+const lite = liteSaved(params);
 /* v102: лёгкая версия — отдельная страница lite.html (src/liteLab). Здесь в лёгком режиме остаётся только страница
    кейса по прямой ссылке: она та же, что в 3D-версии. Закрыли кейс — уходим на lite.html */
 const isCaseLink = () => location.hash.startsWith("#/work/");
@@ -77,14 +84,62 @@ function toLitePage() {
   location.replace(url.href);
 }
 if (lite && !isCaseLink()) toLitePage();
-else if (lite) startLite(lite);
+else if (lite) { heroFx(); startLite(lite); }
 /* v69: открыли прямой ссылкой на кейс — страница кейса собирается первой, холм поднимается после неё */
-else if (location.hash.startsWith("#/work/")) startCaseFirst();
-else boot3d();
+else if (isCaseLink()) startCaseFirst();
+else bootHill();
 
-function boot3d(caseView?: CaseView) {
+/* v95: заставка «Расфокус» (src/intro/focusLoader.ts): сам холм в мягком фокусе и графите за именем, «Enter»
+   возвращает резкость и цвет. Прежний «живой сад» стал отдельным демо (github.com/kloserock97-tech/overgrowth).
+   Один раз за сессию; ?intro=1 — всегда, ?intro=0 — никогда, ?ui=0 и ?cam= — тоже без заставки. */
+function wantsIntro() {
+  const introParam = params.get("intro");
+  let seen = false;
+  try { seen = sessionStorage.getItem("hill-intro") === "1"; } catch { /* приватный режим */ }
+  return !isCaseLink() && (introParam === "1" || (introParam !== "0" && !seen && params.get("ui") !== "0" && !fixedCamera()));
+}
+function fixedCamera() {
+  const cam = params.get("cam")?.split(",").map(Number);
+  return cam?.length === 6 && cam.every(Number.isFinite) ? (cam as HillSceneOptions["fixedCamera"]) : undefined;
+}
+
+/* v140: заставка — в первом же кадре. Раньше она создавалась и тут же, в том же куске скрипта, собирался холм
+   (посадка травы, модели, шейдеры): браузер не мог нарисовать ничего, пока кусок не кончится, и человек 2,4 с на
+   ноутбуке и 6 с на телефоне смотрел в пустой светлый экран, после чего тот резко темнел. Теперь заставка успевает
+   нарисоваться, и только потом начинается сборка: тёмный экран и кнопка лёгкой версии — сразу.
+   Обработчики заставки привязываются позже, когда сцена есть; до этого «Лёгкая версия» просто уводит на lite.html */
+type IntroBoot = { intro: FocusLoader; hooks: { done: () => void; lite: () => void } };
+function bootHill() {
+  /* v140: модели начинают распаковываться до сборки сцены (scene/models.ts) — и с заставкой, и без неё */
+  const models = startModels();
+  if (!wantsIntro()) {
+    if (liteProbe(params)) return toLitePage();
+    void models.kicked.then(() => { heroFx(); boot3d(); });
+    return;
+  }
+  let left = false;
+  const hooks: IntroBoot["hooks"] = { done: () => {}, lite: () => { left = true; rememberLite(); toLitePage(); } };
+  const intro = createFocusLoader(() => hooks.done(), () => hooks.lite());
+  let ran = false;
+  const run = () => {
+    if (ran || left) return;
+    ran = true;
+    /* проверка WebGL — первое обращение к видеокарте, уже под заставкой; не прошла — лёгкая страница, как и раньше */
+    if (liteProbe(params)) { intro.dispose(); return toLitePage(); }
+    void models.kicked.then(() => {
+      if (left) return;
+      heroFx();
+      boot3d(undefined, { intro, hooks });
+    });
+  };
+  /* кадр нарисован, когда управление получила следующая задача после rAF; скрытая вкладка кадров не рисует — не ждём */
+  requestAnimationFrame(() => setTimeout(run, 0));
+  setTimeout(run, 250);
+}
+
+function boot3d(caseView?: CaseView, introBoot?: IntroBoot) {
   try {
-    start3d(caseView);
+    start3d(caseView, introBoot);
   } catch (e) {
     console.warn("3D не запустилось — лёгкая версия", e);
     if (!isCaseLink()) return toLitePage();
@@ -105,7 +160,17 @@ function startCaseFirst() {
   lateFonts();
   const view = initCaseView({ onToggle: pauseForCase });
   let booted = false;
-  const boot = () => { if (!booted) { booted = true; boot3d(view); } };
+  /* v140: и здесь модели уходят в распаковку до сборки сцены — но стартуют только теперь, а не вместе со страницей
+     кейса: её картинкам сеть нужнее */
+  const boot = () => {
+    if (booted) return;
+    booted = true;
+    /* проверка WebGL — первое обращение к видеокарте (на только что открытой вкладке ~0,5 с ожидания): раньше она
+       шла до страницы кейса, теперь под ней. Не прошла — под кейсом собирается лёгкая страница, как и прежде */
+    const why = liteProbe(params);
+    if (why) { heroFx(); return startLite(why, view); }
+    void startModels().kicked.then(() => { heroFx(); boot3d(view); });
+  };
   const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback
     ?? ((cb: () => void) => window.setTimeout(cb, 1));
   const wait = () => {
@@ -118,7 +183,7 @@ function startCaseFirst() {
   setTimeout(boot, 4000);
 }
 
-function startLite(reason: string) {
+function startLite(reason: string, caseView?: CaseView) {
   lateFonts();
   const ui = initHeroUi({});
   renderCases();
@@ -140,31 +205,29 @@ function startLite(reason: string) {
   if (dockNav) trackByScroll(dockNav.track);
   /* v43: в лёгкой версии страница прокручивается сама — то же мягкое колесо, что на страницах кейсов */
   smoothWheel(window, () => body.classList.contains("case-open"));
-  initCaseView();
+  if (!caseView) initCaseView();
   initLangToggle();
   ui.ready();
   /* кейс закрыли (адрес без #/work/ и страница кейса убрана) — возвращаемся на лёгкую страницу */
   new MutationObserver(() => { if (!isCaseLink() && !body.classList.contains("case-open")) toLitePage(); }).observe(body, { attributes: true, attributeFilter: ["class"] });
 }
 
-function start3d(caseView?: CaseView) {
+function start3d(caseView?: CaseView, introBoot?: IntroBoot) {
   const opts: HillSceneOptions = {};
-  const cam = params.get("cam")?.split(",").map(Number);
-  if (cam?.length === 6 && cam.every(Number.isFinite)) opts.fixedCamera = cam as HillSceneOptions["fixedCamera"];
+  const cam = fixedCamera();
+  if (cam) opts.fixedCamera = cam;
   if (params.get("ui") === "0") body.classList.add("no-ui");
 
-  /* v95: заставка «Расфокус» (src/intro/focusLoader.ts): сам холм в мягком фокусе и графите за именем, «Enter»
-     возвращает резкость и цвет. Прежний «живой сад» стал отдельным демо (github.com/kloserock97-tech/overgrowth).
-     Один раз за сессию; ?intro=1 — всегда, ?intro=0 — никогда, ?ui=0 — тоже без заставки. */
-  const introParam = params.get("intro");
-  let seen = false;
-  try { seen = sessionStorage.getItem("hill-intro") === "1"; } catch { /* приватный режим */ }
-  const withIntro = !location.hash.startsWith("#/work/") && (introParam === "1" || (introParam !== "0" && !seen && params.get("ui") !== "0" && !opts.fixedCamera));
-  const intro = withIntro ? createFocusLoader(() => {
-    try { sessionStorage.setItem("hill-intro", "1"); } catch { /* private mode */ }
-    scene.paused = body.classList.contains("case-open");
-    ui.ready();
-  }, () => degrade("stall")) : null;
+  /* заставка уже на экране (bootHill); здесь ей достаются настоящие обработчики */
+  const intro = introBoot?.intro ?? null;
+  if (introBoot) {
+    introBoot.hooks.done = () => {
+      try { sessionStorage.setItem("hill-intro", "1"); } catch { /* private mode */ }
+      scene.paused = body.classList.contains("case-open");
+      ui.ready();
+    };
+    introBoot.hooks.lite = () => degrade("stall");
+  }
 
   const canvas = document.getElementById("scene") as HTMLCanvasElement;
   let scene: HillScene;
@@ -233,6 +296,9 @@ function start3d(caseView?: CaseView) {
   // Real readiness milestones drive the loader; no simulated download percentage.
   const introPoll = intro ? window.setInterval(() => intro.progress(scene.loadingProgress), 160) : 0;
 
+  /* v140: разовые тяжёлые дела (lib/chores.ts) — когда модели приехали и видеокарта собирает их шейдеры */
+  const chores = scene.propsReady.then(runChores);
+
   let started = false;
   const start = () => {
     if (started || body.classList.contains("lite")) return;
@@ -241,7 +307,8 @@ function start3d(caseView?: CaseView) {
     clearInterval(introPoll);
     if (intro) {
       // The loading screen shows the hill itself behind the name, so the scene keeps running.
-      scene.presentationReady.then(() => {
+      /* v140: вуаль тает, только когда очередь дел загрузки пуста — иначе они попадают в проявление холма рывком */
+      Promise.all([scene.presentationReady, chores]).then(() => {
         if (body.classList.contains("lite")) return;
         intro.ready();
       });

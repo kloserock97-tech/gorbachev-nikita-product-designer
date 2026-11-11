@@ -111,7 +111,9 @@ export function createFocusLoader(onDone: () => void, onLite: () => void): Focus
     clock += dt;
     /* progress line: real readiness, eased so a jump between phases does not snap */
     shown += (target - shown) * (1 - Math.exp(-dt * 5));
-    if (ready && shown > .995) shown = 1;
+    /* v140: once the scene is ready the line is full at once. It used to ease up to 100 % first — about 0.8 s — but
+       since v104 the ink is dark on the dark veil: nobody sees the line move, the hill just showed up later */
+    if (ready) shown = 1;
     /* v103: only when the value moved — the screen waits for Enter with the line full, and the per-frame writes kept
        recalculating the loader's styles */
     const p = shown.toFixed(4);

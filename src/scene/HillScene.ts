@@ -1,6 +1,5 @@
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+import { disposeModels, startModels } from "./models";
 import { fbm, heightAt, makeRng, normalAt } from "./terrain";
 import { loadHdri } from "./hdri";
 import { createPostFx, type PostFx } from "./postfx";
@@ -156,8 +155,8 @@ export class HillScene {
   /* v96: декодер лежит в public/draco (wasm + обёртка из three) и грузится сразу, а не после прихода props.glb:
      цепочка «модель → декодер → вторая модель» стоила ~1,2 с до кресла. Заодно сборка перестала тащить три лишних
      файла Draco (~1 МБ) через import.meta.url */
-  private draco = new DRACOLoader().setDecoderPath(`${BASE}draco/`).setDecoderConfig({ type: "wasm" }).preload();
-  private gltfLoader = new GLTFLoader().setDRACOLoader(this.draco);
+  /* v140: сами файлы берутся и разбираются до конструктора (scene/models.ts) — распаковка идёт, пока сажается трава */
+  private models = startModels();
   private dpr = 1;
   private qualityScale = 1;
 
@@ -303,15 +302,24 @@ export class HillScene {
     this.buildTree();
     if (!/[?&]rocks=0/.test(location.search)) this.scene.add(createRocks(this.uniforms));
     this.buildGround();
-    this.buildGrass();
-    this.buildPollen();
-    this.buildMotes();
-    this.buildWisps();
+    /* v140: свет и туман — до травы (раньше стояли после неё). От числа источников света и от тумана зависит ключ
+       программы у three, поэтому собирать шейдеры заранее можно только когда они на месте. Порядок отрисовки не
+       меняется: источники света не рисуются */
     this.buildLights();
     /* Кресло, компьютер и собака — стандартные материалы, airFog из шейдеров травы до них не
        доходил. Линейный туман того же цвета на их дистанции (~12 м) даёт те же 3–4 %.
        ShaderMaterial его не видят (fog: false), так что трава и небо не затуманятся дважды. */
     this.scene.fog = new THREE.Fog(this.uniforms.uFogCol.value, 10, 60);
+    /* небо, даль, дерево, камни, земля, постобработка, карты теней — их шейдеры видеокарта собирает, пока
+       процессор сажает траву */
+    this.precompile();
+    /* окружение — тоже до травы: шейдеры свёртки HDRI (PMREM) собираются параллельно, и отражения готовы сразу после
+       конструктора; от них зависит, когда начнут собираться материалы кресла и компьютера */
+    this.loadEnvironment();
+    this.buildGrass();
+    this.buildPollen();
+    this.buildMotes();
+    this.buildWisps();
     this.weather = new Weather({
       scene: this.scene,
       uniforms: this.uniforms,
@@ -323,11 +331,10 @@ export class HillScene {
     });
     this.weather.setPixelRatio(this.dpr);
     this.loadProps();
-    this.loadEnvironment();
     if (!/[?&]dog=0/.test(location.search)) {
       this.dog = new Dog(this.uniforms, this.reduced);
       this.scene.add(this.dog.group);
-      void this.dog.load(this.gltfLoader).then(() => this.compileLate(this.dog!.group));
+      void this.dog.load(this.models.dog ?? Promise.resolve(null)).then(() => this.compileLate(this.dog!.group));
     }
 
     window.addEventListener("resize", this.onWindowResize);
@@ -343,7 +350,7 @@ export class HillScene {
        строится при загрузке, поэтому надёжнее перезагрузить страницу, чем чинить по частям. */
     canvas.addEventListener("webglcontextlost", this.onContextLost);
     canvas.addEventListener("webglcontextrestored", this.onContextRestored);
-    this.precompile();
+    this.precompile(true);
     this.loop();
   }
 
@@ -375,17 +382,28 @@ export class HillScene {
         this.loadLog.push(`${obj.name || obj.type} ${Math.round(performance.now() - t0)} ms`);
       });
   }
-  private precompile() {
-    const t0 = performance.now();
+  /* v140: в два захода. Первый — посреди конструктора, перед посадкой травы: всё, что уже есть в сцене, плюс
+     постобработка и карты теней. Посадка занимает процессор на 0,8 с (на телефоне — на несколько секунд), и раньше
+     видеокарта всё это время простаивала, а собирать начинала только после. Второй заход (last) — в конце
+     конструктора: трава, цветы, пыльца, погода; уже собранные программы three находит по ключу и второй раз не
+     собирает */
+  private early: Promise<unknown> = Promise.resolve();
+  private precompileT0 = 0;
+  private precompile(last = false) {
+    this.precompileT0 ||= performance.now();
     const prev = this.renderer.getRenderTarget();
     this.renderer.setRenderTarget(this.fx.compileTarget);
     const scene = this.renderer.compileAsync(this.scene, this.camera);
     this.renderer.setRenderTarget(prev);
-    Promise.all([scene, this.fx.compileAsync()])
+    if (!last) {
+      this.early = Promise.all([scene, this.fx.compileAsync(), this.fx.params.shafts?.compileAsync()]).catch(() => {});
+      return;
+    }
+    Promise.all([scene, this.early])
       .catch(() => {})
       .then(() => {
         this.shadersReady = true;
-        this.loadLog.push(`shaders ${Math.round(performance.now() - t0)} ms`);
+        this.loadLog.push(`shaders ${Math.round(performance.now() - this.precompileT0)} ms`);
       });
   }
 
@@ -1291,7 +1309,7 @@ export class HillScene {
   }
 
   private loadProps() {
-    this.gltfLoader.load(`${BASE}models/props.glb`, (gltf) => {
+    this.models.props.then((gltf) => {
       if (this.disposed) return;
       const props = gltf.scene;
       props.rotation.y = PROPS_YAW;
@@ -1326,7 +1344,7 @@ export class HillScene {
         this.propBox = new THREE.Box3().setFromObject(props);
         this.resolveProps();
       });
-    }, undefined, (error) => {
+    }, (error) => {
       /* v96: кресло не загрузилось (обрыв сети, 404) — холм без реквизита лучше вечной заставки: без этого
          assetsReady не доходил до 2, presentationReady не наступал и заставка не отпускала человека */
       if (this.disposed) return;
@@ -1386,7 +1404,7 @@ export class HillScene {
       cup.position.x = local.x - 0.12;
       cup.position.z = local.z + 0.12;
     }
-    const gltf = await this.gltfLoader.loadAsync(`${BASE}models/computer.glb`).catch(() => null);
+    const gltf = await this.models.computer;
     if (!gltf || this.disposed) return;
     const pc = gltf.scene;
     pc.scale.setScalar(0.8);
@@ -2609,8 +2627,10 @@ ${SCREEN_SPILL}`)
     this.sky.uniforms.uRain.value = this.weather.rainShare;
     this.updateStory(dt);
     this.updateSun(dt);
-    /* карты тени холма и кроны нужны траве и земле, даже когда лучи выключены */
-    if (!this.hillHidden()) this.fx.params.shafts?.prepare();
+    /* карты тени холма и кроны нужны траве и земле, даже когда лучи выключены.
+       v140: только когда шейдеры собраны — до этого кадр всё равно не рисуется (проверка ниже), а съёмка карт
+       заставляла главный поток ждать сборки их программ */
+    if (this.shadersReady && this.pendingCompile === 0 && !this.hillHidden()) this.fx.params.shafts?.prepare();
 
     const fixed = this.opts.fixedCamera;
     if (fixed) {
@@ -2870,7 +2890,7 @@ ${SCREEN_SPILL}`)
   dispose() {
     this.disposed = true;
     this.walk?.dispose();
-    this.draco.dispose();
+    disposeModels();
     this.screen?.dispose();
     this.kinetic?.dispose();
     this.studio?.dispose();

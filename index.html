@@ -54,7 +54,10 @@
 <!-- v96: кресло, компьютер, небо и декодер моделей — с первых миллисекунд, а не по цепочке после скрипта -->
 <link rel="preload" href="/models/props.glb" as="fetch" crossorigin>
 <link rel="preload" href="/draco/draco_decoder.wasm" as="fetch" crossorigin>
+<!-- v140: обёртка декодера и собака тоже нужны первому экрану; модели разбираются до сборки сцены (scene/models.ts) -->
+<link rel="preload" href="/draco/draco_wasm_wrapper.js" as="fetch" crossorigin>
 <link rel="preload" href="/models/computer.glb" as="fetch" crossorigin>
+<link rel="preload" href="/models/dog.glb" as="fetch" crossorigin>
 <link rel="preload" href="/hdri/sky-256.hdr" as="fetch" crossorigin>
 </head>
 <body>

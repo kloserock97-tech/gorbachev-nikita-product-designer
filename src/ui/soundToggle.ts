@@ -1,4 +1,5 @@
 import { cue } from "../audio/bus";
+import { chore } from "../lib/chores";
 import type { SoundState } from "../audio/ambient";
 import { chapters, portalAt } from "../scene/story";
 import { onLang, t as tr } from "../i18n";
@@ -133,7 +134,9 @@ export function initSound(scene: Scene) {
   /* первый жест на странице включает фон, если звук не выключали */
   if (read() !== "off" && !conn?.saveData) {
     const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1));
-    window.setTimeout(() => idle(prewarm, { timeout: 3000 }), document.body.classList.contains("intro-loading") ? 300 : 2500);
+    /* v140: на заставке — в очереди дел загрузки (lib/chores.ts): «простой» выпадал на проявление холма */
+    if (document.body.classList.contains("intro-loading")) chore(prewarm);
+    else window.setTimeout(() => idle(prewarm, { timeout: 3000 }), 2500);
     const first = (e: Event) => {
       if ((e.target as Element | null)?.closest?.(".sound-fab, .m-bar__sound, .m-menu__sound")) return; // кнопку обработает её click (v139: и кнопки звука в панели и меню)
       if (e instanceof KeyboardEvent && isM(e)) return;

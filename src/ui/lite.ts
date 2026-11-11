@@ -12,8 +12,11 @@ import { onLang, t, type Key } from "../i18n";
 const KEY = "hill-lite:v2";
 const TTL = 14 * 24 * 3600 * 1000;
 
-/** причина открыть лёгкую версию сразу, или null — пробуем 3D */
-export function liteReason(params: URLSearchParams): string | null {
+/** причина открыть лёгкую версию, известная без обращения к видеокарте: параметр адреса или запомненный выбор.
+    v140: проверка разделена на две. Вторая (liteProbe) создаёт WebGL-контекст — на только что открытой вкладке это
+    первое обращение к видеокарте, и оно ждёт её процесс около полусекунды. Раньше обе шли подряд в самом начале
+    скрипта, до заставки; теперь первая решает сразу, а вторая идёт уже под нарисованной заставкой */
+export function liteSaved(params: URLSearchParams): string | null {
   const q = params.get("lite");
   if (q === "1") return "param";
   if (q === "0") {
@@ -24,6 +27,12 @@ export function liteReason(params: URLSearchParams): string | null {
     const saved = JSON.parse(localStorage.getItem(KEY) ?? "null") as { at: number } | null;
     if (saved && Date.now() - saved.at < TTL) return "saved";
   } catch { /* ничего */ }
+  return null;
+}
+
+/** нет WebGL2 или рисовать будет процессор — причина открыть лёгкую версию; null — пробуем 3D */
+export function liteProbe(params: URLSearchParams): string | null {
+  if (params.get("lite") === "0") return null;
   /* failIfMajorPerformanceCaveat: браузер не отдаёт контекст, если рисовать будет процессор */
   const probe = document.createElement("canvas");
   const gl = probe.getContext("webgl2", { failIfMajorPerformanceCaveat: true });

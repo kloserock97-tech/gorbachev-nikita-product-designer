@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { chore } from "../lib/chores";
 
 /* v121 (Никита: «как у igloo — размытые слова в глубине вместо бегущей строки»; приём igloo, слова, раскладка и код
    свои): за компьютером в тумане About плавают заранее размытые моноширинные слова. Три слоя глубины лежат в одной
@@ -61,9 +62,9 @@ export function wordsTexture() {
   shared.minFilter = shared.magFilter = THREE.LinearFilter;
   shared.colorSpace = THREE.NoColorSpace;
   const tex = shared;
-  /* рисуется один раз, когда загрузился Plex Mono и браузер свободен (~20 мс), — до About ещё далеко; пока пусто — слов нет */
-  const idle = (fn: () => void) => ("requestIdleCallback" in window ? requestIdleCallback(fn, { timeout: 3000 }) : setTimeout(fn, 500));
-  const run = () => idle(() => paint(tex));
+  /* рисуется один раз, когда загрузился Plex Mono, — до About ещё далеко; пока пусто — слов нет.
+     v140: не «когда браузер свободен» (это попадало в проявление холма), а в очереди дел загрузки (lib/chores.ts) */
+  const run = () => chore(() => paint(tex));
   (document.fonts?.load('500 30px "Plex Mono"') ?? Promise.resolve()).then(run, run);
   return tex;
 }

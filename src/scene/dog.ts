@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { clamp01 } from "../lib/math";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { heightAt } from "./terrain";
 import { createUmbrellaHat, type UmbrellaHat } from "./umbrellaHat";
 
@@ -18,7 +18,6 @@ import { createUmbrellaHat, type UmbrellaHat } from "./umbrellaHat";
    и раскрывается; кончился дождь — складывается и улетает вверх. В футере (закат) Келли спит
    клубочком на кресле: пересадка — пока кадр размыт, дыхание медленное и глубокое, изредка ухо. */
 
-const BASE = import.meta.env.BASE_URL;
 const MODEL_HEIGHT = 3.0; // рост модели в её единицах
 const DOG_HEIGHT = 0.5; // рост сидя с головой, м
 const SCALE = DOG_HEIGHT / MODEL_HEIGHT;
@@ -128,8 +127,9 @@ export class Dog {
     return this.umbrella ? [this.umbrella.hat] : [];
   }
 
-  async load(loader: GLTFLoader) {
-    const gltf = await loader.loadAsync(`${BASE}models/dog.glb`).catch(() => null);
+  /** v140: файл берёт и разбирает scene/models.ts — до сборки сцены; сюда приходит готовое обещание */
+  async load(source: Promise<GLTF | null>) {
+    const gltf = await source;
     if (!gltf) return;
     const model = gltf.scene;
     model.scale.setScalar(SCALE);

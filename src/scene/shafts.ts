@@ -161,6 +161,32 @@ export function createShafts(renderer: THREE.WebGLRenderer, camera: THREE.Perspe
     onCapture: null as ((capturing: boolean) => void) | null,
     /** солнце переехало — карту тени холма пересчитать в ближайшем prepare() */
     setSun(dir: THREE.Vector3) { s.copy(dir).normalize(); hillDirty = true; frame = 0; },
+    /** v140: программы этого модуля — заранее и параллельно, вместе с остальными шейдерами холма (HillScene.precompile).
+        Раньше prepare() шёл с самого первого кадра, до готовности шейдеров: карта тени холма (цикл в 160 шагов) и съёмка
+        кроны собирались синхронно при первом использовании — 0,65 с простоя главного потока на загрузке. У съёмки
+        кроны свои программы коры и листвы: дерево рисуется одно, без источников света, и ключ программы у three
+        получается не тот, что в основной сцене, — поэтому собираем тем же вызовом, что и снимаем (дерево, камера
+        солнца, буфер кроны). Проходы на весь экран — на сетке без нормалей, как у FullScreenQuad (см. postfx) */
+    compileAsync() {
+      const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      const geo = new THREE.PlaneGeometry(2, 2);
+      geo.deleteAttribute("normal");
+      const passes = new THREE.Scene();
+      for (const m of [hillMat, material]) {
+        const mesh = new THREE.Mesh(geo, m);
+        mesh.frustumCulled = false;
+        passes.add(mesh);
+      }
+      const prev = renderer.getRenderTarget();
+      renderer.setRenderTarget(hillRT);
+      const jobs: Promise<unknown>[] = [renderer.compileAsync(passes, cam)];
+      if (tree) {
+        renderer.setRenderTarget(crownRT);
+        jobs.push(renderer.compileAsync(tree, sunCam));
+      }
+      renderer.setRenderTarget(prev);
+      return Promise.all(jobs).finally(() => geo.dispose());
+    },
     /** раз в кадр, пока холм на экране: карта холма (если солнце сдвинулось) и через кадр — снимок кроны */
     prepare() {
       if (hillDirty) { hillDirty = false; withTarget(hillRT, () => quad.render(renderer)); }
